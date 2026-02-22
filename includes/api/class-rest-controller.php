@@ -366,7 +366,7 @@ class WPAIC_REST_Controller {
             $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
             $bootstrap_hash = hash('sha256', $ip . $user_agent . wp_salt());
             $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
-            set_transient($transient_key, $bootstrap_hash, HOUR_IN_SECONDS);
+            set_transient($transient_key, $bootstrap_hash, 15 * MINUTE_IN_SECONDS);
         }
 
         // Generate HMAC session token for cookie-less environments
@@ -630,7 +630,8 @@ class WPAIC_REST_Controller {
                         'data'    => [
                             'message_id'         => $cache_msg_id,
                             'content'            => $cached_content,
-                            'tokens_used'        => 0,
+                            'tokens_used'        => (int) ($cached['tokens_used'] ?? 0),
+                            'tokens_billed'      => 0,
                             'sources'            => array_values($sources),
                             'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
                             'cached'             => true,
@@ -1404,12 +1405,18 @@ class WPAIC_REST_Controller {
      */
     private function check_public_rate_limit(string $route_key = 'pub', int $limit = 30, int $window = 60) {
         $ip = $this->get_client_ip();
+
         if (empty($ip)) {
-            return true;
+            // IP unavailable (some proxy/hosting configs) — fall back to
+            // User-Agent hash so the endpoint is never fully unlimited.
+            $ua = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : 'no-ua';
+            $fallback = hash('sha256', $ua . wp_salt());
+            $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($fallback, 0, 24);
+        } else {
+            $ip_hash = hash('sha256', $ip . wp_salt());
+            $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($ip_hash, 0, 24);
         }
 
-        $ip_hash = hash('sha256', $ip . wp_salt());
-        $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($ip_hash, 0, 24);
         $count = (int) get_transient($transient_key);
 
         if ($count >= $limit) {
