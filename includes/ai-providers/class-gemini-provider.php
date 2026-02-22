@@ -104,6 +104,20 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
             $error_status = $data['error']['status'] ?? '';
 
+            // Log detailed error for debugging
+            error_log(sprintf(
+                'WPAIC Gemini API Error: HTTP %d | status=%s | model=%s | message=%s',
+                $response_code,
+                $error_status,
+                $this->model,
+                $error_message
+            ));
+
+            // Authentication errors
+            if ($response_code === 401 || $response_code === 403) {
+                throw new Exception(esc_html__('Gemini API key is invalid or does not have permission to use this model.', 'rapls-ai-chatbot'));
+            }
+
             // Check for quota/billing errors
             if ($response_code === 429 || $response_code === 402 ||
                 $error_status === 'RESOURCE_EXHAUSTED' ||
@@ -112,6 +126,30 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
                 stripos($error_message, 'exceeded') !== false ||
                 stripos($error_message, 'exhausted') !== false) {
                 throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+            }
+
+            // Invalid parameter errors
+            if ($response_code === 400 || $error_status === 'INVALID_ARGUMENT') {
+                throw new Exception(
+                    /* translators: 1: model name, 2: error message */
+                    sprintf(esc_html__('Gemini API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
+                );
+            }
+
+            // Model not found
+            if ($response_code === 404 || $error_status === 'NOT_FOUND') {
+                throw new Exception(
+                    /* translators: %s: model name */
+                    sprintf(esc_html__('Gemini model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model))
+                );
+            }
+
+            // Server errors
+            if ($response_code >= 500) {
+                throw new Exception(
+                    /* translators: %d: HTTP status code */
+                    sprintf(esc_html__('Gemini server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
+                );
             }
 
             throw new Exception(esc_html__('Gemini API error: ', 'rapls-ai-chatbot') . esc_html($error_message));

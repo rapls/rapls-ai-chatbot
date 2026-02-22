@@ -1062,6 +1062,14 @@ class WPAIC_REST_Controller {
             }
         }
 
+        // Header-based session verification (localStorage fallback when cookies are blocked)
+        if (isset($_SERVER['HTTP_X_WPAIC_SESSION'])) {
+            $header_session = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
+            if (hash_equals($header_session, $session_id)) {
+                return true;
+            }
+        }
+
         $ip = $this->get_client_ip();
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
         $current_hash = hash('sha256', $ip . $user_agent . wp_salt());

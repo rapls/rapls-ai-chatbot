@@ -197,7 +197,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             )) {
                 throw new Exception(
                     /* translators: 1: model name, 2: error message */
-                    sprintf(esc_html__('OpenAI API parameter error (model: %1$s): %2$s', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
+                    sprintf(esc_html__('OpenAI API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
+                );
+            }
+
+            // Model access denied (requires special permissions or paid tier)
+            if ($response_code === 403) {
+                throw new Exception(
+                    /* translators: %s: model name */
+                    sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model))
                 );
             }
 
@@ -205,7 +213,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             if ($response_code === 404 || $error_code === 'model_not_found') {
                 throw new Exception(
                     /* translators: %s: model name */
-                    sprintf(esc_html__('OpenAI model "%s" not found. Please check your model selection.', 'rapls-ai-chatbot'), esc_html($this->model))
+                    sprintf(esc_html__('OpenAI model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model))
+                );
+            }
+
+            // Server errors
+            if ($response_code >= 500) {
+                throw new Exception(
+                    /* translators: %d: HTTP status code */
+                    sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
                 );
             }
 

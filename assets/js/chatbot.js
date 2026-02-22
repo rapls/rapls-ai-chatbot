@@ -344,8 +344,9 @@
                 this.clearSession();
             }
 
-            // セッションストレージからセッションID取得
-            this.sessionId = sessionStorage.getItem('wpaic_session');
+            // セッションストレージからセッションID取得（sessionStorage優先、localStorageフォールバック）
+            this.sessionId = sessionStorage.getItem('wpaic_session')
+                || localStorage.getItem('wpaic_session');
 
             var finishLoading = function() {
                 self.sessionLoading = false;
@@ -363,6 +364,7 @@
                         self.sessionId = response.session_id;
                         sessionStorage.setItem('wpaic_session', self.sessionId);
                         sessionStorage.setItem('wpaic_session_version', String(currentVersion));
+                        localStorage.setItem('wpaic_session', self.sessionId);
                         // セッション作成後にリード設定を読み込み
                         return self.loadLeadConfig();
                     })
@@ -408,6 +410,7 @@
 
             sessionStorage.removeItem('wpaic_session');
             sessionStorage.removeItem('wpaic_session_version');
+            localStorage.removeItem('wpaic_session');
 
             // すべてのリード送信済みフラグをクリア
             var keys = Object.keys(sessionStorage);
@@ -1212,12 +1215,18 @@
         apiRequest: function(method, endpoint, data) {
             var url = this.config.api_base + endpoint;
 
+            var headers = {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': this.config.nonce
+            };
+
+            if (this.sessionId) {
+                headers['X-WPAIC-Session'] = this.sessionId;
+            }
+
             var options = {
                 method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': this.config.nonce
-                }
+                headers: headers
             };
 
             if (data) {

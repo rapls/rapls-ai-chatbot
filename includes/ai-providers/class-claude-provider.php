@@ -112,6 +112,20 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
             $error_type = $data['error']['type'] ?? '';
 
+            // Log detailed error for debugging
+            error_log(sprintf(
+                'WPAIC Claude API Error: HTTP %d | type=%s | model=%s | message=%s',
+                $response_code,
+                $error_type,
+                $this->model,
+                $error_message
+            ));
+
+            // Authentication errors
+            if ($response_code === 401 || $error_type === 'authentication_error') {
+                throw new Exception(esc_html__('Claude API key is invalid or has been revoked.', 'rapls-ai-chatbot'));
+            }
+
             // Check for quota/billing errors
             if ($response_code === 429 || $response_code === 402 ||
                 $error_type === 'rate_limit_error' ||
@@ -120,6 +134,30 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                 stripos($error_message, 'billing') !== false ||
                 stripos($error_message, 'exceeded') !== false) {
                 throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+            }
+
+            // Invalid parameter errors
+            if ($response_code === 400 || $error_type === 'invalid_request_error') {
+                throw new Exception(
+                    /* translators: 1: model name, 2: error message */
+                    sprintf(esc_html__('Claude API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
+                );
+            }
+
+            // Model not found
+            if ($response_code === 404) {
+                throw new Exception(
+                    /* translators: %s: model name */
+                    sprintf(esc_html__('Claude model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model))
+                );
+            }
+
+            // Server errors
+            if ($response_code >= 500) {
+                throw new Exception(
+                    /* translators: %d: HTTP status code */
+                    sprintf(esc_html__('Claude server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
+                );
             }
 
             throw new Exception(esc_html__('Claude API error: ', 'rapls-ai-chatbot') . esc_html($error_message));

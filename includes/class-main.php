@@ -221,21 +221,26 @@ class WPAIC_Main {
         ));
 
         if (!empty($old_conversations)) {
-            $ids_placeholder = implode(',', array_fill(0, count($old_conversations), '%d'));
+            $batch_size = 1000;
+            $batches = array_chunk($old_conversations, $batch_size);
 
-            // Delete messages
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query($wpdb->prepare(
-                "DELETE FROM {$table_messages} WHERE conversation_id IN ({$ids_placeholder})",
-                ...$old_conversations
-            ));
+            foreach ($batches as $batch) {
+                $ids_placeholder = implode(',', array_fill(0, count($batch), '%d'));
 
-            // Delete conversations
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query($wpdb->prepare(
-                "DELETE FROM {$table_conversations} WHERE id IN ({$ids_placeholder})",
-                ...$old_conversations
-            ));
+                // Delete messages
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM {$table_messages} WHERE conversation_id IN ({$ids_placeholder})",
+                    ...$batch
+                ));
+
+                // Delete conversations
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM {$table_conversations} WHERE id IN ({$ids_placeholder})",
+                    ...$batch
+                ));
+            }
         }
     }
 
