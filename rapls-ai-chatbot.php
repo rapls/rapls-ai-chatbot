@@ -99,6 +99,44 @@ if (!function_exists('wpaic_mb_substr_count')) {
         return function_exists('mb_substr_count') ? mb_substr_count($haystack, $needle) : substr_count($haystack, $needle);
     }
 }
+if (!function_exists('wpaic_mb_convert_encoding')) {
+    /**
+     * Multibyte-safe encoding conversion with graceful fallback.
+     *
+     * @param string $s        Input string.
+     * @param string $to       Target encoding.
+     * @param string $from     Source encoding (optional).
+     * @return string Converted string, or original if mbstring unavailable.
+     */
+    function wpaic_mb_convert_encoding(string $s, string $to, string $from = ''): string {
+        if (function_exists('mb_convert_encoding')) {
+            return $from ? mb_convert_encoding($s, $to, $from) : mb_convert_encoding($s, $to);
+        }
+        return $s;
+    }
+}
+
+/**
+ * Input sanitization helpers.
+ *
+ * Enforce the wp_unslash() → sanitize pattern in a single call,
+ * preventing the common mistake of omitting wp_unslash().
+ */
+if (!function_exists('wpaic_get_text')) {
+    function wpaic_get_text(array $src, string $key, string $default = ''): string {
+        return isset($src[$key]) ? sanitize_text_field(wp_unslash($src[$key])) : $default;
+    }
+}
+if (!function_exists('wpaic_get_int')) {
+    function wpaic_get_int(array $src, string $key, int $default = 0): int {
+        return isset($src[$key]) ? absint(wp_unslash($src[$key])) : $default;
+    }
+}
+if (!function_exists('wpaic_get_email')) {
+    function wpaic_get_email(array $src, string $key, string $default = ''): string {
+        return isset($src[$key]) ? sanitize_email(wp_unslash($src[$key])) : $default;
+    }
+}
 
 /**
  * Load and run the main plugin class

@@ -94,6 +94,11 @@ class WPAIC_Content_Extractor {
      * Converts HTML tags to readable text format instead of stripping them
      */
     private function enhanced_strip_html(string $content): string {
+        // Fallback if DOMDocument is not available
+        if (!class_exists('DOMDocument')) {
+            return $this->strip_html($content);
+        }
+
         // Remove scripts and styles
         $content = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $content);
         $content = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $content);
@@ -104,7 +109,8 @@ class WPAIC_Content_Extractor {
 
         $doc = new DOMDocument();
         libxml_use_internal_errors(true);
-        $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $converted = wpaic_mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        $doc->loadHTML($converted, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
 
         $body = $doc->getElementsByTagName('body')->item(0);
