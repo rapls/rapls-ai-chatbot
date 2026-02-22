@@ -1086,12 +1086,6 @@ class WPAIC_REST_Controller {
         return $decrypted;
     }
 
-    /**
-     * Get client IP address
-     *
-     * Defaults to REMOTE_ADDR for security. Optionally trusts
-     * Cloudflare's CF-Connecting-IP header when enabled in settings.
-     */
     public function validate_image_param( $value, $request, $param ) {
         if (empty($value)) {
             return true;
@@ -1128,21 +1122,21 @@ class WPAIC_REST_Controller {
         // Verify actual MIME type via finfo (not just the data URI header)
         if (function_exists('finfo_open')) {
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $real_mime = finfo_buffer($finfo, $decoded);
-            finfo_close($finfo);
-            $allowed_mimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (!in_array($real_mime, $allowed_mimes, true)) {
-                return new WP_Error('invalid_image', __('Invalid image type detected. Allowed: JPEG, PNG, GIF, WebP.', 'rapls-ai-chatbot'));
+            if ($finfo !== false) {
+                $real_mime = finfo_buffer($finfo, $decoded);
+                finfo_close($finfo);
+                $allowed_mimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if ($real_mime !== false && !in_array($real_mime, $allowed_mimes, true)) {
+                    return new WP_Error('invalid_image', __('Invalid image type detected. Allowed: JPEG, PNG, GIF, WebP.', 'rapls-ai-chatbot'));
+                }
             }
+            // If finfo_open fails, skip MIME check and rely on getimagesizefromstring below
         }
 
         // Verify image dimensions (max 2048px per side)
-        $image_info = getimagesizefromstring($decoded);
+        // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- getimagesizefromstring may emit warnings on corrupt data
+        $image_info = @getimagesizefromstring($decoded);
         if ($image_info === false) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC: getimagesizefromstring failed for uploaded image.');
-            }
             return new WP_Error('invalid_image', __('Unable to read image dimensions.', 'rapls-ai-chatbot'));
         }
         $max_dimension = 2048;
@@ -2687,7 +2681,7 @@ class WPAIC_REST_Controller {
      * When save_history is ON, the counter is derived from the messages table.
      */
     private function increment_no_history_monthly_count(): void {
-        $option_key = 'wpaic_nohist_msg_count_' . gmdate('Y_m');
+        $option_key = 'wpaic_nohist_msg_count_' . wp_date('Y_m');
         $count = (int) get_option($option_key, 0);
         update_option($option_key, $count + 1, false);
     }

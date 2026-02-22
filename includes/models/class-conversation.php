@@ -40,16 +40,21 @@ class WPAIC_Conversation {
         $raw_ip = $data['visitor_ip'] ?? ($_SERVER['REMOTE_ADDR'] ?? '');
         $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         $user_id = get_current_user_id();
+
         $insert_data = [
             'session_id' => $session_id,
-            'user_id'    => $user_id ? $user_id : null,
             'visitor_ip' => self::hash_ip($raw_ip, $user_agent),
             'page_url'   => isset($data['page_url']) ? esc_url_raw($data['page_url']) : '',
             'status'     => 'active',
         ];
+        $formats = ['%s', '%s', '%s', '%s'];
 
-        // Use %s for user_id when null to preserve NULL in database (avoid storing 0 for anonymous visitors)
-        $formats = ['%s', $user_id ? '%d' : '%s', '%s', '%s', '%s'];
+        // Only include user_id when logged in; omitting it lets MySQL store actual NULL
+        // (avoids 0 or '' for anonymous visitors, which breaks IS NULL queries)
+        if ($user_id) {
+            $insert_data['user_id'] = $user_id;
+            $formats[] = '%d';
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert($table, $insert_data, $formats);

@@ -1286,7 +1286,7 @@ class WPAIC_Admin {
             return;
         }
 
-        $dismiss_url = wp_nonce_url(admin_url('admin-ajax.php?action=wpaic_dismiss_security_notice'), 'wpaic_dismiss_security_notice');
+        $dismiss_nonce = wp_create_nonce('wpaic_dismiss_security_notice');
         ?>
         <div class="notice notice-warning is-dismissible" id="wpaic-security-notice">
             <p>
@@ -1300,9 +1300,22 @@ class WPAIC_Admin {
             <p>
                 <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Go to Settings', 'rapls-ai-chatbot'); ?></a>
                 &nbsp;|&nbsp;
-                <a href="<?php echo esc_url($dismiss_url); ?>" style="color: #999;"><?php esc_html_e('Dismiss for 30 days', 'rapls-ai-chatbot'); ?></a>
+                <a href="#" id="wpaic-dismiss-security" style="color: #999;"><?php esc_html_e('Dismiss for 30 days', 'rapls-ai-chatbot'); ?></a>
             </p>
         </div>
+        <script>
+        document.getElementById('wpaic-dismiss-security').addEventListener('click', function(e) {
+            e.preventDefault();
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?php echo esc_url(admin_url('admin-ajax.php')); ?>');
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                var notice = document.getElementById('wpaic-security-notice');
+                if (notice) notice.remove();
+            };
+            xhr.send('action=wpaic_dismiss_security_notice&_wpnonce=<?php echo esc_js($dismiss_nonce); ?>');
+        });
+        </script>
         <?php
     }
 
@@ -1869,10 +1882,14 @@ class WPAIC_Admin {
             update_option('wpaic_settings', $merged_settings);
         }
 
-        // Import knowledge data
+        // Import knowledge data (respects FAQ limit for Free users)
         $knowledge_count = 0;
         if (isset($import_data['knowledge']) && is_array($import_data['knowledge'])) {
+            $pro = WPAIC_Pro_Features::get_instance();
             foreach ($import_data['knowledge'] as $item) {
+                if (!$pro->can_add_faq()) {
+                    break; // FAQ limit reached — stop importing
+                }
                 $result = WPAIC_Knowledge::create([
                     'title'     => $item['title'] ?? '',
                     'content'   => $item['content'] ?? '',
@@ -2054,8 +2071,7 @@ class WPAIC_Admin {
         }
 
         set_transient('wpaic_security_notice_dismissed', true, 30 * DAY_IN_SECONDS);
-        wp_safe_redirect(wp_get_referer() ?: admin_url('admin.php?page=wpaic-settings'));
-        exit;
+        wp_send_json_success();
     }
 
     /**

@@ -81,13 +81,15 @@ class WPAIC_Pro_Features {
     public function get_monthly_ai_response_count(): int {
         global $wpdb;
         $table = $wpdb->prefix . 'aichat_messages';
-        // Use MySQL DATE_FORMAT(NOW()) to match CURRENT_TIMESTAMP stored in created_at (same TZ)
+        // Use WordPress site timezone for consistent month boundary calculation
+        $month_start = wp_date('Y-m-01 00:00:00');
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $db_count = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$table} WHERE role = 'assistant' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00')"
-        );
-        // Include messages sent while save_history was OFF
-        $nohist_count = (int) get_option('wpaic_nohist_msg_count_' . gmdate('Y_m'), 0);
+        $db_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE role = 'assistant' AND created_at >= %s",
+            $month_start
+        ));
+        // Include messages sent while save_history was OFF (same TZ key)
+        $nohist_count = (int) get_option('wpaic_nohist_msg_count_' . wp_date('Y_m'), 0);
         return $db_count + $nohist_count;
     }
 

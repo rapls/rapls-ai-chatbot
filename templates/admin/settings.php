@@ -918,6 +918,7 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Trust Cloudflare CF-Connecting-IP header', 'rapls-ai-chatbot'); ?>
                             </label>
                             <p class="description"><?php esc_html_e('Enable only if your site is behind Cloudflare. Uses Cloudflare\'s header to detect the real visitor IP for rate limiting.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description" style="color: #d63638;"><strong><?php esc_html_e('Security warning: Only enable this if ALL traffic to your server passes through Cloudflare. If your server is directly accessible (bypassing Cloudflare), attackers can forge this header to bypass rate limiting and IP blocking.', 'rapls-ai-chatbot'); ?></strong></p>
                         </td>
                     </tr>
                     <tr>
