@@ -614,9 +614,13 @@ class WPAIC_REST_Controller {
                         $this->increment_no_history_monthly_count();
                     }
 
-                    $sources = array_filter(array_map(function ($u) {
-                    return esc_url_raw($u, ['http', 'https']);
-                }, array_column($related_content, 'url')));
+                    $urls = is_array($related_content) ? array_column($related_content, 'url') : [];
+                    $sources = array_filter(array_map(
+                        static function ($u) {
+                            return esc_url_raw((string) $u, ['http', 'https']);
+                        },
+                        $urls
+                    ));
                     $remaining_messages = $pro_features->get_remaining_messages();
 
                     $cached_content = apply_filters('wpaic_ai_response', $cached['content'], $message, $settings);
@@ -785,9 +789,13 @@ class WPAIC_REST_Controller {
             $pro_features->maybe_send_budget_alert($msg_cost);
 
             // Get source URLs
-            $sources = array_filter(array_map(function ($u) {
-                    return esc_url_raw($u, ['http', 'https']);
-                }, array_column($related_content, 'url')));
+            $urls = is_array($related_content) ? array_column($related_content, 'url') : [];
+            $sources = array_filter(array_map(
+                static function ($u) {
+                    return esc_url_raw((string) $u, ['http', 'https']);
+                },
+                $urls
+            ));
 
             // Trigger webhook for new message (Pro feature)
             if ($save_history && $conversation && class_exists('WPAIC_Webhook')) {
@@ -1122,8 +1130,12 @@ class WPAIC_REST_Controller {
         }
 
         // Verify image dimensions (max 2048px per side)
-        $image_info = @getimagesizefromstring($decoded);
+        $image_info = getimagesizefromstring($decoded);
         if ($image_info === false) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC: getimagesizefromstring failed for uploaded image.');
+            }
             return new WP_Error('invalid_image', __('Unable to read image dimensions.', 'rapls-ai-chatbot'));
         }
         $max_dimension = 2048;
@@ -2082,9 +2094,13 @@ class WPAIC_REST_Controller {
                 'ai_model' => $response['model'] ?? null,
             ]);
 
-            $sources = array_filter(array_map(function ($u) {
-                    return esc_url_raw($u, ['http', 'https']);
-                }, array_column($related_content, 'url')));
+            $urls = is_array($related_content) ? array_column($related_content, 'url') : [];
+            $sources = array_filter(array_map(
+                static function ($u) {
+                    return esc_url_raw((string) $u, ['http', 'https']);
+                },
+                $urls
+            ));
 
             return new WP_REST_Response([
                 'success' => true,
