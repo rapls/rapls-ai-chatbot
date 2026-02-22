@@ -48,13 +48,13 @@ $is_pro_active = get_option('wpaic_pro_active');
                 </button>
             </div>
             <div class="alignright" style="display: flex; gap: 10px; align-items: center;">
-                <select id="wpaic-export-format" <?php echo !$is_pro_active ? 'disabled' : ''; ?>>
+                <select id="wpaic-export-format" <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
                     <option value="csv">CSV</option>
                     <option value="json">JSON</option>
                 </select>
-                <input type="date" id="wpaic-export-date-from" placeholder="<?php esc_attr_e('From', 'rapls-ai-chatbot'); ?>" <?php echo !$is_pro_active ? 'disabled' : ''; ?>>
-                <input type="date" id="wpaic-export-date-to" placeholder="<?php esc_attr_e('To', 'rapls-ai-chatbot'); ?>" <?php echo !$is_pro_active ? 'disabled' : ''; ?>>
-                <button type="button" id="wpaic-export-conversations" class="button" <?php echo !$is_pro_active ? 'disabled' : ''; ?>>
+                <input type="date" id="wpaic-export-date-from" placeholder="<?php esc_attr_e('From', 'rapls-ai-chatbot'); ?>" <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
+                <input type="date" id="wpaic-export-date-to" placeholder="<?php esc_attr_e('To', 'rapls-ai-chatbot'); ?>" <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
+                <button type="button" id="wpaic-export-conversations" class="button" <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
                     <?php esc_html_e('Export', 'rapls-ai-chatbot'); ?>
                     <?php if (!$is_pro_active): ?>
                     <span class="wpaic-pro-badge-small">PRO</span>

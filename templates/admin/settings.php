@@ -88,7 +88,7 @@ if (!defined('ABSPATH')) {
                                     data-initial-value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o-mini'); ?>">
                                     <?php foreach ($openai_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
-                                            data-vision="<?php echo in_array($value, $openai_vision_models, true) ? '1' : '0'; ?>"
+                                            data-vision="<?php echo esc_attr(in_array($value, $openai_vision_models, true) ? '1' : '0'); ?>"
                                             <?php selected($settings['openai_model'] ?? 'gpt-4o-mini', $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
@@ -137,7 +137,7 @@ if (!defined('ABSPATH')) {
                                     data-initial-value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-sonnet-4-20250514'); ?>">
                                     <?php foreach ($claude_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
-                                            data-vision="<?php echo in_array($value, $claude_vision_models, true) ? '1' : '0'; ?>"
+                                            data-vision="<?php echo esc_attr(in_array($value, $claude_vision_models, true) ? '1' : '0'); ?>"
                                             <?php selected($settings['claude_model'] ?? 'claude-sonnet-4-20250514', $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
@@ -186,7 +186,7 @@ if (!defined('ABSPATH')) {
                                     data-initial-value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'); ?>">
                                     <?php foreach ($gemini_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
-                                            data-vision="<?php echo in_array($value, $gemini_vision_models, true) ? '1' : '0'; ?>"
+                                            data-vision="<?php echo esc_attr(in_array($value, $gemini_vision_models, true) ? '1' : '0'); ?>"
                                             <?php selected($settings['gemini_model'] ?? 'gemini-2.0-flash-exp', $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
@@ -639,10 +639,10 @@ if (!defined('ABSPATH')) {
                             <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('ダークモードを有効にすると、選択したテーマに関係なくチャットウィジェットがダークカラーで表示されます。', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
-                            <label class="<?php echo !$is_pro_active ? 'wpaic-pro-locked' : ''; ?>">
+                            <label class="<?php echo esc_attr(!$is_pro_active ? 'wpaic-pro-locked' : ''); ?>">
                                 <input type="checkbox" name="wpaic_settings[dark_mode]" value="1"
                                     <?php checked($settings['dark_mode'] ?? false); ?>
-                                    <?php echo !$is_pro_active ? 'disabled' : ''; ?>>
+                                    <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
                                 <?php esc_html_e('Enable dark mode for the chatbot', 'rapls-ai-chatbot'); ?>
                                 <?php if (!$is_pro_active): ?>
                                 <span class="dashicons dashicons-lock" style="color: #999; margin-left: 5px;"></span>
@@ -807,7 +807,7 @@ if (!defined('ABSPATH')) {
                             <input type="password" name="wpaic_settings[recaptcha_secret_key]"
                                    value=""
                                    class="regular-text" autocomplete="off"
-                                   placeholder="<?php echo !empty($settings['recaptcha_secret_key']) ? '••••••••' : ''; ?>">
+                                   placeholder="<?php echo esc_attr(!empty($settings['recaptcha_secret_key']) ? '••••••••' : ''); ?>">
                             <p class="description">
                                 <?php esc_html_e('reCAPTCHA v3 secret key', 'rapls-ai-chatbot'); ?>
                                 <?php if (!empty($settings['recaptcha_secret_key'])): ?>
