@@ -356,6 +356,11 @@ class WPAIC_REST_Controller {
                 'secure'   => is_ssl(),
             ]);
             $cookie_set = true;
+        } else {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC: headers_sent() prevented setting session cookie.');
+            }
         }
 
         // Store bootstrap transient ONLY when cookie could not be set
@@ -558,6 +563,7 @@ class WPAIC_REST_Controller {
                         'message_id'         => $limit_msg_id,
                         'content'            => $faq_answer,
                         'tokens_used'        => 0,
+                        'tokens_billed'      => 0,
                         'sources'            => [],
                         'remaining_messages' => 0,
                         'limit_reached'      => true,
