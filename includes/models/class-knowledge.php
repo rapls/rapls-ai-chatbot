@@ -348,7 +348,13 @@ class WPAIC_Knowledge {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        return $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
+        $result = $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
+        if ($result === false) {
+            // Fallback: TRUNCATE may fail due to DB permissions or configuration
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $result = $wpdb->query("DELETE FROM " . esc_sql($table));
+        }
+        return $result;
     }
 
     /**
