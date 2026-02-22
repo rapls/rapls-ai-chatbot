@@ -175,6 +175,81 @@ class WPAIC_Admin {
     }
 
     /**
+     * Sanitize imported/merged settings values (clamp numerics, sanitize strings).
+     *
+     * Unlike sanitize_settings() which handles form submission (tab detection, checkboxes),
+     * this method sanitizes an already-merged settings array — suitable for imports.
+     *
+     * @param array $settings Merged settings array
+     * @param array $existing Current stored settings (for fallback values)
+     * @return array Sanitized settings
+     */
+    public function sanitize_settings_values(array $settings, array $existing = []): array {
+        // Numeric clamps (same ranges as sanitize_settings and REST controller)
+        if (isset($settings['max_tokens'])) {
+            $settings['max_tokens'] = max(1, min(16384, absint($settings['max_tokens'])));
+        }
+        if (isset($settings['temperature'])) {
+            $settings['temperature'] = max(0.0, min(2.0, floatval($settings['temperature'])));
+        }
+        if (isset($settings['rate_limit'])) {
+            $settings['rate_limit'] = max(1, absint($settings['rate_limit']));
+        }
+        if (isset($settings['rate_limit_window'])) {
+            $settings['rate_limit_window'] = max(60, absint($settings['rate_limit_window']));
+        }
+        if (isset($settings['crawler_max_results'])) {
+            $settings['crawler_max_results'] = max(1, min(20, absint($settings['crawler_max_results'])));
+        }
+        if (isset($settings['badge_margin_right'])) {
+            $settings['badge_margin_right'] = absint($settings['badge_margin_right']);
+        }
+        if (isset($settings['badge_margin_bottom'])) {
+            $settings['badge_margin_bottom'] = absint($settings['badge_margin_bottom']);
+        }
+
+        // Color validation
+        if (isset($settings['primary_color'])) {
+            $color = sanitize_hex_color($settings['primary_color']);
+            $settings['primary_color'] = $color ?: '#007bff';
+        }
+
+        // String sanitization for key text fields
+        $text_fields = ['system_prompt', 'quota_error_message', 'welcome_message', 'placeholder_text', 'chatbot_title'];
+        foreach ($text_fields as $field) {
+            if (isset($settings[$field])) {
+                $settings[$field] = sanitize_textarea_field($settings[$field]);
+            }
+        }
+
+        // Boolean fields
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'save_history', 'show_feedback_buttons', 'crawler_enabled'];
+        foreach ($bool_fields as $field) {
+            if (isset($settings[$field])) {
+                $settings[$field] = (bool) $settings[$field];
+            }
+        }
+
+        // Widget theme allowlist
+        if (isset($settings['widget_theme'])) {
+            $valid_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat', 'modern', 'gradient', 'dark', 'glass', 'rounded', 'ocean', 'sunset', 'forest', 'neon', 'elegant'];
+            if (!in_array($settings['widget_theme'], $valid_themes, true)) {
+                $settings['widget_theme'] = $existing['widget_theme'] ?? 'default';
+            }
+        }
+
+        // AI provider allowlist
+        if (isset($settings['ai_provider'])) {
+            $valid_providers = ['openai', 'claude', 'gemini'];
+            if (!in_array($settings['ai_provider'], $valid_providers, true)) {
+                $settings['ai_provider'] = $existing['ai_provider'] ?? 'openai';
+            }
+        }
+
+        return $settings;
+    }
+
+    /**
      * Sanitize settings
      */
     public function sanitize_settings(array $input): array {
@@ -214,8 +289,8 @@ class WPAIC_Admin {
         $sanitized['welcome_message'] = sanitize_textarea_field($input['welcome_message'] ?? ($existing['welcome_message'] ?? ''));
         $sanitized['system_prompt'] = sanitize_textarea_field($input['system_prompt'] ?? ($existing['system_prompt'] ?? ''));
         $sanitized['quota_error_message'] = sanitize_text_field($input['quota_error_message'] ?? ($existing['quota_error_message'] ?? ''));
-        $sanitized['max_tokens'] = absint($input['max_tokens'] ?? ($existing['max_tokens'] ?? 1000));
-        $sanitized['temperature'] = floatval($input['temperature'] ?? ($existing['temperature'] ?? 0.7));
+        $sanitized['max_tokens'] = max(1, min(16384, absint($input['max_tokens'] ?? ($existing['max_tokens'] ?? 1000))));
+        $sanitized['temperature'] = max(0.0, min(2.0, floatval($input['temperature'] ?? ($existing['temperature'] ?? 0.7))));
 
         // Context prompt settings
         $sanitized['knowledge_exact_prompt'] = sanitize_textarea_field($input['knowledge_exact_prompt'] ?? ($existing['knowledge_exact_prompt'] ?? ''));
@@ -235,7 +310,7 @@ class WPAIC_Admin {
         $sanitized['badge_margin_bottom'] = array_key_exists('badge_margin_bottom', $input)
             ? absint($input['badge_margin_bottom'])
             : ($existing['badge_margin_bottom'] ?? 20);
-        $sanitized['primary_color'] = sanitize_hex_color($input['primary_color'] ?? ($existing['primary_color'] ?? '#007bff'));
+        $sanitized['primary_color'] = sanitize_hex_color($input['primary_color'] ?? ($existing['primary_color'] ?? '#007bff')) ?: '#007bff';
 
         // Widget theme
         $valid_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat', 'modern', 'gradient', 'dark', 'glass', 'rounded', 'ocean', 'sunset', 'forest', 'neon', 'elegant'];
@@ -251,7 +326,11 @@ class WPAIC_Admin {
             $sanitized['dark_mode'] = $existing['dark_mode'] ?? false;
         }
 
-        $sanitized['show_on_mobile'] = !empty($input['show_on_mobile']);
+        if ($display_form_submitted) {
+            $sanitized['show_on_mobile'] = !empty($input['show_on_mobile']);
+        } else {
+            $sanitized['show_on_mobile'] = $existing['show_on_mobile'] ?? true;
+        }
 
         // Page visibility settings (checkboxes: unchecked = not present when Display form submitted)
         if ($display_form_submitted) {
@@ -299,8 +378,8 @@ class WPAIC_Admin {
         $sanitized['delete_data_on_uninstall'] = !empty($input['delete_data_on_uninstall']);
 
         // Rate limiting
-        $sanitized['rate_limit'] = absint($input['rate_limit'] ?? ($existing['rate_limit'] ?? 20));
-        $sanitized['rate_limit_window'] = absint($input['rate_limit_window'] ?? ($existing['rate_limit_window'] ?? 3600));
+        $sanitized['rate_limit'] = max(1, absint($input['rate_limit'] ?? ($existing['rate_limit'] ?? 20)));
+        $sanitized['rate_limit_window'] = max(60, absint($input['rate_limit_window'] ?? ($existing['rate_limit_window'] ?? 3600)));
 
         // Cloudflare IP trust
         $sanitized['trust_cloudflare_ip'] = !empty($input['trust_cloudflare_ip']);
@@ -1760,6 +1839,11 @@ class WPAIC_Admin {
 
             // Merge with current settings (preserve keys not in import)
             $merged_settings = array_merge($current_settings, $filtered_settings);
+
+            // Pass through sanitize_settings() to ensure imported values are valid
+            // (clamps out-of-range numbers, sanitizes strings, etc.)
+            $merged_settings = $this->sanitize_settings_values($merged_settings, $current_settings);
+
             update_option('wpaic_settings', $merged_settings);
         }
 

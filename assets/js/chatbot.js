@@ -365,6 +365,10 @@
                         sessionStorage.setItem('wpaic_session', self.sessionId);
                         sessionStorage.setItem('wpaic_session_version', String(currentVersion));
                         localStorage.setItem('wpaic_session', self.sessionId);
+                        // HMAC トークンを保存（IP 変動時のフォールバック認証用）
+                        if (response.session_token) {
+                            localStorage.setItem('wpaic_session_token', response.session_token);
+                        }
                         // セッション作成後にリード設定を読み込み
                         return self.loadLeadConfig();
                     })
@@ -411,6 +415,7 @@
             sessionStorage.removeItem('wpaic_session');
             sessionStorage.removeItem('wpaic_session_version');
             localStorage.removeItem('wpaic_session');
+            localStorage.removeItem('wpaic_session_token');
 
             // すべてのリード送信済みフラグをクリア
             var keys = Object.keys(sessionStorage);
@@ -548,6 +553,9 @@
                     .then(function(response) {
                         self.sessionId = response.session_id;
                         sessionStorage.setItem('wpaic_session', self.sessionId);
+                        if (response.session_token) {
+                            localStorage.setItem('wpaic_session_token', response.session_token);
+                        }
                         return self.doSendMessage(message);
                     });
             } else {
@@ -746,6 +754,10 @@
                 sourcesEl.appendChild(titleEl);
 
                 sources.forEach(function(url) {
+                    try {
+                        var parsed = new URL(url);
+                        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+                    } catch (e) { return; }
                     var linkEl = document.createElement('a');
                     linkEl.href = url;
                     linkEl.target = '_blank';
@@ -898,6 +910,10 @@
                         sourcesEl.appendChild(titleEl);
 
                         data.data.sources.forEach(function(url) {
+                            try {
+                                var parsed = new URL(url);
+                                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+                            } catch (e) { return; }
                             var linkEl = document.createElement('a');
                             linkEl.href = url;
                             linkEl.target = '_blank';
@@ -1222,6 +1238,12 @@
 
             if (this.sessionId) {
                 headers['X-WPAIC-Session'] = this.sessionId;
+            }
+
+            // HMAC トークンを送信（IP 変動時のフォールバック認証用）
+            var sessionToken = localStorage.getItem('wpaic_session_token');
+            if (sessionToken) {
+                headers['X-WPAIC-Session-Token'] = sessionToken;
             }
 
             var options = {

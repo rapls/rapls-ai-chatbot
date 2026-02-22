@@ -154,6 +154,23 @@ class WPAIC_Activator {
     }
 
     /**
+     * Execute an ALTER TABLE query and log errors under WP_DEBUG.
+     *
+     * @param string $sql   The ALTER TABLE SQL statement
+     * @param string $desc  Human-readable description for the log (e.g. "add column input_tokens")
+     */
+    private static function safe_alter(string $sql, string $desc = ''): void {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $result = $wpdb->query($sql);
+        if ($result === false && defined('WP_DEBUG') && WP_DEBUG) {
+            $context = $desc ? " ({$desc})" : '';
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log('WPAIC DB Upgrade' . $context . ': ' . $wpdb->last_error);
+        }
+    }
+
+    /**
      * Public entry point for column upgrades (called from WPAIC_Main)
      */
     public static function upgrade_columns() {
@@ -186,8 +203,7 @@ class WPAIC_Activator {
         $input_tokens_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'input_tokens'");
 
         if (empty($input_tokens_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD COLUMN input_tokens INT UNSIGNED DEFAULT 0 AFTER tokens_used");
+            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN input_tokens INT UNSIGNED DEFAULT 0 AFTER tokens_used", 'add column input_tokens');
         }
 
         // Check if output_tokens column exists
@@ -195,8 +211,7 @@ class WPAIC_Activator {
         $output_tokens_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'output_tokens'");
 
         if (empty($output_tokens_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD COLUMN output_tokens INT UNSIGNED DEFAULT 0 AFTER input_tokens");
+            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN output_tokens INT UNSIGNED DEFAULT 0 AFTER input_tokens", 'add column output_tokens');
         }
 
         // Check if ai_model index exists
@@ -204,8 +219,7 @@ class WPAIC_Activator {
         $index_exists = $wpdb->get_results("SHOW INDEX FROM {$table_messages} WHERE Key_name = 'ai_model'");
 
         if (empty($index_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD KEY ai_model (ai_model)");
+            self::safe_alter("ALTER TABLE {$table_messages} ADD KEY ai_model (ai_model)", 'add index ai_model');
         }
     }
 
@@ -228,40 +242,32 @@ class WPAIC_Activator {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $has_priority = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'priority'");
         if (empty($has_priority)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD COLUMN priority INT(11) DEFAULT 0 AFTER category");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD KEY priority (priority)");
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN priority INT(11) DEFAULT 0 AFTER category", 'add column priority');
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY priority (priority)", 'add index priority');
         }
 
         // is_active column
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'is_active'");
         if (empty($column_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER priority");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD KEY is_active (is_active)");
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER priority", 'add column is_active');
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY is_active (is_active)", 'add index is_active');
         }
 
         // status column
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $has_status = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'status'");
         if (empty($has_status)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD COLUMN status VARCHAR(20) DEFAULT 'published' AFTER is_active");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD KEY status (status)");
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN status VARCHAR(20) DEFAULT 'published' AFTER is_active", 'add column status');
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY status (status)", 'add index status');
         }
 
         // type column
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $has_type = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'type'");
         if (empty($has_type)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("ALTER TABLE {$table_knowledge} ADD KEY type (type)");
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status", 'add column type');
+            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY type (type)", 'add index type');
         }
 
         // Add feedback column to messages
@@ -289,8 +295,7 @@ class WPAIC_Activator {
 
         if (empty($column_exists)) {
             // Add feedback column: 1 = positive, -1 = negative, 0 or NULL = no feedback
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD COLUMN feedback TINYINT DEFAULT NULL AFTER ai_model");
+            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN feedback TINYINT DEFAULT NULL AFTER ai_model", 'add column feedback');
         }
     }
 
@@ -314,10 +319,8 @@ class WPAIC_Activator {
         $hash_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'cache_hash'");
 
         if (empty($hash_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD COLUMN cache_hash VARCHAR(64) DEFAULT NULL AFTER feedback");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD INDEX cache_hash (cache_hash)");
+            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN cache_hash VARCHAR(64) DEFAULT NULL AFTER feedback", 'add column cache_hash');
+            self::safe_alter("ALTER TABLE {$table_messages} ADD INDEX cache_hash (cache_hash)", 'add index cache_hash');
         }
 
         // Check if cache_hit column exists
@@ -325,8 +328,7 @@ class WPAIC_Activator {
         $hit_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'cache_hit'");
 
         if (empty($hit_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table_messages} ADD COLUMN cache_hit TINYINT(1) DEFAULT 0 AFTER cache_hash");
+            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN cache_hit TINYINT(1) DEFAULT 0 AFTER cache_hash", 'add column cache_hit');
         }
     }
 
@@ -388,10 +390,8 @@ class WPAIC_Activator {
         $col_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'converted_at'");
 
         if (empty($col_exists)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN converted_at DATETIME DEFAULT NULL AFTER status");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN conversion_goal VARCHAR(100) DEFAULT NULL AFTER converted_at");
+            self::safe_alter("ALTER TABLE {$table} ADD COLUMN converted_at DATETIME DEFAULT NULL AFTER status", 'add column converted_at');
+            self::safe_alter("ALTER TABLE {$table} ADD COLUMN conversion_goal VARCHAR(100) DEFAULT NULL AFTER converted_at", 'add column conversion_goal');
         }
     }
 
@@ -409,8 +409,7 @@ class WPAIC_Activator {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $col_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_conv} LIKE 'status'");
             if ($col_info && strpos(strtolower($col_info->Type), 'enum') !== false) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                $wpdb->query("ALTER TABLE {$table_conv} MODIFY COLUMN status VARCHAR(20) DEFAULT 'active'");
+                self::safe_alter("ALTER TABLE {$table_conv} MODIFY COLUMN status VARCHAR(20) DEFAULT 'active'", 'convert conversations.status ENUM to VARCHAR');
             }
         }
 
@@ -422,8 +421,7 @@ class WPAIC_Activator {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $col_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_msg} LIKE 'role'");
             if ($col_info && strpos(strtolower($col_info->Type), 'enum') !== false) {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-                $wpdb->query("ALTER TABLE {$table_msg} MODIFY COLUMN role VARCHAR(20) NOT NULL");
+                self::safe_alter("ALTER TABLE {$table_msg} MODIFY COLUMN role VARCHAR(20) NOT NULL", 'convert messages.role ENUM to VARCHAR');
             }
         }
     }

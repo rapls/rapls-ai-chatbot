@@ -307,6 +307,7 @@ class WPAIC_REST_Controller {
                 return new WP_REST_Response([
                     'success'         => true,
                     'session_id'      => $existing_session,
+                    'session_token'   => $this->generate_session_token($existing_session),
                     'session_version' => $session_version,
                 ], 200);
             }
@@ -318,6 +319,7 @@ class WPAIC_REST_Controller {
                 return new WP_REST_Response([
                     'success'         => true,
                     'session_id'      => $existing_session,
+                    'session_token'   => $this->generate_session_token($existing_session),
                     'session_version' => $session_version,
                 ], 200);
             }
@@ -348,9 +350,13 @@ class WPAIC_REST_Controller {
         $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
         set_transient($transient_key, $bootstrap_hash, HOUR_IN_SECONDS);
 
+        // Generate HMAC session token for cookie-less environments
+        $session_token = $this->generate_session_token($session_id);
+
         return new WP_REST_Response([
             'success'         => true,
             'session_id'      => $session_id,
+            'session_token'   => $session_token,
             'session_version' => $session_version,
         ], 200);
     }
@@ -589,7 +595,9 @@ class WPAIC_REST_Controller {
                         $this->increment_no_history_monthly_count();
                     }
 
-                    $sources = array_filter(array_column($related_content, 'url'));
+                    $sources = array_filter(array_map(function ($u) {
+                    return esc_url_raw($u, ['http', 'https']);
+                }, array_column($related_content, 'url')));
                     $remaining_messages = $pro_features->get_remaining_messages();
 
                     $cached_content = apply_filters('wpaic_ai_response', $cached['content'], $message, $settings);
@@ -758,7 +766,9 @@ class WPAIC_REST_Controller {
             $pro_features->maybe_send_budget_alert($msg_cost);
 
             // Get source URLs
-            $sources = array_filter(array_column($related_content, 'url'));
+            $sources = array_filter(array_map(function ($u) {
+                    return esc_url_raw($u, ['http', 'https']);
+                }, array_column($related_content, 'url')));
 
             // Trigger webhook for new message (Pro feature)
             if ($save_history && $conversation && class_exists('WPAIC_Webhook')) {
@@ -1058,9 +1068,24 @@ class WPAIC_REST_Controller {
             return new WP_Error('invalid_image', __('Invalid image format. Allowed: JPEG, PNG, GIF, WebP.', 'rapls-ai-chatbot'));
         }
 
-        // Max 2MB base64 (~2.7MB encoded string)
+        // Quick reject: base64 encoding expands ~33%, so 2MB binary ≈ 2.67MB encoded
         if (strlen($value) > 2800000) {
             return new WP_Error('image_too_large', __('Image is too large. Maximum size is 2MB.', 'rapls-ai-chatbot'));
+        }
+
+        // Verify decoded binary size (base64 string length can be imprecise)
+        $comma_pos = strpos($value, ',');
+        if ($comma_pos !== false) {
+            $base64_data = substr($value, $comma_pos + 1);
+            // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+            $decoded = base64_decode($base64_data, true);
+            if ($decoded === false) {
+                return new WP_Error('invalid_image', __('Invalid image data.', 'rapls-ai-chatbot'));
+            }
+            // 2MB = 2 * 1024 * 1024 = 2097152 bytes
+            if (strlen($decoded) > 2097152) {
+                return new WP_Error('image_too_large', __('Image is too large. Maximum size is 2MB.', 'rapls-ai-chatbot'));
+            }
         }
 
         return true;
@@ -1119,7 +1144,9 @@ class WPAIC_REST_Controller {
     /**
      * Verify that the current request owns the given session.
      *
-     * Checks cookie match and visitor IP hash (same logic as get_history).
+     * Checks (in order): cookie → HMAC token → IP+UA hash fallbacks.
+     * Cookie is primary; HMAC token is secondary (no IP dependency);
+     * IP+UA hash is the last resort for legacy/transient scenarios.
      * Admins always pass.
      *
      * @param string $session_id  Session ID to verify
@@ -1141,11 +1168,20 @@ class WPAIC_REST_Controller {
             }
         }
 
+        // Secondary: HMAC-signed session token (IP-independent, works across mobile/VPN/proxy)
+        // Client stores token in localStorage and sends via X-WPAIC-Session-Token header
+        if (isset($_SERVER['HTTP_X_WPAIC_SESSION_TOKEN'])) {
+            $client_token = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION_TOKEN']));
+            if ($this->verify_session_token($session_id, $client_token)) {
+                return true;
+            }
+        }
+
         $ip = $this->get_client_ip();
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
         $current_hash = hash('sha256', $ip . $user_agent . wp_salt());
 
-        // Header-based session verification (localStorage fallback when cookies are blocked)
+        // Header-based session verification (legacy localStorage fallback)
         // Requires matching IP+UA hash via bootstrap transient to prevent session_id-only spoofing
         if (isset($_SERVER['HTTP_X_WPAIC_SESSION'])) {
             $header_session = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
@@ -1174,6 +1210,32 @@ class WPAIC_REST_Controller {
         }
 
         return false;
+    }
+
+    /**
+     * Generate an HMAC-signed session token.
+     *
+     * The token is IP-independent so it survives mobile/VPN/proxy IP changes.
+     * It binds session_id to a server secret, preventing forgery without
+     * access to wp_salt().
+     *
+     * @param string $session_id Session ID to sign
+     * @return string HMAC token (hex)
+     */
+    private function generate_session_token(string $session_id): string {
+        return hash_hmac('sha256', $session_id, wp_salt('auth'));
+    }
+
+    /**
+     * Verify an HMAC-signed session token.
+     *
+     * @param string $session_id   Session ID
+     * @param string $client_token Token from the client
+     * @return bool True if the token is valid
+     */
+    private function verify_session_token(string $session_id, string $client_token): bool {
+        $expected = $this->generate_session_token($session_id);
+        return hash_equals($expected, $client_token);
     }
 
     /**
@@ -1227,8 +1289,14 @@ class WPAIC_REST_Controller {
 
         $ip_hash = hash('sha256', $ip . wp_salt());
 
-        // Burst protection: max 3 requests per 10 seconds per IP (always active)
-        $burst_key = 'wpaic_burst_' . substr($ip_hash, 0, 32);
+        // Burst protection: max 3 requests per 10 seconds
+        // Prefer session-based key to avoid NAT/corporate proxy collisions;
+        // fall back to IP-based key when session is unavailable
+        if (isset($_COOKIE['wpaic_session_id'])) {
+            $burst_key = 'wpaic_burst_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) . wp_salt()), 0, 32);
+        } else {
+            $burst_key = 'wpaic_burst_' . substr($ip_hash, 0, 32);
+        }
         $burst_count = (int) get_transient($burst_key);
         if ($burst_count >= 3) {
             return __('Too many requests. Please wait a few seconds.', 'rapls-ai-chatbot');
@@ -1970,7 +2038,9 @@ class WPAIC_REST_Controller {
             // Increment message count
             $pro_features->increment_message_count();
 
-            $sources = array_filter(array_column($related_content, 'url'));
+            $sources = array_filter(array_map(function ($u) {
+                    return esc_url_raw($u, ['http', 'https']);
+                }, array_column($related_content, 'url')));
 
             return new WP_REST_Response([
                 'success' => true,

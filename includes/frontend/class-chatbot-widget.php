@@ -27,6 +27,9 @@ class WPAIC_Chatbot_Widget {
         // Apply custom colors
         $settings = get_option('wpaic_settings', []);
         $primary_color = $settings['primary_color'] ?? '#007bff';
+        if (empty($primary_color) || !preg_match('/^#[0-9a-fA-F]{3,6}$/', $primary_color)) {
+            $primary_color = '#007bff';
+        }
         $margin_right = absint($settings['badge_margin_right'] ?? 20);
         $margin_bottom = absint($settings['badge_margin_bottom'] ?? 20);
 
