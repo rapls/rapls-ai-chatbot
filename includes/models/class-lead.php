@@ -80,11 +80,10 @@ class WPAIC_Lead {
             'phone' => sanitize_text_field($data['phone'] ?? ''),
             'company' => sanitize_text_field($data['company'] ?? ''),
             'custom_fields' => isset($data['custom_fields']) ? wp_json_encode($data['custom_fields']) : null,
-            'created_at' => current_time('mysql'),
         ];
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-        $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%s', '%s', '%s', '%s']);
+        $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%s', '%s', '%s']);
 
         if ($result === false) {
             return false;
@@ -320,28 +319,22 @@ class WPAIC_Lead {
         global $wpdb;
         $table = self::get_table_name();
 
-        // Use WP timezone instead of MySQL CURDATE()/NOW()
-        $now = wp_date('Y-m-d H:i:s');
-
+        // Use MySQL time functions to match CURRENT_TIMESTAMP stored in created_at (same TZ)
         switch ($period) {
             case 'today':
-                $start = wp_date('Y-m-d 00:00:00');
-                $end   = wp_date('Y-m-d 23:59:59');
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 return (int) $wpdb->get_var(
-                    $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE created_at BETWEEN %s AND %s", $start, $end)
+                    "SELECT COUNT(*) FROM {$table} WHERE DATE(created_at) = CURDATE()"
                 );
             case 'week':
-                $start = wp_date('Y-m-d H:i:s', strtotime('-7 days'));
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 return (int) $wpdb->get_var(
-                    $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE created_at >= %s", $start)
+                    "SELECT COUNT(*) FROM {$table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
                 );
             case 'month':
-                $start = wp_date('Y-m-d H:i:s', strtotime('-30 days'));
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 return (int) $wpdb->get_var(
-                    $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE created_at >= %s", $start)
+                    "SELECT COUNT(*) FROM {$table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
                 );
             default:
                 return 0;

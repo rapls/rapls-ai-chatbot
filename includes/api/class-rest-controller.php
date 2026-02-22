@@ -282,6 +282,11 @@ class WPAIC_REST_Controller {
      * Get or create session
      */
     public function get_session(WP_REST_Request $request): WP_REST_Response {
+        $rate_check = $this->check_public_rate_limit('ses', 30, 60);
+        if ($rate_check !== true) {
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+        }
+
         $session_version = get_option('wpaic_session_version', 1);
 
         // Reuse existing session from cookie if valid
@@ -1062,17 +1067,22 @@ class WPAIC_REST_Controller {
             }
         }
 
-        // Header-based session verification (localStorage fallback when cookies are blocked)
-        if (isset($_SERVER['HTTP_X_WPAIC_SESSION'])) {
-            $header_session = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
-            if (hash_equals($header_session, $session_id)) {
-                return true;
-            }
-        }
-
         $ip = $this->get_client_ip();
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
         $current_hash = hash('sha256', $ip . $user_agent . wp_salt());
+
+        // Header-based session verification (localStorage fallback when cookies are blocked)
+        // Requires matching IP+UA hash via bootstrap transient to prevent session_id-only spoofing
+        if (isset($_SERVER['HTTP_X_WPAIC_SESSION'])) {
+            $header_session = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
+            if (hash_equals($header_session, $session_id)) {
+                $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+                $stored_hash = get_transient($transient_key);
+                if ($stored_hash !== false && hash_equals($stored_hash, $current_hash)) {
+                    return true;
+                }
+            }
+        }
 
         // Fallback 1: visitor IP + User-Agent hash match against conversation record
         $conversation = WPAIC_Conversation::get_by_session($session_id);
@@ -1178,6 +1188,34 @@ class WPAIC_REST_Controller {
 
         set_transient($global_key, $global_count + 1, $window);
 
+        return true;
+    }
+
+    /**
+     * Lightweight rate limit for public (unauthenticated) REST routes.
+     * Less strict than check_rate_limit() — prevents automated abuse without
+     * interfering with normal page views that trigger /session or /lead-config.
+     *
+     * @param string $route_key Short identifier for the route (used in transient key)
+     * @param int    $limit     Max requests per window (default 30)
+     * @param int    $window    Window in seconds (default 60)
+     * @return true|string True if allowed, or error message string if blocked
+     */
+    private function check_public_rate_limit(string $route_key = 'pub', int $limit = 30, int $window = 60) {
+        $ip = $this->get_client_ip();
+        if (empty($ip)) {
+            return true;
+        }
+
+        $ip_hash = hash('sha256', $ip . wp_salt());
+        $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($ip_hash, 0, 24);
+        $count = (int) get_transient($transient_key);
+
+        if ($count >= $limit) {
+            return __('Too many requests. Please try again later.', 'rapls-ai-chatbot');
+        }
+
+        set_transient($transient_key, $count + 1, $window);
         return true;
     }
 
@@ -1408,6 +1446,11 @@ class WPAIC_REST_Controller {
      * Get lead form configuration
      */
     public function get_lead_config(WP_REST_Request $request): WP_REST_Response {
+        $rate_check = $this->check_public_rate_limit('lcfg', 30, 60);
+        if ($rate_check !== true) {
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+        }
+
         try {
             $pro_features = WPAIC_Pro_Features::get_instance();
             $settings = get_option('wpaic_settings', []);
@@ -1468,6 +1511,11 @@ class WPAIC_REST_Controller {
      * Get message limit status
      */
     public function get_message_limit_status(WP_REST_Request $request): WP_REST_Response {
+        $rate_check = $this->check_public_rate_limit('mlim', 30, 60);
+        if ($rate_check !== true) {
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+        }
+
         $pro_features = WPAIC_Pro_Features::get_instance();
         $stats = $pro_features->get_usage_stats();
 
@@ -2185,6 +2233,11 @@ class WPAIC_REST_Controller {
      * Submit offline message (Pro feature)
      */
     public function submit_offline_message(WP_REST_Request $request): WP_REST_Response {
+        $rate_check = $this->check_public_rate_limit('offl', 10, 60);
+        if ($rate_check !== true) {
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+        }
+
         $name = $request->get_param('name') ?? '';
         $email = $request->get_param('email');
         $message = $request->get_param('message');

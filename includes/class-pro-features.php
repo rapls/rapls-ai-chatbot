@@ -81,11 +81,11 @@ class WPAIC_Pro_Features {
     public function get_monthly_ai_response_count(): int {
         global $wpdb;
         $table = $wpdb->prefix . 'aichat_messages';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE role = 'assistant' AND created_at >= %s",
-            gmdate('Y-m-01 00:00:00')
-        ));
+        // Use MySQL DATE_FORMAT(NOW()) to match CURRENT_TIMESTAMP stored in created_at (same TZ)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table} WHERE role = 'assistant' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00')"
+        );
     }
 
     /**

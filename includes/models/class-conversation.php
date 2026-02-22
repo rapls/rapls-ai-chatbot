@@ -148,13 +148,10 @@ class WPAIC_Conversation {
         global $wpdb;
         $table = self::get_table_name();
 
-        // Use WP timezone for "today" range instead of MySQL CURDATE()
-        $today_start = wp_date('Y-m-d 00:00:00');
-        $today_end   = wp_date('Y-m-d 23:59:59');
-
+        // Use MySQL CURDATE() to match CURRENT_TIMESTAMP stored in created_at (same TZ)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var(
-            $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE created_at BETWEEN %s AND %s", $today_start, $today_end)
+            "SELECT COUNT(*) FROM {$table} WHERE DATE(created_at) = CURDATE()"
         );
     }
 
