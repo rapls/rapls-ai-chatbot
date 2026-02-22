@@ -58,6 +58,7 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert($table, $insert_data, $formats);
+        wpaic_log_db_error('Conversation::create');
 
         return self::get_by_id($wpdb->insert_id);
     }

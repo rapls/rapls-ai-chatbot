@@ -37,6 +37,7 @@ class WPAIC_Message {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%d', '%d', '%d', '%s', '%s']);
+        wpaic_log_db_error('Message::create');
 
         if ($result) {
             return self::get_by_id($wpdb->insert_id);
@@ -192,6 +193,7 @@ class WPAIC_Message {
             ['%d'],
             ['%d']
         );
+        wpaic_log_db_error('Message::update_feedback');
 
         return $result !== false;
     }

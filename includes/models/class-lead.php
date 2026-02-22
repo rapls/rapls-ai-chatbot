@@ -84,6 +84,7 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%s', '%s', '%s']);
+        wpaic_log_db_error('Lead::create');
 
         if ($result === false) {
             return false;

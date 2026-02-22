@@ -20,9 +20,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     private string $model = 'gpt-4o-mini';
 
     /**
-     * API Endpoint
+     * API Endpoints
      */
     private string $api_url = 'https://api.openai.com/v1/chat/completions';
+    private string $responses_api_url = 'https://api.openai.com/v1/responses';
 
     /**
      * Reasoning models (no system role, temperature fixed at 1)
@@ -94,13 +95,44 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     }
 
     /**
-     * Send message
+     * Send message (with automatic Responses API fallback)
      */
     public function send_message(array $messages, array $options = []): array {
         if (empty($this->api_key)) {
             throw new Exception(esc_html__('OpenAI API key is not configured.', 'rapls-ai-chatbot'));
         }
 
+        // Try Chat Completions API first
+        try {
+            return $this->send_via_chat_completions($messages, $options);
+        } catch (Exception $e) {
+            // Only retry with Responses API on 400-level errors that suggest
+            // the model doesn't support chat/completions endpoint
+            $code = $e->getCode();
+            $msg = $e->getMessage();
+            $is_endpoint_mismatch = ($code === 400 || $code === 404)
+                && (stripos($msg, 'not supported') !== false
+                    || stripos($msg, 'model_not_found') !== false
+                    || stripos($msg, 'not found') !== false
+                    || stripos($msg, 'invalid') !== false);
+
+            if (!$is_endpoint_mismatch) {
+                throw $e; // Re-throw non-endpoint errors (auth, quota, server, etc.)
+            }
+        }
+
+        // Fallback: try Responses API
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(sprintf('WPAIC OpenAI: chat/completions failed for model=%s, retrying with Responses API', $this->model));
+        }
+        return $this->send_via_responses_api($messages, $options);
+    }
+
+    /**
+     * Send via Chat Completions API (/v1/chat/completions)
+     */
+    private function send_via_chat_completions(array $messages, array $options): array {
         $is_reasoning = $this->is_reasoning_model();
 
         // Convert messages for reasoning models
@@ -137,13 +169,18 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $body['temperature'] = $options['temperature'] ?? 0.7;
         }
 
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(sprintf('WPAIC OpenAI: endpoint=chat/completions model=%s', $this->model));
+        }
+
         $response = wp_remote_post($this->api_url, [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->api_key,
                 'Content-Type'  => 'application/json',
             ],
             'body'    => wp_json_encode($body),
-            'timeout' => 120, // Reasoning models may take longer
+            'timeout' => 120,
         ]);
 
         if (is_wp_error($response)) {
@@ -155,94 +192,169 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $data = json_decode($response_body, true);
 
         if ($response_code !== 200) {
-            $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
-            $error_type = $data['error']['type'] ?? '';
-            $error_code = $data['error']['code'] ?? '';
-
-            // Log detailed error for debugging (only when WP_DEBUG is enabled)
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log(sprintf(
-                    'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
-                    $response_code,
-                    $error_type,
-                    $error_code,
-                    $this->model,
-                    $error_message
-                ));
-            }
-
-            // Authentication errors (invalid or revoked API key)
-            if ($response_code === 401 || $error_code === 'invalid_api_key') {
-                throw new Exception(esc_html__('OpenAI API key is invalid or has been revoked.', 'rapls-ai-chatbot'));
-            }
-
-            // Quota/billing errors
-            if ($response_code === 402 ||
-                $error_code === 'insufficient_quota' ||
-                $error_type === 'insufficient_quota' ||
-                stripos($error_message, 'quota') !== false ||
-                stripos($error_message, 'billing') !== false ||
-                stripos($error_message, 'exceeded') !== false) {
-                throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
-            }
-
-            // Rate limit errors (429 without quota keywords = rate limit, not billing)
-            if ($response_code === 429) {
-                throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
-            }
-
-            // Invalid parameter errors (model doesn't support a parameter)
-            if ($response_code === 400 && (
-                $error_code === 'invalid_request_error' ||
-                stripos($error_message, 'not supported') !== false ||
-                stripos($error_message, 'invalid') !== false
-            )) {
-                throw new Exception(
-                    /* translators: 1: model name, 2: error message */
-                    sprintf(esc_html__('OpenAI API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
-                );
-            }
-
-            // Model access denied (requires special permissions or paid tier)
-            if ($response_code === 403) {
-                throw new Exception(
-                    /* translators: %s: model name */
-                    sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model))
-                );
-            }
-
-            // Model not found
-            if ($response_code === 404 || $error_code === 'model_not_found') {
-                throw new Exception(
-                    /* translators: %s: model name */
-                    sprintf(esc_html__('OpenAI model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model))
-                );
-            }
-
-            // Server errors
-            if ($response_code >= 500) {
-                throw new Exception(
-                    /* translators: %d: HTTP status code */
-                    sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
-                );
-            }
-
-            throw new Exception(esc_html__('OpenAI API error: ', 'rapls-ai-chatbot') . esc_html($error_message));
+            $this->handle_api_error($response_code, $data);
         }
 
-        // Get content from response (support multiple formats)
-        $content = '';
-        $tokens_used = 0;
+        return $this->parse_response($data);
+    }
 
-        // Standard format: choices[0].message.content
+    /**
+     * Send via Responses API (/v1/responses) — fallback for newer models
+     */
+    private function send_via_responses_api(array $messages, array $options): array {
+        // Convert messages to Responses API input format
+        $input = [];
+        foreach ($messages as $message) {
+            $role = $message['role'];
+            // Responses API uses 'developer' instead of 'system'
+            if ($role === 'system') {
+                $role = 'developer';
+            }
+            $input[] = [
+                'role'    => $role,
+                'content' => $message['content'],
+            ];
+        }
+
+        $body = [
+            'model' => $this->model,
+            'input' => $input,
+        ];
+
+        $configured_max = $options['max_tokens'] ?? 4000;
+        if ($this->is_gpt5_model()) {
+            $body['max_output_tokens'] = min($configured_max * 4, 16384);
+        } else {
+            $body['max_output_tokens'] = $configured_max;
+        }
+
+        if (!$this->is_reasoning_model() && !$this->is_gpt5_model()) {
+            $body['temperature'] = $options['temperature'] ?? 0.7;
+        }
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(sprintf('WPAIC OpenAI: endpoint=responses model=%s', $this->model));
+        }
+
+        $response = wp_remote_post($this->responses_api_url, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->api_key,
+                'Content-Type'  => 'application/json',
+            ],
+            'body'    => wp_json_encode($body),
+            'timeout' => 120,
+        ]);
+
+        if (is_wp_error($response)) {
+            throw new Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = wp_remote_retrieve_body($response);
+        $data = json_decode($response_body, true);
+
+        if ($response_code !== 200) {
+            $this->handle_api_error($response_code, $data);
+        }
+
+        return $this->parse_response($data);
+    }
+
+    /**
+     * Handle API error responses (shared between both endpoints)
+     *
+     * @throws Exception|WPAIC_Quota_Exceeded_Exception
+     */
+    private function handle_api_error(int $response_code, ?array $data): void {
+        $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
+        $error_type = $data['error']['type'] ?? '';
+        $error_code = $data['error']['code'] ?? '';
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(sprintf(
+                'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
+                $response_code,
+                $error_type,
+                $error_code,
+                $this->model,
+                $error_message
+            ));
+        }
+
+        // Authentication errors
+        if ($response_code === 401 || $error_code === 'invalid_api_key') {
+            throw new Exception(esc_html__('OpenAI API key is invalid or has been revoked.', 'rapls-ai-chatbot'));
+        }
+
+        // Quota/billing errors
+        if ($response_code === 402 ||
+            $error_code === 'insufficient_quota' ||
+            $error_type === 'insufficient_quota' ||
+            stripos($error_message, 'quota') !== false ||
+            stripos($error_message, 'billing') !== false ||
+            stripos($error_message, 'exceeded') !== false) {
+            throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+        }
+
+        // Rate limit errors
+        if ($response_code === 429) {
+            throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+        }
+
+        // Invalid parameter / model mismatch errors — use code for fallback detection
+        if ($response_code === 400 && (
+            $error_code === 'invalid_request_error' ||
+            stripos($error_message, 'not supported') !== false ||
+            stripos($error_message, 'invalid') !== false
+        )) {
+            $exception = new Exception(
+                sprintf(esc_html__('OpenAI API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message)),
+                400
+            );
+            throw $exception;
+        }
+
+        // Model access denied
+        if ($response_code === 403) {
+            throw new Exception(
+                sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model))
+            );
+        }
+
+        // Model not found
+        if ($response_code === 404 || $error_code === 'model_not_found') {
+            $exception = new Exception(
+                sprintf(esc_html__('OpenAI model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model)),
+                404
+            );
+            throw $exception;
+        }
+
+        // Server errors
+        if ($response_code >= 500) {
+            throw new Exception(
+                sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
+            );
+        }
+
+        throw new Exception(esc_html__('OpenAI API error: ', 'rapls-ai-chatbot') . esc_html($error_message));
+    }
+
+    /**
+     * Parse API response (handles both Chat Completions and Responses API formats)
+     */
+    private function parse_response(array $data): array {
+        $content = '';
+
+        // Standard Chat Completions format: choices[0].message.content
         if (isset($data['choices'][0]['message']['content'])) {
             $content = $data['choices'][0]['message']['content'];
         }
-        // Alternative format: output (some new models)
+        // Responses API format: output[].content[].text
         elseif (isset($data['output'])) {
             if (is_array($data['output'])) {
-                // output is array
                 foreach ($data['output'] as $output) {
                     if (isset($output['content'])) {
                         if (is_array($output['content'])) {
@@ -260,12 +372,12 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                 $content = $data['output'];
             }
         }
-        // Alternative format: choices[0].text (legacy)
+        // Legacy format: choices[0].text
         elseif (isset($data['choices'][0]['text'])) {
             $content = $data['choices'][0]['text'];
         }
 
-        // Get token usage
+        // Token usage (supports both API response formats)
         $input_tokens = 0;
         $output_tokens = 0;
 
@@ -286,7 +398,6 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $tokens_used = $data['usage']['total_tokens'];
         }
 
-        // Error if content is empty
         if (empty($content)) {
             throw new Exception(esc_html__('Failed to get response from AI.', 'rapls-ai-chatbot'));
         }

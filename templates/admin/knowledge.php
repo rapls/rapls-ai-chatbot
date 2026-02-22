@@ -112,7 +112,7 @@ $is_pro = $pro_features->is_pro();
                     <?php endif; ?>
                 </table>
                 <p class="submit">
-                    <button type="submit" class="button button-primary" <?php echo $faq_limit_reached && !$is_pro ? 'disabled' : ''; ?>><?php esc_html_e('Add', 'rapls-ai-chatbot'); ?></button>
+                    <button type="submit" class="button button-primary" <?php disabled($faq_limit_reached && !$is_pro); ?>><?php esc_html_e('Add', 'rapls-ai-chatbot'); ?></button>
                     <span id="add-knowledge-status"></span>
                 </p>
             </form>
@@ -138,7 +138,7 @@ $is_pro = $pro_features->is_pro();
                     </tr>
                 </table>
                 <p class="submit">
-                    <button type="submit" class="button button-secondary" <?php echo $faq_limit_reached && !$is_pro ? 'disabled' : ''; ?>><?php esc_html_e('Import', 'rapls-ai-chatbot'); ?></button>
+                    <button type="submit" class="button button-secondary" <?php disabled($faq_limit_reached && !$is_pro); ?>><?php esc_html_e('Import', 'rapls-ai-chatbot'); ?></button>
                     <span id="import-knowledge-status"></span>
                 </p>
             </form>
@@ -187,12 +187,12 @@ $is_pro = $pro_features->is_pro();
                 </a> |
             </li>
             <li>
-                <a href="<?php echo esc_url(add_query_arg('status', 'published', $base_tab_url)); ?>" class="<?php echo $status_filter === 'published' ? 'current' : ''; ?>">
+                <a href="<?php echo esc_url(add_query_arg('status', 'published', $base_tab_url)); ?>" class="<?php echo esc_attr($status_filter === 'published' ? 'current' : ''); ?>">
                     <?php esc_html_e('Published', 'rapls-ai-chatbot'); ?>
                 </a> |
             </li>
             <li>
-                <a href="<?php echo esc_url(add_query_arg('status', 'draft', $base_tab_url)); ?>" class="<?php echo $status_filter === 'draft' ? 'current' : ''; ?>">
+                <a href="<?php echo esc_url(add_query_arg('status', 'draft', $base_tab_url)); ?>" class="<?php echo esc_attr($status_filter === 'draft' ? 'current' : ''); ?>">
                     <?php esc_html_e('Drafts', 'rapls-ai-chatbot'); ?>
                     <?php if ($draft_count > 0): ?>
                         <span class="count">(<?php echo esc_html($draft_count); ?>)</span>
@@ -262,7 +262,7 @@ $is_pro = $pro_features->is_pro();
                         $item_status = $item['status'] ?? 'published';
                         $item_type = $item['type'] ?? 'qa';
                     ?>
-                        <tr data-id="<?php echo esc_attr($item['id']); ?>" class="<?php echo $item_status === 'draft' ? 'wpaic-draft-row' : ''; ?>">
+                        <tr data-id="<?php echo esc_attr($item['id']); ?>" class="<?php echo esc_attr($item_status === 'draft' ? 'wpaic-draft-row' : ''); ?>">
                             <td><?php echo esc_html($item['id']); ?></td>
                             <td>
                                 <strong><?php echo esc_html($item['title']); ?></strong>

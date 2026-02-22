@@ -134,7 +134,7 @@ if (!defined('ABSPATH')) {
                     <td>
                         <span class="status-badge status-<?php echo esc_attr( $has_api_key ? 'ok' : 'warning' ); ?>">
                             <?php echo esc_html(strtoupper($settings['ai_provider'] ?? 'openai')); ?>
-                            <?php echo $has_api_key ? '&#10003;' : '(' . esc_html__('API Key not set', 'rapls-ai-chatbot') . ')'; ?>
+                            <?php echo $has_api_key ? '<span aria-hidden="true">&#10003;</span>' : '(' . esc_html__('API Key not set', 'rapls-ai-chatbot') . ')'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static HTML entity ?>
                         </span>
                     </td>
                 </tr>

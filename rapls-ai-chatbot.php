@@ -139,6 +139,26 @@ if (!function_exists('wpaic_get_email')) {
 }
 
 /**
+ * Log DB errors for observability (WP_DEBUG only).
+ *
+ * Call after critical $wpdb->insert() / $wpdb->update() operations.
+ *
+ * @param string $context Description of the operation (e.g. 'Message::create').
+ */
+if (!function_exists('wpaic_log_db_error')) {
+    function wpaic_log_db_error(string $context): void {
+        if (!(defined('WP_DEBUG') && WP_DEBUG)) {
+            return;
+        }
+        global $wpdb;
+        if (!empty($wpdb->last_error)) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log(sprintf('WPAIC DB error [%s]: %s', $context, $wpdb->last_error));
+        }
+    }
+}
+
+/**
  * Load and run the main plugin class
  */
 function wpaic_run()

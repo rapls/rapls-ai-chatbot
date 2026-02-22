@@ -462,7 +462,11 @@ class WPAIC_Admin {
         // White label
         $sanitized['white_label_enabled'] = !empty($input['white_label_enabled']);
         $sanitized['hide_powered_by'] = !empty($input['hide_powered_by']);
-        $sanitized['custom_css'] = wp_strip_all_tags($input['custom_css'] ?? ($existing['custom_css'] ?? ''));
+        $raw_css = wp_strip_all_tags($input['custom_css'] ?? ($existing['custom_css'] ?? ''));
+        // Remove CSS injection vectors
+        $raw_css = str_replace('expression(', '', $raw_css);
+        $raw_css = preg_replace('/url\s*\(\s*["\']?\s*javascript:/i', 'url(about:blank', $raw_css);
+        $sanitized['custom_css'] = $raw_css;
 
         // Webhook
         $sanitized['webhook_enabled'] = !empty($input['webhook_enabled']);

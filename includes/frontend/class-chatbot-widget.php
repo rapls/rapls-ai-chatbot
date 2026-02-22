@@ -55,9 +55,14 @@ class WPAIC_Chatbot_Widget {
             ";
         }
 
-        // White label: custom CSS
+        // White label: custom CSS (strip dangerous strings to prevent style breakout)
         if ($pro->is_pro() && !empty($pro_settings['custom_css'])) {
-            $custom_css .= "\n" . $pro_settings['custom_css'];
+            $safe_css = $pro_settings['custom_css'];
+            $safe_css = preg_replace('/<\/?style[^>]*>/i', '', $safe_css);
+            $safe_css = preg_replace('/<\/?script[^>]*>/i', '', $safe_css);
+            $safe_css = str_replace('expression(', '', $safe_css);
+            $safe_css = preg_replace('/url\s*\(\s*["\']?\s*javascript:/i', 'url(about:blank', $safe_css);
+            $custom_css .= "\n" . $safe_css;
         }
 
         wp_add_inline_style('wpaic-chatbot', $custom_css);

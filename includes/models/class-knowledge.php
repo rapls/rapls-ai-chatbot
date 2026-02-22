@@ -107,6 +107,7 @@ class WPAIC_Knowledge {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $result = $wpdb->insert($table, $insert_data, ['%s', '%s', '%s', '%d', '%d', '%s', '%s']);
+        wpaic_log_db_error('Knowledge::create');
 
         if ($result === false) {
             return new WP_Error('db_error', 'Failed to save to database.');
