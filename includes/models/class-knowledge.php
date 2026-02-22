@@ -386,15 +386,15 @@ class WPAIC_Knowledge {
     public static function import_from_file($file, $category = '') {
         // Check file upload error
         if (!isset($file['tmp_name']) || empty($file['tmp_name'])) {
-            return new WP_Error('upload_error', 'File upload failed.');
+            return new WP_Error('upload_error', __('File upload failed.', 'rapls-ai-chatbot'));
         }
 
         if (isset($file['error']) && $file['error'] !== UPLOAD_ERR_OK) {
-            return new WP_Error('upload_error', 'File upload error: ' . $file['error']);
+            return new WP_Error('upload_error', __('File upload error.', 'rapls-ai-chatbot'));
         }
 
         if (!file_exists($file['tmp_name']) || !is_readable($file['tmp_name'])) {
-            return new WP_Error('file_error', 'Cannot read uploaded file.');
+            return new WP_Error('file_error', __('Cannot read uploaded file.', 'rapls-ai-chatbot'));
         }
 
         // Defense-in-depth file size check
@@ -413,7 +413,7 @@ class WPAIC_Knowledge {
             case 'md':
                 $content = file_get_contents($file['tmp_name']);
                 if ($content === false) {
-                    return new WP_Error('read_error', 'Failed to read file.');
+                    return new WP_Error('read_error', __('Failed to read file.', 'rapls-ai-chatbot'));
                 }
                 break;
 
@@ -422,17 +422,19 @@ class WPAIC_Knowledge {
                 break;
 
             default:
-                return new WP_Error('invalid_file_type', 'Unsupported file type. (txt, csv, md only)');
+                return new WP_Error('invalid_file_type', __('Unsupported file type. (txt, csv, md only)', 'rapls-ai-chatbot'));
         }
 
         if (empty($content)) {
-            return new WP_Error('empty_content', 'File content is empty.');
+            return new WP_Error('empty_content', __('File content is empty.', 'rapls-ai-chatbot'));
         }
 
-        // Convert to UTF-8
-        $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS', 'EUC-JP', 'ISO-8859-1']);
-        if ($encoding && $encoding !== 'UTF-8') {
-            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+        // Convert to UTF-8 (only if mbstring extension is available)
+        if (function_exists('mb_detect_encoding') && function_exists('mb_convert_encoding')) {
+            $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS', 'EUC-JP', 'ISO-8859-1']);
+            if ($encoding && $encoding !== 'UTF-8') {
+                $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+            }
         }
 
         return self::create([

@@ -754,8 +754,8 @@ class WPAIC_Admin {
 
         // Sort model_totals in-memory
         $allowed_model_orderby = ['ai_model', 'input_tokens', 'output_tokens', 'total_tokens', 'cost'];
-        $model_orderby = isset($_GET['model_orderby']) && in_array($_GET['model_orderby'], $allowed_model_orderby, true) ? sanitize_text_field($_GET['model_orderby']) : 'total_tokens';
-        $model_order = isset($_GET['model_order']) && strtoupper($_GET['model_order']) === 'ASC' ? 'ASC' : 'DESC';
+        $model_orderby = isset($_GET['model_orderby']) && in_array(sanitize_text_field(wp_unslash($_GET['model_orderby'])), $allowed_model_orderby, true) ? sanitize_text_field(wp_unslash($_GET['model_orderby'])) : 'total_tokens';
+        $model_order = isset($_GET['model_order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['model_order']))) === 'ASC' ? 'ASC' : 'DESC';
 
         if (!empty($usage_stats['model_totals'])) {
             usort($usage_stats['model_totals'], function ($a, $b) use ($model_orderby, $model_order) {
@@ -794,8 +794,8 @@ class WPAIC_Admin {
 
         // Sort parameters
         $allowed_orderby = ['title', 'post_type', 'indexed_at'];
-        $orderby = isset($_GET['orderby']) && in_array($_GET['orderby'], $allowed_orderby, true) ? sanitize_text_field($_GET['orderby']) : 'indexed_at';
-        $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'ASC' ? 'ASC' : 'DESC';
+        $orderby = isset($_GET['orderby']) && in_array(sanitize_text_field(wp_unslash($_GET['orderby'])), $allowed_orderby, true) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'indexed_at';
+        $order = isset($_GET['order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['order']))) === 'ASC' ? 'ASC' : 'DESC';
 
         $indexed_list = WPAIC_Content_Index::get_list([
             'per_page' => 50,
@@ -813,12 +813,12 @@ class WPAIC_Admin {
      * Render conversations page
      */
     public function render_conversations_page(): void {
-        $page = isset($_GET['paged']) ? absint($_GET['paged']) : 1;
+        $page = isset($_GET['paged']) ? absint(wp_unslash($_GET['paged'])) : 1;
 
         // Sort parameters
         $allowed_orderby = ['id', 'status', 'created_at', 'updated_at'];
-        $orderby = isset($_GET['orderby']) && in_array($_GET['orderby'], $allowed_orderby, true) ? sanitize_text_field($_GET['orderby']) : 'created_at';
-        $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'ASC' ? 'ASC' : 'DESC';
+        $orderby = isset($_GET['orderby']) && in_array(sanitize_text_field(wp_unslash($_GET['orderby'])), $allowed_orderby, true) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'created_at';
+        $order = isset($_GET['order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['order']))) === 'ASC' ? 'ASC' : 'DESC';
 
         $conversations = WPAIC_Conversation::get_list([
             'page'     => $page,
@@ -843,14 +843,14 @@ class WPAIC_Admin {
      * Render knowledge page
      */
     public function render_knowledge_page(): void {
-        $page = isset($_GET['paged']) ? absint($_GET['paged']) : 1;
-        $category = isset($_GET['category']) ? sanitize_text_field($_GET['category']) : '';
-        $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+        $page = isset($_GET['paged']) ? absint(wp_unslash($_GET['paged'])) : 1;
+        $category = isset($_GET['category']) ? sanitize_text_field(wp_unslash($_GET['category'])) : '';
+        $status_filter = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
 
         // Sort parameters
         $allowed_orderby = ['id', 'title', 'category', 'priority', 'created_at'];
-        $orderby = isset($_GET['orderby']) && in_array($_GET['orderby'], $allowed_orderby, true) ? sanitize_text_field($_GET['orderby']) : 'priority';
-        $order = isset($_GET['order']) && strtoupper($_GET['order']) === 'ASC' ? 'ASC' : 'DESC';
+        $orderby = isset($_GET['orderby']) && in_array(sanitize_text_field(wp_unslash($_GET['orderby'])), $allowed_orderby, true) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'priority';
+        $order = isset($_GET['order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['order']))) === 'ASC' ? 'ASC' : 'DESC';
 
         $list_args = [
             'page'     => $page,
@@ -1276,7 +1276,7 @@ class WPAIC_Admin {
 
         // Only show warnings on our plugin pages
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $page = $_GET['page'] ?? '';
+        $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
         if (strpos($page, 'wpaic') !== 0) {
             return;
         }
@@ -2062,7 +2062,7 @@ class WPAIC_Admin {
      * Render Pro upsell page (for Leads and Analytics)
      */
     public function render_pro_upsell_page(): void {
-        $current_page = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        $current_page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
 
         $previews = [
             'wpaic-pro-settings'  => 'render_pro_settings_preview',

@@ -39,16 +39,20 @@ class WPAIC_Conversation {
         // otherwise fall back to REMOTE_ADDR
         $raw_ip = $data['visitor_ip'] ?? ($_SERVER['REMOTE_ADDR'] ?? '');
         $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        $user_id = get_current_user_id();
         $insert_data = [
             'session_id' => $session_id,
-            'user_id'    => get_current_user_id() ?: null,
+            'user_id'    => $user_id ? $user_id : null,
             'visitor_ip' => self::hash_ip($raw_ip, $user_agent),
-            'page_url'   => $data['page_url'] ?? '',
+            'page_url'   => isset($data['page_url']) ? esc_url_raw($data['page_url']) : '',
             'status'     => 'active',
         ];
 
+        // Use %s for user_id when null to preserve NULL in database (avoid storing 0 for anonymous visitors)
+        $formats = ['%s', $user_id ? '%d' : '%s', '%s', '%s', '%s'];
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-        $wpdb->insert($table, $insert_data, ['%s', '%d', '%s', '%s', '%s']);
+        $wpdb->insert($table, $insert_data, $formats);
 
         return self::get_by_id($wpdb->insert_id);
     }
