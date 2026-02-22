@@ -1,0 +1,345 @@
+# Copyright (C) 2024 Yoshiaki Miyaguchi
+# This file is distributed under the same license as the Rapls AI Chatbot plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Rapls AI Chatbot 1.2.5\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-12 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2024-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: includes/admin/class-admin.php
+msgid "AI Chatbot"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Dashboard"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Settings"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Site Learning"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Conversations"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Knowledge"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "AI Settings"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Chat Settings"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Display Settings"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Advanced"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "API Key"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Model"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Bot Name"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Welcome Message"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "System Prompt"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Max Tokens"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Temperature"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Save Settings"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Total Conversations"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Today's Messages"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Indexed Pages"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Custom Knowledge"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Quick Actions"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Status"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "AI Provider"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Enabled"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Disabled"
+msgstr ""
+
+#: templates/admin/crawler.php
+msgid "Learning Status"
+msgstr ""
+
+#: templates/admin/crawler.php
+msgid "Learning Feature"
+msgstr ""
+
+#: templates/admin/crawler.php
+msgid "Last Crawl"
+msgstr ""
+
+#: templates/admin/crawler.php
+msgid "Run Learning Now"
+msgstr ""
+
+#: templates/admin/crawler.php
+msgid "Target Content"
+msgstr ""
+
+#: templates/admin/conversations.php
+msgid "Delete Selected"
+msgstr ""
+
+#: templates/admin/conversations.php
+msgid "Delete All"
+msgstr ""
+
+#: templates/admin/conversations.php
+msgid "Session"
+msgstr ""
+
+#: templates/admin/conversations.php
+msgid "Details"
+msgstr ""
+
+#: templates/admin/conversations.php
+msgid "Delete"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Add Text"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Title"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Content"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Category"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Add"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Import from File"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Knowledge List"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Edit"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Update"
+msgstr ""
+
+#: templates/admin/knowledge.php
+msgid "Cancel"
+msgstr ""
+
+#: includes/api/class-rest-controller.php
+msgid "Message is empty or too long."
+msgstr ""
+
+#: includes/api/class-rest-controller.php
+msgid "Rate limit exceeded. Please wait a moment."
+msgstr ""
+
+#: includes/ai-providers/class-openai-provider.php
+msgid "OpenAI API key is not configured."
+msgstr ""
+
+#: includes/ai-providers/class-claude-provider.php
+msgid "Claude API key is not configured."
+msgstr ""
+
+#: includes/ai-providers/class-gemini-provider.php
+msgid "Gemini API key is not configured."
+msgstr ""
+
+#: Common strings
+msgid "Are you sure you want to delete?"
+msgstr ""
+
+msgid "Processing..."
+msgstr ""
+
+msgid "Success"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "An error occurred."
+msgstr ""
+
+msgid "Permission denied."
+msgstr ""
+
+#: includes/admin/class-admin.php
+#: templates/admin/license.php
+msgid "License"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "AI Chatbot - License"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "License Status"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Licensed"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Username"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Email"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Deactivate License"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Trial Period"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "days remaining"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "You are currently using the trial version. All features are available during the trial period."
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Trial started: %s"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Trial Expired"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Your trial period has expired. Please enter a valid license to continue using all features."
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Activate License"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Enter your license information to unlock all features."
+msgstr ""
+
+#: templates/admin/license.php
+msgid "License Key"
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Activating..."
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Deactivating..."
+msgstr ""
+
+#: templates/admin/license.php
+msgid "Are you sure you want to deactivate the license?"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Your trial period has ended. The chatbot is currently disabled."
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Trial Version"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "%d days remaining in your trial."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "License activated successfully."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Invalid license key."
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "License has been deactivated."
+msgstr ""
+
+#: includes/api/class-rest-controller.php
+msgid "License expired. Please activate a valid license to use this feature."
+msgstr ""

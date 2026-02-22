@@ -1,0 +1,2282 @@
+<?php
+/**
+ * REST API Controller
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class WPAIC_REST_Controller {
+
+    /**
+     * Namespace
+     */
+    private string $namespace = 'wp-ai-chatbot/v1';
+
+    /**
+     * Register routes
+     */
+    public function register_routes(): void {
+        // Get/Create session
+        register_rest_route($this->namespace, '/session', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'get_session'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        // Send chat message
+        register_rest_route($this->namespace, '/chat', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'send_message'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'message' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_textarea_field',
+                ],
+                'page_url' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ],
+                'recaptcha_token' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'user_id' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'image' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'validate_callback' => [$this, 'validate_image_param'],
+                ],
+            ],
+        ]);
+
+        // Get conversation history
+        register_rest_route($this->namespace, '/history/(?P<session_id>[a-zA-Z0-9-]+)', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'get_history'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
+        // Submit lead (Pro feature)
+        register_rest_route($this->namespace, '/lead', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'submit_lead'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'name' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'email' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_email',
+                ],
+                'phone' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'company' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'page_url' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ],
+            ],
+        ]);
+
+        // Get lead form configuration
+        register_rest_route($this->namespace, '/lead-config', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'get_lead_config'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        // Get message limit status
+        register_rest_route($this->namespace, '/message-limit', [
+            'methods'             => 'GET',
+            'callback'            => [$this, 'get_message_limit_status'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        // Submit message feedback (Free feature)
+        register_rest_route($this->namespace, '/feedback', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'submit_feedback'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'message_id' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ],
+                'feedback' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                ],
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
+        // Regenerate response (Free feature)
+        register_rest_route($this->namespace, '/regenerate', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'regenerate_response'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'message_id' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ],
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
+        // Pro-only routes: only register when Pro is active
+        $pro_features = WPAIC_Pro_Features::get_instance();
+        if ($pro_features->is_pro()) {
+            // Get conversation summary (Pro feature)
+            register_rest_route($this->namespace, '/summary/(?P<session_id>[a-zA-Z0-9-]+)', [
+                'methods'             => 'GET',
+                'callback'            => [$this, 'get_conversation_summary'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                ],
+            ]);
+
+            // Get related questions (Pro feature)
+            register_rest_route($this->namespace, '/suggestions', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'get_related_suggestions'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'last_response' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_textarea_field',
+                    ],
+                ],
+            ]);
+
+            // Get autocomplete suggestions (Pro feature)
+            register_rest_route($this->namespace, '/autocomplete', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'get_autocomplete'],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'query' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                ],
+            ]);
+
+            // Submit offline message (Pro feature)
+            register_rest_route($this->namespace, '/offline-message', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'submit_offline_message'],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'name' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'email' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_email',
+                    ],
+                    'message' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_textarea_field',
+                    ],
+                    'page_url' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'esc_url_raw',
+                    ],
+                ],
+            ]);
+
+            // Track conversion (Pro feature)
+            register_rest_route($this->namespace, '/conversion', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'track_conversion'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'goal' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Get or create session
+     */
+    public function get_session(WP_REST_Request $request): WP_REST_Response {
+        $session_version = get_option('wpaic_session_version', 1);
+
+        // Reuse existing session from cookie if valid
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $existing_session = isset($_COOKIE['wpaic_session_id']) ? sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) : '';
+        if (!empty($existing_session)) {
+            // Verify the session exists in DB (active conversation)
+            $conversation = WPAIC_Conversation::get_by_session($existing_session);
+            if ($conversation) {
+                return new WP_REST_Response([
+                    'success'         => true,
+                    'session_id'      => $existing_session,
+                    'session_version' => $session_version,
+                ], 200);
+            }
+            // Session cookie exists but no active conversation — still reuse the ID
+            // (conversation will be created on first message)
+            return new WP_REST_Response([
+                'success'         => true,
+                'session_id'      => $existing_session,
+                'session_version' => $session_version,
+            ], 200);
+        }
+
+        // Generate new session
+        $session_id = WPAIC_Conversation::generate_session_id();
+
+        // Set httpOnly cookie for session ownership verification
+        if (!headers_sent()) {
+            setcookie('wpaic_session_id', $session_id, [
+                'expires'  => 0,
+                'path'     => '/',
+                'httponly'  => true,
+                'samesite' => 'Lax',
+                'secure'   => is_ssl(),
+            ]);
+        }
+
+        return new WP_REST_Response([
+            'success'         => true,
+            'session_id'      => $session_id,
+            'session_version' => $session_version,
+        ], 200);
+    }
+
+    /**
+     * Send chat message
+     */
+    public function send_message(WP_REST_Request $request): WP_REST_Response {
+        $session_id = $request->get_param('session_id');
+        $message = $request->get_param('message');
+        $page_url = $request->get_param('page_url');
+        $recaptcha_token = $request->get_param('recaptcha_token');
+        $image = $request->get_param('image');
+
+        // Reject image if multimodal is not enabled (Pro feature)
+        if (!empty($image)) {
+            $pro_features_check = WPAIC_Pro_Features::get_instance();
+            if (!$pro_features_check->is_pro() || !method_exists($pro_features_check, 'is_multimodal_enabled') || !$pro_features_check->is_multimodal_enabled()) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Image upload is not available.', 'rapls-ai-chatbot'),
+                ], 400);
+            }
+        }
+
+        // Session ownership already verified by check_session_permission()
+
+        // Validate input
+        $message_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
+        if (empty($message) || $message_length > 2000) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Message is empty or too long.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Verify reCAPTCHA
+        $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'chat');
+        if (is_wp_error($recaptcha_result)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $recaptcha_result->get_error_message(),
+            ], 403);
+        }
+
+        // Check rate limit (Pro enhanced or basic)
+        $rate_limit_result = $this->check_rate_limit();
+        if ($rate_limit_result !== true) {
+            $rate_limit_msg = is_string($rate_limit_result) ? $rate_limit_result : __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $rate_limit_msg,
+            ], 429);
+        }
+
+        // Check monthly message limit
+        $pro_features = WPAIC_Pro_Features::get_instance();
+
+        // Check IP block (Pro feature)
+        if ($pro_features->is_ip_blocked()) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $pro_features->get_ip_block_message(),
+                'code'    => 'ip_blocked',
+            ], 403);
+        }
+
+        // Check business hours and holidays (Pro feature)
+        $unavailable_message = $pro_features->get_unavailable_message();
+        if ($unavailable_message !== null) {
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'content'     => $unavailable_message,
+                    'is_auto'     => true,
+                    'sources'     => [],
+                ],
+            ], 200);
+        }
+
+        // Check budget limit (Pro feature)
+        if ($pro_features->check_budget_limit()) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $pro_features->get_budget_block_message(),
+                'code'    => 'budget_exceeded',
+            ], 429);
+        }
+
+        // Check banned words (Pro feature)
+        if ($pro_features->contains_banned_words($message)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $pro_features->get_banned_words_message(),
+                'code'    => 'banned_words',
+            ], 400);
+        }
+
+        // Pre-check API key
+        $settings = get_option('wpaic_settings', []);
+        $provider_name = $settings['ai_provider'] ?? 'openai';
+
+        switch ($provider_name) {
+            case 'claude':
+                $api_key = $this->decrypt_api_key($settings['claude_api_key'] ?? '');
+                break;
+            case 'gemini':
+                $api_key = $this->decrypt_api_key($settings['gemini_api_key'] ?? '');
+                break;
+            default:
+                $api_key = $this->decrypt_api_key($settings['openai_api_key'] ?? '');
+                break;
+        }
+
+        if (empty($api_key)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('AI API key is not configured. Please configure it in the admin settings.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        try {
+            // Get or create conversation
+            $conversation = WPAIC_Conversation::get_or_create($session_id, [
+                'page_url'   => $page_url,
+                'visitor_ip' => $this->get_client_ip(),
+            ]);
+
+            if (!$conversation) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Failed to create conversation session.', 'rapls-ai-chatbot'),
+                ], 500);
+            }
+
+            // Save user message
+            WPAIC_Message::create([
+                'conversation_id' => $conversation['id'],
+                'role'            => 'user',
+                'content'         => $message,
+            ]);
+
+            // Check message limit — if reached, try FAQ fallback instead of AI
+            if ($pro_features->is_limit_reached()) {
+                $search_engine = new WPAIC_Search_Engine();
+                $faq_results = $search_engine->search_knowledge_only($message, 3);
+                $faq_answer = $this->extract_faq_answer($faq_results, $message);
+
+                if (empty($faq_answer)) {
+                    $faq_answer = __('The monthly AI response limit has been reached. For more advanced usage, please consider the Pro version.', 'rapls-ai-chatbot');
+                }
+
+                // Save synthetic assistant message
+                $ai_message = WPAIC_Message::create([
+                    'conversation_id' => $conversation['id'],
+                    'role'            => 'assistant',
+                    'content'         => $faq_answer,
+                ]);
+
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => [
+                        'message_id'         => $ai_message['id'] ?? 0,
+                        'content'            => $faq_answer,
+                        'tokens_used'        => 0,
+                        'sources'            => [],
+                        'remaining_messages' => 0,
+                        'limit_reached'      => true,
+                    ],
+                ], 200);
+            }
+
+            // Get AI provider
+            $ai_provider = $this->get_ai_provider();
+
+            // Search related content
+            $search_engine = new WPAIC_Search_Engine();
+            $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
+            $context = $search_engine->build_context($related_content, $this->get_max_context_chars(), $message);
+
+            // Response cache check (Pro feature)
+            $pro_settings = $settings['pro_features'] ?? [];
+            $cache_enabled = !empty($pro_settings['response_cache_enabled']) && $pro_features->is_pro();
+            $cache_hash = null;
+
+            if ($cache_enabled) {
+                $cache_ttl = (int) ($pro_settings['cache_ttl_days'] ?? 7);
+                $cache_hash = WPAIC_Message::build_cache_hash($message, $context);
+                $cached = WPAIC_Message::find_cached_response($cache_hash, $cache_ttl);
+
+                if ($cached) {
+                    // Cache hit — save a copy as the new assistant message
+                    $ai_message = WPAIC_Message::create([
+                        'conversation_id' => $conversation['id'],
+                        'role'            => 'assistant',
+                        'content'         => $cached['content'],
+                        'tokens_used'     => $cached['tokens_used'] ?? 0,
+                        'input_tokens'    => 0,
+                        'output_tokens'   => 0,
+                        'ai_provider'     => $cached['ai_provider'] ?? null,
+                        'ai_model'        => $cached['ai_model'] ?? null,
+                    ]);
+
+                    // Mark as cache hit and store hash
+                    if ($ai_message) {
+                        WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
+                        global $wpdb;
+                        $msg_table = $wpdb->prefix . 'aichat_messages';
+                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                        $wpdb->update($msg_table, ['cache_hit' => 1], ['id' => $ai_message['id']], ['%d'], ['%d']);
+                    }
+
+                    $sources = array_filter(array_column($related_content, 'url'));
+                    $remaining_messages = $pro_features->get_remaining_messages();
+
+                    $cached_content = apply_filters('wpaic_ai_response', $cached['content'], $message, $settings);
+
+                    return new WP_REST_Response([
+                        'success' => true,
+                        'data'    => [
+                            'message_id'         => $ai_message['id'] ?? 0,
+                            'content'            => $cached_content,
+                            'tokens_used'        => 0,
+                            'sources'            => array_values($sources),
+                            'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
+                            'cached'             => true,
+                        ],
+                    ], 200);
+                }
+            }
+
+            // Build system prompt
+            $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant. Please answer user questions politely.';
+
+            /**
+             * Filter the system prompt sent to the AI provider.
+             *
+             * @param string $system_prompt The system prompt.
+             * @param array  $settings      The plugin settings.
+             */
+            $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt, $settings);
+
+            // Add sentiment analysis (Pro feature)
+            $sentiment = $pro_features->analyze_sentiment($message);
+            $sentiment_prompt = $pro_features->get_sentiment_prompt($sentiment);
+            if (!empty($sentiment_prompt)) {
+                $system_prompt .= $sentiment_prompt;
+            }
+
+            // Add feedback examples for learning (if feedback is enabled)
+            if (!empty($settings['show_feedback_buttons'])) {
+                $feedback_prompt = '';
+
+                // Positive examples - what works well
+                $positive_examples = WPAIC_Message::get_positive_feedback_examples(3);
+                if (!empty($positive_examples)) {
+                    $good_header = $settings['feedback_good_header'] ?? "[LEARNING FROM USER FEEDBACK - GOOD EXAMPLES]\nThe following responses received positive feedback. Use these as examples of good responses:";
+                    $feedback_prompt .= "\n\n" . $good_header . "\n";
+                    foreach ($positive_examples as $idx => $example) {
+                        $feedback_prompt .= sprintf("\nGood Example %d:\nQ: %s\nA: %s\n", $idx + 1, $example['question'], $example['answer']);
+                    }
+                }
+
+                // Negative examples - what to avoid
+                $negative_examples = WPAIC_Message::get_negative_feedback_examples(2);
+                if (!empty($negative_examples)) {
+                    $bad_header = $settings['feedback_bad_header'] ?? "[LEARNING FROM USER FEEDBACK - AVOID THESE PATTERNS]\nThe following responses received negative feedback. AVOID responding in similar ways:";
+                    $feedback_prompt .= "\n\n" . $bad_header . "\n";
+                    foreach ($negative_examples as $idx => $example) {
+                        $feedback_prompt .= sprintf("\nBad Example %d:\nQ: %s\nA (AVOID): %s\n", $idx + 1, $example['question'], $example['answer']);
+                    }
+                }
+
+                if (!empty($feedback_prompt)) {
+                    $feedback_prompt .= "\n" . __('Learn from these examples to improve response quality.', 'rapls-ai-chatbot') . "\n";
+                    $system_prompt .= $feedback_prompt;
+                }
+            }
+
+            // Add context memory (Pro feature)
+            $user_id = $request->get_param('user_id') ?? '';
+            if (!empty($user_id) && $pro_features->is_context_memory_enabled()) {
+                $user_context = $pro_features->get_user_context($user_id);
+                $context_prompt = $pro_features->build_context_memory_prompt($user_context);
+                if (!empty($context_prompt)) {
+                    $system_prompt .= $context_prompt;
+                }
+            }
+            /**
+             * Filter the RAG context before injection into the system prompt.
+             *
+             * @param string $context  The context from site learning and knowledge base.
+             * @param string $message  The user's message.
+             * @param array  $settings The plugin settings.
+             */
+            $context = apply_filters('wpaic_context', $context, $message, $settings);
+
+            if (!empty($context)) {
+                // Check if context contains Q&A format
+                $has_qa_format = preg_match('/Question\s*[:：]/ui', $context) && preg_match('/Answer\s*[:：]/ui', $context);
+
+                if ($has_qa_format) {
+                    // Check for exact match (highest priority)
+                    $has_exact_match = strpos($context, '[EXACT MATCH') !== false;
+
+                    if ($has_exact_match) {
+                        // Exact match found - use configurable prompt
+                        $exact_prompt = $settings['knowledge_exact_prompt'] ?? "=== STRICT INSTRUCTIONS ===\nAn EXACT MATCH has been found for the user's question.\nYou MUST:\n1. Use ONLY the Answer provided below\n2. DO NOT add any information not in this Answer\n3. DO NOT combine with other sources\n4. Respond naturally using this Answer's content\n\n=== ANSWER TO USE ===\n{context}\n=== END ===";
+                        $system_prompt .= "\n\n" . str_replace('{context}', $context, $exact_prompt);
+                    } else {
+                        // Q&A format - use configurable prompt
+                        $qa_prompt = $settings['knowledge_qa_prompt'] ?? "=== CRITICAL INSTRUCTIONS ===\nBelow is a FAQ database. When the user asks a question:\n1. FIRST, look for [BEST MATCH] - this is the most relevant Q&A for the user's question\n2. If [BEST MATCH] exists, use that Answer to respond\n3. If no [BEST MATCH], find the Question that matches or is similar to the user's question\n4. Return the corresponding Answer from the FAQ\n5. DO NOT make up answers - ONLY use the information provided below\n\nIMPORTANT: The Answer after [BEST MATCH] is your primary response source.\n\n=== FAQ DATABASE ===\n{context}\n=== END FAQ DATABASE ===";
+                        $system_prompt .= "\n\n" . str_replace('{context}', $context, $qa_prompt);
+                    }
+                } else {
+                    // Standard reference information - use configurable prompt
+                    $site_prompt = $settings['site_context_prompt'] ?? "[IMPORTANT: Reference Information]\nYou MUST use the following information as the primary source when answering. If the answer can be found in this information, use it directly.\nIf the reference information does NOT contain the answer, clearly state that you don't have specific information about it. Do NOT guess or fabricate details.\n\n{context}";
+                    $system_prompt .= "\n\n" . str_replace('{context}', $context, $site_prompt);
+                }
+            }
+
+            // Get conversation history
+            $history = WPAIC_Message::get_context_messages($conversation['id'], 10);
+
+            // Build message array
+            $messages = [
+                ['role' => 'system', 'content' => $system_prompt],
+            ];
+
+            foreach ($history as $msg) {
+                $messages[] = [
+                    'role'    => $msg['role'],
+                    'content' => $msg['content'],
+                ];
+            }
+
+            // Send to AI (clamp settings to safe ranges)
+            $max_tokens = max(1, min(16384, (int) ($settings['max_tokens'] ?? 1000)));
+            $temperature = max(0.0, min(2.0, (float) ($settings['temperature'] ?? 0.7)));
+
+            $response = $ai_provider->send_message($messages, [
+                'max_tokens'  => $max_tokens,
+                'temperature' => $temperature,
+            ]);
+
+            // Save AI response
+            $ai_message = WPAIC_Message::create([
+                'conversation_id' => $conversation['id'],
+                'role'            => 'assistant',
+                'content'         => $response['content'],
+                'tokens_used'     => $response['tokens_used'],
+                'input_tokens'    => $response['input_tokens'] ?? 0,
+                'output_tokens'   => $response['output_tokens'] ?? 0,
+                'ai_provider'     => $response['provider'],
+                'ai_model'        => $response['model'],
+            ]);
+
+            // Store cache hash on the new response
+            if ($cache_enabled && $cache_hash && !empty($ai_message['id'])) {
+                WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
+            }
+
+            // Budget alert check (Pro feature)
+            $msg_cost = WPAIC_Cost_Calculator::calculate_cost(
+                $response['model'] ?? '',
+                $response['input_tokens'] ?? 0,
+                $response['output_tokens'] ?? 0
+            );
+            $pro_features->maybe_send_budget_alert($msg_cost);
+
+            // Get source URLs
+            $sources = array_filter(array_column($related_content, 'url'));
+
+            // Trigger webhook for new message (Pro feature)
+            if (class_exists('WPAIC_Webhook')) {
+                try {
+                    $webhook = WPAIC_Webhook::get_instance();
+                    $webhook->trigger_new_message($conversation, $message, $response['content']);
+                } catch (\Throwable $e) {
+                    // Webhook error - ignore
+                }
+            }
+
+            // Get remaining messages for response
+            $remaining_messages = $pro_features->get_remaining_messages();
+
+            /**
+             * Filter the AI response content before returning to the user.
+             *
+             * @param string $content  The AI response text.
+             * @param string $message  The user's original message.
+             * @param array  $settings The plugin settings.
+             */
+            $response['content'] = apply_filters('wpaic_ai_response', $response['content'], $message, $settings);
+
+            // Build response data
+            $response_data = [
+                'message_id'  => $ai_message['id'],
+                'content'     => $response['content'],
+                'tokens_used' => $response['tokens_used'],
+                'sources'     => array_values($sources),
+                'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
+            ];
+
+            // Add sentiment to response if sentiment analysis is enabled
+            $sentiment_enabled = $pro_features->is_sentiment_analysis_enabled();
+            if ($sentiment_enabled && !empty($sentiment) && $sentiment !== 'neutral') {
+                $response_data['sentiment'] = $sentiment;
+            }
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => $response_data,
+            ], 200);
+
+        } catch (WPAIC_Quota_Exceeded_Exception $e) {
+            // Return custom quota error message from settings
+            $quota_message = $settings['quota_error_message'] ?? 'Currently recharging. Please try again later.';
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $quota_message,
+            ], 503);
+
+        } catch (Exception $e) {
+            $error_message = $e->getMessage();
+
+            // Log detailed error for admin debugging
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC Chat Error: ' . $error_message);
+            }
+
+            // Return generic message to user (don't expose API internals)
+            if (strpos($error_message, 'API key') !== false) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('The AI service is not configured correctly. Please contact the site administrator.', 'rapls-ai-chatbot'),
+                ], 500);
+            }
+
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot'),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get conversation history
+     */
+    public function get_history(WP_REST_Request $request): WP_REST_Response {
+        $session_id = $request->get_param('session_id');
+
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+
+        if (!$conversation) {
+            return new WP_REST_Response([
+                'success'  => true,
+                'messages' => [],
+            ], 200);
+        }
+
+        // Session ownership already verified by check_session_permission()
+
+        $messages = WPAIC_Message::get_by_conversation($conversation['id']);
+
+        // Return only necessary information
+        $formatted = array_map(function($msg) {
+            return [
+                'id'         => $msg['id'],
+                'role'       => $msg['role'],
+                'content'    => $msg['content'],
+                'created_at' => $msg['created_at'],
+            ];
+        }, $messages);
+
+        return new WP_REST_Response([
+            'success'  => true,
+            'messages' => $formatted,
+        ], 200);
+    }
+
+    /**
+     * Get AI provider
+     */
+    private function get_ai_provider(): WPAIC_AI_Provider_Interface {
+        $settings = get_option('wpaic_settings', []);
+        $provider_name = $settings['ai_provider'] ?? 'openai';
+
+        switch ($provider_name) {
+            case 'claude':
+                $provider = new WPAIC_Claude_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['claude_api_key'] ?? ''));
+                $provider->set_model($settings['claude_model'] ?? 'claude-sonnet-4-20250514');
+                break;
+
+            case 'gemini':
+                $provider = new WPAIC_Gemini_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['gemini_api_key'] ?? ''));
+                $provider->set_model($settings['gemini_model'] ?? 'gemini-2.0-flash-exp');
+                break;
+
+            default: // openai
+                $provider = new WPAIC_OpenAI_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['openai_api_key'] ?? ''));
+                $provider->set_model($settings['openai_model'] ?? 'gpt-4o');
+                break;
+        }
+
+        return $provider;
+    }
+
+    /**
+     * Get max context characters based on the configured model.
+     * Conservative limits (~25% of model token window) to leave room for system prompt + response.
+     */
+    private function get_max_context_chars(): int {
+        $settings = get_option('wpaic_settings', []);
+        $provider = $settings['ai_provider'] ?? 'openai';
+
+        switch ($provider) {
+            case 'openai':
+                $model = $settings['openai_model'] ?? 'gpt-4o';
+                // GPT-4.1 and o-series have 128K+ context
+                if (strpos($model, 'gpt-4.1') === 0 || strpos($model, 'o') === 0) {
+                    return 40000;
+                }
+                // GPT-4o: 128K context
+                if (strpos($model, 'gpt-4o') === 0) {
+                    return 30000;
+                }
+                // GPT-4-turbo: 128K context
+                if (strpos($model, 'gpt-4-turbo') === 0) {
+                    return 30000;
+                }
+                // GPT-4: 8K context
+                if (strpos($model, 'gpt-4') === 0) {
+                    return 8000;
+                }
+                // GPT-3.5-turbo: 16K
+                if (strpos($model, 'gpt-3.5') === 0) {
+                    return 12000;
+                }
+                return 20000;
+
+            case 'claude':
+                // Claude models generally have 200K context
+                return 40000;
+
+            case 'gemini':
+                $model = $settings['gemini_model'] ?? 'gemini-2.0-flash-exp';
+                // Gemini 2.0 Flash Lite: smaller context
+                if (strpos($model, 'flash-lite') !== false) {
+                    return 15000;
+                }
+                // Gemini Pro/Flash: 1M+ context
+                return 40000;
+
+            default:
+                return 20000;
+        }
+    }
+
+    /**
+     * Decrypt API key (supports GCM and legacy CBC)
+     */
+    private function decrypt_api_key(string $encrypted): string {
+        if (empty($encrypted)) {
+            return '';
+        }
+
+        // Return as-is if not encrypted (check known API key prefixes)
+        if (strpos($encrypted, 'sk-') === 0 || strpos($encrypted, 'sk-ant-') === 0 || strpos($encrypted, 'AIza') === 0) {
+            return $encrypted;
+        }
+
+        if (!function_exists('openssl_decrypt')) {
+            return '';
+        }
+
+        $key = wp_salt('auth');
+
+        // AES-256-GCM (new format with tamper detection)
+        if (strpos($encrypted, 'encg:') === 0) {
+            $data = base64_decode(substr($encrypted, 5), true);
+            if ($data === false || strlen($data) <= 28) { // 12 (IV) + 16 (tag) = 28 minimum
+                error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.');
+                return '';
+            }
+            $iv  = substr($data, 0, 12);
+            $tag = substr($data, 12, 16);
+            $encrypted_data = substr($data, 28);
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            if ($decrypted === false) {
+                error_log('WPAIC: API key GCM decryption failed (salt may have changed or data tampered). Please re-enter your API key in settings.');
+                return '';
+            }
+            return $decrypted;
+        }
+
+        // AES-256-CBC (legacy format)
+        $raw = $encrypted;
+        if (strpos($raw, 'enc:') === 0) {
+            $raw = substr($raw, 4);
+        }
+
+        $data = base64_decode($raw, true);
+
+        if ($data === false) {
+            error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.');
+            return '';
+        }
+
+        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
+        if (strlen($data) <= $iv_length) {
+            error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.');
+            return '';
+        }
+
+        $iv = substr($data, 0, $iv_length);
+        $encrypted_data = substr($data, $iv_length);
+
+        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+
+        if ($decrypted === false) {
+            error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.');
+            return '';
+        }
+
+        return $decrypted;
+    }
+
+    /**
+     * Get client IP address
+     *
+     * Defaults to REMOTE_ADDR for security. Optionally trusts
+     * Cloudflare's CF-Connecting-IP header when enabled in settings.
+     */
+    public function validate_image_param( $value, $request, $param ) {
+        if (empty($value)) {
+            return true;
+        }
+
+        // Must be a data URI with allowed MIME type
+        if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $value, $matches)) {
+            return new WP_Error('invalid_image', __('Invalid image format. Allowed: JPEG, PNG, GIF, WebP.', 'rapls-ai-chatbot'));
+        }
+
+        // Max 2MB base64 (~2.7MB encoded string)
+        if (strlen($value) > 2800000) {
+            return new WP_Error('image_too_large', __('Image is too large. Maximum size is 2MB.', 'rapls-ai-chatbot'));
+        }
+
+        return true;
+    }
+
+    private function get_client_ip(): string {
+        $settings = get_option('wpaic_settings', []);
+
+        // Trust Cloudflare header only when explicitly enabled
+        if (!empty($settings['trust_cloudflare_ip'])) {
+            if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+                $ip = sanitize_text_field(wp_unslash($_SERVER['HTTP_CF_CONNECTING_IP']));
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+
+        // Default: use REMOTE_ADDR (cannot be spoofed by client)
+        $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? ''));
+
+        return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
+    }
+
+    /**
+     * Permission callback for session-based REST routes.
+     *
+     * Extracts session_id from the request and verifies ownership.
+     * Returns true (allowed) or WP_Error (denied).
+     *
+     * @param WP_REST_Request $request REST request object.
+     * @return true|WP_Error
+     */
+    public function check_session_permission(WP_REST_Request $request) {
+        $session_id = $request->get_param('session_id');
+
+        if (empty($session_id)) {
+            return new WP_Error(
+                'rest_missing_session',
+                __('Session ID is required.', 'rapls-ai-chatbot'),
+                ['status' => 400]
+            );
+        }
+
+        if (!$this->verify_session_ownership($session_id)) {
+            return new WP_Error(
+                'rest_session_forbidden',
+                __('Invalid session.', 'rapls-ai-chatbot'),
+                ['status' => 403]
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Verify that the current request owns the given session.
+     *
+     * Checks cookie match and visitor IP hash (same logic as get_history).
+     * Admins always pass.
+     *
+     * @param string $session_id  Session ID to verify
+     * @return bool True if ownership is verified
+     */
+    private function verify_session_ownership(string $session_id): bool {
+        // Note: prefer using check_session_permission() as permission_callback for REST routes.
+        // This method is kept for internal use where a bool return is needed.
+        // Admins always pass
+        if (current_user_can('manage_options')) {
+            return true;
+        }
+
+        // Primary: cookie set at session creation
+        if (isset($_COOKIE['wpaic_session_id'])) {
+            $cookie_session = sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id']));
+            if (hash_equals($cookie_session, $session_id)) {
+                return true;
+            }
+        }
+
+        // Fallback: visitor IP + User-Agent hash match against conversation record
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        if ($conversation && !empty($conversation['visitor_ip'])) {
+            $ip = $this->get_client_ip();
+            $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+            $current_hash = hash('sha256', $ip . $user_agent . wp_salt());
+            if (hash_equals($conversation['visitor_ip'], $current_hash)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check rate limit
+     *
+     * @return true|string True if allowed, or error message string if blocked
+     */
+    private function check_rate_limit() {
+        // Check Pro enhanced rate limit first
+        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_settings = get_option('wpaic_settings', []);
+        $pro_feat_settings = $pro_settings['pro_features'] ?? [];
+
+        if ($pro_features->is_pro() && !empty($pro_feat_settings['enhanced_rate_limit_enabled'])) {
+            $result = $pro_features->check_enhanced_rate_limit();
+            if ($result['blocked']) {
+                return $result['message'];
+            }
+            return true;
+        }
+
+        // Basic rate limit (Free version fallback)
+        $settings = get_option('wpaic_settings', []);
+        $limit = (int) ($settings['rate_limit'] ?? 20);
+        $window = (int) ($settings['rate_limit_window'] ?? 3600);
+
+        // Enforce minimum floor: even if admin sets 0, always apply at least
+        // 60 requests per hour to prevent bot abuse
+        if ($limit < 1) {
+            $limit = 60;
+        }
+        if ($window < 60) {
+            $window = 3600;
+        }
+
+        $ip = $this->get_client_ip();
+
+        // If IP detection fails, fall back to session-based rate limiting
+        // to prevent unlimited access from unknown-IP environments
+        if (empty($ip)) {
+            if (isset($_COOKIE['wpaic_session_id'])) {
+                $session_key = 'wpaic_noip_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) . wp_salt()), 0, 32);
+                $noip_count = (int) get_transient($session_key);
+                if ($noip_count >= $limit) {
+                    return __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+                }
+                set_transient($session_key, $noip_count + 1, $window);
+            }
+            return true;
+        }
+
+        $ip_hash = hash('sha256', $ip . wp_salt());
+
+        // Burst protection: max 3 requests per 10 seconds per IP (always active)
+        $burst_key = 'wpaic_burst_' . substr($ip_hash, 0, 32);
+        $burst_count = (int) get_transient($burst_key);
+        if ($burst_count >= 3) {
+            return __('Too many requests. Please wait a few seconds.', 'rapls-ai-chatbot');
+        }
+        set_transient($burst_key, $burst_count + 1, 10);
+
+        // Use session_id in key when available (from cookie) to reduce
+        // false positives behind shared NAT/corporate networks
+        $session_suffix = '';
+        if (isset($_COOKIE['wpaic_session_id'])) {
+            $session_suffix = '_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id']))), 0, 8);
+        }
+        $transient_key = 'wpaic_rate_' . substr($ip_hash, 0, 24) . $session_suffix;
+
+        $count = (int) get_transient($transient_key);
+
+        if ($count >= $limit) {
+            return __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+        }
+
+        set_transient($transient_key, $count + 1, $window);
+
+        // Also enforce a global per-IP limit (2x) to prevent abuse via multiple sessions
+        $global_key = 'wpaic_rate_ip_' . substr($ip_hash, 0, 32);
+        $global_count = (int) get_transient($global_key);
+        $global_limit = $limit * 2;
+
+        if ($global_count >= $global_limit) {
+            return __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+        }
+
+        set_transient($global_key, $global_count + 1, $window);
+
+        return true;
+    }
+
+    /**
+     * Verify reCAPTCHA
+     *
+     * @param string|null $token    reCAPTCHA token
+     * @param string      $expected_action Expected reCAPTCHA action name (e.g. 'chat', 'lead', 'offline')
+     * @return bool|WP_Error True if verified, WP_Error on failure
+     */
+    private function verify_recaptcha( $token, string $expected_action = '' ) {
+        $settings = get_option('wpaic_settings', []);
+
+        // Skip if reCAPTCHA is disabled
+        if (empty($settings['recaptcha_enabled'])) {
+            return true;
+        }
+
+        $secret_key = $settings['recaptcha_secret_key'] ?? '';
+        $threshold = floatval($settings['recaptcha_threshold'] ?? 0.5);
+
+        // Decrypt secret key if encrypted (GCM or legacy CBC)
+        if (!empty($secret_key) && (strpos($secret_key, 'encg:') === 0 || strpos($secret_key, 'enc:') === 0)) {
+            $secret_key = WPAIC_Admin::decrypt_secret_static($secret_key);
+        }
+
+        // reCAPTCHA enabled but secret key is missing — misconfiguration
+        if (empty($secret_key)) {
+            // Cost-sensitive actions must be blocked to prevent abuse
+            $cost_sensitive_actions = ['chat', 'lead', 'offline'];
+            if (in_array($expected_action, $cost_sensitive_actions, true)) {
+                return new WP_Error('recaptcha_misconfigured', __('Security verification is not properly configured. Please contact the site administrator.', 'rapls-ai-chatbot'));
+            }
+            return true;
+        }
+
+        // Error if token is missing
+        if (empty($token)) {
+            return new WP_Error('recaptcha_missing', __('reCAPTCHA token is missing. Please reload the page.', 'rapls-ai-chatbot'));
+        }
+
+        // Send verification request to Google reCAPTCHA API
+        $response = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', [
+            'body' => [
+                'secret'   => $secret_key,
+                'response' => $token,
+                'remoteip' => $this->get_client_ip(),
+            ],
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response)) {
+            // Determine fail mode: cost-sensitive actions (chat, lead, offline) default to closed
+            $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
+            $cost_sensitive_actions = ['chat', 'lead', 'offline'];
+            $should_block = ($fail_mode === 'closed') || in_array($expected_action, $cost_sensitive_actions, true);
+            if ($should_block) {
+                return new WP_Error('recaptcha_unavailable', __('Security verification is temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'));
+            }
+            return true; // fail-open: allow request through
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (empty($body['success'])) {
+            return new WP_Error('recaptcha_failed', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
+        }
+
+        // Verify action matches expected (prevents token reuse across different forms)
+        if (!empty($expected_action) && isset($body['action']) && $body['action'] !== $expected_action) {
+            return new WP_Error('recaptcha_action_mismatch', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
+        }
+
+        // Verify hostname matches this site (prevents token from other sites)
+        if (!empty($body['hostname'])) {
+            $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+            if ($site_host && strtolower($body['hostname']) !== strtolower($site_host)) {
+                return new WP_Error('recaptcha_hostname_mismatch', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
+            }
+        }
+
+        // Check score (reCAPTCHA v3)
+        $score = floatval($body['score'] ?? 0);
+        if ($score < $threshold) {
+            return new WP_Error('recaptcha_low_score', __('Security check failed.', 'rapls-ai-chatbot'));
+        }
+
+        return true;
+    }
+
+    /**
+     * Submit lead form (Pro feature)
+     */
+    public function submit_lead(WP_REST_Request $request): WP_REST_Response {
+        try {
+            // Check if Pro feature is available
+            $pro_features = WPAIC_Pro_Features::get_instance();
+            if (!$pro_features->is_feature_available(WPAIC_Pro_Features::FEATURE_LEAD_CAPTURE)) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Lead capture feature requires Pro license.', 'rapls-ai-chatbot'),
+                ], 403);
+            }
+
+            // Session ownership already verified by check_session_permission()
+            $session_id = $request->get_param('session_id');
+
+            // Rate limit: max 10 lead submissions per IP per hour
+            $ip = $this->get_client_ip();
+            if (!empty($ip)) {
+                $ip_hash = hash('sha256', $ip . wp_salt());
+                $transient_key = 'wpaic_lead_rate_' . substr($ip_hash, 0, 32);
+                $count = (int) get_transient($transient_key);
+                if ($count >= 10) {
+                    return new WP_REST_Response([
+                        'success' => false,
+                        'error'   => __('Too many submissions. Please try again later.', 'rapls-ai-chatbot'),
+                    ], 429);
+                }
+                set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
+            }
+
+            // Verify reCAPTCHA if enabled
+            $recaptcha_token = $request->get_param('recaptcha_token');
+            $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'lead');
+            if (is_wp_error($recaptcha_result)) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => $recaptcha_result->get_error_message(),
+                ], 403);
+            }
+
+            $session_id = $request->get_param('session_id');
+            $email = $request->get_param('email');
+            $name = $request->get_param('name');
+            $phone = $request->get_param('phone');
+            $company = $request->get_param('company');
+            $page_url = $request->get_param('page_url');
+
+            // Validate email
+            if (empty($email) || !is_email($email)) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Please enter a valid email address.', 'rapls-ai-chatbot'),
+                ], 400);
+            }
+
+            // Get or create conversation
+            $conversation = WPAIC_Conversation::get_or_create($session_id, [
+                'page_url'   => $page_url,
+                'visitor_ip' => $this->get_client_ip(),
+            ]);
+
+            if (!$conversation) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Failed to create conversation.', 'rapls-ai-chatbot'),
+                ], 500);
+            }
+
+            // Check if lead already exists for this conversation
+            $existing_lead = WPAIC_Lead::get_by_conversation($conversation['id']);
+            if ($existing_lead) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => [
+                        'lead_id' => $existing_lead['id'],
+                        'message' => __('Lead already submitted.', 'rapls-ai-chatbot'),
+                    ],
+                ], 200);
+            }
+
+            // Create lead
+            $lead = WPAIC_Lead::create([
+                'conversation_id' => $conversation['id'],
+                'name'            => $name,
+                'email'           => $email,
+                'phone'           => $phone,
+                'company'         => $company,
+            ]);
+
+            if (!$lead) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Failed to save lead information.', 'rapls-ai-chatbot'),
+                ], 500);
+            }
+
+            // Trigger webhook for lead captured (Pro feature)
+            if (class_exists('WPAIC_Webhook')) {
+                try {
+                    $webhook = WPAIC_Webhook::get_instance();
+                    $webhook->trigger_lead_captured($lead);
+                } catch (\Throwable $webhook_error) {
+                    error_log('WPAIC Webhook Error: ' . $webhook_error->getMessage());
+                }
+            }
+
+            // Send admin notification email if enabled (wrapped in try-catch)
+            try {
+                $this->maybe_send_lead_notification($lead);
+            } catch (\Throwable $notification_error) {
+                error_log('WPAIC Notification Error: ' . $notification_error->getMessage());
+            }
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'lead_id' => $lead['id'],
+                    'message' => __('Thank you for your information.', 'rapls-ai-chatbot'),
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            error_log('WPAIC Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $e->getMessage(),
+                'debug'   => [
+                    'file' => basename($e->getFile()),
+                    'line' => $e->getLine(),
+                ],
+            ], 500);
+        }
+    }
+
+    /**
+     * Get lead form configuration
+     */
+    public function get_lead_config(WP_REST_Request $request): WP_REST_Response {
+        try {
+            $pro_features = WPAIC_Pro_Features::get_instance();
+            $settings = get_option('wpaic_settings', []);
+            $pro_settings = $settings['pro_features'] ?? WPAIC_Pro_Features::get_default_settings();
+
+            // Check if lead capture is enabled and available
+            $is_enabled = !empty($pro_settings['lead_capture_enabled']) &&
+                          $pro_features->is_feature_available(WPAIC_Pro_Features::FEATURE_LEAD_CAPTURE);
+
+            if (!$is_enabled) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => [
+                        'enabled'  => false,
+                        'required' => false,
+                    ],
+                ], 200);
+            }
+
+            // Build fields configuration
+            $fields = [];
+            $lead_fields = $pro_settings['lead_fields'] ?? [];
+
+            foreach ($lead_fields as $field_name => $field_config) {
+                if (!empty($field_config['enabled'])) {
+                    $fields[$field_name] = [
+                        'label'    => $field_config['label'] ?? ucfirst($field_name),
+                        'required' => !empty($field_config['required']),
+                        'type'     => $field_name === 'email' ? 'email' : ($field_name === 'phone' ? 'tel' : 'text'),
+                    ];
+                }
+            }
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'enabled'     => true,
+                    'required'    => !empty($pro_settings['lead_capture_required']),
+                    'title'       => $pro_settings['lead_form_title'] ?? __('Before we start', 'rapls-ai-chatbot'),
+                    'description' => $pro_settings['lead_form_description'] ?? __('Please enter your information', 'rapls-ai-chatbot'),
+                    'fields'      => $fields,
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            error_log('WPAIC Lead Config Error: ' . $e->getMessage());
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'enabled'  => false,
+                    'required' => false,
+                ],
+            ], 200);
+        }
+    }
+
+    /**
+     * Get message limit status
+     */
+    public function get_message_limit_status(WP_REST_Request $request): WP_REST_Response {
+        $pro_features = WPAIC_Pro_Features::get_instance();
+        $stats = $pro_features->get_usage_stats();
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data'    => $stats,
+        ], 200);
+    }
+
+    /**
+     * Send lead notification email to admin
+     */
+    private function maybe_send_lead_notification(array $lead): void {
+        $settings = get_option('wpaic_settings', []);
+        $pro_settings = $settings['pro_features'] ?? [];
+
+        // Check if notification is enabled
+        if (empty($pro_settings['lead_notification_enabled'])) {
+            return;
+        }
+
+        // Determine recipient
+        $to = $pro_settings['lead_notification_email'] ?? '';
+        if (empty($to) || !is_email($to)) {
+            $to = get_option('admin_email');
+        }
+
+        if (empty($to)) {
+            error_log('WPAIC Lead Notification: No valid email address found');
+            return;
+        }
+
+        $site_name = get_bloginfo('name');
+        $subject = sprintf(
+            /* translators: %s: site name */
+            __('[%s] New lead captured', 'rapls-ai-chatbot'),
+            $site_name
+        );
+
+        // Build HTML message
+        $message_html = sprintf(
+            '<h2>%s</h2>
+            <table style="border-collapse: collapse; width: 100%%; max-width: 500px;">
+                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
+                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="mailto:%s">%s</a></td></tr>
+                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
+                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
+                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
+            </table>
+            <p style="margin-top: 20px;"><a href="%s">%s</a></p>',
+            __('New Lead Captured', 'rapls-ai-chatbot'),
+            __('Name', 'rapls-ai-chatbot'),
+            esc_html($lead['name'] ?: '-'),
+            __('Email', 'rapls-ai-chatbot'),
+            esc_attr($lead['email']),
+            esc_html($lead['email']),
+            __('Phone', 'rapls-ai-chatbot'),
+            esc_html($lead['phone'] ?: '-'),
+            __('Company', 'rapls-ai-chatbot'),
+            esc_html($lead['company'] ?: '-'),
+            __('Date', 'rapls-ai-chatbot'),
+            esc_html($lead['created_at']),
+            esc_url(admin_url('admin.php?page=wpaic-leads')),
+            __('View all leads', 'rapls-ai-chatbot')
+        );
+
+        // Plain text fallback
+        /* translators: %1$s: name, %2$s: email, %3$s: phone, %4$s: company, %5$s: date, %6$s: leads page URL */
+        $message_text = sprintf(
+            __("A new lead has been captured:\n\nName: %1\$s\nEmail: %2\$s\nPhone: %3\$s\nCompany: %4\$s\nDate: %5\$s\n\nView all leads: %6\$s", 'rapls-ai-chatbot'),
+            $lead['name'] ?: '-',
+            $lead['email'],
+            $lead['phone'] ?: '-',
+            $lead['company'] ?: '-',
+            $lead['created_at'],
+            admin_url('admin.php?page=wpaic-leads')
+        );
+
+        // Headers
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+            'From: ' . $site_name . ' <' . get_option('admin_email') . '>',
+        ];
+
+        // Send email
+        $result = wp_mail($to, $subject, $message_html, $headers);
+
+        if (!$result) {
+            error_log('WPAIC Lead Notification: wp_mail() failed. To: ' . $to);
+        }
+    }
+
+    /**
+     * Submit message feedback
+     */
+    public function submit_feedback(WP_REST_Request $request): WP_REST_Response {
+        $message_id = $request->get_param('message_id');
+        $feedback = (int) $request->get_param('feedback');
+        $session_id = $request->get_param('session_id');
+
+        // Validate feedback value
+        if (!in_array($feedback, [-1, 0, 1], true)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Invalid feedback value.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Verify message exists
+        $message = WPAIC_Message::get_by_id($message_id);
+        if (!$message) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Message not found.', 'rapls-ai-chatbot'),
+            ], 404);
+        }
+
+        // Only allow feedback on assistant messages
+        if ($message['role'] !== 'assistant') {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Feedback only allowed on AI responses.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Verify message belongs to the given session
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        if (!$conversation || (int) $conversation['id'] !== (int) $message['conversation_id']) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Invalid session.', 'rapls-ai-chatbot'),
+            ], 403);
+        }
+
+        // Session ownership already verified by check_session_permission()
+
+        // Update feedback
+        $result = WPAIC_Message::update_feedback($message_id, $feedback);
+
+        if (!$result) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Failed to save feedback.', 'rapls-ai-chatbot'),
+            ], 500);
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data'    => [
+                'message_id' => $message_id,
+                'feedback'   => $feedback,
+            ],
+        ], 200);
+    }
+
+    /**
+     * Regenerate AI response (Pro feature)
+     */
+    public function regenerate_response(WP_REST_Request $request): WP_REST_Response {
+        // Check Pro license
+        $pro_features = WPAIC_Pro_Features::get_instance();
+        if (!$pro_features->is_pro()) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
+            ], 403);
+        }
+
+        $message_id = $request->get_param('message_id');
+        $session_id = $request->get_param('session_id');
+
+        // Get the message to regenerate
+        $message = WPAIC_Message::get_by_id($message_id);
+        if (!$message || $message['role'] !== 'assistant') {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Invalid message.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Get conversation
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        if (!$conversation || $conversation['id'] != $message['conversation_id']) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Invalid session.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Session ownership already verified by check_session_permission()
+
+        // Check message limit
+        $limit_check = $pro_features->check_message_limit();
+        if (is_wp_error($limit_check)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $limit_check->get_error_message(),
+            ], 429);
+        }
+
+        // Get messages before this one
+        $messages = WPAIC_Message::get_by_conversation($conversation['id']);
+        $context_messages = [];
+        foreach ($messages as $msg) {
+            if ($msg['id'] >= $message_id) {
+                break;
+            }
+            if ($msg['role'] === 'user' || $msg['role'] === 'assistant') {
+                $context_messages[] = [
+                    'role' => $msg['role'],
+                    'content' => $msg['content'],
+                ];
+            }
+        }
+
+        // Find the user message that triggered this response
+        $user_message_content = '';
+        for ($i = count($context_messages) - 1; $i >= 0; $i--) {
+            if ($context_messages[$i]['role'] === 'user') {
+                $user_message_content = $context_messages[$i]['content'];
+                break;
+            }
+        }
+
+        if (empty($user_message_content)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Could not find original question.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        try {
+            // Get AI provider
+            $provider = $this->get_ai_provider();
+            $settings = get_option('wpaic_settings', []);
+
+            // Search for related content
+            $search = new WPAIC_Search_Engine();
+            $related_content = $search->search($user_message_content, 3);
+
+            // Build system prompt with context
+            $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant.';
+            if (!empty($related_content)) {
+                $context = "Reference:\n";
+                foreach ($related_content as $item) {
+                    $context .= "- " . ($item['content'] ?? '') . "\n";
+                }
+                $system_prompt .= "\n\n" . $context;
+            }
+
+            // Get the previous response to avoid repeating it
+            $previous_response = $message['content'];
+
+            // Extract first 100 characters of previous response to explicitly forbid
+            $forbidden_start = function_exists('mb_substr') ? mb_substr(trim($previous_response), 0, 100) : substr(trim($previous_response), 0, 100);
+
+            // Generate random variation number to force different output
+            $variation_number = wp_rand(1, 1000);
+            $variation_styles = [
+                __('Use a casual, friendly tone', 'rapls-ai-chatbot'),
+                __('Use a formal, professional tone', 'rapls-ai-chatbot'),
+                __('Start your answer with a different opening', 'rapls-ai-chatbot'),
+                __('Explain from a different angle', 'rapls-ai-chatbot'),
+                __('Use different examples', 'rapls-ai-chatbot'),
+                __('Focus on different aspects', 'rapls-ai-chatbot'),
+            ];
+            $random_style = $variation_styles[array_rand($variation_styles)];
+
+            // Add stronger instruction to system prompt
+            $regen_settings = get_option('wpaic_settings', []);
+            $regen_template = $regen_settings['regenerate_prompt'] ?? '[REGENERATION REQUEST #{variation_number}]: The user wants a DIFFERENT answer. FORBIDDEN: Do not start with "{forbidden_start}". {style}. Create a completely new response with different wording. IMPORTANT: Do NOT use headings, labels, or section markers like【】or brackets. Write in natural flowing paragraphs. Complete all sentences fully.';
+            $regenerate_instruction = "\n\n" . str_replace(
+                ['{variation_number}', '{forbidden_start}', '{style}'],
+                [$variation_number, function_exists('mb_substr') ? mb_substr($forbidden_start, 0, 50) : substr($forbidden_start, 0, 50), $random_style],
+                $regen_template
+            );
+            $system_prompt .= $regenerate_instruction;
+
+            // Remove the last context message if it's the same user message
+            array_pop($context_messages);
+
+            // Build message array for AI
+            $ai_messages = [
+                ['role' => 'system', 'content' => $system_prompt],
+            ];
+
+            // Add conversation history (without the previous AI response)
+            foreach ($context_messages as $ctx_msg) {
+                $ai_messages[] = $ctx_msg;
+            }
+
+            // Add original user question
+            $ai_messages[] = [
+                'role'    => 'user',
+                'content' => $user_message_content,
+            ];
+
+            // Add the previous AI response that user didn't like
+            $ai_messages[] = [
+                'role'    => 'assistant',
+                'content' => $previous_response,
+            ];
+
+            // Add user request for different answer with random element
+            // Use microtime for unique identifier
+            $unique_id = substr(md5(microtime(true) . wp_rand()), 0, 6);
+            $regenerate_request = sprintf(
+                /* translators: 1: style instruction, 2: unique request ID */
+                __('Please give me a different answer. %1$s. Do not use any headings or special formatting. Write naturally and complete all sentences. [ID:%2$s]', 'rapls-ai-chatbot'),
+                $random_style,
+                $unique_id
+            );
+            $ai_messages[] = [
+                'role'    => 'user',
+                'content' => $regenerate_request,
+            ];
+
+            // Call AI with higher temperature for more variety
+            // Use higher max_tokens for regeneration to avoid truncation
+            $max_tokens = max(($settings['max_tokens'] ?? 1000), 2000);
+            $response = $provider->send_message($ai_messages, [
+                'max_tokens'  => $max_tokens,
+                'temperature' => 1.0, // Maximum temperature for variety
+            ]);
+
+            // Delete old message and create new one
+            global $wpdb;
+            $table = $wpdb->prefix . 'aichat_messages';
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $wpdb->delete($table, ['id' => $message_id], ['%d']);
+
+            // Save new AI response
+            $new_message = WPAIC_Message::create([
+                'conversation_id' => $conversation['id'],
+                'role' => 'assistant',
+                'content' => $response['content'],
+                'tokens_used' => $response['tokens_used'],
+                'input_tokens' => $response['input_tokens'] ?? 0,
+                'output_tokens' => $response['output_tokens'] ?? 0,
+                'ai_provider' => $settings['ai_provider'] ?? 'openai',
+                'ai_model' => $response['model'] ?? null,
+            ]);
+
+            // Increment message count
+            $pro_features->increment_message_count();
+
+            $sources = array_filter(array_column($related_content, 'url'));
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'message_id'  => $new_message['id'],
+                    'content'     => $response['content'],
+                    'tokens_used' => $response['tokens_used'],
+                    'sources'     => array_values($sources),
+                ],
+            ], 200);
+
+        } catch (Exception $e) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get conversation summary (Pro feature)
+     */
+    public function get_conversation_summary(WP_REST_Request $request): WP_REST_Response {
+        // Check Pro license
+        $pro_features = WPAIC_Pro_Features::get_instance();
+        if (!$pro_features->is_pro()) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
+            ], 403);
+        }
+
+        $session_id = $request->get_param('session_id');
+
+        // Session ownership already verified by check_session_permission()
+
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+
+        if (!$conversation) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Conversation not found.', 'rapls-ai-chatbot'),
+            ], 404);
+        }
+
+        // Get all messages
+        $messages = WPAIC_Message::get_by_conversation($conversation['id'], 100);
+
+        if (count($messages) < 4) {
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'summary' => null,
+                    'message' => __('Conversation is too short to summarize.', 'rapls-ai-chatbot'),
+                ],
+            ], 200);
+        }
+
+        // Build conversation text for summary
+        $conversation_text = '';
+        foreach ($messages as $msg) {
+            if ($msg['role'] === 'user') {
+                $conversation_text .= "User: " . $msg['content'] . "\n";
+            } elseif ($msg['role'] === 'assistant') {
+                $conversation_text .= "Assistant: " . wp_trim_words($msg['content'], 50) . "\n";
+            }
+        }
+
+        try {
+            // Get AI provider
+            $provider = $this->get_ai_provider();
+
+            // Generate summary
+            $sum_settings = get_option('wpaic_settings', []);
+            $summary_prompt = $sum_settings['summary_prompt'] ?? __('Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:', 'rapls-ai-chatbot');
+
+            $response = $provider->generate_response([
+                ['role' => 'user', 'content' => $summary_prompt . "\n\n" . $conversation_text]
+            ], [
+                'max_tokens' => 200,
+                'temperature' => 0.3,
+            ]);
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'summary'       => $response['content'],
+                    'message_count' => count($messages),
+                ],
+            ], 200);
+
+        } catch (Exception $e) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get related question suggestions (Pro feature)
+     */
+    public function get_related_suggestions(WP_REST_Request $request): WP_REST_Response {
+        try {
+            // Check Pro license
+            $pro_features = WPAIC_Pro_Features::get_instance();
+            if (!$pro_features->is_pro()) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            // Check if related suggestions are enabled
+            $settings = get_option('wpaic_settings', []);
+            $pro_settings = $settings['pro_features'] ?? [];
+            if (empty($pro_settings['related_suggestions_enabled'])) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            $session_id = $request->get_param('session_id');
+            $last_response = $request->get_param('last_response');
+
+            $conversation = WPAIC_Conversation::get_by_session($session_id);
+            if (!$conversation) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            // Get recent messages for context
+            $messages = WPAIC_Message::get_context_messages($conversation['id'], 4);
+
+            if (empty($messages)) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            // Get AI provider
+            $provider = $this->get_ai_provider();
+
+            // Build context
+            $context = '';
+            foreach ($messages as $msg) {
+                // Decode HTML entities to avoid issues with AI
+                $content = html_entity_decode(wp_trim_words($msg['content'], 30), ENT_QUOTES, 'UTF-8');
+                $context .= ($msg['role'] === 'user' ? 'Q: ' : 'A: ') . $content . "\n";
+            }
+
+            // Generate suggestions
+            $suggestion_prompt = __('Based on the following conversation, suggest 3 short follow-up questions the user might want to ask. Return only the questions, one per line, without numbering:', 'rapls-ai-chatbot');
+
+            // Use higher token limit for reasoning models (o1, o3, etc.)
+            $response = $provider->send_message([
+                ['role' => 'user', 'content' => $suggestion_prompt . "\n\n" . $context]
+            ], [
+                'max_tokens' => 1000,
+                'temperature' => 0.7,
+            ]);
+
+            // Parse suggestions
+            $suggestions = array_filter(
+                array_map('trim', explode("\n", $response['content'])),
+                function($s) { $len = function_exists('mb_strlen') ? mb_strlen($s) : strlen($s); return !empty($s) && $len > 5 && $len < 100; }
+            );
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'suggestions' => array_values(array_slice($suggestions, 0, 3)),
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => ['suggestions' => []],
+            ], 200);
+        }
+    }
+
+    /**
+     * Get autocomplete suggestions (Pro feature)
+     */
+    public function get_autocomplete(WP_REST_Request $request): WP_REST_Response {
+        try {
+            // Check Pro license
+            $pro_features = WPAIC_Pro_Features::get_instance();
+            if (!$pro_features->is_pro()) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            // Check if autocomplete is enabled
+            $settings = get_option('wpaic_settings', []);
+            $pro_settings = $settings['pro_features'] ?? [];
+            if (empty($pro_settings['autocomplete_enabled'])) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            $query = $request->get_param('query');
+
+            $query_len = function_exists('mb_strlen') ? mb_strlen($query) : strlen($query);
+            if ($query_len < 3) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            // Get suggestions from knowledge base and past questions
+            $suggestions = [];
+
+            // Search knowledge base for matching questions
+            try {
+                $knowledge = WPAIC_Knowledge::search($query, 5);
+                foreach ($knowledge as $item) {
+                    if (!empty($item['question'])) {
+                        $suggestions[] = $item['question'];
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Skip knowledge search on error
+            }
+
+            // Search past user messages for similar questions
+            try {
+                global $wpdb;
+                // Table name is safe - uses $wpdb->prefix with hardcoded suffix
+                $msg_table = $wpdb->prefix . 'aichat_messages';
+
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $past_questions = $wpdb->get_col($wpdb->prepare(
+                    "SELECT DISTINCT content FROM {$msg_table}
+                     WHERE role = 'user'
+                     AND content LIKE %s
+                     AND CHAR_LENGTH(content) > 10
+                     AND CHAR_LENGTH(content) < 150
+                     ORDER BY created_at DESC
+                     LIMIT 5",
+                    '%' . $wpdb->esc_like($query) . '%'
+                ));
+
+                if ($past_questions) {
+                    $suggestions = array_merge($suggestions, $past_questions);
+                }
+            } catch (\Throwable $e) {
+                // Skip past questions on error
+            }
+
+            // Remove duplicates and limit
+            $suggestions = array_unique($suggestions);
+            $suggestions = array_slice($suggestions, 0, 5);
+
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'suggestions' => array_values($suggestions),
+                ],
+            ], 200);
+
+        } catch (\Throwable $e) {
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => ['suggestions' => []],
+            ], 200);
+        }
+    }
+
+    /**
+     * Extract FAQ answer from knowledge search results
+     *
+     * @param array  $results Knowledge search results
+     * @param string $query   User query
+     * @return string FAQ answer or empty string if no match
+     */
+    private function extract_faq_answer(array $results, string $query): string {
+        if (empty($results)) {
+            return '';
+        }
+
+        // Try Q&A format extraction from the best match
+        $best = $results[0];
+        $content = $best['content'] ?? '';
+
+        if (empty($content)) {
+            return '';
+        }
+
+        // Check if content contains Q&A format
+        if (preg_match('/(?:Answer|A)\s*[:：]\s*(.+)/uis', $content, $matches)) {
+            return trim($matches[1]);
+        }
+
+        // If content has a title matching the query closely, return the content as-is
+        $title = $best['title'] ?? '';
+        $query_lower = mb_strtolower($query);
+        $title_lower = mb_strtolower($title);
+
+        if (!empty($title) && (
+            mb_strpos($title_lower, $query_lower) !== false ||
+            mb_strpos($query_lower, $title_lower) !== false
+        )) {
+            return $content;
+        }
+
+        // Return best match content if score is high enough
+        if (($best['score'] ?? 0) >= 30) {
+            return $content;
+        }
+
+        return '';
+    }
+
+    /**
+     * Track conversion (Pro feature)
+     */
+    public function track_conversion(WP_REST_Request $request): WP_REST_Response {
+        // Session ownership already verified by check_session_permission()
+        $session_id = $request->get_param('session_id');
+        $goal = $request->get_param('goal') ?? '';
+
+        $settings = get_option('wpaic_settings', []);
+        $pro_settings = $settings['pro_features'] ?? [];
+
+        if (empty($pro_settings['conversion_tracking_enabled'])) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Conversion tracking is not enabled.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        $result = WPAIC_Conversation::mark_converted($session_id, $goal);
+
+        return new WP_REST_Response([
+            'success' => $result,
+        ], $result ? 200 : 400);
+    }
+
+    /**
+     * Submit offline message (Pro feature)
+     */
+    public function submit_offline_message(WP_REST_Request $request): WP_REST_Response {
+        $name = $request->get_param('name') ?? '';
+        $email = $request->get_param('email');
+        $message = $request->get_param('message');
+        $page_url = $request->get_param('page_url') ?? '';
+
+        if (empty($email) || !is_email($email)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('A valid email address is required.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        if (empty($message)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Message is required.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Message length limit (5,000 characters)
+        $msg_len = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
+        if ($msg_len > 5000) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Message is too long. Maximum 5,000 characters.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        $settings = get_option('wpaic_settings', []);
+        $pro_settings = $settings['pro_features'] ?? [];
+
+        if (empty($pro_settings['offline_message_enabled'])) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Offline messages are not enabled.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        // Rate limit: max 5 offline messages per IP per hour
+        $ip = $this->get_client_ip();
+        if (!empty($ip)) {
+            $ip_hash = hash('sha256', $ip . wp_salt());
+            $transient_key = 'wpaic_offline_rate_' . substr($ip_hash, 0, 32);
+            $count = (int) get_transient($transient_key);
+            if ($count >= 5) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Too many submissions. Please try again later.', 'rapls-ai-chatbot'),
+                ], 429);
+            }
+            set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
+        }
+
+        // Verify reCAPTCHA if enabled
+        $recaptcha_token = $request->get_param('recaptcha_token');
+        $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'offline');
+        if (is_wp_error($recaptcha_result)) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => $recaptcha_result->get_error_message(),
+            ], 403);
+        }
+
+        // Save as a lead with type 'offline_message'
+        global $wpdb;
+        $leads_table = $wpdb->prefix . 'aichat_leads';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $result = $wpdb->insert($leads_table, [
+            'conversation_id' => 0,
+            'name'            => $name,
+            'email'           => $email,
+            'custom_fields'   => wp_json_encode([
+                'type'     => 'offline_message',
+                'message'  => $message,
+                'page_url' => $page_url,
+            ], JSON_UNESCAPED_UNICODE),
+        ]);
+
+        if (!$result) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Failed to save message.', 'rapls-ai-chatbot'),
+            ], 500);
+        }
+
+        // Send email notification
+        if (!empty($pro_settings['offline_notification_enabled'])) {
+            $to = $pro_settings['offline_notification_email'] ?? '';
+            if (empty($to)) {
+                $to = get_option('admin_email');
+            }
+
+            $site_name = get_bloginfo('name');
+            $subject = sprintf(
+                /* translators: %s: site name */
+                __('[%s] New Offline Message', 'rapls-ai-chatbot'),
+                $site_name
+            );
+
+            $body = sprintf(
+                "%s: %s\n%s: %s\n\n%s:\n%s",
+                __('Name', 'rapls-ai-chatbot'),
+                $name ?: __('(not provided)', 'rapls-ai-chatbot'),
+                __('Email', 'rapls-ai-chatbot'),
+                $email,
+                __('Message', 'rapls-ai-chatbot'),
+                $message
+            );
+
+            if (!empty($page_url)) {
+                $body .= "\n\n" . __('Page', 'rapls-ai-chatbot') . ': ' . $page_url;
+            }
+
+            wp_mail($to, $subject, $body);
+        }
+
+        // Trigger webhook
+        if (class_exists('WPAIC_Webhook')) {
+            try {
+                $webhook = WPAIC_Webhook::get_instance();
+                $webhook->send('offline_message_received', [
+                    'name'     => $name,
+                    'email'    => $email,
+                    'message'  => $message,
+                    'page_url' => $page_url,
+                ]);
+            } catch (\Throwable $e) {
+                // Ignore webhook errors
+            }
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data'    => [
+                'message' => __('Thank you! Your message has been received. We will get back to you soon.', 'rapls-ai-chatbot'),
+            ],
+        ], 200);
+    }
+}

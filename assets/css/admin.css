@@ -1,0 +1,1364 @@
+/**
+ * WP AI Chatbot - 管理画面スタイル
+ */
+
+/* ============================================
+   共通スタイル
+============================================ */
+.wpaic-admin {
+    max-width: 1200px;
+}
+
+.wpaic-admin h1 {
+    margin-bottom: 20px;
+}
+
+.wpaic-admin h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* ============================================
+   カード
+============================================ */
+.wpaic-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.wpaic-card h2 {
+    margin: -20px -20px 20px;
+    padding: 15px 20px;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+}
+
+/* ============================================
+   ダッシュボード
+============================================ */
+.wpaic-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.wpaic-stats-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    grid-column: 1 / -1;
+}
+
+.wpaic-dashboard-grid .wpaic-card-full {
+    grid-column: 1 / -1;
+}
+
+.wpaic-stat-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.wpaic-stat-card .stat-icon {
+    font-size: 36px;
+    line-height: 1;
+}
+
+.wpaic-stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+.wpaic-stat-card .stat-label {
+    color: #50575e;
+    font-size: 14px;
+}
+
+.wpaic-stat-card-warning {
+    border-color: #dba617;
+    background: #fef8ee;
+}
+
+.wpaic-stat-card-warning .stat-value {
+    color: #96600a;
+}
+
+.wpaic-stat-card-critical {
+    border-color: #d63638;
+    background: #fef0f0;
+}
+
+.wpaic-stat-card-critical .stat-value {
+    color: #d63638;
+}
+
+/* ============================================
+   クイックアクション
+============================================ */
+.wpaic-quick-actions {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.wpaic-quick-actions .action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ============================================
+   ステータステーブル
+============================================ */
+.wpaic-status-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wpaic-status-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.wpaic-status-table td:first-child {
+    color: #50575e;
+    width: 40%;
+}
+
+.wpaic-status-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ステータスバッジ */
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.status-ok {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.status-off {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.status-active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-closed {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.status-badge.status-archived {
+    background: #d6d8db;
+    color: #1b1e21;
+}
+
+/* ============================================
+   設定タブ
+============================================ */
+.wpaic-settings-tabs .nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+.wpaic-settings-tabs .tab-content {
+    display: none;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+    padding: 20px;
+    margin-top: -1px;
+}
+
+.wpaic-settings-tabs .tab-content.active {
+    display: block;
+}
+
+.wpaic-settings-tabs .provider-settings {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.wpaic-settings-tabs .provider-settings h3 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+/* APIキー入力 */
+.wpaic-api-key-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wpaic-api-key-wrapper input[type="password"] {
+    flex: 0 0 300px;
+}
+
+.wpaic-key-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+
+.wpaic-key-status.wpaic-key-set {
+    background: #d4edda;
+    color: #155724;
+}
+
+.wpaic-key-status.wpaic-key-empty {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.wpaic-clear-api-key {
+    color: #b32d2e !important;
+    border-color: #b32d2e !important;
+}
+
+.wpaic-clear-api-key:hover {
+    background: #b32d2e !important;
+    color: #fff !important;
+}
+
+/* ============================================
+   クローラーページ
+============================================ */
+.wpaic-crawler-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.wpaic-crawler-grid .wpaic-card-full {
+    grid-column: 1 / -1;
+}
+
+.wpaic-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+#crawl-status {
+    margin-left: 10px;
+    color: #50575e;
+}
+
+/* ============================================
+   モーダル
+============================================ */
+.wpaic-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpaic-modal-content {
+    background: #fff;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.wpaic-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.wpaic-modal-header h2 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.wpaic-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    line-height: 1;
+}
+
+.wpaic-modal-close:hover {
+    color: #000;
+}
+
+.wpaic-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* 会話メッセージ */
+.wpaic-message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 8px;
+}
+
+.wpaic-message.message-user {
+    background: #e3f2fd;
+    margin-left: 20%;
+}
+
+.wpaic-message.message-assistant {
+    background: #f5f5f5;
+    margin-right: 20%;
+}
+
+.wpaic-message strong {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.wpaic-message small {
+    color: #666;
+}
+
+.wpaic-message p {
+    margin: 5px 0 0;
+    white-space: pre-wrap;
+}
+
+/* ============================================
+   マージン入力
+============================================ */
+.wpaic-margin-inputs {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.wpaic-margin-inputs label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wpaic-margin-inputs input[type="number"] {
+    text-align: center;
+}
+
+/* ============================================
+   削除ボタン
+============================================ */
+.button-link-delete {
+    color: #b32d2e !important;
+    border-color: #b32d2e !important;
+}
+
+.button-link-delete:hover {
+    background: #b32d2e !important;
+    color: #fff !important;
+}
+
+.button-link-delete:disabled {
+    color: #a0a5aa !important;
+    border-color: #dcdcde !important;
+    background: transparent !important;
+}
+
+/* 一括操作 */
+.wpaic-admin .tablenav .bulkactions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.wpaic-admin .tablenav .bulkactions .button {
+    margin: 0;
+}
+
+/* ============================================
+   Pro機能
+============================================ */
+
+/* Pro バッジ（小）- タブ用 */
+.wpaic-pro-badge-small {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+/* Pro menu badge styles are in admin-menu.css (loaded on all admin pages) */
+
+/* Pro バッジ（通常） */
+.wpaic-pro-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+/* Pro ステータスバナー */
+.wpaic-pro-status-banner {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wpaic-pro-status-banner .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+}
+
+.wpaic-pro-status-banner.wpaic-pro-active {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.wpaic-pro-status-banner.wpaic-pro-inactive {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+/* Pro 機能セクション */
+.wpaic-pro-feature {
+    position: relative;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.wpaic-pro-feature h3 {
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+}
+
+.wpaic-pro-feature .form-table {
+    margin-top: 10px;
+}
+
+/* h3タイトルをオーバーレイの上に表示 */
+.wpaic-pro-feature h3 {
+    position: relative;
+    z-index: 20;
+    background: #fff;
+    margin: 0 0 15px 0;
+    padding: 10px 0;
+}
+
+/* ロック状態 */
+.wpaic-pro-feature.wpaic-pro-locked {
+    opacity: 1;
+}
+
+.wpaic-pro-feature.wpaic-pro-locked .form-table {
+    opacity: 0.6;
+}
+
+.wpaic-pro-feature.wpaic-pro-locked input,
+.wpaic-pro-feature.wpaic-pro-locked select,
+.wpaic-pro-feature.wpaic-pro-locked textarea,
+.wpaic-pro-feature.wpaic-pro-locked button {
+    pointer-events: none;
+}
+
+/* オーバーレイ */
+.wpaic-pro-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 6px;
+}
+
+.wpaic-pro-overlay-content {
+    text-align: center;
+    padding: 30px;
+}
+
+.wpaic-pro-overlay-content .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.wpaic-pro-overlay-content p {
+    margin: 0 0 15px;
+    color: #666;
+    font-size: 14px;
+}
+
+.wpaic-pro-overlay-content a {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.wpaic-pro-overlay-content a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+/* 使用量バー */
+.wpaic-usage-stats {
+    padding: 10px 0;
+}
+
+.wpaic-usage-bar-container {
+    width: 100%;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.wpaic-usage-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.wpaic-usage-stats p {
+    margin: 5px 0;
+}
+
+.wpaic-usage-stats p.description {
+    color: #666;
+    font-size: 13px;
+}
+
+/* ============================================
+   レスポンシブ
+============================================ */
+@media (max-width: 782px) {
+    .wpaic-stats-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .wpaic-crawler-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wpaic-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .wpaic-admin .tablenav .bulkactions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wpaic-pro-feature {
+        padding: 15px;
+    }
+
+    .wpaic-pro-overlay-content {
+        padding: 20px;
+    }
+}
+
+/* ============================================
+   ツールチップ
+============================================ */
+.wpaic-tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #e0e0e0;
+    color: #666;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: help;
+    margin-left: 6px;
+    position: relative;
+    vertical-align: middle;
+    transition: background 0.2s, color 0.2s;
+}
+
+.wpaic-tooltip:hover {
+    background: #667eea;
+    color: #fff;
+}
+
+.wpaic-tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1d2327;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.5;
+    white-space: normal;
+    width: 280px;
+    max-width: 320px;
+    text-align: left;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+}
+
+.wpaic-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1d2327;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    z-index: 1000;
+}
+
+.wpaic-tooltip:hover::before,
+.wpaic-tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 右寄せ調整（画面端で切れないように） */
+.wpaic-tooltip.wpaic-tooltip-left::before {
+    left: 0;
+    transform: translateX(0);
+}
+
+.wpaic-tooltip.wpaic-tooltip-left::after {
+    left: 9px;
+    transform: translateX(0);
+}
+
+.wpaic-tooltip.wpaic-tooltip-right::before {
+    left: auto;
+    right: 0;
+    transform: translateX(0);
+}
+
+.wpaic-tooltip.wpaic-tooltip-right::after {
+    left: auto;
+    right: 9px;
+    transform: translateX(0);
+}
+
+/* ============================================
+   テーマセレクター
+============================================ */
+.wpaic-theme-selector {
+    max-width: 600px;
+}
+
+.wpaic-theme-group-label {
+    font-weight: 600;
+    margin: 15px 0 10px 0;
+    color: #1d2327;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wpaic-theme-group-label:first-child {
+    margin-top: 0;
+}
+
+.wpaic-theme-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.wpaic-themes-locked {
+    opacity: 0.7;
+}
+
+.wpaic-theme-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: all 0.2s;
+    position: relative;
+    background: #fff;
+}
+
+.wpaic-theme-option:hover {
+    border-color: #667eea;
+}
+
+.wpaic-theme-option.selected {
+    border-color: #667eea;
+    background: #f0f3ff;
+}
+
+.wpaic-theme-option.disabled {
+    cursor: not-allowed;
+}
+
+.wpaic-theme-option.disabled:hover {
+    border-color: #ddd;
+}
+
+.wpaic-theme-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wpaic-theme-preview {
+    pointer-events: none;
+    width: 80px;
+    height: 60px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border: 1px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Free Themes Previews */
+.wpaic-theme-preview-default {
+    background: linear-gradient(180deg, #007bff 30%, #f5f5f5 30%);
+}
+
+.wpaic-theme-preview-default::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #007bff;
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-simple {
+    background: #fff;
+    border: 2px solid #e0e0e0;
+}
+
+.wpaic-theme-preview-simple::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.wpaic-theme-preview-classic {
+    background: linear-gradient(180deg, #2c3e50 30%, #ecf0f1 30%);
+}
+
+.wpaic-theme-preview-classic::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #2c3e50;
+    border-radius: 2px;
+}
+
+/* Pro Themes Previews */
+.wpaic-theme-preview-modern {
+    background: linear-gradient(180deg, #1a1a2e 30%, #16213e 30%);
+}
+
+.wpaic-theme-preview-modern::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.wpaic-theme-preview-gradient::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-dark {
+    background: linear-gradient(180deg, #1e1e1e 30%, #2d2d2d 30%);
+}
+
+.wpaic-theme-preview-dark::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #4a9eff;
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-glass {
+    background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+
+.wpaic-theme-preview-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    z-index: -1;
+}
+
+.wpaic-theme-preview-rounded {
+    background: linear-gradient(180deg, #ff6b6b 30%, #fff5f5 30%);
+    border-radius: 12px;
+}
+
+.wpaic-theme-preview-rounded::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 10px;
+    background: #ff6b6b;
+    border-radius: 10px;
+}
+
+.wpaic-theme-name {
+    font-size: 12px;
+    color: #50575e;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+.wpaic-theme-option.selected .wpaic-theme-name {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.wpaic-theme-lock {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.wpaic-theme-lock .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+/* New Free Theme Previews */
+.wpaic-theme-preview-light {
+    background: linear-gradient(180deg, #fff 30%, #fafafa 30%);
+    border: 2px solid #e8e8e8;
+}
+
+.wpaic-theme-preview-light::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #5c9eff;
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-minimal {
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+.wpaic-theme-preview-minimal::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    height: 12px;
+    background: #333;
+    border-radius: 2px;
+}
+
+.wpaic-theme-preview-minimal::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+}
+
+.wpaic-theme-preview-flat {
+    background: linear-gradient(180deg, #3498db 30%, #ecf0f1 30%);
+}
+
+.wpaic-theme-preview-flat::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #3498db;
+    border-radius: 0;
+}
+
+/* New Pro Theme Previews */
+.wpaic-theme-preview-ocean {
+    background: linear-gradient(180deg, #006994 30%, #e0f7fa 30%);
+}
+
+.wpaic-theme-preview-ocean::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: linear-gradient(90deg, #00bcd4, #006994);
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-sunset {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffcc00 100%);
+}
+
+.wpaic-theme-preview-sunset::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-forest {
+    background: linear-gradient(180deg, #1b4332 30%, #d8f3dc 30%);
+}
+
+.wpaic-theme-preview-forest::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: #2d6a4f;
+    border-radius: 4px;
+}
+
+.wpaic-theme-preview-neon {
+    background: #0a0a0a;
+}
+
+.wpaic-theme-preview-neon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(90deg, #ff00ff, #00ffff);
+}
+
+.wpaic-theme-preview-neon::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: linear-gradient(90deg, #00ffff, #ff00ff);
+    border-radius: 4px;
+    box-shadow: 0 0 10px #00ffff;
+}
+
+.wpaic-theme-preview-elegant {
+    background: linear-gradient(180deg, #1a1a1a 30%, #f5f5f5 30%);
+    border: 1px solid #c9a961;
+}
+
+.wpaic-theme-preview-elegant::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    border-bottom: 2px solid #c9a961;
+}
+
+.wpaic-theme-preview-elegant::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    height: 8px;
+    background: linear-gradient(90deg, #c9a961, #f0d78c);
+    border-radius: 4px;
+}
+
+/* ============================================
+   リセットボタン
+============================================ */
+
+/* タブリセットボタン */
+.wpaic-tab-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.wpaic-tab-header h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.wpaic-reset-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    color: #50575e;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wpaic-reset-tab-btn:hover {
+    background: #fff;
+    border-color: #8c8f94;
+    color: #1d2327;
+}
+
+.wpaic-reset-tab-btn .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* フィールドリセットボタン */
+.wpaic-field-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 5px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    color: #8c8f94;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: all 0.2s;
+}
+
+.wpaic-field-reset:hover {
+    background: #f0f0f1;
+    border-color: #c3c4c7;
+    color: #1d2327;
+}
+
+.wpaic-field-reset .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* フィールドラッパー */
+.wpaic-field-with-reset {
+    display: inline-flex;
+    align-items: center;
+}
+
+.wpaic-field-with-reset input[type="text"],
+.wpaic-field-with-reset input[type="number"],
+.wpaic-field-with-reset input[type="email"],
+.wpaic-field-with-reset input[type="url"],
+.wpaic-field-with-reset textarea {
+    flex: 1;
+}
+
+/* ============================================
+   フィードバックバッジ
+============================================ */
+.wpaic-feedback-badge {
+    display: inline-block;
+    font-size: 14px;
+    margin-left: 5px;
+    cursor: help;
+}
+
+.wpaic-feedback-positive {
+    color: #00a32a;
+}
+
+.wpaic-feedback-negative {
+    color: #d63638;
+}
+
+/* 設定画面 Pro アップグレードバナー */
+.wpaic-pro-settings-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin: 15px 0 5px;
+    font-size: 14px;
+}
+
+.wpaic-pro-settings-banner .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #ffd700;
+}
+
+.wpaic-pro-settings-banner span:nth-child(2) {
+    flex: 1;
+}
+
+.wpaic-pro-settings-banner .button {
+    background: #fff;
+    color: #667eea;
+    border: none;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.wpaic-pro-settings-banner .button:hover {
+    background: #f0f0f0;
+    color: #764ba2;
+}
+
+/* 会話詳細モーダル内のフィードバック */
+.wpaic-message .wpaic-feedback-badge {
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+/* Sortable column headers */
+.wpaic-sortable,
+.wpaic-sorted {
+    text-decoration: none;
+    color: #2271b1;
+    white-space: nowrap;
+}
+
+.wpaic-sortable:hover {
+    color: #135e96;
+}
+
+.wpaic-sorted {
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.wpaic-sorted:hover {
+    color: #135e96;
+}
+
+.wpaic-sort-indicator {
+    font-size: 10px;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+
+/* List statistics cards */
+.wpaic-list-stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.wpaic-list-stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left-width: 4px;
+    border-left-color: #2271b1;
+    border-radius: 4px;
+    padding: 12px 18px;
+    min-width: 120px;
+}
+
+.wpaic-list-stat-card .stat-value {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #1d2327;
+}
+
+.wpaic-list-stat-card .stat-label {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 2px;
+}
+
+.wpaic-list-stat-card.stat-highlight {
+    border-left-color: #00a32a;
+}
+
+.wpaic-list-stat-card.stat-warning {
+    border-left-color: #dba617;
+}
+
+.wpaic-list-stat-card.stat-info {
+    border-left-color: #667eea;
+}
+
+/* Advanced section toggle */
+.wpaic-advanced-section.wpaic-advanced-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+}
+
+.wpaic-advanced-section.wpaic-advanced-disabled textarea,
+.wpaic-advanced-section.wpaic-advanced-disabled input,
+.wpaic-advanced-section.wpaic-advanced-disabled button,
+.wpaic-advanced-section.wpaic-advanced-disabled select {
+    pointer-events: none;
+}
+
+.wpaic-advanced-toggle {
+    vertical-align: middle;
+    margin-right: 4px;
+}

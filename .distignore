@@ -1,0 +1,33 @@
+# Files and directories to exclude from WordPress.org SVN distribution
+# Used by wp dist-archive and similar tools
+
+# Development files
+.distignore
+.gitignore
+.git
+.github
+.claude
+.serena
+
+# Documentation and server-side files (contains credentials)
+docs/
+
+# IDE and OS files
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
+
+# Node/Composer dev files (if any)
+node_modules/
+composer.json
+composer.lock
+package.json
+package-lock.json
+
+# CI/CD
+.travis.yml
+phpunit.xml
+phpcs.xml
+tests/

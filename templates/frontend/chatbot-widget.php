@@ -1,0 +1,131 @@
+<?php
+/**
+ * チャットボットウィジェットテンプレート
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+?>
+<div id="wp-ai-chatbot" class="wp-ai-chatbot wpaic-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed">
+
+    <!-- バッジ（閉じた状態） -->
+    <button class="chatbot-badge" aria-label="チャットを開く">
+        <?php if ($badge_icon_type === 'preset' && !empty($badge_icon_preset)) : ?>
+            <?php echo wp_kses(wpaic_get_badge_preset_svg($badge_icon_preset), wpaic_get_svg_allowed_tags()); ?>
+        <?php elseif ($badge_icon_type === 'image' && !empty($badge_icon_image)) : ?>
+            <img class="badge-icon-image" src="<?php echo esc_url($badge_icon_image); ?>" alt="">
+        <?php elseif ($badge_icon_type === 'emoji' && !empty($badge_icon_emoji)) : ?>
+            <span class="badge-icon-emoji"><?php echo esc_html($badge_icon_emoji); ?></span>
+        <?php else : ?>
+            <svg class="badge-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+                <circle cx="8" cy="10" r="1.5"/>
+                <circle cx="12" cy="10" r="1.5"/>
+                <circle cx="16" cy="10" r="1.5"/>
+            </svg>
+        <?php endif; ?>
+        <span class="badge-notification" hidden></span>
+    </button>
+
+    <!-- チャットウィンドウ -->
+    <div class="chatbot-window" aria-hidden="true">
+
+        <!-- ヘッダー -->
+        <header class="chatbot-header">
+            <div class="header-info">
+                <?php if ($bot_avatar_is_image): ?>
+                    <img class="bot-avatar bot-avatar-img" src="<?php echo esc_url($bot_avatar); ?>" alt="<?php echo esc_attr($bot_name); ?>">
+                <?php else: ?>
+                    <span class="bot-avatar"><?php echo esc_html($bot_avatar); ?></span>
+                <?php endif; ?>
+                <div class="header-text">
+                    <span class="bot-name"><?php echo esc_html($bot_name); ?></span>
+                    <span class="bot-status">オンライン</span>
+                </div>
+            </div>
+            <button class="chatbot-close" aria-label="閉じる">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- リード獲得フォーム（Pro機能） -->
+        <div class="chatbot-lead-form" hidden>
+            <div class="lead-form-content">
+                <h3 class="lead-form-title"></h3>
+                <p class="lead-form-description"></p>
+                <form class="lead-form" novalidate>
+                    <div class="lead-field lead-field-name" hidden>
+                        <label for="lead-name"><?php esc_html_e('Name', 'rapls-ai-chatbot'); ?></label>
+                        <input type="text" id="lead-name" name="name" autocomplete="name">
+                    </div>
+                    <div class="lead-field lead-field-email" hidden>
+                        <label for="lead-email"><?php esc_html_e('Email', 'rapls-ai-chatbot'); ?></label>
+                        <input type="email" id="lead-email" name="email" autocomplete="email">
+                    </div>
+                    <div class="lead-field lead-field-phone" hidden>
+                        <label for="lead-phone"><?php esc_html_e('Phone', 'rapls-ai-chatbot'); ?></label>
+                        <input type="tel" id="lead-phone" name="phone" autocomplete="tel">
+                    </div>
+                    <div class="lead-field lead-field-company" hidden>
+                        <label for="lead-company"><?php esc_html_e('Company', 'rapls-ai-chatbot'); ?></label>
+                        <input type="text" id="lead-company" name="company" autocomplete="organization">
+                    </div>
+                    <div class="lead-form-buttons">
+                        <button type="submit" class="lead-submit-btn"><?php esc_html_e('Start Chat', 'rapls-ai-chatbot'); ?></button>
+                        <button type="button" class="lead-skip-btn" hidden><?php esc_html_e('Skip', 'rapls-ai-chatbot'); ?></button>
+                    </div>
+                    <div class="lead-form-error" hidden></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- メッセージエリア -->
+        <div class="chatbot-messages" role="log" aria-live="polite">
+            <!-- メッセージはJavaScriptで追加される -->
+        </div>
+
+        <!-- タイピングインジケーター -->
+        <div class="chatbot-typing" hidden aria-label="入力中">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <!-- 画像プレビュー（Pro: マルチモーダル） -->
+        <div class="chatbot-image-preview" hidden>
+            <img src="" alt="プレビュー">
+            <button type="button" class="image-preview-remove" aria-label="画像を削除">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 入力エリア -->
+        <form class="chatbot-input" autocomplete="off" novalidate>
+            <input type="file" class="chatbot-image-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
+            <button type="button" class="chatbot-image-btn" aria-label="画像をアップロード" hidden>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+            </button>
+            <textarea
+                name="wpaic_message_<?php echo esc_attr(uniqid()); ?>"
+                placeholder="メッセージを入力..."
+                rows="1"
+                aria-label="メッセージ入力"
+                autocomplete="new-password"
+                spellcheck="false"
+            ></textarea>
+            <button type="submit" aria-label="送信">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </form>
+
+    </div>
+</div>

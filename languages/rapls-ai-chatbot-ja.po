@@ -1,0 +1,3803 @@
+# Japanese translations for Rapls AI Chatbot plugin.
+# Copyright (C) 2024 Yoshiaki Miyaguchi
+# This file is distributed under the same license as the Rapls AI Chatbot plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Rapls AI Chatbot 1.2.18\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-12-12 00:00+0000\n"
+"PO-Revision-Date: 2026-02-12 00:00+0900\n"
+"Last-Translator: \n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# Menu items
+msgid "AI Chatbot"
+msgstr "AI チャットボット"
+
+msgid "Dashboard"
+msgstr "ダッシュボード"
+
+msgid "Settings"
+msgstr "設定"
+
+msgid "Site Learning"
+msgstr "サイト学習"
+
+msgid "Conversations"
+msgstr "会話履歴"
+
+msgid "Knowledge"
+msgstr "学習"
+
+# Dashboard
+msgid "AI Chatbot - Dashboard"
+msgstr "AI チャットボット - ダッシュボード"
+
+msgid "Total Conversations"
+msgstr "総会話数"
+
+msgid "Today's Messages"
+msgstr "今日のメッセージ"
+
+msgid "Indexed Pages"
+msgstr "学習済みページ"
+
+msgid "Custom Knowledge"
+msgstr "カスタム学習データ"
+
+msgid "Quick Actions"
+msgstr "クイックアクション"
+
+msgid "Status"
+msgstr "設定状態"
+
+msgid "AI Provider"
+msgstr "AI プロバイダー"
+
+msgid "API Key not set"
+msgstr "API キー未設定"
+
+msgid "Save History"
+msgstr "履歴保存"
+
+msgid "Enabled"
+msgstr "有効"
+
+msgid "Disabled"
+msgstr "無効"
+
+# Settings page
+msgid "AI Chatbot - Settings"
+msgstr "AI チャットボット - 設定"
+
+msgid "AI Settings"
+msgstr "AI 設定"
+
+msgid "Chat Settings"
+msgstr "チャット設定"
+
+msgid "Display Settings"
+msgstr "表示設定"
+
+msgid "reCAPTCHA"
+msgstr "reCAPTCHA"
+
+msgid "Advanced"
+msgstr "詳細設定"
+
+msgid "API Key"
+msgstr "API キー"
+
+msgid "Model"
+msgstr "モデル"
+
+msgid "Test Connection"
+msgstr "接続テスト"
+
+msgid "Remove"
+msgstr "削除"
+
+msgid "Configured"
+msgstr "設定済み"
+
+msgid "Not configured"
+msgstr "未設定"
+
+msgid "Enter your OpenAI API key."
+msgstr "OpenAI の API キーを入力してください。"
+
+msgid "Enter your Anthropic API key."
+msgstr "Anthropic の API キーを入力してください。"
+
+msgid "Get your API key from Google AI Studio."
+msgstr "Google AI Studio から API キーを取得してください。"
+
+msgid "OpenAI Settings"
+msgstr "OpenAI 設定"
+
+msgid "Claude Settings"
+msgstr "Claude 設定"
+
+msgid "Gemini Settings"
+msgstr "Gemini 設定"
+
+msgid "Bot Name"
+msgstr "ボット名"
+
+msgid "Avatar"
+msgstr "アバター"
+
+msgid "Enter an emoji."
+msgstr "絵文字を入力してください。"
+
+msgid "Welcome Message"
+msgstr "ウェルカムメッセージ"
+
+msgid "System Prompt"
+msgstr "システムプロンプト"
+
+msgid "A prompt that defines the AI behavior."
+msgstr "AI の動作を定義するプロンプトです。"
+
+msgid "Max Tokens"
+msgstr "最大トークン数"
+
+msgid "Temperature"
+msgstr "温度"
+
+msgid "Closer to 0 is more deterministic, closer to 2 is more random."
+msgstr "0に近いほど確定的、2に近いほどランダムになります。"
+
+msgid "Badge Position (Margin)"
+msgstr "バッジ位置（マージン）"
+
+msgid "Right:"
+msgstr "右:"
+
+msgid "Bottom:"
+msgstr "下:"
+
+msgid "Adjust the badge position from the bottom right of the screen."
+msgstr "画面右下からのバッジ位置を調整します。"
+
+msgid "Primary Color"
+msgstr "メインカラー"
+
+msgid "Mobile Display"
+msgstr "モバイル表示"
+
+msgid "Show on mobile devices"
+msgstr "モバイルデバイスで表示"
+
+msgid "Enable reCAPTCHA"
+msgstr "reCAPTCHA を有効化"
+
+msgid "Protect with reCAPTCHA v3"
+msgstr "reCAPTCHA v3 で保護"
+
+msgid "Site Key"
+msgstr "サイトキー"
+
+msgid "reCAPTCHA v3 site key"
+msgstr "reCAPTCHA v3 のサイトキー"
+
+msgid "Secret Key"
+msgstr "シークレットキー"
+
+msgid "reCAPTCHA v3 secret key"
+msgstr "reCAPTCHA v3 のシークレットキー"
+
+msgid "Key saved (encrypted). Leave empty to keep current key."
+msgstr "キーは保存済み（暗号化）。現在のキーを維持する場合は空のままにしてください。"
+
+msgid "Score Threshold"
+msgstr "スコア閾値"
+
+msgid "0.0-1.0 (default: 0.5). Requests below this score will be blocked."
+msgstr "0.0〜1.0（デフォルト: 0.5）。このスコア以下のリクエストはブロックされます。"
+
+msgid "Use Existing reCAPTCHA"
+msgstr "既存の reCAPTCHA を使用"
+
+msgid "Use existing reCAPTCHA on the page"
+msgstr "ページ上の既存の reCAPTCHA を使用"
+
+msgid "If another plugin (e.g., Contact Form 7) loads reCAPTCHA, avoid loading the script twice."
+msgstr "他のプラグイン（Contact Form 7 など）が reCAPTCHA を読み込んでいる場合、スクリプトの重複読み込みを避けます。"
+
+msgid "Use Google reCAPTCHA v3 to prevent spam."
+msgstr "Google reCAPTCHA v3 を使用してスパムを防止します。"
+
+msgid "Get keys from Google reCAPTCHA Admin Console"
+msgstr "Google reCAPTCHA 管理コンソールからキーを取得"
+
+msgid "Save conversation history"
+msgstr "会話履歴を保存"
+
+msgid "History Retention"
+msgstr "履歴保存期間"
+
+msgid "days"
+msgstr "日"
+
+msgid "0 for unlimited retention"
+msgstr "0で無期限保存"
+
+msgid "Delete Data on Uninstall"
+msgstr "アンインストール時にデータを削除"
+
+msgid "Delete all conversation history, knowledge base, leads, and other plugin data when the plugin is uninstalled"
+msgstr "プラグインのアンインストール時に、すべての会話履歴、ナレッジベース、リード情報、その他のプラグインデータを削除します"
+
+msgid "Warning: This action is irreversible. If disabled, plugin settings will still be removed but database tables (conversations, knowledge base, leads) will be preserved."
+msgstr "警告: この操作は元に戻せません。無効の場合、プラグイン設定は削除されますが、データベーステーブル（会話履歴、ナレッジベース、リード情報）は保持されます。"
+
+msgid "Rate Limit"
+msgstr "レート制限"
+
+msgid "requests/hour"
+msgstr "リクエスト/時間"
+
+msgid "Limit per IP address. 0 for unlimited."
+msgstr "IP アドレスごとの制限。0で無制限。"
+
+msgid "Import/Export Settings"
+msgstr "設定のインポート/エクスポート"
+
+msgid "Export or import all settings as a JSON file."
+msgstr "すべての設定を JSON ファイルとしてエクスポート/インポートします。"
+
+msgid "Export"
+msgstr "エクスポート"
+
+msgid "Export Settings"
+msgstr "設定をエクスポート"
+
+msgid "Include knowledge data"
+msgstr "学習データも含める"
+
+msgid "Download current settings as a JSON file."
+msgstr "現在の設定を JSON ファイルとしてダウンロードします。"
+
+msgid "Import"
+msgstr "インポート"
+
+msgid "Import Settings"
+msgstr "設定をインポート"
+
+msgid "Upload an exported JSON file to restore settings."
+msgstr "エクスポートした JSON ファイルをアップロードして設定を復元します。"
+
+msgid "Reset Settings"
+msgstr "設定を初期化"
+
+msgid "Reset all settings to default values. API keys will also be deleted."
+msgstr "すべての設定をデフォルト値に戻します。API キーも削除されます。"
+
+msgid "Save Settings"
+msgstr "設定を保存"
+
+# Crawler page
+msgid "AI Chatbot - Site Learning"
+msgstr "AI チャットボット - サイト学習"
+
+msgid "Learning Status"
+msgstr "学習状態"
+
+msgid "Learning Feature"
+msgstr "学習機能"
+
+msgid "pages"
+msgstr "ページ"
+
+msgid "Last Crawl"
+msgstr "最終学習日時"
+
+msgid "Never"
+msgstr "未実行"
+
+msgid "Last Result"
+msgstr "最終結果"
+
+msgid "New:"
+msgstr "新規:"
+
+msgid "Updated:"
+msgstr "更新:"
+
+msgid "Skipped:"
+msgstr "スキップ:"
+
+msgid "Run Learning Now"
+msgstr "今すぐ学習を実行"
+
+msgid "Learning Settings"
+msgstr "学習設定"
+
+msgid "Auto-learn site content"
+msgstr "サイトコンテンツを自動学習する"
+
+msgid "Target Content"
+msgstr "対象コンテンツ"
+
+msgid "All Public Content (Recommended)"
+msgstr "すべての公開コンテンツ（推奨）"
+
+msgid "Learn all posts, pages, custom post types, and custom fields."
+msgstr "投稿、固定ページ、カスタム投稿タイプ、カスタムフィールドをすべて学習します。"
+
+msgid "Or select individually:"
+msgstr "または、個別に選択:"
+
+msgid "Auto Learning Interval"
+msgstr "自動学習間隔"
+
+msgid "Hourly"
+msgstr "毎時"
+
+msgid "Twice Daily"
+msgstr "1日2回"
+
+msgid "Daily"
+msgstr "毎日"
+
+msgid "Weekly"
+msgstr "毎週"
+
+msgid "Reference Count"
+msgstr "参照件数"
+
+msgid "Maximum pages to reference when answering"
+msgstr "回答時に参照する最大ページ数"
+
+msgid "Title"
+msgstr "タイトル"
+
+msgid "Type"
+msgstr "タイプ"
+
+msgid "URL"
+msgstr "URL"
+
+msgid "Indexed Date"
+msgstr "学習日時"
+
+msgid "No indexed pages yet. Click \"Run Learning Now\" to start indexing."
+msgstr "学習済みのページはありません。「今すぐ学習を実行」ボタンをクリックして学習を開始してください。"
+
+# Conversations page
+msgid "AI Chatbot - Conversations"
+msgstr "AI チャットボット - 会話履歴"
+
+msgid "Delete Selected"
+msgstr "選択した会話を削除"
+
+msgid "Delete All"
+msgstr "すべての会話を削除"
+
+msgid "Session"
+msgstr "セッション"
+
+msgid "Start Page"
+msgstr "開始ページ"
+
+msgid "Started"
+msgstr "開始日時"
+
+msgid "Last Updated"
+msgstr "最終更新"
+
+msgid "Actions"
+msgstr "操作"
+
+msgid "Details"
+msgstr "詳細"
+
+msgid "Delete"
+msgstr "削除"
+
+msgid "Active"
+msgstr "アクティブ"
+
+msgid "Closed"
+msgstr "終了"
+
+msgid "Archived"
+msgstr "アーカイブ"
+
+msgid "items"
+msgstr "件"
+
+msgid "No conversation history."
+msgstr "会話履歴がありません。"
+
+msgid "Conversation Details"
+msgstr "会話詳細"
+
+msgid "User"
+msgstr "ユーザー"
+
+msgid "AI"
+msgstr "AI"
+
+msgid "No messages."
+msgstr "メッセージがありません。"
+
+msgid "Are you sure you want to delete this conversation?"
+msgstr "この会話を削除してもよろしいですか？"
+
+msgid "Please select conversations to delete."
+msgstr "削除する会話を選択してください。"
+
+msgid "Are you sure you want to delete the selected conversations?"
+msgstr "選択した会話を削除してもよろしいですか？"
+
+msgid "Are you sure you want to delete all conversation history?\nThis action cannot be undone."
+msgstr "すべての会話履歴を削除してもよろしいですか？\nこの操作は取り消せません。"
+
+msgid "Are you absolutely sure you want to delete all conversation history?"
+msgstr "本当にすべての会話履歴を削除しますか？"
+
+msgid "Deleting..."
+msgstr "削除中..."
+
+msgid "Failed to delete."
+msgstr "削除に失敗しました。"
+
+# Knowledge page
+msgid "AI Chatbot - Knowledge"
+msgstr "AI チャットボット - 学習"
+
+msgid "Upload text or files to teach the chatbot custom knowledge. The learned content will be used as reference when answering user questions."
+msgstr "テキストやファイルをアップロードして、チャットボットに独自の知識を学習させることができます。学習した内容は、ユーザーからの質問に回答する際に参考情報として使用されます。"
+
+msgid "Add Text"
+msgstr "テキストを追加"
+
+msgid "Content"
+msgstr "内容"
+
+msgid "A title to identify the knowledge"
+msgstr "学習内容を識別するためのタイトル"
+
+msgid "Text content to learn (FAQ, product info, manuals, etc.)"
+msgstr "学習させたいテキスト内容（FAQ、製品情報、マニュアルなど）"
+
+msgid "Category"
+msgstr "カテゴリー"
+
+msgid "Optional category for organization"
+msgstr "任意のカテゴリー（整理用）"
+
+msgid "Add"
+msgstr "追加"
+
+msgid "Import from File"
+msgstr "ファイルからインポート"
+
+msgid "File"
+msgstr "ファイル"
+
+msgid "Supported formats: TXT, CSV, MD (max 5MB)"
+msgstr "対応形式: TXT, CSV, MD（最大5MB）"
+
+msgid "Knowledge List"
+msgstr "学習データ一覧"
+
+msgid "Filter by category:"
+msgstr "カテゴリーで絞り込み:"
+
+msgid "All"
+msgstr "すべて"
+
+msgid "Content (Preview)"
+msgstr "内容（プレビュー）"
+
+msgid "Created"
+msgstr "作成日"
+
+msgid "Edit"
+msgstr "編集"
+
+msgid "No knowledge data. Add text using the form above."
+msgstr "学習データがありません。上のフォームからテキストを追加してください。"
+
+msgid "Edit Knowledge"
+msgstr "ナレッジを編集"
+
+msgid "Update"
+msgstr "更新"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Adding..."
+msgstr "追加中..."
+
+msgid "Added successfully"
+msgstr "追加しました"
+
+msgid "Please select a file"
+msgstr "ファイルを選択してください"
+
+msgid "Importing..."
+msgstr "インポート中..."
+
+msgid "Import failed"
+msgstr "インポートに失敗しました"
+
+msgid "Updating..."
+msgstr "更新中..."
+
+msgid "Are you sure you want to delete this knowledge?"
+msgstr "このナレッジを削除してもよろしいですか？"
+
+# Common
+msgid "Are you sure you want to delete?"
+msgstr "削除してもよろしいですか？"
+
+msgid "Are you sure you want to delete all?"
+msgstr "すべて削除してもよろしいですか？"
+
+msgid "Processing..."
+msgstr "処理中..."
+
+msgid "Success"
+msgstr "成功"
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "An error occurred"
+msgstr "エラーが発生しました"
+
+msgid "An error occurred."
+msgstr "エラーが発生しました。"
+
+msgid "Please select a file."
+msgstr "ファイルを選択してください。"
+
+msgid "Please select a JSON file."
+msgstr "JSON ファイルを選択してください。"
+
+msgid "Current settings will be overwritten. Continue?"
+msgstr "現在の設定が上書きされます。続行しますか？"
+
+msgid "Import failed."
+msgstr "インポートに失敗しました。"
+
+msgid "Export failed."
+msgstr "エクスポートに失敗しました。"
+
+msgid "Exporting..."
+msgstr "エクスポート中..."
+
+msgid "All settings will be reset. API keys will also be deleted.\n\nThis action cannot be undone.\n\nTo reset, type \"reset\":"
+msgstr "すべての設定が初期化されます。API キーも削除されます。\n\nこの操作は取り消せません。\n\n初期化するには「reset」と入力してください:"
+
+msgid "Please type \"reset\"."
+msgstr "「reset」と入力してください。"
+
+msgid "Resetting..."
+msgstr "初期化中..."
+
+msgid "Reset failed."
+msgstr "初期化に失敗しました。"
+
+# API messages
+msgid "Permission denied."
+msgstr "権限がありません。"
+
+msgid "Crawl complete: %d indexed, %d updated, %d skipped"
+msgstr "学習完了: %d件新規, %d件更新, %d件スキップ"
+
+msgid "Please enter an API key."
+msgstr "API キーを入力してください。"
+
+msgid "Connection successful! API key is valid."
+msgstr "接続成功！API キーは有効です。"
+
+msgid "Invalid API key."
+msgstr "API キーが無効です。"
+
+msgid "Error: "
+msgstr "エラー: "
+
+msgid "Conversation ID not specified."
+msgstr "会話 ID が指定されていません。"
+
+msgid "Conversation deleted."
+msgstr "会話を削除しました。"
+
+msgid "No conversations selected for deletion."
+msgstr "削除する会話が選択されていません。"
+
+msgid "%d conversations deleted."
+msgstr "%d件の会話を削除しました。"
+
+msgid "All conversation history deleted."
+msgstr "すべての会話履歴を削除しました。"
+
+msgid "Title and content are required."
+msgstr "タイトルと内容は必須です。"
+
+msgid "Knowledge added."
+msgstr "ナレッジを追加しました。"
+
+msgid "Failed to add."
+msgstr "追加に失敗しました。"
+
+msgid "No file uploaded."
+msgstr "ファイルがアップロードされていません。"
+
+msgid "File size too large (php.ini limit)"
+msgstr "ファイルサイズが大きすぎます（php.ini 制限）"
+
+msgid "File size too large (form limit)"
+msgstr "ファイルサイズが大きすぎます（フォーム制限）"
+
+msgid "File was only partially uploaded"
+msgstr "ファイルが一部しかアップロードされませんでした"
+
+msgid "No file was uploaded"
+msgstr "ファイルがアップロードされませんでした"
+
+msgid "Missing temporary folder"
+msgstr "一時フォルダがありません"
+
+msgid "Failed to write to disk"
+msgstr "ディスクへの書き込みに失敗しました"
+
+msgid "Upload error: "
+msgstr "アップロードエラー: "
+
+msgid "File size must be 5MB or less."
+msgstr "ファイルサイズは5MB 以下にしてください。"
+
+msgid "Failed to save data."
+msgstr "データの保存に失敗しました。"
+
+msgid "File imported."
+msgstr "ファイルをインポートしました。"
+
+msgid "ID not specified."
+msgstr "ID が指定されていません。"
+
+msgid "Knowledge not found."
+msgstr "ナレッジが見つかりません。"
+
+msgid "Required fields are missing."
+msgstr "必須項目が入力されていません。"
+
+msgid "Knowledge updated."
+msgstr "ナレッジを更新しました。"
+
+msgid "Failed to update."
+msgstr "更新に失敗しました。"
+
+msgid "Knowledge deleted."
+msgstr "ナレッジを削除しました。"
+
+msgid "enabled"
+msgstr "有効"
+
+msgid "disabled"
+msgstr "無効"
+
+msgid "Knowledge %s."
+msgstr "ナレッジを %s にしました。"
+
+msgid "No import data provided."
+msgstr "インポートデータがありません。"
+
+msgid "Invalid JSON data."
+msgstr "無効な JSON データです。"
+
+msgid "Settings imported."
+msgstr "設定をインポートしました。"
+
+msgid "Knowledge: %d items"
+msgstr "学習データ: %d件"
+
+msgid "Settings have been reset."
+msgstr "設定を初期化しました。"
+
+# AI Provider messages
+msgid "OpenAI API key is not configured."
+msgstr "OpenAI API キーが設定されていません。"
+
+msgid "Claude API key is not configured."
+msgstr "Claude API キーが設定されていません。"
+
+msgid "Gemini API key is not configured."
+msgstr "Gemini API キーが設定されていません。"
+
+msgid "API communication error: "
+msgstr "API 通信エラー: "
+
+msgid "Unknown error"
+msgstr "不明なエラー"
+
+msgid "OpenAI API error: "
+msgstr "OpenAI API エラー: "
+
+msgid "Claude API error: "
+msgstr "Claude API エラー: "
+
+msgid "Gemini API error: "
+msgstr "Gemini API エラー: "
+
+msgid "Failed to get response from AI."
+msgstr "AI からの応答を取得できませんでした。"
+
+# REST API messages
+msgid "Message is empty or too long."
+msgstr "メッセージが空か、長すぎます。"
+
+msgid "Rate limit exceeded. Please wait a moment."
+msgstr "リクエスト制限を超えました。しばらくお待ちください。"
+
+msgid "AI API key is not configured. Please configure it in the admin settings."
+msgstr "AI の API キーが設定されていません。管理画面で設定してください。"
+
+msgid "Failed to create conversation session."
+msgstr "会話セッションの作成に失敗しました。"
+
+msgid "Sorry, an error occurred: "
+msgstr "エラーが発生しました: "
+
+msgid "reCAPTCHA token is missing. Please reload the page."
+msgstr "reCAPTCHA トークンがありません。ページを再読み込みしてください。"
+
+msgid "Security verification failed. Please reload the page."
+msgstr "セキュリティ検証に失敗しました。ページを再読み込みしてください。"
+
+msgid "Security check failed."
+msgstr "セキュリティチェックに通過しませんでした。"
+
+# License page
+msgid "License"
+msgstr "ライセンス"
+
+msgid "AI Chatbot - License"
+msgstr "AI チャットボット - ライセンス"
+
+msgid "License Status"
+msgstr "ライセンス状態"
+
+msgid "Licensed"
+msgstr "ライセンス済み"
+
+msgid "Username"
+msgstr "ユーザー名"
+
+msgid "Email"
+msgstr "メールアドレス"
+
+msgid "Deactivate License"
+msgstr "ライセンスを解除"
+
+msgid "Pro Version"
+msgstr "Pro 版"
+
+msgid "Free Version"
+msgstr "Free 版"
+
+msgid "Thank you for purchasing! All Pro features are unlocked."
+msgstr "ご購入ありがとうございます！すべての Pro 機能がご利用いただけます。"
+
+msgid "You are using the Free version. Basic chatbot features are available."
+msgstr "Free 版をご利用中です。基本的なチャットボット機能をご利用いただけます。"
+
+msgid "Upgrade to Pro"
+msgstr "Pro にアップグレード"
+
+msgid "Unlock powerful features to enhance your chatbot:"
+msgstr "チャットボットを強化するパワフルな機能をアンロック："
+
+msgid "Unlimited monthly messages"
+msgstr "月間メッセージ無制限"
+
+msgid "Conversation export (CSV/JSON)"
+msgstr "会話エクスポート（CSV/JSON）"
+
+msgid "White label (remove branding)"
+msgstr "ホワイトラベル（ブランディング非表示）"
+
+msgid "Webhook integration"
+msgstr "Webhook 連携"
+
+msgid "Analytics dashboard"
+msgstr "分析ダッシュボード"
+
+msgid "Business hours & holidays"
+msgstr "営業時間・休日設定"
+
+msgid "And many more..."
+msgstr "その他多数..."
+
+msgid "Upgrade to Pro and unlock all features!"
+msgstr "Pro にアップグレードして全機能をアンロック！"
+
+msgid "Purchase Pro License"
+msgstr "Pro ライセンスを購入"
+
+msgid "Activate Pro License"
+msgstr "Pro ライセンスを有効化"
+
+msgid "Already purchased? Enter your license information to unlock Pro features."
+msgstr "すでにご購入済みですか？ライセンス情報を入力して Pro 機能をアンロックしてください。"
+
+msgid "Enter the email address used for purchase."
+msgstr "購入時に使用したメールアドレスを入力してください。"
+
+msgid "Enter the license key from your purchase confirmation email."
+msgstr "購入確認メールに記載されているライセンスキーを入力してください。"
+
+msgid "License Key"
+msgstr "ライセンスキー"
+
+msgid "License not activated. Pro features are limited."
+msgstr "ライセンスが有効化されていません。Pro 機能は制限されています。"
+
+msgid "Email Address"
+msgstr "メールアドレス"
+
+msgid "Activate License"
+msgstr "ライセンスを有効化"
+
+msgid "Activating..."
+msgstr "有効化中..."
+
+msgid "Deactivating..."
+msgstr "解除中..."
+
+msgid "Are you sure you want to deactivate the license?"
+msgstr "ライセンスを解除してもよろしいですか？"
+
+msgid "License activated successfully."
+msgstr "ライセンスを有効化しました。"
+
+msgid "Invalid license key."
+msgstr "ライセンスキーが無効です。"
+
+msgid "License has been deactivated."
+msgstr "ライセンスを解除しました。"
+
+msgid "License expired. Please activate a valid license to use this feature."
+msgstr "ライセンスが期限切れです。この機能を使用するには有効なライセンスを登録してください。"
+
+msgid "Security check failed. Please reload the page and try again."
+msgstr "セキュリティチェックに失敗しました。ページを再読み込みしてもう一度お試しください。"
+
+msgid "Please fill in all fields."
+msgstr "すべての項目を入力してください。"
+
+msgid "License activated successfully!"
+msgstr "ライセンスを有効化しました！"
+
+msgid "Invalid license key. Please check your information and try again."
+msgstr "ライセンスキーが無効です。入力内容を確認してもう一度お試しください。"
+
+msgid "License deactivated."
+msgstr "ライセンスを解除しました。"
+
+msgid "Network error"
+msgstr "ネットワークエラー"
+
+msgid "Access denied"
+msgstr "アクセスが拒否されました"
+
+msgid "Server error"
+msgstr "サーバーエラー"
+
+# API Quota Error
+msgid "API Quota Error Message"
+msgstr "API 残高不足時のメッセージ"
+
+msgid "Message displayed when the API quota is exceeded or billing issue occurs."
+msgstr "API の残高不足や課金に関する問題が発生した時に表示するメッセージです。"
+
+msgid "Currently recharging. Please try again later."
+msgstr "ただいま充電中です。しばらくしてからお試しください。"
+
+# Knowledge priority
+msgid "Priority"
+msgstr "優先度"
+
+msgid "Higher priority content is used first (0-100)"
+msgstr "優先度が高いコンテンツが優先的に使用されます（0-100）"
+
+msgid "Higher priority content is always used in responses"
+msgstr "優先度が高いコンテンツは常に回答に使用されます"
+
+msgid "Normal"
+msgstr "通常"
+
+msgid "Low"
+msgstr "低"
+
+msgid "Medium"
+msgstr "中"
+
+msgid "High"
+msgstr "高"
+
+msgid "Highest"
+msgstr "最高"
+
+msgid "Failed to update priority"
+msgstr "優先度の更新に失敗しました"
+
+msgid "Priority updated."
+msgstr "優先度を更新しました。"
+
+# OpenAI model descriptions
+msgid "Most powerful"
+msgstr "最高性能"
+
+msgid "Complex problem solving"
+msgstr "複雑な問題向き"
+
+msgid "Powerful and stable"
+msgstr "高性能・安定"
+
+msgid "Coding and analysis"
+msgstr "コード・分析向き"
+
+msgid "Fast and affordable"
+msgstr "高速・低コスト"
+
+msgid "Fastest and cheapest"
+msgstr "最速・最安"
+
+msgid "Deep analysis"
+msgstr "深い分析向き"
+
+msgid "Long context (1M tokens)"
+msgstr "長文対応（100万トークン）"
+
+msgid "Fast, long context"
+msgstr "高速・長文対応"
+
+msgid "Fastest, long context"
+msgstr "最速・長文対応"
+
+msgid "Legacy"
+msgstr "旧世代"
+
+msgid "Legacy, vision"
+msgstr "旧世代・画像対応"
+
+msgid "Legacy, cheapest"
+msgstr "旧世代・最安"
+
+msgid "★ Recommended — multimodal"
+msgstr "★おすすめ — 画像・音声対応"
+
+msgid "★ Recommended — affordable"
+msgstr "★おすすめ — 低コスト"
+
+msgid "Reasoning model"
+msgstr "推論モデル"
+
+msgid "Reasoning, highest accuracy"
+msgstr "推論・最高精度"
+
+msgid "Advanced reasoning"
+msgstr "高度な推論"
+
+msgid "Reasoning, affordable"
+msgstr "推論・低コスト"
+
+msgid "Latest reasoning, fast"
+msgstr "最新推論・高速"
+
+# Claude model descriptions
+msgid "★ Recommended — fast and powerful"
+msgstr "★おすすめ — 高速・高性能"
+
+msgid "★ Recommended — fastest, cheapest"
+msgstr "★おすすめ — 最速・最安"
+
+msgid "Previous flagship"
+msgstr "前世代の最上位"
+
+msgid "Coding focused"
+msgstr "コード特化"
+
+msgid "Reliable all-purpose"
+msgstr "汎用・安定"
+
+msgid "Reasoning capable"
+msgstr "推論対応"
+
+msgid "Legacy, fast"
+msgstr "旧世代・高速"
+
+# Gemini model descriptions
+msgid "Preview, most capable"
+msgstr "プレビュー・最高性能"
+
+msgid "Preview, fast"
+msgstr "プレビュー・高速"
+
+msgid "Powerful, reasoning"
+msgstr "高性能・推論対応"
+
+msgid "★ Recommended — fast and smart"
+msgstr "★おすすめ — 高速・高性能"
+
+msgid "★ Recommended — stable"
+msgstr "★おすすめ — 安定・画像対応"
+
+msgid "Legacy, long context"
+msgstr "旧世代・長文対応"
+
+# Site Learning - Index deletion
+msgid "Index deleted."
+msgstr "インデックスを削除しました。"
+
+msgid "All index data deleted."
+msgstr "すべてのインデックスデータを削除しました。"
+
+msgid "Are you sure you want to delete this index?"
+msgstr "このインデックスを削除してもよろしいですか？"
+
+msgid "Are you sure you want to delete all indexed pages?\nThis action cannot be undone."
+msgstr "すべての学習済みページを削除してもよろしいですか？\nこの操作は取り消せません。"
+
+# API Usage Statistics
+msgid "API Usage (Last 30 Days)"
+msgstr "API 使用量（過去30日間）"
+
+msgid "Reset Statistics"
+msgstr "統計をリセット"
+
+msgid "Total Tokens"
+msgstr "合計トークン"
+
+msgid "Input Tokens"
+msgstr "入力トークン"
+
+msgid "Output Tokens"
+msgstr "出力トークン"
+
+msgid "Estimated Cost"
+msgstr "推定コスト"
+
+msgid "Daily Token Usage"
+msgstr "日別トークン使用量"
+
+msgid "Usage by Model"
+msgstr "モデル別使用量"
+
+msgid "Provider"
+msgstr "プロバイダー"
+
+msgid "Are you sure you want to reset usage statistics?\nThis will clear all token counts but keep conversation history."
+msgstr "使用量統計をリセットしますか？\nトークン数はクリアされますが、会話履歴は保持されます。"
+
+msgid "Usage statistics have been reset."
+msgstr "使用量統計をリセットしました。"
+
+# Page Exclusion
+msgid "Page Exclusion"
+msgstr "ページ除外"
+
+msgid "-- Select page to exclude --"
+msgstr "-- 除外するページを選択 --"
+
+msgid "The chatbot will not be displayed on selected pages."
+msgstr "選択したページではチャットボットが表示されません。"
+
+# Rate Limit Settings
+msgid "Advanced Settings"
+msgstr "詳細設定"
+
+msgid "Limit per IP address. Set requests to 0 for unlimited."
+msgstr "IP アドレスごとの制限。リクエスト数を0にすると無制限になります。"
+
+msgid "requests"
+msgstr "リクエスト"
+
+msgid "1 minute"
+msgstr "1分"
+
+msgid "5 minutes"
+msgstr "5分"
+
+msgid "10 minutes"
+msgstr "10分"
+
+msgid "30 minutes"
+msgstr "30分"
+
+msgid "1 hour"
+msgstr "1時間"
+
+msgid "1 day"
+msgstr "1日"
+
+# Cloudflare / Security settings
+msgid "Cloudflare Integration"
+msgstr "Cloudflare 連携"
+
+msgid "Trust Cloudflare CF-Connecting-IP header"
+msgstr "Cloudflare の CF-Connecting-IP ヘッダーを信頼する"
+
+msgid "Enable only if your site is behind Cloudflare. Uses Cloudflare's header to detect the real visitor IP for rate limiting."
+msgstr "サイトが Cloudflare の背後にある場合のみ有効にしてください。レート制限のために Cloudflare のヘッダーから実際の訪問者 IP を取得します。"
+
+msgid "reCAPTCHA Failure Mode"
+msgstr "reCAPTCHA 障害時の動作"
+
+msgid "Fail-open (allow requests)"
+msgstr "フェイルオープン（リクエストを許可）"
+
+msgid "Fail-closed (block requests)"
+msgstr "フェイルクローズ（リクエストをブロック）"
+
+msgid "Behavior when reCAPTCHA verification server is unreachable. Fail-open allows requests through (recommended for most sites). Fail-closed blocks requests for maximum security."
+msgstr "reCAPTCHA 検証サーバーに接続できない場合の動作。フェイルオープンはリクエストを通過させます（ほとんどのサイトに推奨）。フェイルクローズはセキュリティを最大化するためリクエストをブロックします。"
+
+msgid "Security verification is temporarily unavailable. Please try again later."
+msgstr "セキュリティ検証が一時的に利用できません。しばらくしてからもう一度お試しください。"
+
+# License purchase
+msgid "Purchase License"
+msgstr "ライセンスを購入"
+
+msgid "Purchase a license to continue using all features."
+msgstr "引き続きすべての機能をご利用いただくには、ライセンスを購入してください。"
+
+# Context Prompts (Advanced Settings)
+msgid "Context Prompts (Advanced)"
+msgstr "コンテキストプロンプト（上級者向け）"
+
+msgid "These prompts are appended to the system prompt when knowledge base or site learning data is used. Use {context} as a placeholder for the actual content."
+msgstr "これらのプロンプトは、ナレッジベースやサイト学習データが使用される際にシステムプロンプトに追加されます。{context} を実際のコンテンツのプレースホルダーとして使用してください。"
+
+msgid "Knowledge Base (Exact Match)"
+msgstr "ナレッジベース（完全一致）"
+
+msgid "Prompt used when an exact Q&A match is found in the knowledge base."
+msgstr "ナレッジベースで完全一致する Q&A が見つかった場合に使用されるプロンプトです。"
+
+msgid "Knowledge Base (Q&A Format)"
+msgstr "ナレッジベース（Q&A 形式）"
+
+msgid "Prompt used when Q&A format knowledge is found (but not exact match)."
+msgstr "Q&A 形式のナレッジが見つかった場合（完全一致ではない）に使用されるプロンプトです。"
+
+msgid "Site Learning Context"
+msgstr "サイト学習コンテキスト"
+
+msgid "Prompt used when site learning content is provided as context."
+msgstr "サイト学習コンテンツがコンテキストとして提供される場合に使用されるプロンプトです。"
+
+msgid "Reset to default"
+msgstr "デフォルトに戻す"
+
+# Avatar settings
+msgid "Select Image"
+msgstr "画像を選択"
+
+msgid "Reset to Emoji"
+msgstr "絵文字に戻す"
+
+msgid "Enter an emoji or select an image (recommended: 96x96px or larger, square)."
+msgstr "絵文字を入力するか、画像を選択してください（推奨: 96x96px 以上の正方形）。"
+
+msgid "Select Avatar Image"
+msgstr "アバター画像を選択"
+
+msgid "Use as Avatar"
+msgstr "アバターとして使用"
+
+# Pro Features - General
+msgid "Pro Features"
+msgstr "Pro 機能"
+
+# Pro Features - Lead Capture
+msgid "Lead Capture"
+msgstr "リード獲得"
+
+msgid "Enable Lead Capture"
+msgstr "リード獲得を有効化"
+
+msgid "Collect visitor information before starting chat"
+msgstr "チャット開始前に訪問者情報を収集"
+
+msgid "Require Lead Info"
+msgstr "リード情報を必須にする"
+
+msgid "Users must provide info before chatting"
+msgstr "チャット前に情報入力を必須にする"
+
+msgid "Form Fields"
+msgstr "フォームフィールド"
+
+msgid "Name"
+msgstr "お名前"
+
+msgid "Phone"
+msgstr "電話番号"
+
+msgid "Company"
+msgstr "会社名"
+
+msgid "Form Title"
+msgstr "フォームタイトル"
+
+msgid "Form Description"
+msgstr "フォーム説明文"
+
+msgid "Before we start"
+msgstr "チャット開始前に"
+
+msgid "Please enter your information"
+msgstr "お客様情報をご入力ください"
+
+msgid "Lead capture feature requires Pro license."
+msgstr "リード獲得機能には Pro ライセンスが必要です。"
+
+# Pro Features - White Label
+msgid "White Label"
+msgstr "ホワイトラベル"
+
+msgid "Enable White Label"
+msgstr "ホワイトラベルを有効化"
+
+msgid "Hide Powered By"
+msgstr "「Powered by」を非表示"
+
+msgid "Remove branding from the chatbot"
+msgstr "チャットボットからブランディングを削除"
+
+msgid "Custom CSS"
+msgstr "カスタム CSS"
+
+msgid "Add custom styles to the chatbot"
+msgstr "チャットボットにカスタムスタイルを追加"
+
+# Pro Features - Webhook
+msgid "Webhook Integration"
+msgstr "Webhook 連携"
+
+msgid "Enable Webhook"
+msgstr "Webhook を有効化"
+
+msgid "Send webhook notifications"
+msgstr "Webhook 通知を送信"
+
+msgid "Webhook URL"
+msgstr "Webhook URL"
+
+msgid "Optional - for signature verification"
+msgstr "任意 - 署名検証用"
+
+msgid "Used to sign webhook payloads (X-Webhook-Signature header)."
+msgstr "Webhook ペイロードの署名に使用されます（X-Webhook-Signature ヘッダー）。"
+
+msgid "Events"
+msgstr "イベント"
+
+msgid "New Conversation"
+msgstr "新規会話開始"
+
+msgid "New Message"
+msgstr "新規メッセージ"
+
+msgid "Lead Captured"
+msgstr "リード獲得"
+
+msgid "Test Webhook"
+msgstr "Webhook テスト"
+
+msgid "Send Test"
+msgstr "テスト送信"
+
+# Pro Features - Quick Replies
+msgid "Quick Replies"
+msgstr "クイックリプライ"
+
+msgid "Enable Quick Replies"
+msgstr "クイックリプライを有効化"
+
+msgid "Show preset reply buttons"
+msgstr "定型回答ボタンを表示"
+
+msgid "Reply Options"
+msgstr "回答オプション"
+
+msgid "+ Add Quick Reply"
+msgstr "+ クイックリプライを追加"
+
+# Pro Features - Business Hours
+msgid "Business Hours"
+msgstr "営業時間"
+
+msgid "Enable Business Hours"
+msgstr "営業時間を有効化"
+
+msgid "Show message outside business hours"
+msgstr "営業時間外にメッセージを表示"
+
+msgid "Timezone"
+msgstr "タイムゾーン"
+
+msgid "Hours"
+msgstr "営業時間設定"
+
+msgid "Monday"
+msgstr "月曜日"
+
+msgid "Tuesday"
+msgstr "火曜日"
+
+msgid "Wednesday"
+msgstr "水曜日"
+
+msgid "Thursday"
+msgstr "木曜日"
+
+msgid "Friday"
+msgstr "金曜日"
+
+msgid "Saturday"
+msgstr "土曜日"
+
+msgid "Sunday"
+msgstr "日曜日"
+
+msgid "Outside Hours Message"
+msgstr "営業時間外メッセージ"
+
+msgid "We are currently outside business hours. Please leave a message and we will get back to you."
+msgstr "現在、営業時間外です。メッセージを残していただければ、後ほどご連絡いたします。"
+
+# Pro Features - Holidays
+msgid "Holidays"
+msgstr "休日設定"
+
+msgid "Enable Holidays"
+msgstr "休日を有効化"
+
+msgid "Show holiday message on specific dates"
+msgstr "特定の日に休日メッセージを表示"
+
+msgid "Holiday Dates"
+msgstr "休日"
+
+msgid "+ Add Holiday"
+msgstr "+ 休日を追加"
+
+msgid "Holiday Message"
+msgstr "休日メッセージ"
+
+msgid "We are closed today. Please contact us on the next business day."
+msgstr "本日は休業日です。次の営業日にお問い合わせください。"
+
+# Pro Features - Banned Words
+msgid "Banned Words Filter"
+msgstr "禁止ワードフィルター"
+
+msgid "Enable Banned Words Filter"
+msgstr "禁止ワードフィルターを有効化"
+
+msgid "Block messages containing specific words"
+msgstr "特定の単語を含むメッセージをブロック"
+
+msgid "Banned Words"
+msgstr "禁止ワード"
+
+msgid "One word per line"
+msgstr "1行に1単語"
+
+msgid "Block Message"
+msgstr "ブロックメッセージ"
+
+msgid "Your message contains prohibited content."
+msgstr "お送りいただいたメッセージには禁止されている内容が含まれています。"
+
+# Pro Features - IP Blocking
+msgid "IP Blocking"
+msgstr "IP ブロック"
+
+msgid "Enable IP Blocking"
+msgstr "IP ブロックを有効化"
+
+msgid "Block specific IP addresses"
+msgstr "特定の IP アドレスをブロック"
+
+msgid "Blocked IPs"
+msgstr "ブロックする IP"
+
+msgid "One IP per line (supports CIDR notation)"
+msgstr "1行に1つの IP アドレス（CIDR 表記対応）"
+
+msgid "Enter one IP address per line. CIDR notation supported (e.g., 192.168.1.0/24)."
+msgstr "1行に1つの IP アドレスを入力してください。CIDR 表記も使用可能です（例：192.168.1.0/24）。"
+
+msgid "Access denied."
+msgstr "アクセスが拒否されました。"
+
+# Pro Features - AI Enhancement
+msgid "AI Enhancement"
+msgstr "AI 機能強化"
+
+msgid "Related Questions"
+msgstr "関連質問"
+
+msgid "Show related question suggestions after each response"
+msgstr "各回答後に関連質問のサジェストを表示"
+
+msgid "Input Autocomplete"
+msgstr "入力補完"
+
+msgid "Show autocomplete suggestions while typing"
+msgstr "入力中にオートコンプリートのサジェストを表示"
+
+msgid "Prompt Templates"
+msgstr "プロンプトテンプレート"
+
+msgid "Use preset prompt templates"
+msgstr "プリセットのプロンプトテンプレートを使用"
+
+msgid "Active Template"
+msgstr "使用するテンプレート"
+
+msgid "-- Use default system prompt --"
+msgstr "-- デフォルトのシステムプロンプトを使用 --"
+
+msgid "Select a prompt template to override the system prompt."
+msgstr "システムプロンプトを上書きするテンプレートを選択します。"
+
+msgid "Custom Templates"
+msgstr "カスタムテンプレート"
+
+msgid "Template Name"
+msgstr "テンプレート名"
+
+msgid "System prompt for this template..."
+msgstr "このテンプレートのシステムプロンプト..."
+
+msgid "+ Add Template"
+msgstr "+ テンプレートを追加"
+
+msgid "Customer Support"
+msgstr "カスタマーサポート"
+
+msgid "You are a friendly customer support assistant. Be helpful, professional, and empathetic. Always try to resolve issues and provide clear solutions."
+msgstr "あなたは親切なカスタマーサポートアシスタントです。親身になって、プロフェッショナルに、共感を持って対応してください。常に問題解決を心がけ、明確な解決策を提供してください。"
+
+msgid "Sales Assistant"
+msgstr "セールスアシスタント"
+
+msgid "You are a knowledgeable sales assistant. Help customers find the right products, answer questions about features and pricing, and guide them through the purchase process."
+msgstr "あなたは知識豊富なセールスアシスタントです。お客様が適切な製品を見つけるお手伝いをし、機能や価格についての質問に答え、購入プロセスをガイドしてください。"
+
+msgid "FAQ Bot"
+msgstr "FAQ ボット"
+
+msgid "You are a helpful FAQ assistant. Answer questions concisely based on the provided knowledge base. If you do not know the answer, politely say so and suggest contacting support."
+msgstr "あなたは親切な FAQ アシスタントです。提供されたナレッジベースに基づいて簡潔に回答してください。答えがわからない場合は丁寧にその旨を伝え、サポートへの問い合わせを提案してください。"
+
+# Pro Features - Scheduled Crawl
+msgid "Scheduled Learning"
+msgstr "定期学習"
+
+msgid "Scheduled Crawl"
+msgstr "定期クロール"
+
+msgid "Enable scheduled site learning"
+msgstr "サイトの定期学習を有効化"
+
+msgid "Frequency"
+msgstr "頻度"
+
+msgid "Monthly"
+msgstr "毎月"
+
+msgid "Differential Crawl"
+msgstr "差分クロール"
+
+msgid "Only update changed pages (faster)"
+msgstr "変更されたページのみ更新（高速）"
+
+# Pro Features - Human Handoff
+msgid "Human Handoff"
+msgstr "人間への引き継ぎ"
+
+msgid "Enable Handoff"
+msgstr "引き継ぎを有効化"
+
+msgid "Notify humans when AI cannot resolve"
+msgstr "AI が解決できない場合に人間に通知"
+
+msgid "Trigger Keywords"
+msgstr "トリガーキーワード"
+
+msgid "speak to human, talk to agent, real person"
+msgstr "オペレーターに繋いで, 人と話したい, 担当者"
+
+msgid "Comma-separated keywords that trigger human handoff."
+msgstr "人間への引き継ぎをトリガーするキーワード（カンマ区切り）。"
+
+msgid "Notification Email"
+msgstr "通知メール"
+
+msgid "Handoff Message"
+msgstr "引き継ぎメッセージ"
+
+msgid "I understand this may need human assistance. A support representative will contact you soon."
+msgstr "担当者による対応が必要なようです。まもなくサポート担当者よりご連絡いたします。"
+
+# Pro Features - Survey
+msgid "Post-Conversation Survey"
+msgstr "会話後アンケート"
+
+msgid "Enable Survey"
+msgstr "アンケートを有効化"
+
+msgid "Show satisfaction survey after conversation"
+msgstr "会話終了後に満足度アンケートを表示"
+
+msgid "Survey Question"
+msgstr "アンケートの質問"
+
+msgid "How would you rate this conversation?"
+msgstr "この会話の満足度を教えてください"
+
+msgid "Very Satisfied"
+msgstr "とても満足"
+
+msgid "Satisfied"
+msgstr "満足"
+
+msgid "Neutral"
+msgstr "普通"
+
+msgid "Dissatisfied"
+msgstr "不満"
+
+# Pro Features - Conversation Tags
+msgid "Conversation Tags"
+msgstr "会話タグ"
+
+msgid "Enable Tags"
+msgstr "タグを有効化"
+
+msgid "Allow tagging conversations for organization"
+msgstr "会話にタグを付けて整理"
+
+msgid "Tags can be added from the Conversations page."
+msgstr "タグは会話履歴ページから追加できます。"
+
+# Pro Features - Multiple Chatbots
+msgid "Multiple Chatbots"
+msgstr "複数チャットボット"
+
+msgid "Enable Multiple Bots"
+msgstr "複数ボットを有効化"
+
+msgid "Use different chatbot configurations per page"
+msgstr "ページごとに異なるチャットボット設定を使用"
+
+msgid "Create multiple bot profiles and assign them to specific pages or post types."
+msgstr "複数のボットプロファイルを作成し、特定のページや投稿タイプに割り当てます。"
+
+# Pro Features - Operator Mode
+msgid "Operator Mode"
+msgstr "オペレーターモード"
+
+msgid "Enable Operator Mode"
+msgstr "オペレーターモードを有効化"
+
+msgid "Allow administrators to take over conversations"
+msgstr "管理者が会話を引き継げるようにする"
+
+msgid "Takeover Message"
+msgstr "引き継ぎメッセージ"
+
+msgid "Message shown when an operator takes over the conversation."
+msgstr "オペレーターが会話を引き継いだ際に表示されるメッセージ。"
+
+msgid "You are now connected with a support representative."
+msgstr "サポート担当者に接続されました。"
+
+# Pro Features - FAQ Auto-Generation
+msgid "FAQ Auto-Generation"
+msgstr "FAQ 自動生成"
+
+msgid "Enable Auto-Generation"
+msgstr "自動生成を有効化"
+
+msgid "Automatically generate FAQ from conversation history"
+msgstr "会話履歴から自動的に FAQ を生成"
+
+msgid "Minimum Occurrences"
+msgstr "最小発生回数"
+
+msgid "Number of times a similar question must be asked before suggesting FAQ creation."
+msgstr "FAQ 作成を提案するまでに同様の質問が必要な回数。"
+
+# Pro Features - Real-time Monitor
+msgid "Real-time Monitor"
+msgstr "リアルタイムモニター"
+
+msgid "Enable Monitor"
+msgstr "モニターを有効化"
+
+msgid "Enable real-time conversation monitoring"
+msgstr "リアルタイムの会話モニタリングを有効化"
+
+msgid "View active conversations in real-time from the dashboard."
+msgstr "ダッシュボードからリアルタイムで進行中の会話を確認できます。"
+
+msgid "Refresh Interval"
+msgstr "更新間隔"
+
+msgid "seconds"
+msgstr "秒"
+
+# Analytics Page
+msgid "Pro Feature"
+msgstr "Pro 機能"
+
+msgid "Analytics dashboard is available with a Pro license. Get insights into your chatbot performance, user satisfaction, and frequently asked questions."
+msgstr "分析ダッシュボードは Pro ライセンスでご利用いただけます。チャットボットのパフォーマンス、ユーザー満足度、よくある質問などの詳細を確認できます。"
+
+msgid "Period:"
+msgstr "期間:"
+
+msgid "Last 7 days"
+msgstr "過去7日間"
+
+msgid "Last 30 days"
+msgstr "過去30日間"
+
+msgid "Last 90 days"
+msgstr "過去90日間"
+
+msgid "Messages"
+msgstr "メッセージ数"
+
+msgid "Avg Messages/Conv"
+msgstr "平均メッセージ数/会話"
+
+msgid "Satisfaction Rate"
+msgstr "満足度"
+
+msgid "Daily Conversations"
+msgstr "日別会話数"
+
+msgid "Hourly Distribution"
+msgstr "時間帯別分布"
+
+msgid "Frequently Asked Questions"
+msgstr "よくある質問"
+
+msgid "Question"
+msgstr "質問"
+
+msgid "Count"
+msgstr "回数"
+
+msgid "Top Pages"
+msgstr "人気ページ"
+
+msgid "Page"
+msgstr "ページ"
+
+msgid "Negative Feedback (Needs Improvement)"
+msgstr "ネガティブフィードバック（改善が必要）"
+
+msgid "User Question"
+msgstr "ユーザーの質問"
+
+msgid "Bot Answer (excerpt)"
+msgstr "ボットの回答（抜粋）"
+
+msgid "Date"
+msgstr "日付"
+
+msgid "No data available yet."
+msgstr "データがまだありません。"
+
+msgid "No negative feedback yet. Great job!"
+msgstr "ネガティブフィードバックはまだありません。素晴らしいです！"
+
+# Message Limit
+msgid "Monthly message limit reached. Please upgrade to Pro for unlimited messages."
+msgstr "月間メッセージ上限に達しました。無制限でご利用いただくには Pro にアップグレードしてください。"
+
+msgid "Unlimited"
+msgstr "無制限"
+
+# Feedback
+msgid "Good response"
+msgstr "良い回答"
+
+msgid "Bad response"
+msgstr "悪い回答"
+
+msgid "Regenerate response"
+msgstr "回答を再生成"
+
+msgid "Feedback only allowed on AI responses."
+msgstr "フィードバックは AI の回答にのみ可能です。"
+
+msgid "Failed to save feedback."
+msgstr "フィードバックの保存に失敗しました。"
+
+# Suggestions
+msgid "Based on the following conversation, suggest 3 short follow-up questions the user might want to ask. Return only the questions, one per line, without numbering:"
+msgstr "以下の会話に基づいて、ユーザーが次に聞きたいかもしれない短いフォローアップ質問を3つ提案してください。質問のみを1行ずつ、番号なしで返してください："
+
+msgid "Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:"
+msgstr "以下の会話を2〜3文で要約し、議論された主なトピックと結論を強調してください："
+
+msgid "Conversation is too short to summarize."
+msgstr "会話が短すぎて要約できません。"
+
+msgid "AI provider not configured."
+msgstr "AI プロバイダーが設定されていません。"
+
+msgid "Conversation not found."
+msgstr "会話が見つかりません。"
+
+# Pro Features - Additional translations
+msgid "Pro features require a license."
+msgstr "Pro 機能にはライセンスが必要です。"
+
+msgid "Monthly Message Usage"
+msgstr "月間メッセージ使用量"
+
+msgid "messages used this month"
+msgstr "件のメッセージを今月使用"
+
+msgid "messages"
+msgstr "件"
+
+msgid "Resets on %s"
+msgstr "%s にリセットされます"
+
+msgid "Lead Capture Form"
+msgstr "リード獲得フォーム"
+
+msgid "Show lead form before chat"
+msgstr "チャット前にリードフォームを表示"
+
+msgid "Require Form"
+msgstr "フォーム必須"
+
+msgid "User must fill form before chatting"
+msgstr "チャット前にフォームの入力を必須にする"
+
+msgid "Required"
+msgstr "必須"
+
+msgid "Custom label"
+msgstr "カスタムラベル"
+
+msgid "Email Notification"
+msgstr "メール通知"
+
+msgid "Send email when lead is captured"
+msgstr "リード獲得時にメールを送信"
+
+msgid "Leave empty to use admin email."
+msgstr "空欄の場合は管理者メールアドレスを使用します。"
+
+msgid "Hide Branding"
+msgstr "ブランディング非表示"
+
+msgid "Hide \"Powered by\" footer in chatbot"
+msgstr "チャットボットの「Powered by」を非表示"
+
+msgid "Add custom CSS to style the chatbot widget."
+msgstr "チャットボットウィジェットにカスタム CSS を追加します。"
+
+msgid "Enable Filter"
+msgstr "フィルターを有効化"
+
+msgid "Block messages containing banned words"
+msgstr "禁止ワードを含むメッセージをブロック"
+
+msgid "Enter one word or phrase per line."
+msgstr "1行につき1つの単語またはフレーズを入力してください。"
+
+msgid "Enable IP Block"
+msgstr "IP ブロックを有効化"
+
+msgid "Block access from specific IPs"
+msgstr "特定の IP からのアクセスをブロック"
+
+# Quick Replies additional
+msgid "Show quick reply buttons"
+msgstr "クイックリプライボタンを表示"
+
+msgid "Quick Reply Options"
+msgstr "クイックリプライ選択肢"
+
+# Analytics additional
+msgid "Total conversations in the selected period"
+msgstr "選択期間の総会話数"
+
+msgid "Total messages sent and received"
+msgstr "送受信されたメッセージの総数"
+
+msgid "Average number of messages per conversation"
+msgstr "会話あたりの平均メッセージ数"
+
+msgid "Percentage of positive feedback"
+msgstr "ポジティブなフィードバックの割合"
+
+# Export
+msgid "Export Conversations"
+msgstr "会話をエクスポート"
+
+msgid "Export Leads"
+msgstr "リードをエクスポート"
+
+msgid "Export as CSV"
+msgstr "CSV でエクスポート"
+
+msgid "Export as JSON"
+msgstr "JSON でエクスポート"
+
+# Webhook events
+msgid "Triggered when a new conversation starts"
+msgstr "新しい会話が開始されたときにトリガー"
+
+msgid "Triggered when a message is sent"
+msgstr "メッセージが送信されたときにトリガー"
+
+msgid "Triggered when lead information is captured"
+msgstr "リード情報が取得されたときにトリガー"
+
+# Business hours additional
+msgid "Set operating hours for the chatbot"
+msgstr "チャットボットの営業時間を設定"
+
+msgid "Message shown outside business hours"
+msgstr "営業時間外に表示されるメッセージ"
+
+# Holidays additional
+msgid "Set specific dates as holidays"
+msgstr "特定の日を休日に設定"
+
+msgid "Holiday name (optional)"
+msgstr "休日名（任意）"
+
+# AI Enhancement additional
+msgid "Suggest related questions after each response"
+msgstr "各回答後に関連質問をサジェスト"
+
+msgid "Show suggestions while user types"
+msgstr "ユーザーの入力中にサジェストを表示"
+
+msgid "Use predefined prompt templates"
+msgstr "定義済みのプロンプトテンプレートを使用"
+
+# Scheduled Crawl additional
+msgid "Automatically re-crawl site on schedule"
+msgstr "スケジュールに従ってサイトを自動で再クロール"
+
+msgid "Only crawl pages that have changed"
+msgstr "変更のあったページのみクロール"
+
+# Human Handoff additional
+msgid "Keywords that trigger handoff to human"
+msgstr "人間への引き継ぎをトリガーするキーワード"
+
+msgid "Email to notify when handoff is triggered"
+msgstr "引き継ぎ発生時に通知するメールアドレス"
+
+msgid "Message shown to user when handoff occurs"
+msgstr "引き継ぎ発生時にユーザーに表示するメッセージ"
+
+# Survey additional
+msgid "Ask users to rate the conversation"
+msgstr "会話の評価をユーザーに依頼"
+
+msgid "Question shown in the survey"
+msgstr "アンケートに表示する質問"
+
+# Conversation Tags additional
+msgid "Organize conversations with tags"
+msgstr "タグで会話を整理"
+
+# Multiple Chatbots additional
+msgid "Configure different bots for different pages"
+msgstr "ページごとに異なるボットを設定"
+
+# Operator Mode additional
+msgid "Take over conversations manually"
+msgstr "会話を手動で引き継ぎ"
+
+msgid "Message shown when operator joins"
+msgstr "オペレーターが参加したときに表示するメッセージ"
+
+# FAQ Auto-Generation additional
+msgid "Generate FAQ entries from common questions"
+msgstr "よくある質問から FAQ エントリーを生成"
+
+msgid "How many times a question must appear"
+msgstr "質問が何回出現すると FAQ 候補になるか"
+
+# Real-time Monitor additional
+msgid "Watch conversations as they happen"
+msgstr "リアルタイムで会話を監視"
+
+msgid "How often to refresh the monitor"
+msgstr "モニターの更新頻度"
+
+# Chatbot frontend
+msgid "Type your message..."
+msgstr "メッセージを入力..."
+
+msgid "Send"
+msgstr "送信"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "Thinking..."
+msgstr "考え中..."
+
+msgid "Error occurred. Please try again."
+msgstr "エラーが発生しました。もう一度お試しください。"
+
+msgid "Also try asking:"
+msgstr "こちらも聞いてみませんか："
+
+# Feedback messages
+msgid "Thank you for your feedback!"
+msgstr "フィードバックありがとうございます！"
+
+msgid "Response regenerated"
+msgstr "回答を再生成しました"
+
+# Lead form
+msgid "Start Chat"
+msgstr "チャットを開始"
+
+msgid "Skip"
+msgstr "スキップ"
+
+msgid "Thank you for your information."
+msgstr "情報をお送りいただきありがとうございます。"
+
+msgid "Please enter a valid email address."
+msgstr "有効なメールアドレスを入力してください。"
+
+msgid "Please fill in all required fields."
+msgstr "必須項目をすべて入力してください。"
+
+# Admin messages
+msgid "Settings saved."
+msgstr "設定を保存しました。"
+
+msgid "Webhook test successful!"
+msgstr "Webhook テストが成功しました！"
+
+msgid "Webhook test failed."
+msgstr "Webhook テストが失敗しました。"
+
+msgid "Export completed."
+msgstr "エクスポートが完了しました。"
+
+msgid "No data to export."
+msgstr "エクスポートするデータがありません。"
+
+# Usage stats
+msgid "Free: %d messages/month"
+msgstr "Free: 月間%d件まで"
+
+msgid "Pro: Unlimited"
+msgstr "Pro: 無制限"
+
+# Rapls AI Chatbot PRO status
+msgid "Rapls AI Chatbot PROをお使いです。"
+msgstr "Rapls AI Chatbot PRO をお使いです。"
+
+msgid "You are using Rapls AI Chatbot PRO."
+msgstr "Rapls AI Chatbot PRO をお使いです。"
+
+# Theme selector
+msgid "Widget Theme"
+msgstr "ウィジェットテーマ"
+
+msgid "Free Themes"
+msgstr "無料テーマ"
+
+msgid "Pro Themes"
+msgstr "Pro テーマ"
+
+msgid "Default"
+msgstr "デフォルト"
+
+msgid "Simple"
+msgstr "シンプル"
+
+msgid "Classic"
+msgstr "クラシック"
+
+msgid "Modern"
+msgstr "モダン"
+
+msgid "Gradient"
+msgstr "グラデーション"
+
+msgid "Dark"
+msgstr "ダーク"
+
+msgid "Glass"
+msgstr "グラス"
+
+msgid "Rounded"
+msgstr "ラウンド"
+
+msgid "Upgrade to Pro to unlock all themes"
+msgstr "Pro にアップグレードしてすべてのテーマをアンロック"
+
+# New themes
+msgid "Light"
+msgstr "ライト"
+
+msgid "Minimal"
+msgstr "ミニマル"
+
+msgid "Flat"
+msgstr "フラット"
+
+msgid "Ocean"
+msgstr "オーシャン"
+
+msgid "Sunset"
+msgstr "サンセット"
+
+msgid "Forest"
+msgstr "フォレスト"
+
+msgid "Neon"
+msgstr "ネオン"
+
+msgid "Elegant"
+msgstr "エレガント"
+
+# Dark mode and color settings
+msgid "Dark Mode"
+msgstr "ダークモード"
+
+msgid "Enable dark mode for the chatbot"
+msgstr "チャットボットにダークモードを適用"
+
+msgid "This color is automatically set when you select a theme."
+msgstr "テーマを選択すると、この色は自動的に設定されます。"
+
+# Leads page
+msgid "Leads"
+msgstr "リード"
+
+msgid "Lead management is available with a Pro license. Capture and manage visitor information collected through the chatbot."
+msgstr "リード管理は Pro ライセンスでご利用いただけます。チャットボットで収集した訪問者情報を管理できます。"
+
+msgid "Export CSV"
+msgstr "CSV をエクスポート"
+
+msgid "Export JSON"
+msgstr "JSON をエクスポート"
+
+msgid "Search by name, email, or company..."
+msgstr "名前、メール、会社名で検索..."
+
+msgid "From:"
+msgstr "開始日:"
+
+msgid "To:"
+msgstr "終了日:"
+
+msgid "Filter"
+msgstr "フィルター"
+
+msgid "Clear"
+msgstr "クリア"
+
+msgid "No leads found."
+msgstr "リードが見つかりません。"
+
+msgid "Enable the lead capture form in Settings > Pro Features to start collecting visitor information."
+msgstr "設定 > Pro 機能でリード獲得フォームを有効にして、訪問者情報の収集を開始してください。"
+
+msgid "%d leads found"
+msgstr "%d件のリードが見つかりました"
+
+msgid "Conversation"
+msgstr "会話"
+
+msgid "Lead deleted."
+msgstr "リードを削除しました。"
+
+# Session reset
+msgid "Reset All User Sessions"
+msgstr "全ユーザーセッションをリセット"
+
+msgid "Are you sure you want to reset all user sessions?"
+msgstr "すべてのユーザーセッションをリセットしてもよろしいですか？"
+
+msgid "This will force all users to start new conversations on their next visit."
+msgstr "次回訪問時にすべてのユーザーが新しい会話を開始することになります。"
+
+msgid "Existing conversation history will remain in the database."
+msgstr "既存の会話履歴はデータベースに残ります。"
+
+msgid "All user sessions have been reset. Users will start new sessions on their next visit."
+msgstr "すべてのユーザーセッションをリセットしました。ユーザーは次回訪問時に新しいセッションを開始します。"
+
+msgid "Failed to reset sessions."
+msgstr "セッションのリセットに失敗しました。"
+
+# Lead column in conversations
+msgid "Lead"
+msgstr "リード"
+
+# Reset default buttons
+msgid "Reset all settings in this tab to defaults?"
+msgstr "このタブの設定をすべてデフォルトに戻しますか？"
+
+msgid "Reset this field to default?"
+msgstr "このフィールドをデフォルトに戻しますか？"
+
+# Conversation export
+msgid "Conversation ID"
+msgstr "会話 ID"
+
+msgid "Session ID"
+msgstr "セッション ID"
+
+msgid "Page URL"
+msgstr "ページ URL"
+
+msgid "Lead Name"
+msgstr "リード名"
+
+msgid "Lead Email"
+msgstr "リードメール"
+
+msgid "Lead Phone"
+msgstr "リード電話番号"
+
+msgid "Lead Company"
+msgstr "リード会社名"
+
+msgid "Role"
+msgstr "役割"
+
+msgid "Message"
+msgstr "メッセージ"
+
+msgid "Conversation Date"
+msgstr "会話日時"
+
+msgid "Message Date"
+msgstr "メッセージ日時"
+
+# Lead export
+msgid "ID"
+msgstr "ID"
+
+msgid "Created At"
+msgstr "作成日時"
+
+# Export feature
+msgid "Export feature requires Pro license."
+msgstr "エクスポート機能には Pro ライセンスが必要です。"
+
+# Analytics page
+msgid "Analytics"
+msgstr "分析"
+
+# Device breakdown
+msgid "Desktop"
+msgstr "デスクトップ"
+
+msgid "Mobile"
+msgstr "モバイル"
+
+msgid "Tablet"
+msgstr "タブレット"
+
+msgid "Other"
+msgstr "その他"
+
+# Satisfaction trend
+
+# Pro Features Preview - New entries only (no duplicates)
+msgid "Unlock Pro Features"
+msgstr "Pro 機能をアンロック"
+
+msgid "Get access to all the features below"
+msgstr "以下のすべての機能にアクセスできます"
+
+msgid "Get Pro Version"
+msgstr "Pro 版を入手"
+
+msgid "Show lead capture form before chat"
+msgstr "チャット開始前にリード獲得フォームを表示"
+
+msgid "Send email when new lead is captured"
+msgstr "新しいリードを獲得した時にメールを送信"
+
+msgid "Show special message outside business hours"
+msgstr "営業時間外に特別なメッセージを表示"
+
+msgid "Enable banned words filter"
+msgstr "禁止ワードフィルターを有効化"
+
+msgid "Enable IP blocking"
+msgstr "IP ブロックを有効化"
+
+msgid "One IP per line"
+msgstr "1行に1つの IP アドレス"
+
+msgid "What are your hours?"
+msgstr "営業時間は？"
+
+msgid "Contact support"
+msgstr "サポートに連絡"
+
+msgid "Pricing info"
+msgstr "料金情報"
+
+msgid "Show related question suggestions"
+msgstr "関連する質問のサジェストを表示"
+
+msgid "Show autocomplete while typing"
+msgstr "入力中にオートコンプリートを表示"
+
+msgid "Hide \"Powered by\" text"
+msgstr "「Powered by」テキストを非表示"
+
+msgid "Add your custom CSS here"
+msgstr "カスタム CSS をここに追加"
+
+msgid "Unlock lead capture, analytics, webhooks, and more features."
+msgstr "リード獲得、分析、Webhook、その他の機能をアンロック。"
+
+msgid "Automatically crawl and index your website content so the chatbot can answer questions based on your site information."
+msgstr "サイトのコンテンツを自動的にクロール・インデックスし、チャットボットがサイトの情報に基づいて質問に回答できるようにします。"
+
+msgid "Conversation History"
+msgstr "会話履歴"
+
+msgid "View and manage all chatbot conversations. Search, filter, and analyze visitor interactions."
+msgstr "チャットボットのすべての会話を閲覧・管理します。訪問者とのやり取りを検索、フィルタリング、分析できます。"
+
+msgid "Lead Management"
+msgstr "リード管理"
+
+msgid "Capture and manage visitor information collected through the chatbot. Export leads to CSV/JSON and receive email notifications."
+msgstr "チャットボットで収集した訪問者情報を管理します。リードを CSV/JSON でエクスポートしたり、メール通知を受け取ることができます。"
+
+msgid "Get insights into your chatbot performance, user satisfaction, frequently asked questions, and more."
+msgstr "チャットボットのパフォーマンス、ユーザー満足度、よくある質問などのインサイトを取得します。"
+
+msgid "Lead Capture Forms"
+msgstr "リード獲得フォーム"
+
+msgid "Business Hours & Holidays"
+msgstr "営業時間と休日"
+
+msgid "White Label Options"
+msgstr "ホワイトラベルオプション"
+
+msgid "Analytics Dashboard"
+msgstr "分析ダッシュボード"
+
+# Feedback buttons setting
+msgid "Feedback Buttons"
+msgstr "フィードバックボタン"
+
+msgid "Show feedback buttons (thumbs up/down) on bot messages"
+msgstr "ボットのメッセージにフィードバックボタン（👍👎）を表示"
+
+msgid "Allow users to rate bot responses. Feedback data is stored for analytics."
+msgstr "ユーザーがボットの回答を評価できるようにします。フィードバックデータは分析用に保存されます。"
+
+msgid "Show feedback buttons (👍👎) on bot messages"
+msgstr "ボットのメッセージにフィードバックボタン（👍👎）を表示"
+
+msgid "Allow users to rate bot responses. Feedback is used to improve AI response quality."
+msgstr "ユーザーがボットの回答を評価できるようにします。フィードバックは AI 回答の品質向上に使用されます。"
+
+# Pro Settings menu
+msgid "Pro Settings"
+msgstr "Pro 設定"
+
+# Plugin description
+msgid "AI Chatbot plugin with OpenAI/Claude/Google support and automatic site content learning."
+msgstr "OpenAI/Claude/Google に対応し、サイトコンテンツを自動学習する AI チャットボットプラグイン。"
+
+# Plugin action links (Pro dependency)
+msgid "Deactivate"
+msgstr "無効化"
+
+msgid "Cannot deactivate while Rapls AI Chatbot Pro is active"
+msgstr "Rapls AI Chatbot Pro で使用中のため無効化できません"
+
+# Pro Settings Preview
+msgid "Unlock all Pro features including Lead Capture, Business Hours, Webhook, and more."
+msgstr "リード獲得、営業時間、Webhook など、すべての Pro 機能をアンロックします。"
+
+msgid "Enter form title..."
+msgstr "フォームタイトルを入力..."
+
+msgid "Pro Features Include:"
+msgstr "Pro 機能一覧："
+
+msgid "Content Filters (Banned Words, IP Blocking)"
+msgstr "コンテンツフィルター（禁止ワード、IP ブロック）"
+
+msgid "AI Enhancement (Related Suggestions, Autocomplete)"
+msgstr "AI 機能強化（関連質問、入力補完）"
+
+msgid "Lead Management Dashboard"
+msgstr "リード管理ダッシュボード"
+
+msgid "Pro Themes & Dark Mode"
+msgstr "Pro テーマ & ダークモード"
+
+# Pro Settings Preview - Lead Capture Fields
+msgid "Capture Fields"
+msgstr "獲得項目"
+
+msgid "Optional"
+msgstr "任意"
+
+# Pro Settings Preview - Business Hours Schedule
+msgid "Business Hours Schedule"
+msgstr "営業時間スケジュール"
+
+msgid "Thank you for your message. We are currently outside of business hours..."
+msgstr "お問い合わせありがとうございます。現在営業時間外です..."
+
+# Pro Settings Preview - Missing translations
+msgid "Require lead information before allowing chat"
+msgstr "チャットを許可する前にリード情報の入力を必須にする"
+
+msgid "Used for signature verification (optional)."
+msgstr "署名検証に使用します（任意）。"
+
+msgid "Related Suggestions"
+msgstr "関連質問サジェスト"
+
+msgid "Autocomplete"
+msgstr "入力補完"
+
+msgid "Send email notification for new leads"
+msgstr "新規リード獲得時にメール通知を送信"
+
+# Sentiment Analysis (Pro Preview)
+msgid "Sentiment Analysis"
+msgstr "感情分析"
+
+msgid "Analyze user emotions and adjust AI response tone"
+msgstr "ユーザーの感情を分析して AI の回答トーンを調整"
+
+msgid "When enabled, AI will detect user sentiment (positive, negative, neutral) and respond appropriately."
+msgstr "有効にすると、AI がユーザーの感情（ポジティブ、ネガティブ、ニュートラル）を検出し、適切に応答します。"
+
+# Context Memory (Pro Preview)
+msgid "Context Memory"
+msgstr "コンテキスト記憶"
+
+msgid "Remember conversation context across sessions"
+msgstr "セッション間で会話コンテキストを記憶"
+
+msgid "When enabled, AI will remember previous conversations with the same user."
+msgstr "有効にすると、AI が同じユーザーとの過去の会話を記憶します。"
+
+msgid "Memory retention days:"
+msgstr "記憶保持日数:"
+
+# Multimodal Support (Pro Preview)
+msgid "Multimodal Support"
+msgstr "マルチモーダル対応"
+
+msgid "Allow users to upload and analyze images"
+msgstr "ユーザーが画像をアップロードして分析できるようにする"
+
+msgid "When enabled, users can upload images for AI analysis. Requires GPT-4 Vision, Claude 3, or Gemini."
+msgstr "有効にすると、ユーザーが AI 分析用の画像をアップロードできます。GPT-4 Vision、Claude 3、または Gemini が必要です。"
+
+msgid "Max image size (KB):"
+msgstr "最大画像サイズ（KB）:"
+
+msgid "Allowed formats:"
+msgstr "許可する形式:"
+
+# Pro Features List
+msgid "AI Enhancement (Related Suggestions, Autocomplete, Sentiment Analysis)"
+msgstr "AI 機能強化（関連質問サジェスト、入力補完、感情分析）"
+
+msgid "Context Memory (Cross-session)"
+msgstr "コンテキスト記憶（セッション間記憶）"
+
+msgid "Multimodal Support (Image Upload & Analysis)"
+msgstr "マルチモーダル対応（画像アップロード・解析）"
+
+# Vision model warnings
+msgid "Multimodal is enabled. Please select a vision-capable model."
+msgstr "マルチモーダルが有効です。ビジョン対応モデルを選択してください。"
+
+msgid "No vision support"
+msgstr "ビジョン非対応"
+
+# Regenerate response instruction - variation styles
+msgid "Use a casual, friendly tone"
+msgstr "カジュアルでフレンドリーな口調で"
+
+msgid "Use a formal, professional tone"
+msgstr "フォーマルでプロフェッショナルな口調で"
+
+msgid "Start your answer with a different opening"
+msgstr "回答の書き出しを変えて"
+
+msgid "Explain from a different angle"
+msgstr "別の角度から説明して"
+
+msgid "Use different examples"
+msgstr "別の例を使って"
+
+msgid "Focus on different aspects"
+msgstr "別の側面に焦点を当てて"
+
+#, php-format
+msgid "[REGENERATION REQUEST #%d]: The user wants a DIFFERENT answer. FORBIDDEN: Do not start with \"%s\". %s. Create a completely new response with different wording. IMPORTANT: Do NOT use headings, labels, or section markers like【】or brackets. Write in natural flowing paragraphs. Complete all sentences fully."
+msgstr "[再生成リクエスト #%d]: ユーザーは別の回答を求めています。禁止: 「%s」で始めないでください。%s。異なる言葉遣いで完全に新しい回答を作成してください。重要: 見出し、ラベル、【】などのセクションマーカーを使わないでください。自然な段落で書き、すべての文を最後まで完結させてください。"
+
+#, php-format
+msgid "Please give me a different answer. %s. Do not use any headings or special formatting. Write naturally and complete all sentences. [ID:%s]"
+msgstr "別の回答をお願いします。%s。見出しや特殊な書式を使わないでください。自然に書いて、すべての文を完結させてください。[ID:%s]"
+
+# Feedback learning
+msgid "The following responses received positive feedback from users. Use these as examples of good responses:"
+msgstr "以下の回答はユーザーから良い評価を受けました。良い回答の例として参考にしてください："
+
+msgid "Please respond in a similar style and quality."
+msgstr "同様のスタイルと品質で回答してください。"
+
+msgid "The following responses received negative feedback. AVOID responding in similar ways:"
+msgstr "以下の回答は悪い評価を受けました。同様の回答パターンを避けてください："
+
+msgid "Learn from these examples to improve response quality."
+msgstr "これらの例から学んで回答の品質を向上させてください。"
+
+msgid "Positive feedback"
+msgstr "良い評価"
+
+msgid "Negative feedback"
+msgstr "悪い評価"
+
+# Free/Pro Limit System (v1.2.19)
+msgid "Monthly AI response limit reached."
+msgstr "AI 応答の月間上限に達しました。"
+
+msgid "The monthly AI response limit has been reached. For more advanced usage, please consider the Pro version."
+msgstr "AI 応答の月間上限に達しました。より高度にご利用いただくには Pro 版をご検討ください。"
+
+#, php-format
+msgid "FAQ limit reached (%d items). Upgrade to Pro for unlimited entries."
+msgstr "FAQ の上限に達しました (%d件)。無制限にするには Pro にアップグレードしてください。"
+
+#, php-format
+msgid "FAQ entries: %1$d / %2$d (Free version limit)"
+msgstr "FAQ エントリー: %1$d / %2$d (無料版の上限)"
+
+msgid "Limit reached. Upgrade to Pro for unlimited entries."
+msgstr "上限に達しました。無制限にするには Pro にアップグレードしてください。"
+
+msgid "The chatbot can no longer generate AI responses this month. Upgrade to Pro for unlimited responses."
+msgstr "今月の AI 応答を生成できなくなりました。無制限にするには Pro にアップグレードしてください。"
+
+msgid "AI Chatbot:"
+msgstr "AI チャットボット:"
+
+msgid "Monthly AI response limit reached. The chatbot can no longer generate AI responses this month."
+msgstr "AI 応答の月間上限に達しました。今月はチャットボットで AI 応答を生成できません。"
+
+msgid "Upgrade to Pro for unlimited responses"
+msgstr "Pro にアップグレードして無制限に"
+
+msgid "Monthly AI Responses"
+msgstr "今月の AI 応答数"
+
+msgid "Limit reached"
+msgstr "上限に達しました"
+
+#, php-format
+msgid "%d remaining"
+msgstr "残り %d回"
+
+# Badge Icon (Free locked preview)
+msgid "Badge Icon"
+msgstr "バッジアイコン"
+
+msgid "Configured in Pro Settings > Badge Icon tab."
+msgstr "Pro 設定 > バッジアイコンタブで設定できます。"
+
+msgid "Icon Type"
+msgstr "アイコンの種類"
+
+msgid "Preset"
+msgstr "プリセット"
+
+msgid "Custom Image"
+msgstr "カスタム画像"
+
+msgid "Emoji"
+msgstr "絵文字"
+
+msgid "Upgrade to Pro to customize the badge icon with presets, images, or emoji."
+msgstr "Pro にアップグレードすると、プリセット、画像、絵文字でバッジアイコンをカスタマイズできます。"
+
+# Enhanced Pro Preview - Crawler
+msgid "Next Scheduled Crawl"
+msgstr "次回のスケジュール学習"
+
+msgid "Custom Post Types"
+msgstr "カスタム投稿タイプ"
+
+msgid "Only re-crawl changed pages"
+msgstr "変更されたページのみ再学習する"
+
+msgid "When enabled, only pages modified since the last crawl will be re-indexed."
+msgstr "有効にすると、前回の学習以降に変更されたページのみ再インデックスされます。"
+
+msgid "Exclude URLs"
+msgstr "除外 URL"
+
+msgid "One URL pattern per line (e.g., /private/*, /draft/*)"
+msgstr "1行に1つの URL パターン（例: /private/*, /draft/*）"
+
+msgid "Crawl Progress"
+msgstr "学習の進捗"
+
+msgid "pages crawled"
+msgstr "ページ学習済み"
+
+msgid "Crawl Log"
+msgstr "学習ログ"
+
+msgid "Scheduled"
+msgstr "スケジュール"
+
+msgid "Differential"
+msgstr "差分"
+
+msgid "Completed"
+msgstr "完了"
+
+msgid "Full crawl completed successfully"
+msgstr "フルクロールが正常に完了しました"
+
+msgid "3 changed pages re-indexed"
+msgstr "変更された3ページを再インデックスしました"
+
+msgid "Scheduled automatic crawling"
+msgstr "スケジュール自動学習"
+
+msgid "Differential crawl (changed pages only)"
+msgstr "差分学習（変更ページのみ）"
+
+msgid "URL exclusion rules"
+msgstr "URL 除外ルール"
+
+msgid "Crawl history & logs"
+msgstr "学習履歴とログ"
+
+msgid "Custom post type support"
+msgstr "カスタム投稿タイプ対応"
+
+msgid "Crawl progress tracking"
+msgstr "学習進捗トラッキング"
+
+# Enhanced Pro Preview - Conversations
+msgid "Search conversations..."
+msgstr "会話を検索..."
+
+msgid "All Status"
+msgstr "すべてのステータス"
+
+msgid "All Tags"
+msgstr "すべてのタグ"
+
+msgid "Support"
+msgstr "サポート"
+
+msgid "Sales"
+msgstr "セールス"
+
+msgid "Tags"
+msgstr "タグ"
+
+msgid "Summary"
+msgstr "要約"
+
+msgid "Important"
+msgstr "重要"
+
+msgid "Conversation Detail"
+msgstr "会話の詳細"
+
+msgid "Lead:"
+msgstr "リード:"
+
+msgid "Page:"
+msgstr "ページ:"
+
+msgid "Messages:"
+msgstr "メッセージ:"
+
+msgid "Duration:"
+msgstr "所要時間:"
+
+msgid "min"
+msgstr "分"
+
+msgid "Visitor"
+msgstr "訪問者"
+
+msgid "Bot"
+msgstr "ボット"
+
+msgid "How do I reset my password?"
+msgstr "パスワードをリセットするにはどうすればいいですか？"
+
+msgid "You can reset your password from the account settings page..."
+msgstr "アカウント設定ページからパスワードをリセットできます..."
+
+msgid "AI Summary:"
+msgstr "AI 要約:"
+
+msgid "User inquired about password reset. Bot provided instructions to use the account settings page. Issue resolved."
+msgstr "ユーザーがパスワードリセットについて問い合わせ。ボットがアカウント設定ページの利用手順を案内。問題解決済み。"
+
+msgid "Conversation tags & labeling"
+msgstr "会話タグとラベル付け"
+
+msgid "AI conversation summary"
+msgstr "AI 会話要約"
+
+msgid "Advanced search & filtering"
+msgstr "高度な検索とフィルタリング"
+
+msgid "Conversation detail view"
+msgstr "会話詳細ビュー"
+
+msgid "Bulk operations"
+msgstr "一括操作"
+
+# Enhanced Pro Preview - Analytics
+msgid "Satisfaction Trend"
+msgstr "満足度トレンド"
+
+msgid "Hourly Activity"
+msgstr "時間別アクティビティ"
+
+msgid "conversations"
+msgstr "会話"
+
+msgid "Unresolved Questions"
+msgstr "未解決の質問"
+
+msgid "Last Asked"
+msgstr "最終質問日"
+
+msgid "Add to FAQ"
+msgstr "FAQ に追加"
+
+msgid "Active conversations:"
+msgstr "アクティブな会話:"
+
+msgid "Waiting for response:"
+msgstr "応答待ち:"
+
+msgid "Today's conversations:"
+msgstr "本日の会話:"
+
+msgid "Interactive analytics dashboard"
+msgstr "インタラクティブ分析ダッシュボード"
+
+msgid "FAQ ranking & auto-generation"
+msgstr "FAQ ランキングと自動生成"
+
+msgid "Satisfaction score tracking"
+msgstr "満足度スコアトラッキング"
+
+msgid "Time & device analysis"
+msgstr "時間帯・デバイス分析"
+
+msgid "Unresolved questions detection"
+msgstr "未解決の質問検出"
+
+msgid "Real-time conversation monitor"
+msgstr "リアルタイム会話モニター"
+
+# Enhanced Pro Preview - Leads
+msgid "Email notifications: ON"
+msgstr "メール通知: ON"
+
+msgid "New"
+msgstr "新規"
+
+msgid "Contacted"
+msgstr "連絡済み"
+
+msgid "Converted"
+msgstr "成約"
+
+msgid "Custom Fields"
+msgstr "カスタムフィールド"
+
+msgid "Department:"
+msgstr "部署:"
+
+msgid "Chat"
+msgstr "チャット"
+
+msgid "View conversation"
+msgstr "会話を表示"
+
+msgid "Lead capture form customization"
+msgstr "リードキャプチャフォームのカスタマイズ"
+
+msgid "CSV/JSON export"
+msgstr "CSV/JSON エクスポート"
+
+msgid "Email notifications for new leads"
+msgstr "新規リードのメール通知"
+
+msgid "Custom fields support"
+msgstr "カスタムフィールド対応"
+
+msgid "Lead-conversation linking"
+msgstr "リードと会話の紐付け"
+
+msgid "Lead status management"
+msgstr "リードステータス管理"
+
+# Model validation error
+#, php-format
+msgid "The model \"%1$s\" is no longer available. Please go to Settings and select a current model (e.g. %2$s)."
+msgstr "モデル「%1$s」は利用できなくなりました。設定画面で現行モデル（例: %2$s）を選択してください。"
+
+# Settings page Pro upgrade banner
+msgid "Extend your AI chatbot with automation, analytics, and business-ready features."
+msgstr "AI チャットボットを自動化・分析・ビジネス運用機能で拡張できます。"
+
+msgid "Learn More"
+msgstr "詳しく見る"
+
+# Crawler preview - Free note
+msgid "Manual content indexing is available in the Free version."
+msgstr "手動コンテンツインデックスは Free 版で利用可能です。"
+
+msgid "With Pro, your chatbot automatically stays up-to-date — scheduled crawling keeps content fresh daily, and differential crawl re-indexes only changed pages to save resources."
+msgstr "Pro では、チャットボットが自動的に最新の状態を維持します。スケジュールクロールで毎日コンテンツを更新し、差分クロールで変更ページのみを再インデックスしてリソースを節約します。"
+
+# Conversations preview - Export use cases
+msgid "Export Use Cases:"
+msgstr "エクスポート活用例:"
+
+msgid "CRM integration via CSV import"
+msgstr "CSV インポートによる CRM 連携"
+
+msgid "Monthly conversation reports"
+msgstr "月次会話レポート"
+
+msgid "Customer support analysis"
+msgstr "カスタマーサポート分析"
+
+msgid "Team training data"
+msgstr "チームトレーニングデータ"
+
+# Analytics preview - Stat cards
+msgid "Satisfaction"
+msgstr "満足度"
+
+msgid "Avg Messages"
+msgstr "平均メッセージ数"
+
+# Leads preview - Webhook examples
+msgid "Webhook Integration Examples:"
+msgstr "Webhook 連携例:"
+
+msgid "Slack notifications for new leads"
+msgstr "新規リードの Slack 通知"
+
+msgid "Email alerts via Zapier / Make"
+msgstr "Zapier / Make 経由のメール通知"
+
+msgid "CRM auto-registration (HubSpot, etc.)"
+msgstr "CRM 自動登録（HubSpot など）"
+
+msgid "Google Sheets logging"
+msgstr "Google Sheets への記録"
+
+msgid "All webhooks are HMAC-signed for security."
+msgstr "すべての Webhook は HMAC 署名でセキュリティが確保されています。"
+
+#: templates/admin/conversations.php
+msgid "Total"
+msgstr "合計"
+
+#: templates/admin/conversations.php
+msgid "Today"
+msgstr "今日"
+
+#: templates/admin/knowledge.php
+msgid "Total Entries"
+msgstr "エントリー合計"
+
+#: templates/admin/knowledge.php
+msgid "Inactive"
+msgstr "非アクティブ"
+
+#: templates/admin/knowledge.php
+msgid "Categories"
+msgstr "カテゴリー"
+
+# Feature Prompts (Advanced Settings)
+#: templates/admin/settings.php
+msgid "Feature Prompts (Advanced)"
+msgstr "機能プロンプト（上級者向け）"
+
+#: templates/admin/settings.php
+msgid "These prompts control how AI behaves for specific features."
+msgstr "これらのプロンプトは特定の機能における AI の動作を制御します。"
+
+#: templates/admin/settings.php
+msgid "Regenerate Response Instruction"
+msgstr "回答再生成の指示"
+
+#: templates/admin/settings.php
+msgid "Instruction appended when user requests response regeneration."
+msgstr "ユーザーが回答の再生成をリクエストした際に追加される指示です。"
+
+#: templates/admin/settings.php
+msgid "Available placeholders"
+msgstr "利用可能なプレースホルダー"
+
+#: templates/admin/settings.php
+msgid "A random number (1-1000) inserted each time to force the AI to generate a unique response."
+msgstr "AI に毎回異なる回答を生成させるために挿入されるランダムな数値（1〜1000）です。"
+
+#: templates/admin/settings.php
+msgid "The first 50 characters of the previous response. The AI is instructed not to begin with the same text."
+msgstr "前回の回答の先頭50文字です。AI はこの文章と同じ書き出しで始めないように指示されます。"
+
+#: templates/admin/settings.php
+msgid "A randomly selected style instruction (e.g. \"Use a casual tone\", \"Explain from a different angle\") to vary the response."
+msgstr "回答にバリエーションを持たせるためにランダムに選ばれるスタイル指示（例:「カジュアルなトーンで」「別の角度から説明して」）です。"
+
+#: templates/admin/settings.php
+msgid "Feedback Learning: Good Examples"
+msgstr "フィードバック学習: 良い例"
+
+#: templates/admin/settings.php
+msgid "Header text prepended to positive feedback examples sent to AI."
+msgstr "AI に送信される肯定的なフィードバック例の前に付加されるヘッダーテキストです。"
+
+#: templates/admin/settings.php
+msgid "Feedback Learning: Bad Examples"
+msgstr "フィードバック学習: 悪い例"
+
+#: templates/admin/settings.php
+msgid "Header text prepended to negative feedback examples sent to AI."
+msgstr "AI に送信される否定的なフィードバック例の前に付加されるヘッダーテキストです。"
+
+#: templates/admin/settings.php
+msgid "Conversation Summary Prompt"
+msgstr "会話要約プロンプト"
+
+#: templates/admin/settings.php
+msgid "Prompt used to generate conversation summaries."
+msgstr "会話の要約を生成するために使用されるプロンプトです。"
+
+#: templates/admin/leads.php
+msgid "Total Leads"
+msgstr "リード合計"
+
+#: templates/admin/leads.php
+msgid "This Week"
+msgstr "今週"
+
+#: templates/admin/leads.php
+msgid "This Month"
+msgstr "今月"
+
+#: templates/admin/settings.php
+msgid "Page Type Display"
+msgstr "ページタイプ別表示"
+
+#: templates/admin/settings.php
+msgid "Homepage / Front Page"
+msgstr "ホームページ / フロントページ"
+
+#: templates/admin/settings.php
+msgid "Single Posts"
+msgstr "投稿ページ"
+
+#: templates/admin/settings.php
+msgid "Pages"
+msgstr "固定ページ"
+
+#: templates/admin/settings.php
+msgid "Archives (Category, Tag, Date, Author)"
+msgstr "アーカイブ（カテゴリー、タグ、日付、著者）"
+
+#: templates/admin/settings.php
+msgid "Uncheck to hide the chatbot on specific page types. Note: Include IDs below will override these settings."
+msgstr "チェックを外すと、そのページタイプでチャットボットが非表示になります。注: 下の「表示する ID」を設定すると、ページタイプ設定より優先されます。"
+
+#: templates/admin/settings.php
+msgid "Include Only (IDs)"
+msgstr "表示する ID（ホワイトリスト）"
+
+#: templates/admin/settings.php
+msgid "e.g. 10, 25, 142"
+msgstr "例: 10, 25, 142"
+
+#: templates/admin/settings.php
+msgid "Comma-separated post/page IDs. If set, the chatbot will ONLY be displayed on these pages (overrides page type settings above)."
+msgstr "カンマ区切りの投稿/固定ページ ID。設定すると、これらのページでのみチャットボットが表示されます（上のページタイプ設定より優先）。"
+
+#: templates/admin/settings.php
+msgid "Exclude (IDs)"
+msgstr "非表示にする ID（ブラックリスト）"
+
+#: templates/admin/settings.php
+msgid "e.g. 5, 30, 200"
+msgstr "例: 5, 30, 200"
+
+#: templates/admin/settings.php
+msgid "Comma-separated post/page IDs. The chatbot will NOT be displayed on these pages."
+msgstr "カンマ区切りの投稿/固定ページ ID。これらのページではチャットボットが非表示になります。"
+
+#: templates/admin/settings.php
+msgid "Select specific pages to hide the chatbot (dropdown-based). For posts, use Exclude IDs above."
+msgstr "ドロップダウンから固定ページを選択して非表示にします。投稿ページには上の「非表示にする ID」を使用してください。"
+
+#: templates/admin/crawler.php
+msgid "Enhanced Content Extraction"
+msgstr "高度なコンテンツ抽出"
+
+#: templates/admin/crawler.php
+msgid "Enable enhanced HTML content extraction"
+msgstr "高度な HTML コンテンツ抽出を有効にする"
+
+#: templates/admin/crawler.php
+msgid "Uses DOMDocument to parse HTML and extract structured content from headings, tables, lists, code blocks, and meta tags."
+msgstr "DOMDocument を使用して HTML を解析し、見出し・テーブル・リスト・コードブロック・メタタグから構造化コンテンツを抽出します。"
+
+#: templates/admin/crawler.php
+msgid "Extracted elements:"
+msgstr "抽出される要素:"
+
+#: templates/admin/crawler.php
+msgid "Markdown headings"
+msgstr "Markdown 見出し"
+
+#: templates/admin/crawler.php
+msgid "Structured table data"
+msgstr "構造化テーブルデータ"
+
+#: templates/admin/crawler.php
+msgid "Formatted lists"
+msgstr "書式付きリスト"
+
+#: templates/admin/crawler.php
+msgid "Code blocks"
+msgstr "コードブロック"
+
+#: templates/admin/crawler.php
+msgid "Quoted text"
+msgstr "引用テキスト"
+
+#: templates/admin/crawler.php
+msgid "SEO description & keywords"
+msgstr "SEO ディスクリプション・キーワード"
+
+#: templates/admin/crawler.php
+msgid "After changing this setting, re-run Site Learning to re-index all content."
+msgstr "この設定を変更した後、サイト学習を再実行してすべてのコンテンツを再インデックスしてください。"
+
+#: includes/admin/class-admin.php
+msgid "(saved)"
+msgstr "（保存済み）"
+
+#: includes/admin/class-admin.php
+msgid "AI Prompts"
+msgstr "AI プロンプト"
+
+#: includes/admin/class-admin.php
+msgid "AI Responses"
+msgstr "AI 応答"
+
+#: includes/admin/class-admin.php
+msgid "API Cost Alerts & Budget Caps"
+msgstr "API コストアラート & 予算上限"
+
+#: includes/admin/class-admin.php
+msgid "API key is required."
+msgstr "API キーは必須です。"
+
+#: includes/admin/class-admin.php
+msgid "Action"
+msgstr "アクション"
+
+#: includes/admin/class-admin.php
+msgid "Action type filtering"
+msgstr "アクションタイプでの絞り込み"
+
+#: includes/admin/class-admin.php
+msgid "Add to KB"
+msgstr "KB に追加"
+
+#: includes/admin/class-admin.php
+msgid "All Actions"
+msgstr "すべてのアクション"
+
+#: includes/admin/class-admin.php
+msgid "Analytics Dashboard & PDF Export"
+msgstr "分析ダッシュボード & PDF エクスポート"
+
+#: includes/admin/class-admin.php
+msgid "Audit Log"
+msgstr "監査ログ"
+
+#: includes/admin/class-admin.php
+msgid "Backup"
+msgstr "バックアップ"
+
+#: includes/admin/class-admin.php
+msgid "Backup & Restore Settings"
+msgstr "設定のバックアップ & 復元"
+
+#: includes/admin/class-admin.php
+msgid "Block AI responses when budget exceeded"
+msgstr "予算超過時に AI 応答をブロック"
+
+#: includes/admin/class-admin.php
+msgid "Budget Limit"
+msgstr "予算上限"
+
+#: includes/admin/class-admin.php
+msgid "CSV export for compliance"
+msgstr "コンプライアンス用 CSV エクスポート"
+
+#: includes/admin/class-admin.php
+msgid "Cache"
+msgstr "キャッシュ"
+
+#: includes/admin/class-admin.php
+msgid "Cache AI responses to reduce API costs"
+msgstr "AI 応答をキャッシュして API コストを削減"
+
+#: includes/admin/class-admin.php
+msgid "Cache Statistics"
+msgstr "キャッシュ統計"
+
+#: includes/admin/class-admin.php
+msgid "Cache TTL"
+msgstr "キャッシュ TTL"
+
+#: includes/admin/class-admin.php
+msgid "Cached"
+msgstr "キャッシュ済み"
+
+#: includes/admin/class-admin.php
+msgid "Clear Cache"
+msgstr "キャッシュをクリア"
+
+#: includes/admin/class-admin.php
+msgid "Complete action audit trail"
+msgstr "完全なアクション監査証跡"
+
+#: includes/admin/class-admin.php
+msgid "Configurable retention policy"
+msgstr "設定可能な保持ポリシー"
+
+#: includes/admin/class-admin.php
+msgid "Content Filters"
+msgstr "コンテンツフィルター"
+
+#: includes/admin/class-admin.php
+msgid "Content Filters (Banned Words, IP Blocking, Rate Limiting)"
+msgstr "コンテンツフィルター（禁止ワード、IP ブロック、レート制限）"
+
+#: includes/admin/class-admin.php
+msgid "Context Extraction Prompt"
+msgstr "コンテキスト抽出プロンプト"
+
+#: includes/admin/class-admin.php
+msgid "Context Memory Template"
+msgstr "コンテキスト記憶テンプレート"
+
+#: includes/admin/class-admin.php
+msgid "Conversation statistics"
+msgstr "会話統計"
+
+#: includes/admin/class-admin.php
+msgid "Conversion"
+msgstr "コンバージョン"
+
+#: includes/admin/class-admin.php
+msgid "Conversion Goals"
+msgstr "コンバージョンゴール"
+
+#: includes/admin/class-admin.php
+msgid "Conversion Tracking"
+msgstr "コンバージョントラッキング"
+
+#: includes/admin/class-admin.php
+msgid "Cost Alert"
+msgstr "コストアラート"
+
+#: includes/admin/class-admin.php
+msgid "Current Month Usage"
+msgstr "今月の使用量"
+
+#: includes/admin/class-admin.php
+msgid "Customizable AI Prompts"
+msgstr "カスタマイズ可能な AI プロンプト"
+
+#: includes/admin/class-admin.php
+msgid "Customize the AI prompts used by Pro features. Each field has a Reset button to restore defaults."
+msgstr "Pro 機能で使用される AI プロンプトをカスタマイズします。各フィールドにリセットボタンがあります。"
+
+#: includes/admin/class-admin.php
+msgid "Date range search"
+msgstr "日付範囲検索"
+
+#: includes/admin/class-admin.php
+msgid "Define URL patterns that count as conversions (e.g., /thank-you, /order-complete)."
+msgstr "コンバージョンとしてカウントする URL パターンを定義します（例: /thank-you, /order-complete）。"
+
+#: includes/admin/class-admin.php
+msgid "Device Statistics"
+msgstr "デバイス統計"
+
+#: includes/admin/class-admin.php
+msgid "Download PDF"
+msgstr "PDF をダウンロード"
+
+#: includes/admin/class-admin.php
+msgid "Download Settings (JSON)"
+msgstr "設定をダウンロード（JSON）"
+
+#: includes/admin/class-admin.php
+msgid "Enable Conversion Tracking"
+msgstr "コンバージョントラッキングを有効化"
+
+#: includes/admin/class-admin.php
+msgid "Enable Offline Messages"
+msgstr "オフラインメッセージを有効化"
+
+#: includes/admin/class-admin.php
+msgid "Enable Response Cache"
+msgstr "レスポンスキャッシュを有効化"
+
+#: includes/admin/class-admin.php
+msgid "Enable enhanced HTML content extraction for Site Learning"
+msgstr "サイト学習の高度な HTML コンテンツ抽出を有効化"
+
+#: includes/admin/class-admin.php
+msgid "Enable enhanced rate limiting"
+msgstr "強化レート制限を有効化"
+
+#: includes/admin/class-admin.php
+msgid "Enable site learning"
+msgstr "サイト学習を有効化"
+
+#: includes/admin/class-admin.php
+msgid "Enhanced HTML content extraction"
+msgstr "高度な HTML コンテンツ抽出"
+
+#: includes/admin/class-admin.php
+msgid "Export all plugin settings as a JSON file for backup or migration."
+msgstr "すべてのプラグイン設定をバックアップまたは移行用の JSON ファイルとしてエクスポートします。"
+
+#: includes/admin/class-admin.php
+msgid "Exported 15 leads as JSON"
+msgstr "15件のリードを JSON でエクスポートしました"
+
+#: includes/admin/class-admin.php
+msgid "Exported 48 conversations as CSV"
+msgstr "48件の会話を CSV でエクスポートしました"
+
+#: includes/admin/class-admin.php
+msgid "Failed to reset."
+msgstr "リセットに失敗しました。"
+
+#: includes/admin/class-admin.php
+msgid "Feedback Analytics"
+msgstr "フィードバック分析"
+
+#: includes/admin/class-admin.php
+msgid "Feedback Rate"
+msgstr "フィードバック率"
+
+#: includes/admin/class-admin.php
+msgid "Feedback analytics & satisfaction tracking"
+msgstr "フィードバック分析と満足度トラッキング"
+
+#: includes/admin/class-admin.php
+msgid "Feedback tracking on messages"
+msgstr "メッセージのフィードバックトラッキング"
+
+#: includes/admin/class-admin.php
+msgid "Frequently asked questions not covered by your knowledge base"
+msgstr "ナレッジベースにないよくある質問"
+
+#: includes/admin/class-admin.php
+msgid "Hit Rate"
+msgstr "ヒット率"
+
+#: includes/admin/class-admin.php
+msgid "Hits"
+msgstr "ヒット数"
+
+#: includes/admin/class-admin.php
+msgid "Import settings from a previously exported JSON file."
+msgstr "以前エクスポートした JSON ファイルから設定をインポートします。"
+
+#: includes/admin/class-admin.php
+msgid "Knowledge Gaps"
+msgstr "ナレッジギャップ"
+
+#: includes/admin/class-admin.php
+msgid "Knowledge gap detection"
+msgstr "ナレッジギャップ検出"
+
+#: includes/admin/class-admin.php
+msgid "License activated successfully"
+msgstr "ライセンスを有効化しました"
+
+#: includes/admin/class-admin.php
+msgid "Loading models..."
+msgstr "モデルを読み込み中..."
+
+#: includes/admin/class-admin.php
+msgid "Max messages per hour"
+msgstr "1時間あたりの最大メッセージ数"
+
+#: includes/admin/class-admin.php
+msgid "Max messages per minute"
+msgstr "1分あたりの最大メッセージ数"
+
+#: includes/admin/class-admin.php
+msgid "Maximum number of indexed pages to reference per response (1-10)."
+msgstr "回答ごとに参照するインデックス済みページの最大数（1-10）。"
+
+#: includes/admin/class-admin.php
+msgid "Message shown when budget is exceeded..."
+msgstr "予算超過時に表示するメッセージ..."
+
+#: includes/admin/class-admin.php
+msgid "Monthly Report"
+msgstr "月次レポート"
+
+#: includes/admin/class-admin.php
+msgid "Negative"
+msgstr "ネガティブ"
+
+#: includes/admin/class-admin.php
+msgid "Negative feedback review & improvement"
+msgstr "ネガティブフィードバックのレビューと改善"
+
+#: includes/admin/class-admin.php
+msgid "No models available"
+msgstr "利用可能なモデルがありません"
+
+#: includes/admin/class-admin.php
+msgid "Offline"
+msgstr "オフライン"
+
+#: includes/admin/class-admin.php
+msgid "Offline Messages"
+msgstr "オフラインメッセージ"
+
+#: includes/admin/class-admin.php
+msgid "Offline Messages & Contact Form"
+msgstr "オフラインメッセージ & お問い合わせフォーム"
+
+#: includes/admin/class-admin.php
+msgid "PDF report download"
+msgstr "PDF レポートダウンロード"
+
+#: includes/admin/class-admin.php
+msgid "Period comparison analytics"
+msgstr "期間比較分析"
+
+#: includes/admin/class-admin.php
+msgid "Please leave a message and we will get back to you."
+msgstr "メッセージを残していただければ、折り返しご連絡いたします。"
+
+#: includes/admin/class-admin.php
+msgid "Positive"
+msgstr "ポジティブ"
+
+#: includes/admin/class-admin.php
+msgid "Post type statistics"
+msgstr "投稿タイプ統計"
+
+#: includes/admin/class-admin.php
+msgid "Posts, Pages, and all public custom post types will be indexed."
+msgstr "投稿、固定ページ、すべての公開カスタム投稿タイプがインデックスされます。"
+
+#: includes/admin/class-admin.php
+msgid "Print / PDF"
+msgstr "印刷 / PDF"
+
+#: includes/admin/class-admin.php
+msgid "Pro settings saved"
+msgstr "Pro 設定を保存しました"
+
+#: includes/admin/class-admin.php
+msgid "Prompt for detecting user sentiment. Use {message} as placeholder for user message."
+msgstr "ユーザーの感情を検出するためのプロンプト。{message} をユーザーメッセージのプレースホルダーとして使用してください。"
+
+#: includes/admin/class-admin.php
+msgid "Prompt for extracting user context from conversations. Use {conversation} as placeholder."
+msgstr "会話からユーザーコンテキストを抽出するためのプロンプト。{conversation} をプレースホルダーとして使用してください。"
+
+#: includes/admin/class-admin.php
+msgid "Rate Limiting"
+msgstr "レート制限"
+
+#: includes/admin/class-admin.php
+msgid "Rate limit message"
+msgstr "レート制限メッセージ"
+
+#: includes/admin/class-admin.php
+msgid "Reference count control"
+msgstr "参照件数制御"
+
+#: includes/admin/class-admin.php
+msgid "Refresh model list"
+msgstr "モデルリストを更新"
+
+#: includes/admin/class-admin.php
+msgid "Related Suggestions Prompt"
+msgstr "関連質問サジェストプロンプト"
+
+#: includes/admin/class-admin.php
+msgid "Response Cache"
+msgstr "レスポンスキャッシュ"
+
+#: includes/admin/class-admin.php
+msgid "Response Cache (API Cost Reduction)"
+msgstr "レスポンスキャッシュ（API コスト削減）"
+
+#: includes/admin/class-admin.php
+msgid "Select specific post types"
+msgstr "特定の投稿タイプを選択"
+
+#: includes/admin/class-admin.php
+msgid "Send alert when cost exceeds threshold"
+msgstr "コストがしきい値を超えたらアラートを送信"
+
+#: includes/admin/class-admin.php
+msgid "Send email notification for offline messages"
+msgstr "オフラインメッセージのメール通知を送信"
+
+#: includes/admin/class-admin.php
+msgid "Send monthly usage report via email"
+msgstr "月次利用レポートをメールで送信"
+
+#: includes/admin/class-admin.php
+msgid "Sentiment Detection Prompt"
+msgstr "感情検出プロンプト"
+
+#: includes/admin/class-admin.php
+msgid "Settings Backup & Restore"
+msgstr "設定のバックアップと復元"
+
+#: includes/admin/class-admin.php
+msgid "Show contact form when outside business hours"
+msgstr "営業時間外にお問い合わせフォームを表示"
+
+#: includes/admin/class-admin.php
+msgid "Similar questions will receive cached responses instead of calling the AI API."
+msgstr "同様の質問には AI API を呼び出さずにキャッシュされた回答が返されます。"
+
+#: includes/admin/class-admin.php
+msgid "Template for injecting user context into system prompt. Placeholders: {summary}, {topics}, {preferences}, {last_date}"
+msgstr "ユーザーコンテキストをシステムプロンプトに注入するテンプレート。プレースホルダー: {summary}, {topics}, {preferences}, {last_date}"
+
+#: includes/admin/class-admin.php
+msgid "These prompts are appended to the system prompt based on detected sentiment."
+msgstr "これらのプロンプトは検出された感情に基づいてシステムプロンプトに追加されます。"
+
+#: includes/admin/class-admin.php
+msgid "Times Asked"
+msgstr "質問回数"
+
+#: includes/admin/class-admin.php
+msgid "Tone Adjustment Prompts"
+msgstr "トーン調整プロンプト"
+
+#: includes/admin/class-admin.php
+msgid "Too many messages. Please wait a moment before sending again."
+msgstr "メッセージが多すぎます。少し待ってから再度送信してください。"
+
+#: includes/admin/class-admin.php
+msgid "Total Feedback"
+msgstr "フィードバック合計"
+
+#: includes/admin/class-admin.php
+msgid "Track all administrative actions for compliance and security monitoring."
+msgstr "コンプライアンスとセキュリティ監視のためにすべての管理アクションを追跡します。"
+
+#: includes/admin/class-admin.php
+msgid "Track conversions from chatbot conversations"
+msgstr "チャットボットの会話からコンバージョンをトラッキング"
+
+#: includes/admin/class-admin.php
+msgid "Two-tier throttling (burst + sustained) to prevent spam."
+msgstr "スパム防止のための2段階スロットリング（バースト + 持続）。"
+
+#: includes/admin/class-admin.php
+msgid "Usage & Budget"
+msgstr "使用量 & 予算"
+
+#: includes/admin/class-admin.php
+msgid "User activity tracking"
+msgstr "ユーザーアクティビティトラッキング"
+
+#: includes/admin/class-admin.php
+msgid "Uses DOMDocument to parse HTML structure and extract content from headings, tables, lists, code blocks, blockquotes, and meta tags."
+msgstr "DOMDocument を使用して HTML 構造を解析し、見出し・テーブル・リスト・コードブロック・引用・メタタグからコンテンツを抽出します。"
+
+#: includes/admin/class-admin.php
+msgid "We are currently offline"
+msgstr "現在オフラインです"
+
+#: includes/admin/class-admin.php
+msgid "Webhook"
+msgstr "Webhook"
+
+#: includes/admin/class-admin.php
+msgid "Webhook Secret"
+msgstr "Webhook シークレット"
+
+#: includes/admin/class-admin.php
+msgid "budget used"
+msgstr "予算使用済み"
+
+#: includes/admin/class-admin.php
+msgid "leads found"
+msgstr "件のリード"
+
+#: includes/admin/class-admin.php
+msgid "new"
+msgstr "新規"
+
+#: includes/admin/class-admin.php
+msgid "skipped"
+msgstr "スキップ"
+
+#: includes/admin/class-admin.php
+msgid "updated"
+msgstr "更新"
+
+#: includes/ai-providers/class-gemini-provider.php
+msgid "Fastest, cheapest"
+msgstr "最速・最安"
+
+#: includes/api/class-rest-controller.php
+msgid "(not provided)"
+msgstr "（未入力）"
+
+#: includes/api/class-rest-controller.php
+msgid "A valid email address is required."
+msgstr "有効なメールアドレスが必要です。"
+
+#: includes/api/class-rest-controller.php
+msgid "Conversion tracking is not enabled."
+msgstr "コンバージョントラッキングが有効になっていません。"
+
+#: includes/api/class-rest-controller.php
+msgid "Could not find original question."
+msgstr "元の質問が見つかりませんでした。"
+
+#: includes/api/class-rest-controller.php
+msgid "Failed to create conversation."
+msgstr "会話の作成に失敗しました。"
+
+#: includes/api/class-rest-controller.php
+msgid "Failed to save lead information."
+msgstr "リード情報の保存に失敗しました。"
+
+#: includes/api/class-rest-controller.php
+msgid "Failed to save message."
+msgstr "メッセージの保存に失敗しました。"
+
+#: includes/api/class-rest-controller.php
+msgid "Invalid feedback value."
+msgstr "無効なフィードバック値です。"
+
+#: includes/api/class-rest-controller.php
+msgid "Invalid message."
+msgstr "無効なメッセージです。"
+
+#: includes/api/class-rest-controller.php
+msgid "Invalid session."
+msgstr "無効なセッションです。"
+
+#: includes/api/class-rest-controller.php
+msgid "Lead already submitted."
+msgstr "リード情報はすでに送信済みです。"
+
+#: includes/api/class-rest-controller.php
+msgid "Message is required."
+msgstr "メッセージは必須です。"
+
+#: includes/api/class-rest-controller.php
+msgid "Message not found."
+msgstr "メッセージが見つかりません。"
+
+#: includes/api/class-rest-controller.php
+msgid "New Lead Captured"
+msgstr "新規リード獲得"
+
+#: includes/api/class-rest-controller.php
+msgid "Offline messages are not enabled."
+msgstr "オフラインメッセージが有効になっていません。"
+
+#: includes/api/class-rest-controller.php
+msgid "Session ID is required."
+msgstr "セッション ID は必須です。"
+
+#: includes/api/class-rest-controller.php
+msgid "Sorry, an error occurred while processing your request. Please try again later."
+msgstr "申し訳ございません、リクエストの処理中にエラーが発生しました。後ほど再度お試しください。"
+
+#: includes/api/class-rest-controller.php
+msgid "Thank you! Your message has been received. We will get back to you soon."
+msgstr "ありがとうございます！メッセージを受け取りました。後ほどご連絡いたします。"
+
+#: includes/api/class-rest-controller.php
+msgid "The AI service is not configured correctly. Please contact the site administrator."
+msgstr "AI サービスが正しく設定されていません。サイト管理者にお問い合わせください。"
+
+#: includes/api/class-rest-controller.php
+msgid "This feature requires a Pro license."
+msgstr "この機能には Pro ライセンスが必要です。"
+
+#: includes/api/class-rest-controller.php
+msgid "View all leads"
+msgstr "すべてのリードを表示"
+
+#: includes/class-pro-features.php
+msgid "Image upload requires Pro."
+msgstr "画像アップロードには Pro が必要です。"
+
+#: includes/class-pro-features.php
+msgid "The AI service is temporarily unavailable due to usage limits. Please try again later."
+msgstr "利用上限のため、AI サービスは一時的に利用できません。後ほど再度お試しください。"
+
+#: includes/models/class-knowledge.php
+msgid "Answer"
+msgstr "回答"
+
+#: templates/admin/conversations.php
+msgid "From"
+msgstr "開始日"
+
+#: templates/admin/conversations.php
+msgid "To"
+msgstr "終了日"
+
+#: templates/admin/dashboard.php
+msgid "Cache Hit Rate"
+msgstr "キャッシュヒット率"
+
+#: templates/admin/knowledge.php
+msgid "Answer Template"
+msgstr "回答テンプレート"
+
+#: templates/admin/knowledge.php
+msgid "Approve"
+msgstr "承認"
+
+#: templates/admin/knowledge.php
+msgid "Draft"
+msgstr "下書き"
+
+#: templates/admin/knowledge.php
+msgid "Drafts"
+msgstr "下書き"
+
+#: templates/admin/knowledge.php
+msgid "Generate FAQ drafts from knowledge gaps? This will use your AI API."
+msgstr "ナレッジギャップから FAQ の下書きを生成しますか？AI API を使用します。"
+
+#: templates/admin/knowledge.php
+msgid "Generate FAQ from Gaps"
+msgstr "ギャップから FAQ を生成"
+
+#: templates/admin/knowledge.php
+msgid "Generating..."
+msgstr "生成中..."
+
+#: templates/admin/knowledge.php
+msgid "Published"
+msgstr "公開済み"
+
+#: templates/admin/knowledge.php
+msgid "Reject"
+msgstr "却下"
+
+#: templates/admin/knowledge.php
+msgid "Reject and delete this draft?"
+msgstr "この下書きを却下して削除しますか？"
+
+#: templates/admin/knowledge.php
+msgid "Template"
+msgstr "テンプレート"
+
+#: templates/admin/settings.php
+msgid "Reset"
+msgstr "リセット"
+
+#: templates/admin/settings.php
+msgid "Reset to Default"
+msgstr "デフォルトに戻す"
+
+#: templates/admin/settings.php
+msgid "reCAPTCHA Settings"
+msgstr "reCAPTCHA 設定"
+
+#: includes/class-main.php
+msgid "Data Collected"
+msgstr "収集されるデータ"
+
+#: includes/class-main.php
+msgid "Data Retention"
+msgstr "データの保持"
+
+#: includes/class-main.php
+msgid "External Services"
+msgstr "外部サービス"
+
+#: includes/class-main.php
+msgid "User Controls"
+msgstr "ユーザーによる管理"
+
+#: includes/class-main.php
+msgid "Rapls AI Chatbot"
+msgstr "Rapls AI Chatbot"
+
+#: includes/class-main.php
+msgid "This plugin provides AI-powered chat functionality. When chat history saving is enabled, the following data may be collected and stored:"
+msgstr "このプラグインはAIを活用したチャット機能を提供します。チャット履歴の保存が有効な場合、以下のデータが収集・保存される場合があります："
+
+#: includes/class-main.php
+msgid "Chat messages (user questions and AI responses)"
+msgstr "チャットメッセージ（ユーザーの質問とAIの応答）"
+
+#: includes/class-main.php
+msgid "Session identifiers"
+msgstr "セッション識別子"
+
+#: includes/class-main.php
+msgid "Page URLs where conversations occurred"
+msgstr "会話が行われたページのURL"
+
+#: includes/class-main.php
+msgid "Hashed IP addresses (SHA-256, for rate limiting)"
+msgstr "ハッシュ化されたIPアドレス（SHA-256、レート制限用）"
+
+#: includes/class-main.php
+msgid "Chat history saving can be disabled in the plugin settings. When disabled, no conversation data is stored."
+msgstr "チャット履歴の保存はプラグインの設定で無効にできます。無効にした場合、会話データは保存されません。"
+
+#: includes/class-main.php
+msgid "Conversation data is automatically deleted after the configured retention period. Administrators can also manually delete conversations at any time."
+msgstr "会話データは設定された保持期間後に自動的に削除されます。管理者はいつでも手動で会話を削除できます。"
+
+#: includes/class-main.php
+msgid "OpenAI API (api.openai.com) - for GPT model responses"
+msgstr "OpenAI API (api.openai.com) - GPTモデルの応答用"
+
+#: includes/class-main.php
+msgid "Anthropic API (api.anthropic.com) - for Claude model responses"
+msgstr "Anthropic API (api.anthropic.com) - Claudeモデルの応答用"
+
+#: includes/class-main.php
+msgid "Google AI API (generativelanguage.googleapis.com) - for Gemini model responses"
+msgstr "Google AI API (generativelanguage.googleapis.com) - Geminiモデルの応答用"
+
+#: includes/class-pro-features.php
+msgid "[%s] New lead captured"
+msgstr "[%s] 新しいリードを取得しました"
+
+#: includes/class-pro-features.php
+msgid "[%s] New Offline Message"
+msgstr "[%s] 新しいオフラインメッセージ"
+
+#: includes/class-pro-features.php
+msgid "%s tokens saved"
+msgstr "%s トークン節約"
+
+#: includes/api/class-rest-controller.php
+msgid "Please give me a different answer. %1$s. Do not use any headings or special formatting. Write naturally and complete all sentences. [ID:%2$s]"
+msgstr "別の回答をしてください。%1$s。見出しや特殊な書式は使わないでください。自然に書き、すべての文を完結させてください。[ID:%2$s]"
+
+#: includes/api/class-rest-controller.php
+msgid "Crawl complete: %1$d indexed, %2$d updated, %3$d skipped"
+msgstr "クロール完了: %1$d件インデックス、%2$d件更新、%3$d件スキップ"
+
+#: includes/api/class-rest-controller.php
+msgid "FAQ entry added: \"How to reset password?\""
+msgstr "FAQ追加例: 「パスワードのリセット方法は？」"
+
+#: templates/admin/knowledge.php
+msgid "Q&A / Knowledge"
+msgstr "Q&A / ナレッジ"
+
+#: templates/admin/knowledge.php
+msgid "Dynamic variables (auto-replaced at runtime):"
+msgstr "動的変数（実行時に自動置換）:"
+
+#: templates/admin/knowledge.php
+msgid "Site name"
+msgstr "サイト名"
+
+#: templates/admin/knowledge.php
+msgid "Site URL"
+msgstr "サイトURL"
+
+#: templates/admin/knowledge.php
+msgid "Today's date"
+msgstr "今日の日付"
+
+#: templates/admin/knowledge.php
+msgid "Current year"
+msgstr "現在の年"
+
+#: templates/admin/knowledge.php
+msgid "Admin email"
+msgstr "管理者メール"
+
+#: templates/admin/knowledge.php
+msgid "Business hours"
+msgstr "営業時間"
+
+#: templates/admin/knowledge.php
+msgid "Templates can be inserted with one click in operator mode."
+msgstr "テンプレートはオペレーターモードでワンクリックで挿入できます。"
+
+#: templates/admin/settings.php
+msgid "All settings will be reset. API keys will also be deleted.\\n\\nThis action cannot be undone.\\n\\nTo reset, type \"reset\":"
+msgstr "すべての設定がリセットされます。APIキーも削除されます。\\n\\nこの操作は取り消せません。\\n\\nリセットするには「reset」と入力してください："
+
+#: includes/class-pro-features.php
+msgid "A new lead has been captured:\\n\\nName: %1$s\\nEmail: %2$s\\nPhone: %3$s\\nCompany: %4$s\\nDate: %5$s\\n\\nView all leads: %6$s"
+msgstr "新しいリードを取得しました：\\n\\n名前: %1$s\\nメール: %2$s\\n電話: %3$s\\n会社: %4$s\\n日時: %5$s\\n\\nすべてのリードを表示: %6$s"
+
+#: includes/class-pro-features.php
+msgid "••••••••(configured)"
+msgstr "••••••••（設定済み）"

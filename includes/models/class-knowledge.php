@@ -1,0 +1,517 @@
+<?php
+/**
+ * Knowledge base model
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class WPAIC_Knowledge {
+
+    /**
+     * Table name
+     */
+    private static function get_table_name() {
+        global $wpdb;
+        return $wpdb->prefix . 'aichat_knowledge';
+    }
+
+    /**
+     * Create table
+     */
+    private static function create_table() {
+        global $wpdb;
+        $table = self::get_table_name();
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE IF NOT EXISTS {$table} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            title VARCHAR(255) NOT NULL,
+            content LONGTEXT NOT NULL,
+            category VARCHAR(100) DEFAULT NULL,
+            priority INT(11) DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY category (category),
+            KEY is_active (is_active),
+            KEY priority (priority)
+        ) {$charset_collate};";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+    }
+
+    /**
+     * Add required columns (for existing table upgrade)
+     */
+    private static function maybe_add_columns($table) {
+        global $wpdb;
+
+        // Check if priority column exists
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $has_priority = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'priority'");
+
+        if (empty($has_priority)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN priority INT(11) DEFAULT 0 AFTER category");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD KEY priority (priority)");
+        }
+
+        // Check if is_active column exists
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $has_is_active = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'is_active'");
+
+        if (empty($has_is_active)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER priority");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD KEY is_active (is_active)");
+        }
+
+        // Check if status column exists
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $has_status = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'status'");
+
+        if (empty($has_status)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN status VARCHAR(20) DEFAULT 'published' AFTER is_active");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD KEY status (status)");
+        }
+
+        // Check if type column exists (qa or template)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $has_type = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'type'");
+
+        if (empty($has_type)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->query("ALTER TABLE {$table} ADD KEY type (type)");
+        }
+    }
+
+    /**
+     * Create knowledge
+     */
+    public static function create($data) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // Check if table exists
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'");
+
+        if (!$table_exists) {
+            // Try to create table if not exists
+            self::create_table();
+        }
+
+        // Check and add columns if needed
+        self::maybe_add_columns($table);
+
+        $type = isset($data['type']) && in_array($data['type'], ['qa', 'template'], true) ? $data['type'] : 'qa';
+
+        $insert_data = [
+            'title'     => sanitize_text_field($data['title']),
+            'content'   => wp_kses_post($data['content']),
+            'category'  => sanitize_text_field($data['category'] ?? ''),
+            'priority'  => isset($data['priority']) ? (int) $data['priority'] : 0,
+            'is_active' => isset($data['is_active']) ? (int) $data['is_active'] : 1,
+            'status'    => isset($data['status']) && in_array($data['status'], ['published', 'draft'], true) ? $data['status'] : 'published',
+            'type'      => $type,
+        ];
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+        $result = $wpdb->insert($table, $insert_data, ['%s', '%s', '%s', '%d', '%d', '%s', '%s']);
+
+        if ($result === false) {
+            return new WP_Error('db_error', 'Failed to save to database.');
+        }
+
+        return self::get_by_id($wpdb->insert_id);
+    }
+
+    /**
+     * Get knowledge by ID
+     */
+    public static function get_by_id($id) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE id = %d",
+            $id
+        ), ARRAY_A);
+    }
+
+    /**
+     * Get knowledge list
+     */
+    public static function get_list($args = []) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // Ensure columns exist
+        self::maybe_add_columns($table);
+
+        $defaults = [
+            'per_page'  => 20,
+            'page'      => 1,
+            'category'  => '',
+            'is_active' => null,
+            'status'    => '',
+            'type'      => '',
+            'orderby'   => 'priority',
+            'order'     => 'DESC',
+        ];
+
+        $args = wp_parse_args($args, $defaults);
+        $offset = ($args['page'] - 1) * $args['per_page'];
+
+        $where = '1=1';
+        $params = [];
+
+        if (!empty($args['category'])) {
+            $where .= ' AND category = %s';
+            $params[] = $args['category'];
+        }
+
+        if ($args['is_active'] !== null) {
+            $where .= ' AND is_active = %d';
+            $params[] = (int) $args['is_active'];
+        }
+
+        if (!empty($args['status'])) {
+            $where .= ' AND status = %s';
+            $params[] = sanitize_text_field($args['status']);
+        }
+
+        if (!empty($args['type'])) {
+            $where .= ' AND type = %s';
+            $params[] = sanitize_text_field($args['type']);
+        }
+
+        // Default sort: priority DESC, then created_at DESC
+        // Sanitize order direction
+        $order = strtoupper($args['order']) === 'ASC' ? 'ASC' : 'DESC';
+        $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $order);
+        if (!$orderby) {
+            $orderby = 'priority DESC, created_at DESC';
+        } elseif ($args['orderby'] === 'priority') {
+            $orderby = 'priority ' . $order . ', created_at DESC';
+        }
+
+        $params[] = $args['per_page'];
+        $params[] = $offset;
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, WHERE and ORDER BY are safe internal values
+        $sql = "SELECT * FROM {$table} WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
+    }
+
+    /**
+     * Get total knowledge count
+     */
+    public static function get_count($category = '', $is_active = null, $status = '', $type = '') {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        $where = '1=1';
+        $params = [];
+
+        if (!empty($category)) {
+            $where .= ' AND category = %s';
+            $params[] = $category;
+        }
+
+        if ($is_active !== null) {
+            $where .= ' AND is_active = %d';
+            $params[] = (int) $is_active;
+        }
+
+        if (!empty($status)) {
+            $where .= ' AND status = %s';
+            $params[] = sanitize_text_field($status);
+        }
+
+        if (!empty($type)) {
+            $where .= ' AND type = %s';
+            $params[] = sanitize_text_field($type);
+        }
+
+        if (!empty($params)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            return (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE {$where}",
+                ...$params
+            ));
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+    }
+
+    /**
+     * Get active templates (for operator mode)
+     *
+     * @return array List of template entries
+     */
+    public static function get_templates(): array {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // Ensure columns exist
+        self::maybe_add_columns($table);
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $results = $wpdb->get_results(
+            "SELECT id, title, content, category FROM {$table} WHERE type = 'template' AND is_active = 1 AND status = 'published' ORDER BY category, priority DESC, title",
+            ARRAY_A
+        );
+
+        return $results ?: [];
+    }
+
+    /**
+     * Get draft count
+     */
+    public static function get_draft_count() {
+        return self::get_count('', null, 'draft');
+    }
+
+    /**
+     * Update knowledge
+     */
+    public static function update($id, $data) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        $update_data = [];
+        $format = [];
+
+        if (isset($data['title'])) {
+            $update_data['title'] = sanitize_text_field($data['title']);
+            $format[] = '%s';
+        }
+
+        if (isset($data['content'])) {
+            $update_data['content'] = wp_kses_post($data['content']);
+            $format[] = '%s';
+        }
+
+        if (isset($data['category'])) {
+            $update_data['category'] = sanitize_text_field($data['category']);
+            $format[] = '%s';
+        }
+
+        if (isset($data['priority'])) {
+            $update_data['priority'] = (int) $data['priority'];
+            $format[] = '%d';
+        }
+
+        if (isset($data['is_active'])) {
+            $update_data['is_active'] = (int) $data['is_active'];
+            $format[] = '%d';
+        }
+
+        if (isset($data['status']) && in_array($data['status'], ['published', 'draft'], true)) {
+            $update_data['status'] = $data['status'];
+            $format[] = '%s';
+        }
+
+        if (isset($data['type']) && in_array($data['type'], ['qa', 'template'], true)) {
+            $update_data['type'] = $data['type'];
+            $format[] = '%s';
+        }
+
+        if (empty($update_data)) {
+            return false;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->update(
+            $table,
+            $update_data,
+            ['id' => $id],
+            $format,
+            ['%d']
+        );
+    }
+
+    /**
+     * Delete knowledge
+     */
+    public static function delete($id) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->delete(
+            $table,
+            ['id' => $id],
+            ['%d']
+        );
+    }
+
+    /**
+     * Delete all knowledge
+     */
+    public static function delete_all() {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return $wpdb->query("TRUNCATE TABLE {$table}");
+    }
+
+    /**
+     * Get category list
+     */
+    public static function get_categories() {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return $wpdb->get_col(
+            "SELECT DISTINCT category FROM {$table} WHERE category != '' ORDER BY category ASC"
+        );
+    }
+
+    /**
+     * Import knowledge from file
+     */
+    public static function import_from_file($file, $category = '') {
+        // Check file upload error
+        if (!isset($file['tmp_name']) || empty($file['tmp_name'])) {
+            return new WP_Error('upload_error', 'File upload failed.');
+        }
+
+        if (isset($file['error']) && $file['error'] !== UPLOAD_ERR_OK) {
+            return new WP_Error('upload_error', 'File upload error: ' . $file['error']);
+        }
+
+        if (!file_exists($file['tmp_name']) || !is_readable($file['tmp_name'])) {
+            return new WP_Error('file_error', 'Cannot read uploaded file.');
+        }
+
+        $content = '';
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        // Generate title from filename
+        $title = pathinfo($file['name'], PATHINFO_FILENAME);
+
+        switch ($extension) {
+            case 'txt':
+            case 'md':
+                $content = file_get_contents($file['tmp_name']);
+                if ($content === false) {
+                    return new WP_Error('read_error', 'Failed to read file.');
+                }
+                break;
+
+            case 'csv':
+                $content = self::parse_csv_file($file['tmp_name']);
+                break;
+
+            default:
+                return new WP_Error('invalid_file_type', 'Unsupported file type. (txt, csv, md only)');
+        }
+
+        if (empty($content)) {
+            return new WP_Error('empty_content', 'File content is empty.');
+        }
+
+        // Convert to UTF-8
+        $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS', 'EUC-JP', 'ISO-8859-1']);
+        if ($encoding && $encoding !== 'UTF-8') {
+            $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+        }
+
+        return self::create([
+            'title'    => $title,
+            'content'  => $content,
+            'category' => $category,
+        ]);
+    }
+
+    /**
+     * Export knowledge entries for given filters
+     */
+    public static function export(array $filters = []): array {
+        $args = array_merge($filters, ['per_page' => 10000, 'page' => 1]);
+        return self::get_list($args);
+    }
+
+    /**
+     * Format knowledge entries for CSV export
+     */
+    public static function format_for_csv(array $items): array {
+        $rows = [];
+
+        // Header row
+        $rows[] = [
+            __('ID', 'rapls-ai-chatbot'),
+            __('Question', 'rapls-ai-chatbot'),
+            __('Answer', 'rapls-ai-chatbot'),
+            __('Category', 'rapls-ai-chatbot'),
+            __('Priority', 'rapls-ai-chatbot'),
+            __('Active', 'rapls-ai-chatbot'),
+            __('Created At', 'rapls-ai-chatbot'),
+        ];
+
+        foreach ($items as $item) {
+            $rows[] = [
+                $item['id'],
+                $item['title'],
+                $item['content'],
+                $item['category'] ?? '',
+                $item['priority'] ?? 0,
+                !empty($item['is_active']) ? 'Yes' : 'No',
+                $item['created_at'],
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Parse CSV file
+     */
+    private static function parse_csv_file($filepath) {
+        $content = [];
+
+        if (($handle = fopen($filepath, 'r')) !== false) {
+            $headers = null;
+
+            while (($row = fgetcsv($handle)) !== false) {
+                if ($headers === null) {
+                    $headers = $row;
+                    continue;
+                }
+
+                // Combine headers and values into text
+                $line_parts = [];
+                foreach ($row as $index => $value) {
+                    $header = $headers[$index] ?? "Column" . ($index + 1);
+                    if (!empty($value)) {
+                        $line_parts[] = "{$header}: {$value}";
+                    }
+                }
+                if (!empty($line_parts)) {
+                    $content[] = implode("\n", $line_parts);
+                }
+            }
+            fclose($handle);
+        }
+
+        return implode("\n\n---\n\n", $content);
+    }
+}

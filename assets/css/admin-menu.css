@@ -1,0 +1,22 @@
+/* Pro menu badge — loaded on all admin pages */
+.wpaic-pro-menu-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+#toplevel_page_wpaic-dashboard .wp-submenu li:has(.wpaic-pro-menu-badge:not(.wpaic-pro-badge-active)) > a {
+    opacity: 0.45;
+}
+
+#toplevel_page_wpaic-dashboard .wp-submenu li:has(.wpaic-pro-menu-badge:not(.wpaic-pro-badge-active)) > a:hover {
+    opacity: 0.75;
+}
