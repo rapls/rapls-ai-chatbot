@@ -311,20 +311,38 @@ class WPAIC_Cost_Calculator {
 
     /**
      * 使用量をリセット（メッセージ履歴は残すがトークン情報をクリア）
+     * バッチ処理でID範囲ごとに更新し、大量データでもテーブルロックを最小化する。
      */
     public static function reset_usage_stats(): bool {
         global $wpdb;
         $table = $wpdb->prefix . 'aichat_messages';
+        $batch_size = 5000;
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $result = $wpdb->query(
-            "UPDATE {$table} SET
-                tokens_used = 0,
-                input_tokens = 0,
-                output_tokens = 0"
+        // トークン情報が残っている行の最大IDを取得（全件スキャン回避）
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $max_id = (int) $wpdb->get_var(
+            "SELECT MAX(id) FROM {$table} WHERE tokens_used > 0 OR input_tokens > 0 OR output_tokens > 0"
         );
 
-        return $result !== false;
+        if ($max_id <= 0) {
+            return true;
+        }
+
+        // ID範囲でバッチ更新（各UPDATEは最大 $batch_size 行のみロック）
+        for ($start = 1; $start <= $max_id; $start += $batch_size) {
+            $end = $start + $batch_size - 1;
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $result = $wpdb->query($wpdb->prepare(
+                "UPDATE {$table} SET tokens_used = 0, input_tokens = 0, output_tokens = 0 WHERE id BETWEEN %d AND %d",
+                $start,
+                $end
+            ));
+            if ($result === false) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

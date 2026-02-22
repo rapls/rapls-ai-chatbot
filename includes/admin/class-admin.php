@@ -1227,7 +1227,54 @@ class WPAIC_Admin {
             return;
         }
 
-        // Only show on our plugin pages
+        $settings = get_option('wpaic_settings', []);
+        $errors   = [];
+        $warnings = [];
+
+        // Check reCAPTCHA misconfiguration (critical — chat is broken)
+        $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
+        $recaptcha_site_key_set = !empty($settings['recaptcha_site_key']);
+        $recaptcha_secret_set = !empty($settings['recaptcha_secret_key']);
+
+        if ($recaptcha_enabled && (!$recaptcha_site_key_set || !$recaptcha_secret_set)) {
+            $errors[] = __('reCAPTCHA is enabled but not fully configured (missing site key or secret key). Chat, lead, and offline endpoints will reject all requests until configured.', 'rapls-ai-chatbot');
+        } elseif (!$recaptcha_enabled) {
+            $warnings[] = __('reCAPTCHA is not enabled. Public chat and lead form endpoints are unprotected against bots.', 'rapls-ai-chatbot');
+        }
+
+        // Check rate limit
+        $rate_limit = intval($settings['rate_limit'] ?? 20);
+        if ($rate_limit <= 0) {
+            $warnings[] = __('Rate limiting is disabled. Public API endpoints have no request frequency restrictions.', 'rapls-ai-chatbot');
+        }
+
+        $settings_url = admin_url('admin.php?page=wpaic-settings');
+
+        // Critical errors (red, not dismissible, shown on all admin pages)
+        if (!empty($errors)) {
+            ?>
+            <div class="notice notice-error" id="wpaic-security-error-notice">
+                <p>
+                    <strong><?php esc_html_e('Rapls AI Chatbot - Configuration Error:', 'rapls-ai-chatbot'); ?></strong>
+                </p>
+                <ul style="list-style: disc; margin-left: 20px;">
+                    <?php foreach ($errors as $error) : ?>
+                        <li><?php echo esc_html($error); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <p>
+                    <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Go to Settings', 'rapls-ai-chatbot'); ?></a>
+                </p>
+            </div>
+            <?php
+        }
+
+        // Warnings (yellow, dismissible, only on plugin pages)
+        if (empty($warnings)) {
+            return;
+        }
+
+        // Only show warnings on our plugin pages
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $page = $_GET['page'] ?? '';
         if (strpos($page, 'wpaic') !== 0) {
@@ -1239,31 +1286,6 @@ class WPAIC_Admin {
             return;
         }
 
-        $settings = get_option('wpaic_settings', []);
-        $warnings = [];
-
-        // Check reCAPTCHA
-        $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
-        $recaptcha_site_key_set = !empty($settings['recaptcha_site_key']);
-        $recaptcha_secret_set = !empty($settings['recaptcha_secret_key']);
-
-        if ($recaptcha_enabled && (!$recaptcha_site_key_set || !$recaptcha_secret_set)) {
-            $warnings[] = __('reCAPTCHA is enabled but not fully configured (missing site key or secret key). Chat, lead, and offline endpoints will reject requests until configured.', 'rapls-ai-chatbot');
-        } elseif (!$recaptcha_enabled) {
-            $warnings[] = __('reCAPTCHA is not enabled. Public chat and lead form endpoints are unprotected against bots.', 'rapls-ai-chatbot');
-        }
-
-        // Check rate limit
-        $rate_limit = intval($settings['rate_limit'] ?? 20);
-        if ($rate_limit <= 0) {
-            $warnings[] = __('Rate limiting is disabled. Public API endpoints have no request frequency restrictions.', 'rapls-ai-chatbot');
-        }
-
-        if (empty($warnings)) {
-            return;
-        }
-
-        $settings_url = admin_url('admin.php?page=wpaic-settings');
         $dismiss_url = wp_nonce_url(admin_url('admin-ajax.php?action=wpaic_dismiss_security_notice'), 'wpaic_dismiss_security_notice');
         ?>
         <div class="notice notice-warning is-dismissible" id="wpaic-security-notice">

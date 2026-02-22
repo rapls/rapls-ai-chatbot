@@ -8,9 +8,13 @@
 .github
 .claude
 .serena
+CLAUDE.md
 
 # Documentation and server-side files (contains credentials)
 docs/
+
+# Build tools
+build/
 
 # IDE and OS files
 .DS_Store

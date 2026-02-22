@@ -1073,19 +1073,47 @@ class WPAIC_REST_Controller {
             return new WP_Error('image_too_large', __('Image is too large. Maximum size is 2MB.', 'rapls-ai-chatbot'));
         }
 
-        // Verify decoded binary size (base64 string length can be imprecise)
+        // Verify decoded binary size and content
         $comma_pos = strpos($value, ',');
-        if ($comma_pos !== false) {
-            $base64_data = substr($value, $comma_pos + 1);
-            // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-            $decoded = base64_decode($base64_data, true);
-            if ($decoded === false) {
-                return new WP_Error('invalid_image', __('Invalid image data.', 'rapls-ai-chatbot'));
+        if ($comma_pos === false) {
+            return new WP_Error('invalid_image', __('Invalid image data.', 'rapls-ai-chatbot'));
+        }
+
+        $base64_data = substr($value, $comma_pos + 1);
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+        $decoded = base64_decode($base64_data, true);
+        if ($decoded === false) {
+            return new WP_Error('invalid_image', __('Invalid image data.', 'rapls-ai-chatbot'));
+        }
+
+        // 2MB = 2 * 1024 * 1024 = 2097152 bytes
+        if (strlen($decoded) > 2097152) {
+            return new WP_Error('image_too_large', __('Image is too large. Maximum size is 2MB.', 'rapls-ai-chatbot'));
+        }
+
+        // Verify actual MIME type via finfo (not just the data URI header)
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $real_mime = finfo_buffer($finfo, $decoded);
+            finfo_close($finfo);
+            $allowed_mimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!in_array($real_mime, $allowed_mimes, true)) {
+                return new WP_Error('invalid_image', __('Invalid image type detected. Allowed: JPEG, PNG, GIF, WebP.', 'rapls-ai-chatbot'));
             }
-            // 2MB = 2 * 1024 * 1024 = 2097152 bytes
-            if (strlen($decoded) > 2097152) {
-                return new WP_Error('image_too_large', __('Image is too large. Maximum size is 2MB.', 'rapls-ai-chatbot'));
-            }
+        }
+
+        // Verify image dimensions (max 2048px per side)
+        $image_info = @getimagesizefromstring($decoded);
+        if ($image_info === false) {
+            return new WP_Error('invalid_image', __('Unable to read image dimensions.', 'rapls-ai-chatbot'));
+        }
+        $max_dimension = 2048;
+        if ($image_info[0] > $max_dimension || $image_info[1] > $max_dimension) {
+            return new WP_Error(
+                'image_too_large',
+                /* translators: %d: maximum pixel dimension */
+                sprintf(__('Image dimensions exceed the maximum of %dpx per side.', 'rapls-ai-chatbot'), $max_dimension)
+            );
         }
 
         return true;
@@ -1584,11 +1612,7 @@ class WPAIC_REST_Controller {
             }
             return new WP_REST_Response([
                 'success' => false,
-                'error'   => $e->getMessage(),
-                'debug'   => [
-                    'file' => basename($e->getFile()),
-                    'line' => $e->getLine(),
-                ],
+                'error'   => __('Failed to submit lead information.', 'rapls-ai-chatbot'),
             ], 500);
         }
     }
@@ -1680,7 +1704,6 @@ class WPAIC_REST_Controller {
                 'limit'     => $limit === PHP_INT_MAX ? null : $limit,
                 'remaining' => $remaining === PHP_INT_MAX ? null : $remaining,
                 'reached'   => $pro_features->is_limit_reached(),
-                'is_pro'    => $pro_features->is_pro(),
             ],
         ], 200);
     }
@@ -2056,9 +2079,13 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (Exception $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC Regenerate Error: ' . $e->getMessage());
+            }
             return new WP_REST_Response([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error'   => __('Failed to regenerate response.', 'rapls-ai-chatbot'),
             ], 500);
         }
     }
@@ -2148,9 +2175,13 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (Exception $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC Summary Error: ' . $e->getMessage());
+            }
             return new WP_REST_Response([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error'   => __('Failed to generate summary.', 'rapls-ai-chatbot'),
             ], 500);
         }
     }
