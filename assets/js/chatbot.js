@@ -1041,7 +1041,7 @@
             fetch(this.config.restUrl + 'autocomplete', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: query }),
+                body: JSON.stringify({ query: query, session_id: self.sessionId }),
             })
             .then(function(response) {
                 var contentType = response.headers.get('content-type');

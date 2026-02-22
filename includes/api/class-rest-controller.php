@@ -213,8 +213,13 @@ class WPAIC_REST_Controller {
             register_rest_route($this->namespace, '/autocomplete', [
                 'methods'             => 'POST',
                 'callback'            => [$this, 'get_autocomplete'],
-                'permission_callback' => '__return_true',
+                'permission_callback' => [$this, 'check_session_permission'],
                 'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
                     'query' => [
                         'required'          => true,
                         'type'              => 'string',
@@ -2026,38 +2031,54 @@ class WPAIC_REST_Controller {
             // Get suggestions from knowledge base and past questions
             $suggestions = [];
 
-            // Search knowledge base for matching questions
+            // Search knowledge base for matching titles (safe: KB is admin-curated content)
             try {
-                $knowledge = WPAIC_Knowledge::search($query, 5);
-                foreach ($knowledge as $item) {
-                    if (!empty($item['question'])) {
-                        $suggestions[] = $item['question'];
-                    }
+                global $wpdb;
+                $kb_table = $wpdb->prefix . 'aichat_knowledge';
+
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $kb_titles = $wpdb->get_col($wpdb->prepare(
+                    "SELECT title FROM {$kb_table}
+                     WHERE is_active = 1 AND status = 'published'
+                     AND title LIKE %s
+                     ORDER BY priority DESC
+                     LIMIT 5",
+                    '%' . $wpdb->esc_like($query) . '%'
+                ));
+
+                if ($kb_titles) {
+                    $suggestions = array_merge($suggestions, $kb_titles);
                 }
             } catch (\Throwable $e) {
                 // Skip knowledge search on error
             }
 
-            // Search past user messages for similar questions
+            // Search past user messages from THIS session only (privacy: never expose other users' questions)
             try {
-                global $wpdb;
-                // Table name is safe - uses $wpdb->prefix with hardcoded suffix
-                $msg_table = $wpdb->prefix . 'aichat_messages';
+                $session_id = $request->get_param('session_id');
+                $conversation = WPAIC_Conversation::get_by_session($session_id);
 
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-                $past_questions = $wpdb->get_col($wpdb->prepare(
-                    "SELECT DISTINCT content FROM {$msg_table}
-                     WHERE role = 'user'
-                     AND content LIKE %s
-                     AND CHAR_LENGTH(content) > 10
-                     AND CHAR_LENGTH(content) < 150
-                     ORDER BY created_at DESC
-                     LIMIT 5",
-                    '%' . $wpdb->esc_like($query) . '%'
-                ));
+                if ($conversation) {
+                    global $wpdb;
+                    $msg_table = $wpdb->prefix . 'aichat_messages';
 
-                if ($past_questions) {
-                    $suggestions = array_merge($suggestions, $past_questions);
+                    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                    $past_questions = $wpdb->get_col($wpdb->prepare(
+                        "SELECT DISTINCT content FROM {$msg_table}
+                         WHERE role = 'user'
+                         AND conversation_id = %d
+                         AND content LIKE %s
+                         AND CHAR_LENGTH(content) > 10
+                         AND CHAR_LENGTH(content) < 150
+                         ORDER BY created_at DESC
+                         LIMIT 5",
+                        $conversation['id'],
+                        '%' . $wpdb->esc_like($query) . '%'
+                    ));
+
+                    if ($past_questions) {
+                        $suggestions = array_merge($suggestions, $past_questions);
+                    }
                 }
             } catch (\Throwable $e) {
                 // Skip past questions on error
