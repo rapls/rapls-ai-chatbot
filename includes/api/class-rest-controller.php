@@ -332,6 +332,7 @@ class WPAIC_REST_Controller {
         $session_id = WPAIC_Conversation::generate_session_id();
 
         // Set httpOnly cookie for session ownership verification
+        $cookie_set = false;
         if (!headers_sent()) {
             setcookie('wpaic_session_id', $session_id, [
                 'expires'  => 0,
@@ -340,15 +341,19 @@ class WPAIC_REST_Controller {
                 'samesite' => 'Lax',
                 'secure'   => is_ssl(),
             ]);
+            $cookie_set = true;
         }
 
-        // Store bootstrap transient so verify_session_ownership() can validate
-        // even when cookie was not set (e.g. headers already sent by theme/plugin).
-        $ip = $this->get_client_ip();
-        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
-        $bootstrap_hash = hash('sha256', $ip . $user_agent . wp_salt());
-        $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
-        set_transient($transient_key, $bootstrap_hash, HOUR_IN_SECONDS);
+        // Store bootstrap transient ONLY when cookie could not be set
+        // (e.g. headers already sent by theme/plugin). This prevents
+        // transient flooding if /session is called repeatedly.
+        if (!$cookie_set) {
+            $ip = $this->get_client_ip();
+            $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+            $bootstrap_hash = hash('sha256', $ip . $user_agent . wp_salt());
+            $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+            set_transient($transient_key, $bootstrap_hash, HOUR_IN_SECONDS);
+        }
 
         // Generate HMAC session token for cookie-less environments
         $session_token = $this->generate_session_token($session_id);
