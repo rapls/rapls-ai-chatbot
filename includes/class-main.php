@@ -63,8 +63,10 @@ class WPAIC_Main {
      * Load dependencies
      */
     private function load_dependencies() {
-        // Pro features stubs (for compatibility)
-        require_once WPAIC_PLUGIN_DIR . 'includes/class-pro-features.php';
+        // Pro features stubs (for compatibility — skipped if Pro already loaded)
+        if (!class_exists('WPAIC_Pro_Features', false)) {
+            require_once WPAIC_PLUGIN_DIR . 'includes/class-pro-features.php';
+        }
 
         // Models
         require_once WPAIC_PLUGIN_DIR . 'includes/models/class-conversation.php';

@@ -252,7 +252,8 @@ class WPAIC_Conversation {
     }
 
     /**
-     * Hash IP address with optional User-Agent for stronger identification
+     * Hash IP + User-Agent into a privacy-safe fingerprint.
+     * Stored in the `visitor_ip` column (column name is legacy; value is NOT a raw IP).
      */
     private static function hash_ip($ip, $user_agent = '') {
         if (empty($ip)) {

@@ -1405,17 +1405,13 @@ class WPAIC_REST_Controller {
      */
     private function check_public_rate_limit(string $route_key = 'pub', int $limit = 30, int $window = 60) {
         $ip = $this->get_client_ip();
+        $ua = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : 'no-ua';
 
-        if (empty($ip)) {
-            // IP unavailable (some proxy/hosting configs) — fall back to
-            // User-Agent hash so the endpoint is never fully unlimited.
-            $ua = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : 'no-ua';
-            $fallback = hash('sha256', $ua . wp_salt());
-            $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($fallback, 0, 24);
-        } else {
-            $ip_hash = hash('sha256', $ip . wp_salt());
-            $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($ip_hash, 0, 24);
-        }
+        // Combine IP + User-Agent to reduce NAT false-positives while adding
+        // an extra factor that IP-rotating attackers must also spoof.
+        $identity = ($ip ?: 'no-ip') . '|' . $ua;
+        $identity_hash = hash('sha256', $identity . wp_salt());
+        $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($identity_hash, 0, 24);
 
         $count = (int) get_transient($transient_key);
 

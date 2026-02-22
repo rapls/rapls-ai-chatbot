@@ -52,7 +52,7 @@ class WPAIC_Activator {
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             session_id VARCHAR(64) NOT NULL,
             user_id BIGINT(20) UNSIGNED DEFAULT NULL,
-            visitor_ip VARCHAR(64) DEFAULT NULL,
+            visitor_ip VARCHAR(64) DEFAULT NULL COMMENT 'SHA-256 hash of IP+UA+salt (privacy fingerprint, not raw IP)',
             page_url TEXT DEFAULT NULL,
             status VARCHAR(20) DEFAULT 'active',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

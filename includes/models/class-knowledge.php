@@ -405,6 +405,17 @@ class WPAIC_Knowledge {
         $content = '';
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
+        // MIME type validation — prevents extension spoofing
+        $allowed_mimes = [
+            'txt' => 'text/plain',
+            'csv' => 'text/csv',
+            'md'  => 'text/plain',
+        ];
+        $filetype = wp_check_filetype($file['name'], $allowed_mimes);
+        if (empty($filetype['ext'])) {
+            return new WP_Error('invalid_file_type', __('Unsupported file type. (txt, csv, md only)', 'rapls-ai-chatbot'));
+        }
+
         // Generate title from filename
         $title = pathinfo($file['name'], PATHINFO_FILENAME);
 

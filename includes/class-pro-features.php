@@ -10,6 +10,11 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Guard: if the real Pro implementation was loaded first, skip this stub.
+if (class_exists('WPAIC_Pro_Features', false)) {
+    return;
+}
+
 class WPAIC_Pro_Features {
 
     /**
