@@ -89,11 +89,13 @@ class WPAIC_Conversation {
         $table = self::get_table_name();
 
         $defaults = [
-            'per_page' => 20,
-            'page'     => 1,
-            'status'   => '',
-            'orderby'  => 'created_at',
-            'order'    => 'DESC',
+            'per_page'  => 20,
+            'page'      => 1,
+            'status'    => '',
+            'date_from' => '',
+            'date_to'   => '',
+            'orderby'   => 'created_at',
+            'order'     => 'DESC',
         ];
 
         $args = wp_parse_args($args, $defaults);
@@ -105,6 +107,16 @@ class WPAIC_Conversation {
         if (!empty($args['status'])) {
             $where .= ' AND status = %s';
             $params[] = $args['status'];
+        }
+
+        if (!empty($args['date_from'])) {
+            $where .= ' AND created_at >= %s';
+            $params[] = $args['date_from'] . ' 00:00:00';
+        }
+
+        if (!empty($args['date_to'])) {
+            $where .= ' AND created_at <= %s';
+            $params[] = $args['date_to'] . ' 23:59:59';
         }
 
         $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $args['order']);
@@ -324,5 +336,56 @@ class WPAIC_Conversation {
             'by_goal'             => $by_goal ?: [],
             'daily'               => $daily ?: [],
         ];
+    }
+
+    /**
+     * Export conversations for given filters
+     */
+    public static function export(array $filters = []): array {
+        $args = array_merge($filters, ['per_page' => 10000, 'page' => 1]);
+        return self::get_list($args);
+    }
+
+    /**
+     * Format conversations for CSV export
+     */
+    public static function format_for_csv(array $conversations): array {
+        $rows = [];
+
+        $rows[] = [
+            __('ID', 'rapls-ai-chatbot'),
+            __('Session ID', 'rapls-ai-chatbot'),
+            __('Status', 'rapls-ai-chatbot'),
+            __('Messages', 'rapls-ai-chatbot'),
+            __('Converted', 'rapls-ai-chatbot'),
+            __('Page URL', 'rapls-ai-chatbot'),
+            __('Created At', 'rapls-ai-chatbot'),
+        ];
+
+        foreach ($conversations as $c) {
+            $rows[] = [
+                $c['id'] ?? '',
+                $c['session_id'] ?? '',
+                $c['status'] ?? '',
+                $c['message_count'] ?? '',
+                !empty($c['is_converted']) ? 'Yes' : 'No',
+                self::csv_safe_cell($c['page_url'] ?? ''),
+                $c['created_at'] ?? '',
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Sanitize a cell value to prevent CSV injection.
+     * Prefixes values starting with =, +, -, @ with a single quote.
+     */
+    private static function csv_safe_cell($value): string {
+        $s = (string) $value;
+        if ($s !== '' && preg_match('/^[=+\-@]/', $s)) {
+            return "'" . $s;
+        }
+        return $s;
     }
 }

@@ -470,9 +470,9 @@ class WPAIC_Knowledge {
         foreach ($items as $item) {
             $rows[] = [
                 $item['id'],
-                $item['title'],
-                $item['content'],
-                $item['category'] ?? '',
+                self::csv_safe_cell($item['title']),
+                self::csv_safe_cell($item['content']),
+                self::csv_safe_cell($item['category'] ?? ''),
                 $item['priority'] ?? 0,
                 !empty($item['is_active']) ? 'Yes' : 'No',
                 $item['created_at'],
@@ -480,6 +480,17 @@ class WPAIC_Knowledge {
         }
 
         return $rows;
+    }
+
+    /**
+     * Sanitize a cell value to prevent CSV injection.
+     */
+    private static function csv_safe_cell($value): string {
+        $s = (string) $value;
+        if ($s !== '' && preg_match('/^[=+\-@]/', $s)) {
+            return "'" . $s;
+        }
+        return $s;
     }
 
     /**

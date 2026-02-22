@@ -96,7 +96,7 @@ if (!defined('ABSPATH')) {
             <?php endif; endif; ?>
 
             <?php if (!$is_unlimited): ?>
-            <div class="wpaic-stat-card <?php echo $remaining_messages <= 0 ? 'wpaic-stat-card-critical' : ($remaining_messages <= ceil($message_limit * 0.2) ? 'wpaic-stat-card-warning' : ''); ?>">
+            <div class="wpaic-stat-card <?php echo esc_attr($remaining_messages <= 0 ? 'wpaic-stat-card-critical' : ($remaining_messages <= ceil($message_limit * 0.2) ? 'wpaic-stat-card-warning' : '')); ?>">
                 <div class="stat-icon">🎯</div>
                 <div class="stat-content">
                     <div class="stat-value"><?php echo esc_html($used_messages . ' / ' . $message_limit); ?></div>
@@ -134,7 +134,7 @@ if (!defined('ABSPATH')) {
                     <td>
                         <span class="status-badge status-<?php echo esc_attr( $has_api_key ? 'ok' : 'warning' ); ?>">
                             <?php echo esc_html(strtoupper($settings['ai_provider'] ?? 'openai')); ?>
-                            <?php echo $has_api_key ? '✓' : '(' . esc_html__('API Key not set', 'rapls-ai-chatbot') . ')'; ?>
+                            <?php echo $has_api_key ? '&#10003;' : '(' . esc_html__('API Key not set', 'rapls-ai-chatbot') . ')'; ?>
                         </span>
                     </td>
                 </tr>

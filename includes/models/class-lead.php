@@ -383,15 +383,26 @@ class WPAIC_Lead {
         foreach ($leads as $lead) {
             $rows[] = [
                 $lead['id'],
-                $lead['name'],
-                $lead['email'],
-                $lead['phone'],
-                $lead['company'],
+                self::csv_safe_cell($lead['name']),
+                self::csv_safe_cell($lead['email']),
+                self::csv_safe_cell($lead['phone']),
+                self::csv_safe_cell($lead['company']),
                 $lead['conversation_id'],
                 $lead['created_at'],
             ];
         }
 
         return $rows;
+    }
+
+    /**
+     * Sanitize a cell value to prevent CSV injection.
+     */
+    private static function csv_safe_cell($value): string {
+        $s = (string) $value;
+        if ($s !== '' && preg_match('/^[=+\-@]/', $s)) {
+            return "'" . $s;
+        }
+        return $s;
     }
 }

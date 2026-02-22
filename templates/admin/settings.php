@@ -528,7 +528,7 @@ if (!defined('ABSPATH')) {
                                 <p class="wpaic-theme-group-label"><?php esc_html_e('Free Themes', 'rapls-ai-chatbot'); ?></p>
                                 <div class="wpaic-theme-options">
                                     <?php foreach ($free_themes as $theme_key => $theme_name): ?>
-                                        <label class="wpaic-theme-option <?php echo $current_theme === $theme_key ? 'selected' : ''; ?>">
+                                        <label class="wpaic-theme-option <?php echo esc_attr($current_theme === $theme_key ? 'selected' : ''); ?>">
                                             <input type="radio" name="wpaic_settings[widget_theme]" value="<?php echo esc_attr($theme_key); ?>"
                                                 <?php checked($current_theme, $theme_key); ?>>
                                             <span class="wpaic-theme-preview wpaic-theme-preview-<?php echo esc_attr($theme_key); ?>"></span>
@@ -538,12 +538,12 @@ if (!defined('ABSPATH')) {
                                 </div>
 
                                 <p class="wpaic-theme-group-label"><?php esc_html_e('Pro Themes', 'rapls-ai-chatbot'); ?> <?php if (!$is_pro_active): ?><span class="wpaic-pro-badge-small">PRO</span><?php endif; ?></p>
-                                <div class="wpaic-theme-options <?php echo !$is_pro_active ? 'wpaic-themes-locked' : ''; ?>">
+                                <div class="wpaic-theme-options <?php echo esc_attr(!$is_pro_active ? 'wpaic-themes-locked' : ''); ?>">
                                     <?php foreach ($pro_themes as $theme_key => $theme_name): ?>
-                                        <label class="wpaic-theme-option <?php echo $current_theme === $theme_key ? 'selected' : ''; ?> <?php echo !$is_pro_active ? 'disabled' : ''; ?>">
+                                        <label class="wpaic-theme-option <?php echo esc_attr($current_theme === $theme_key ? 'selected' : ''); ?> <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>">
                                             <input type="radio" name="wpaic_settings[widget_theme]" value="<?php echo esc_attr($theme_key); ?>"
                                                 <?php checked($current_theme, $theme_key); ?>
-                                                <?php echo !$is_pro_active ? 'disabled' : ''; ?>>
+                                                <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
                                             <span class="wpaic-theme-preview wpaic-theme-preview-<?php echo esc_attr($theme_key); ?>"></span>
                                             <span class="wpaic-theme-name"><?php echo esc_html($theme_name); ?></span>
                                             <?php if (!$is_pro_active): ?>
