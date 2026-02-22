@@ -56,21 +56,36 @@ class WPAIC_Site_Crawler {
             'errors'  => 0,
         ];
 
-        foreach ($post_types as $post_type) {
-            $posts = get_posts([
-                'post_type'      => $post_type,
-                'post_status'    => 'publish',
-                'posts_per_page' => -1,
-            ]);
+        $batch_size = 100;
 
-            foreach ($posts as $post) {
-                try {
-                    $result = $this->index_post($post);
-                    $results[$result]++;
-                } catch (Exception $e) {
-                    $results['errors']++;
+        foreach ($post_types as $post_type) {
+            $paged = 1;
+            do {
+                $post_ids = get_posts([
+                    'post_type'      => $post_type,
+                    'post_status'    => 'publish',
+                    'posts_per_page' => $batch_size,
+                    'paged'          => $paged,
+                    'fields'         => 'ids',
+                    'orderby'        => 'ID',
+                    'order'          => 'ASC',
+                ]);
+
+                foreach ($post_ids as $post_id) {
+                    $post = get_post($post_id);
+                    if (!$post) {
+                        continue;
+                    }
+                    try {
+                        $result = $this->index_post($post);
+                        $results[$result]++;
+                    } catch (Exception $e) {
+                        $results['errors']++;
+                    }
                 }
-            }
+
+                $paged++;
+            } while (count($post_ids) === $batch_size);
         }
 
         // Save last crawl time
@@ -194,20 +209,34 @@ class WPAIC_Site_Crawler {
             'errors'  => 0,
         ];
 
-        $posts = get_posts([
-            'post_type'      => $post_type,
-            'post_status'    => 'publish',
-            'posts_per_page' => -1,
-        ]);
+        $batch_size = 100;
+        $paged = 1;
+        do {
+            $post_ids = get_posts([
+                'post_type'      => $post_type,
+                'post_status'    => 'publish',
+                'posts_per_page' => $batch_size,
+                'paged'          => $paged,
+                'fields'         => 'ids',
+                'orderby'        => 'ID',
+                'order'          => 'ASC',
+            ]);
 
-        foreach ($posts as $post) {
-            try {
-                $result = $this->index_post($post);
-                $results[$result]++;
-            } catch (Exception $e) {
-                $results['errors']++;
+            foreach ($post_ids as $post_id) {
+                $post = get_post($post_id);
+                if (!$post) {
+                    continue;
+                }
+                try {
+                    $result = $this->index_post($post);
+                    $results[$result]++;
+                } catch (Exception $e) {
+                    $results['errors']++;
+                }
             }
-        }
+
+            $paged++;
+        } while (count($post_ids) === $batch_size);
 
         return $results;
     }

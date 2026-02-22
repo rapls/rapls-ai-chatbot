@@ -315,6 +315,14 @@ class WPAIC_REST_Controller {
             ]);
         }
 
+        // Store bootstrap transient so verify_session_ownership() can validate
+        // even when cookie was not set (e.g. headers already sent by theme/plugin).
+        $ip = $this->get_client_ip();
+        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+        $bootstrap_hash = hash('sha256', $ip . $user_agent . wp_salt());
+        $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+        set_transient($transient_key, $bootstrap_hash, 10 * MINUTE_IN_SECONDS);
+
         return new WP_REST_Response([
             'success'         => true,
             'session_id'      => $session_id,
@@ -1049,15 +1057,23 @@ class WPAIC_REST_Controller {
             }
         }
 
-        // Fallback: visitor IP + User-Agent hash match against conversation record
+        $ip = $this->get_client_ip();
+        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+        $current_hash = hash('sha256', $ip . $user_agent . wp_salt());
+
+        // Fallback 1: visitor IP + User-Agent hash match against conversation record
         $conversation = WPAIC_Conversation::get_by_session($session_id);
         if ($conversation && !empty($conversation['visitor_ip'])) {
-            $ip = $this->get_client_ip();
-            $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
-            $current_hash = hash('sha256', $ip . $user_agent . wp_salt());
             if (hash_equals($conversation['visitor_ip'], $current_hash)) {
                 return true;
             }
+        }
+
+        // Fallback 2: bootstrap transient (covers cookie-less first request after /session)
+        $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+        $stored_hash = get_transient($transient_key);
+        if ($stored_hash !== false && hash_equals($stored_hash, $current_hash)) {
+            return true;
         }
 
         return false;

@@ -388,6 +388,16 @@ class WPAIC_Knowledge {
     /**
      * Import knowledge from file
      */
+    /**
+     * Maximum import file size (5MB)
+     */
+    const IMPORT_MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    /**
+     * Maximum CSV rows to import
+     */
+    const IMPORT_MAX_CSV_ROWS = 1000;
+
     public static function import_from_file($file, $category = '') {
         // Check file upload error
         if (!isset($file['tmp_name']) || empty($file['tmp_name'])) {
@@ -400,6 +410,11 @@ class WPAIC_Knowledge {
 
         if (!file_exists($file['tmp_name']) || !is_readable($file['tmp_name'])) {
             return new WP_Error('file_error', 'Cannot read uploaded file.');
+        }
+
+        // Defense-in-depth file size check
+        if (filesize($file['tmp_name']) > self::IMPORT_MAX_FILE_SIZE) {
+            return new WP_Error('file_too_large', __('File size must be 5MB or less.', 'rapls-ai-chatbot'));
         }
 
         $content = '';
@@ -487,6 +502,7 @@ class WPAIC_Knowledge {
      */
     private static function parse_csv_file($filepath) {
         $content = [];
+        $row_count = 0;
 
         if (($handle = fopen($filepath, 'r')) !== false) {
             $headers = null;
@@ -495,6 +511,11 @@ class WPAIC_Knowledge {
                 if ($headers === null) {
                     $headers = $row;
                     continue;
+                }
+
+                $row_count++;
+                if ($row_count > self::IMPORT_MAX_CSV_ROWS) {
+                    break;
                 }
 
                 // Combine headers and values into text

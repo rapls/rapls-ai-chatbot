@@ -611,19 +611,8 @@ class WPAIC_Admin {
             true
         );
 
-        // Get AJAX URL with correct path (including subdirectory if any)
-        $ajax_url = admin_url('admin-ajax.php');
-
-        // Fix host/port to match current request (for CORS in local dev)
-        if (isset($_SERVER['HTTP_HOST'])) {
-            $parsed = wp_parse_url($ajax_url);
-            $scheme = is_ssl() ? 'https' : 'http';
-            $path = $parsed['path'] ?? '/wp-admin/admin-ajax.php';
-            $ajax_url = $scheme . '://' . $_SERVER['HTTP_HOST'] . $path;
-        }
-
         wp_localize_script('wpaic-admin', 'wpaicAdmin', [
-            'ajaxUrl' => $ajax_url,
+            'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wpaic_admin_nonce'),
             'defaults' => self::get_all_defaults(),
             'i18n'    => [
