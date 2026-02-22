@@ -344,11 +344,13 @@ class WPAIC_REST_Controller {
      * Send chat message
      */
     public function send_message(WP_REST_Request $request): WP_REST_Response {
-        $session_id = $request->get_param('session_id');
-        $message = $request->get_param('message');
-        $page_url = $request->get_param('page_url');
-        $recaptcha_token = $request->get_param('recaptcha_token');
-        $image = $request->get_param('image');
+        // Route args apply sanitize_callback automatically;
+        // re-sanitize here for defense-in-depth.
+        $session_id      = sanitize_text_field($request->get_param('session_id'));
+        $message         = sanitize_textarea_field($request->get_param('message'));
+        $page_url        = esc_url_raw($request->get_param('page_url') ?? '');
+        $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
+        $image           = $request->get_param('image');
 
         // Reject image if multimodal is not enabled (Pro feature)
         if (!empty($image)) {
@@ -640,7 +642,7 @@ class WPAIC_REST_Controller {
             }
 
             // Add context memory (Pro feature)
-            $user_id = $request->get_param('user_id') ?? '';
+            $user_id = sanitize_text_field($request->get_param('user_id') ?? '');
             if (!empty($user_id) && $pro_features->is_context_memory_enabled()) {
                 $user_context = $pro_features->get_user_context($user_id);
                 $context_prompt = $pro_features->build_context_memory_prompt($user_context);
@@ -830,7 +832,7 @@ class WPAIC_REST_Controller {
             ], 200);
         }
 
-        $session_id = $request->get_param('session_id');
+        $session_id = sanitize_text_field($request->get_param('session_id'));
 
         $conversation = WPAIC_Conversation::get_by_session($session_id);
 
@@ -1064,7 +1066,7 @@ class WPAIC_REST_Controller {
      * @return true|WP_Error
      */
     public function check_session_permission(WP_REST_Request $request) {
-        $session_id = $request->get_param('session_id');
+        $session_id = sanitize_text_field($request->get_param('session_id') ?? '');
 
         if (empty($session_id)) {
             return new WP_Error(
@@ -1364,7 +1366,7 @@ class WPAIC_REST_Controller {
             }
 
             // Session ownership already verified by check_session_permission()
-            $session_id = $request->get_param('session_id');
+            $session_id = sanitize_text_field($request->get_param('session_id'));
 
             // Rate limit: max 10 lead submissions per IP per hour
             $ip = $this->get_client_ip();
@@ -1382,7 +1384,7 @@ class WPAIC_REST_Controller {
             }
 
             // Verify reCAPTCHA if enabled
-            $recaptcha_token = $request->get_param('recaptcha_token');
+            $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
             $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'lead');
             if (is_wp_error($recaptcha_result)) {
                 return new WP_REST_Response([
@@ -1391,12 +1393,12 @@ class WPAIC_REST_Controller {
                 ], 403);
             }
 
-            $session_id = $request->get_param('session_id');
-            $email = $request->get_param('email');
-            $name = $request->get_param('name');
-            $phone = $request->get_param('phone');
-            $company = $request->get_param('company');
-            $page_url = $request->get_param('page_url');
+            $session_id = sanitize_text_field($request->get_param('session_id'));
+            $email      = sanitize_email($request->get_param('email'));
+            $name       = sanitize_text_field($request->get_param('name') ?? '');
+            $phone      = sanitize_text_field($request->get_param('phone') ?? '');
+            $company    = sanitize_text_field($request->get_param('company') ?? '');
+            $page_url   = esc_url_raw($request->get_param('page_url') ?? '');
 
             // Validate email
             if (empty($email) || !is_email($email)) {
@@ -1680,9 +1682,9 @@ class WPAIC_REST_Controller {
             ], 400);
         }
 
-        $message_id = $request->get_param('message_id');
-        $feedback = (int) $request->get_param('feedback');
-        $session_id = $request->get_param('session_id');
+        $message_id = absint($request->get_param('message_id'));
+        $feedback   = (int) $request->get_param('feedback');
+        $session_id = sanitize_text_field($request->get_param('session_id'));
 
         // Validate feedback value
         if (!in_array($feedback, [-1, 0, 1], true)) {
@@ -1761,8 +1763,8 @@ class WPAIC_REST_Controller {
             ], 403);
         }
 
-        $message_id = $request->get_param('message_id');
-        $session_id = $request->get_param('session_id');
+        $message_id = absint($request->get_param('message_id'));
+        $session_id = sanitize_text_field($request->get_param('session_id'));
 
         // Get the message to regenerate
         $message = WPAIC_Message::get_by_id($message_id);
@@ -1984,7 +1986,7 @@ class WPAIC_REST_Controller {
             ], 403);
         }
 
-        $session_id = $request->get_param('session_id');
+        $session_id = sanitize_text_field($request->get_param('session_id'));
 
         // Session ownership already verified by check_session_permission()
 
@@ -2075,8 +2077,8 @@ class WPAIC_REST_Controller {
                 ], 200);
             }
 
-            $session_id = $request->get_param('session_id');
-            $last_response = $request->get_param('last_response');
+            $session_id    = sanitize_text_field($request->get_param('session_id'));
+            $last_response = sanitize_textarea_field($request->get_param('last_response') ?? '');
 
             $conversation = WPAIC_Conversation::get_by_session($session_id);
             if (!$conversation) {
@@ -2163,7 +2165,7 @@ class WPAIC_REST_Controller {
                 ], 200);
             }
 
-            $query = $request->get_param('query');
+            $query = sanitize_text_field($request->get_param('query'));
 
             $query_len = function_exists('mb_strlen') ? mb_strlen($query) : strlen($query);
             if ($query_len < 3) {
@@ -2200,7 +2202,7 @@ class WPAIC_REST_Controller {
 
             // Search past user messages from THIS session only (privacy: never expose other users' questions)
             try {
-                $session_id = $request->get_param('session_id');
+                $session_id = sanitize_text_field($request->get_param('session_id'));
                 $conversation = WPAIC_Conversation::get_by_session($session_id);
 
                 if ($conversation) {
@@ -2298,8 +2300,8 @@ class WPAIC_REST_Controller {
      */
     public function track_conversion(WP_REST_Request $request): WP_REST_Response {
         // Session ownership already verified by check_session_permission()
-        $session_id = $request->get_param('session_id');
-        $goal = $request->get_param('goal') ?? '';
+        $session_id = sanitize_text_field($request->get_param('session_id'));
+        $goal       = sanitize_text_field($request->get_param('goal') ?? '');
 
         $settings = get_option('wpaic_settings', []);
         $pro_settings = $settings['pro_features'] ?? [];
@@ -2327,10 +2329,10 @@ class WPAIC_REST_Controller {
             return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
         }
 
-        $name = $request->get_param('name') ?? '';
-        $email = $request->get_param('email');
-        $message = $request->get_param('message');
-        $page_url = $request->get_param('page_url') ?? '';
+        $name     = sanitize_text_field($request->get_param('name') ?? '');
+        $email    = sanitize_email($request->get_param('email'));
+        $message  = sanitize_textarea_field($request->get_param('message'));
+        $page_url = esc_url_raw($request->get_param('page_url') ?? '');
 
         if (empty($email) || !is_email($email)) {
             return new WP_REST_Response([
@@ -2381,7 +2383,7 @@ class WPAIC_REST_Controller {
         }
 
         // Verify reCAPTCHA if enabled
-        $recaptcha_token = $request->get_param('recaptcha_token');
+        $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
         $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'offline');
         if (is_wp_error($recaptcha_result)) {
             return new WP_REST_Response([
