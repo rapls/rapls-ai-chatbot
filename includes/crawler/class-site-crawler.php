@@ -10,6 +10,21 @@ if (!defined('ABSPATH')) {
 class WPAIC_Site_Crawler {
 
     /**
+     * Transient key for crawl lock (prevent overlapping runs).
+     */
+    const LOCK_KEY = 'wpaic_crawl_lock';
+
+    /**
+     * Lock timeout in seconds (1 hour).
+     */
+    const LOCK_TIMEOUT = 3600;
+
+    /**
+     * Option key for incremental crawl progress.
+     */
+    const PROGRESS_KEY = 'wpaic_crawl_progress';
+
+    /**
      * Content extractor
      */
     private WPAIC_Content_Extractor $extractor;
@@ -28,7 +43,8 @@ class WPAIC_Site_Crawler {
     }
 
     /**
-     * Crawl all content
+     * Crawl content incrementally (N posts per cron run).
+     * Uses a transient lock to prevent overlapping runs.
      */
     public function crawl_all(): array {
         $settings = get_option('wpaic_settings', []);
@@ -37,17 +53,45 @@ class WPAIC_Site_Crawler {
             return ['skipped' => 'Crawler disabled'];
         }
 
+        // Prevent overlapping runs
+        if (get_transient(self::LOCK_KEY)) {
+            return ['skipped' => 'Crawl already in progress'];
+        }
+        set_transient(self::LOCK_KEY, time(), self::LOCK_TIMEOUT);
+
+        try {
+            return $this->run_incremental_crawl($settings);
+        } finally {
+            delete_transient(self::LOCK_KEY);
+        }
+    }
+
+    /**
+     * Run one incremental batch.
+     */
+    private function run_incremental_crawl(array $settings): array {
         $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
         $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
+        $batch_size = 100;
 
         // If "all" is specified, get all public post types
         if (in_array('all', $post_types, true)) {
             $post_types = get_post_types(['public' => true], 'names');
-            // Exclude attachments
             unset($post_types['attachment']);
         }
+        $post_types = array_values($post_types);
 
         $this->chunker->set_chunk_size($chunk_size);
+
+        // Resume from saved progress (or start fresh)
+        $progress = get_option(self::PROGRESS_KEY, null);
+        $type_index = 0;
+        $offset     = 0;
+
+        if (is_array($progress)) {
+            $type_index = (int) ($progress['type_index'] ?? 0);
+            $offset     = (int) ($progress['offset'] ?? 0);
+        }
 
         $results = [
             'indexed' => 0,
@@ -56,43 +100,67 @@ class WPAIC_Site_Crawler {
             'errors'  => 0,
         ];
 
-        $batch_size = 100;
-
-        foreach ($post_types as $post_type) {
-            $paged = 1;
-            do {
-                $post_ids = get_posts([
-                    'post_type'      => $post_type,
-                    'post_status'    => 'publish',
-                    'posts_per_page' => $batch_size,
-                    'paged'          => $paged,
-                    'fields'         => 'ids',
-                    'orderby'        => 'ID',
-                    'order'          => 'ASC',
-                ]);
-
-                foreach ($post_ids as $post_id) {
-                    $post = get_post($post_id);
-                    if (!$post) {
-                        continue;
-                    }
-                    try {
-                        $result = $this->index_post($post);
-                        $results[$result]++;
-                    } catch (Exception $e) {
-                        $results['errors']++;
-                    }
-                }
-
-                $paged++;
-            } while (count($post_ids) === $batch_size);
+        // Already past the last post type — full cycle done
+        if ($type_index >= count($post_types)) {
+            $this->finish_crawl_cycle($results);
+            return $results;
         }
 
-        // Save last crawl time
-        update_option('wpaic_last_crawl', current_time('mysql'));
-        update_option('wpaic_last_crawl_results', $results);
+        $current_type = $post_types[$type_index];
+
+        $post_ids = get_posts([
+            'post_type'      => $current_type,
+            'post_status'    => 'publish',
+            'posts_per_page' => $batch_size,
+            'offset'         => $offset,
+            'fields'         => 'ids',
+            'orderby'        => 'ID',
+            'order'          => 'ASC',
+        ]);
+
+        foreach ($post_ids as $post_id) {
+            $post = get_post($post_id);
+            if (!$post) {
+                continue;
+            }
+            try {
+                $result = $this->index_post($post);
+                $results[$result]++;
+            } catch (Exception $e) {
+                $results['errors']++;
+            }
+        }
+
+        // Advance progress
+        if (count($post_ids) < $batch_size) {
+            // Finished this post type — move to next
+            $type_index++;
+            $offset = 0;
+        } else {
+            $offset += $batch_size;
+        }
+
+        if ($type_index >= count($post_types)) {
+            // All post types done — cycle complete
+            $this->finish_crawl_cycle($results);
+        } else {
+            // Save progress for next cron run
+            update_option(self::PROGRESS_KEY, [
+                'type_index' => $type_index,
+                'offset'     => $offset,
+            ], false);
+        }
 
         return $results;
+    }
+
+    /**
+     * Mark a full crawl cycle as finished.
+     */
+    private function finish_crawl_cycle(array $results): void {
+        delete_option(self::PROGRESS_KEY);
+        update_option('wpaic_last_crawl', current_time('mysql'));
+        update_option('wpaic_last_crawl_results', $results);
     }
 
     /**
