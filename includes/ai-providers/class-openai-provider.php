@@ -159,15 +159,18 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $error_type = $data['error']['type'] ?? '';
             $error_code = $data['error']['code'] ?? '';
 
-            // Log detailed error for debugging
-            error_log(sprintf(
-                'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
-                $response_code,
-                $error_type,
-                $error_code,
-                $this->model,
-                $error_message
-            ));
+            // Log detailed error for debugging (only when WP_DEBUG is enabled)
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log(sprintf(
+                    'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
+                    $response_code,
+                    $error_type,
+                    $error_code,
+                    $this->model,
+                    $error_message
+                ));
+            }
 
             // Authentication errors (invalid or revoked API key)
             if ($response_code === 401 || $error_code === 'invalid_api_key') {

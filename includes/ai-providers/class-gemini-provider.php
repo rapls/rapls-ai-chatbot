@@ -104,14 +104,17 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
             $error_status = $data['error']['status'] ?? '';
 
-            // Log detailed error for debugging
-            error_log(sprintf(
-                'WPAIC Gemini API Error: HTTP %d | status=%s | model=%s | message=%s',
-                $response_code,
-                $error_status,
-                $this->model,
-                $error_message
-            ));
+            // Log detailed error for debugging (only when WP_DEBUG is enabled)
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log(sprintf(
+                    'WPAIC Gemini API Error: HTTP %d | status=%s | model=%s | message=%s',
+                    $response_code,
+                    $error_status,
+                    $this->model,
+                    $error_message
+                ));
+            }
 
             // Authentication errors
             if ($response_code === 401 || $response_code === 403) {

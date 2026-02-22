@@ -220,8 +220,8 @@ class WPAIC_Conversation {
         WPAIC_Message::delete_all();
 
         // Delete all conversations
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->query("TRUNCATE TABLE {$table}");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
     }
 
     /**

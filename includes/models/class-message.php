@@ -158,8 +158,8 @@ class WPAIC_Message {
         global $wpdb;
         $table = self::get_table_name();
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->query("TRUNCATE TABLE {$table}");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
     }
 
     /**

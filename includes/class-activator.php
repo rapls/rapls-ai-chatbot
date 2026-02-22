@@ -174,8 +174,8 @@ class WPAIC_Activator {
         $table_messages = $wpdb->prefix . 'aichat_messages';
 
         // Check if table exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_messages}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_messages));
 
         if (!$table_exists) {
             return;
@@ -217,8 +217,8 @@ class WPAIC_Activator {
         $table_knowledge = $wpdb->prefix . 'aichat_knowledge';
 
         // Check if table exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_knowledge}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_knowledge));
 
         if (!$table_exists) {
             return;
@@ -248,8 +248,8 @@ class WPAIC_Activator {
         $table_messages = $wpdb->prefix . 'aichat_messages';
 
         // Check if table exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_messages}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_messages));
 
         if (!$table_exists) {
             return;
@@ -274,8 +274,8 @@ class WPAIC_Activator {
         $table_messages = $wpdb->prefix . 'aichat_messages';
 
         // Check if table exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_messages}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_messages));
 
         if (!$table_exists) {
             return;
@@ -310,8 +310,8 @@ class WPAIC_Activator {
         $table = $wpdb->prefix . 'aichat_audit_log';
 
         // Check if table already exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 
         if ($table_exists) {
             return;
@@ -348,8 +348,8 @@ class WPAIC_Activator {
         $table = $wpdb->prefix . 'aichat_conversations';
 
         // Check if table exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 
         if (!$table_exists) {
             return;
@@ -375,8 +375,8 @@ class WPAIC_Activator {
 
         // Convert conversations.status ENUM → VARCHAR(20)
         $table_conv = $wpdb->prefix . 'aichat_conversations';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_conv}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_conv));
         if ($table_exists) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $col_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_conv} LIKE 'status'");
@@ -388,8 +388,8 @@ class WPAIC_Activator {
 
         // Convert messages.role ENUM → VARCHAR(20)
         $table_msg = $wpdb->prefix . 'aichat_messages';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table_msg}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_msg));
         if ($table_exists) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $col_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_msg} LIKE 'role'");

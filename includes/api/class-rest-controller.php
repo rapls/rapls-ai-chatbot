@@ -458,27 +458,38 @@ class WPAIC_REST_Controller {
         }
 
         try {
-            // Get or create conversation
-            $conversation = WPAIC_Conversation::get_or_create($session_id, [
-                'page_url'   => $page_url,
-                'visitor_ip' => $this->get_client_ip(),
-            ]);
+            $save_history = !empty($settings['save_history']);
+            $conversation = null;
+            $conversation_id = 0;
 
-            if (!$conversation) {
-                return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => __('Failed to create conversation session.', 'rapls-ai-chatbot'),
-                ], 500);
+            if ($save_history) {
+                // Get or create conversation
+                $conversation = WPAIC_Conversation::get_or_create($session_id, [
+                    'page_url'   => $page_url,
+                    'visitor_ip' => $this->get_client_ip(),
+                ]);
+
+                if (!$conversation) {
+                    return new WP_REST_Response([
+                        'success' => false,
+                        'error'   => __('Failed to create conversation session.', 'rapls-ai-chatbot'),
+                    ], 500);
+                }
+                $conversation_id = $conversation['id'];
+
+                // Save user message
+                WPAIC_Message::create([
+                    'conversation_id' => $conversation_id,
+                    'role'            => 'user',
+                    'content'         => $message,
+                ]);
+            } else {
+                // save_history OFF — store context in transient only
+                $this->append_transient_context($session_id, 'user', $message);
             }
 
-            // Save user message
-            WPAIC_Message::create([
-                'conversation_id' => $conversation['id'],
-                'role'            => 'user',
-                'content'         => $message,
-            ]);
-
             // Check message limit — if reached, try FAQ fallback instead of AI
+            // get_monthly_ai_response_count() includes no-history counter automatically
             if ($pro_features->is_limit_reached()) {
                 $search_engine = new WPAIC_Search_Engine();
                 $faq_results = $search_engine->search_knowledge_only($message, 3);
@@ -488,17 +499,21 @@ class WPAIC_REST_Controller {
                     $faq_answer = __('The monthly AI response limit has been reached. For more advanced usage, please consider the Pro version.', 'rapls-ai-chatbot');
                 }
 
-                // Save synthetic assistant message
-                $ai_message = WPAIC_Message::create([
-                    'conversation_id' => $conversation['id'],
-                    'role'            => 'assistant',
-                    'content'         => $faq_answer,
-                ]);
+                // Save synthetic assistant message (only when history is enabled)
+                $limit_msg_id = 0;
+                if ($save_history) {
+                    $ai_message = WPAIC_Message::create([
+                        'conversation_id' => $conversation_id,
+                        'role'            => 'assistant',
+                        'content'         => $faq_answer,
+                    ]);
+                    $limit_msg_id = $ai_message['id'] ?? 0;
+                }
 
                 return new WP_REST_Response([
                     'success' => true,
                     'data'    => [
-                        'message_id'         => $ai_message['id'] ?? 0,
+                        'message_id'         => $limit_msg_id,
                         'content'            => $faq_answer,
                         'tokens_used'        => 0,
                         'sources'            => [],
@@ -527,25 +542,34 @@ class WPAIC_REST_Controller {
                 $cached = WPAIC_Message::find_cached_response($cache_hash, $cache_ttl);
 
                 if ($cached) {
-                    // Cache hit — save a copy as the new assistant message
-                    $ai_message = WPAIC_Message::create([
-                        'conversation_id' => $conversation['id'],
-                        'role'            => 'assistant',
-                        'content'         => $cached['content'],
-                        'tokens_used'     => $cached['tokens_used'] ?? 0,
-                        'input_tokens'    => 0,
-                        'output_tokens'   => 0,
-                        'ai_provider'     => $cached['ai_provider'] ?? null,
-                        'ai_model'        => $cached['ai_model'] ?? null,
-                    ]);
+                    $cache_msg_id = 0;
 
-                    // Mark as cache hit and store hash
-                    if ($ai_message) {
-                        WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
-                        global $wpdb;
-                        $msg_table = $wpdb->prefix . 'aichat_messages';
-                        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-                        $wpdb->update($msg_table, ['cache_hit' => 1], ['id' => $ai_message['id']], ['%d'], ['%d']);
+                    if ($save_history) {
+                        // Cache hit — save a copy as the new assistant message
+                        $ai_message = WPAIC_Message::create([
+                            'conversation_id' => $conversation_id,
+                            'role'            => 'assistant',
+                            'content'         => $cached['content'],
+                            'tokens_used'     => $cached['tokens_used'] ?? 0,
+                            'input_tokens'    => 0,
+                            'output_tokens'   => 0,
+                            'ai_provider'     => $cached['ai_provider'] ?? null,
+                            'ai_model'        => $cached['ai_model'] ?? null,
+                        ]);
+
+                        // Mark as cache hit and store hash
+                        if ($ai_message) {
+                            $cache_msg_id = $ai_message['id'];
+                            WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
+                            global $wpdb;
+                            $msg_table = $wpdb->prefix . 'aichat_messages';
+                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                            $wpdb->update($msg_table, ['cache_hit' => 1], ['id' => $ai_message['id']], ['%d'], ['%d']);
+                        }
+                    } else {
+                        // save_history OFF — store in transient
+                        $this->append_transient_context($session_id, 'assistant', $cached['content']);
+                        $this->increment_no_history_monthly_count();
                     }
 
                     $sources = array_filter(array_column($related_content, 'url'));
@@ -556,7 +580,7 @@ class WPAIC_REST_Controller {
                     return new WP_REST_Response([
                         'success' => true,
                         'data'    => [
-                            'message_id'         => $ai_message['id'] ?? 0,
+                            'message_id'         => $cache_msg_id,
                             'content'            => $cached_content,
                             'tokens_used'        => 0,
                             'sources'            => array_values($sources),
@@ -658,7 +682,9 @@ class WPAIC_REST_Controller {
             }
 
             // Get conversation history
-            $history = WPAIC_Message::get_context_messages($conversation['id'], 10);
+            $history = $save_history
+                ? WPAIC_Message::get_context_messages($conversation_id, 10)
+                : $this->get_transient_context($session_id);
 
             // Build message array
             $messages = [
@@ -682,20 +708,28 @@ class WPAIC_REST_Controller {
             ]);
 
             // Save AI response
-            $ai_message = WPAIC_Message::create([
-                'conversation_id' => $conversation['id'],
-                'role'            => 'assistant',
-                'content'         => $response['content'],
-                'tokens_used'     => $response['tokens_used'],
-                'input_tokens'    => $response['input_tokens'] ?? 0,
-                'output_tokens'   => $response['output_tokens'] ?? 0,
-                'ai_provider'     => $response['provider'],
-                'ai_model'        => $response['model'],
-            ]);
+            $resp_msg_id = 0;
+            if ($save_history) {
+                $ai_message = WPAIC_Message::create([
+                    'conversation_id' => $conversation_id,
+                    'role'            => 'assistant',
+                    'content'         => $response['content'],
+                    'tokens_used'     => $response['tokens_used'],
+                    'input_tokens'    => $response['input_tokens'] ?? 0,
+                    'output_tokens'   => $response['output_tokens'] ?? 0,
+                    'ai_provider'     => $response['provider'],
+                    'ai_model'        => $response['model'],
+                ]);
+                $resp_msg_id = $ai_message['id'] ?? 0;
 
-            // Store cache hash on the new response
-            if ($cache_enabled && $cache_hash && !empty($ai_message['id'])) {
-                WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
+                // Store cache hash on the new response
+                if ($cache_enabled && $cache_hash && $resp_msg_id) {
+                    WPAIC_Message::store_cache_hash($resp_msg_id, $cache_hash);
+                }
+            } else {
+                // save_history OFF — store in transient and increment counter
+                $this->append_transient_context($session_id, 'assistant', $response['content']);
+                $this->increment_no_history_monthly_count();
             }
 
             // Budget alert check (Pro feature)
@@ -710,7 +744,7 @@ class WPAIC_REST_Controller {
             $sources = array_filter(array_column($related_content, 'url'));
 
             // Trigger webhook for new message (Pro feature)
-            if (class_exists('WPAIC_Webhook')) {
+            if ($save_history && $conversation && class_exists('WPAIC_Webhook')) {
                 try {
                     $webhook = WPAIC_Webhook::get_instance();
                     $webhook->trigger_new_message($conversation, $message, $response['content']);
@@ -733,7 +767,7 @@ class WPAIC_REST_Controller {
 
             // Build response data
             $response_data = [
-                'message_id'  => $ai_message['id'],
+                'message_id'  => $resp_msg_id,
                 'content'     => $response['content'],
                 'tokens_used' => $response['tokens_used'],
                 'sources'     => array_values($sources),
@@ -787,6 +821,15 @@ class WPAIC_REST_Controller {
      * Get conversation history
      */
     public function get_history(WP_REST_Request $request): WP_REST_Response {
+        // When save_history is OFF, no messages are stored — return empty
+        $settings = get_option('wpaic_settings', []);
+        if (empty($settings['save_history'])) {
+            return new WP_REST_Response([
+                'success'  => true,
+                'messages' => [],
+            ], 200);
+        }
+
         $session_id = $request->get_param('session_id');
 
         $conversation = WPAIC_Conversation::get_by_session($session_id);
@@ -922,7 +965,7 @@ class WPAIC_REST_Controller {
         if (strpos($encrypted, 'encg:') === 0) {
             $data = base64_decode(substr($encrypted, 5), true);
             if ($data === false || strlen($data) <= 28) { // 12 (IV) + 16 (tag) = 28 minimum
-                error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 return '';
             }
             $iv  = substr($data, 0, 12);
@@ -930,7 +973,7 @@ class WPAIC_REST_Controller {
             $encrypted_data = substr($data, 28);
             $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
             if ($decrypted === false) {
-                error_log('WPAIC: API key GCM decryption failed (salt may have changed or data tampered). Please re-enter your API key in settings.');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key GCM decryption failed (salt may have changed or data tampered). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 return '';
             }
             return $decrypted;
@@ -945,13 +988,13 @@ class WPAIC_REST_Controller {
         $data = base64_decode($raw, true);
 
         if ($data === false) {
-            error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 
         $iv_length = openssl_cipher_iv_length('aes-256-cbc');
         if (strlen($data) <= $iv_length) {
-            error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 
@@ -961,7 +1004,7 @@ class WPAIC_REST_Controller {
         $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
 
         if ($decrypted === false) {
-            error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 
@@ -1410,7 +1453,10 @@ class WPAIC_REST_Controller {
                     $webhook = WPAIC_Webhook::get_instance();
                     $webhook->trigger_lead_captured($lead);
                 } catch (\Throwable $webhook_error) {
-                    error_log('WPAIC Webhook Error: ' . $webhook_error->getMessage());
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                        error_log('WPAIC Webhook Error: ' . $webhook_error->getMessage());
+                    }
                 }
             }
 
@@ -1418,7 +1464,10 @@ class WPAIC_REST_Controller {
             try {
                 $this->maybe_send_lead_notification($lead);
             } catch (\Throwable $notification_error) {
-                error_log('WPAIC Notification Error: ' . $notification_error->getMessage());
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log('WPAIC Notification Error: ' . $notification_error->getMessage());
+                }
             }
 
             return new WP_REST_Response([
@@ -1430,7 +1479,10 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (\Throwable $e) {
-            error_log('WPAIC Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            }
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => $e->getMessage(),
@@ -1496,7 +1548,10 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (\Throwable $e) {
-            error_log('WPAIC Lead Config Error: ' . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC Lead Config Error: ' . $e->getMessage());
+            }
             return new WP_REST_Response([
                 'success' => true,
                 'data'    => [
@@ -1544,7 +1599,10 @@ class WPAIC_REST_Controller {
         }
 
         if (empty($to)) {
-            error_log('WPAIC Lead Notification: No valid email address found');
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC Lead Notification: No valid email address found');
+            }
             return;
         }
 
@@ -1603,7 +1661,8 @@ class WPAIC_REST_Controller {
         // Send email
         $result = wp_mail($to, $subject, $message_html, $headers);
 
-        if (!$result) {
+        if (!$result && defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log('WPAIC Lead Notification: wp_mail() failed. To: ' . $to);
         }
     }
@@ -1612,6 +1671,15 @@ class WPAIC_REST_Controller {
      * Submit message feedback
      */
     public function submit_feedback(WP_REST_Request $request): WP_REST_Response {
+        // Feedback requires stored messages
+        $settings = get_option('wpaic_settings', []);
+        if (empty($settings['save_history'])) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Feedback is not available when conversation history is disabled.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
         $message_id = $request->get_param('message_id');
         $feedback = (int) $request->get_param('feedback');
         $session_id = $request->get_param('session_id');
@@ -1675,6 +1743,15 @@ class WPAIC_REST_Controller {
      * Regenerate AI response (Pro feature)
      */
     public function regenerate_response(WP_REST_Request $request): WP_REST_Response {
+        // Regeneration requires stored messages
+        $regen_settings = get_option('wpaic_settings', []);
+        if (empty($regen_settings['save_history'])) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Response regeneration is not available when conversation history is disabled.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
         // Check Pro license
         $pro_features = WPAIC_Pro_Features::get_instance();
         if (!$pro_features->is_pro()) {
@@ -1886,6 +1963,18 @@ class WPAIC_REST_Controller {
      * Get conversation summary (Pro feature)
      */
     public function get_conversation_summary(WP_REST_Request $request): WP_REST_Response {
+        // Summary requires stored messages
+        $settings = get_option('wpaic_settings', []);
+        if (empty($settings['save_history'])) {
+            return new WP_REST_Response([
+                'success' => true,
+                'data'    => [
+                    'summary' => null,
+                    'message' => __('Conversation summary is not available when history is disabled.', 'rapls-ai-chatbot'),
+                ],
+            ], 200);
+        }
+
         // Check Pro license
         $pro_features = WPAIC_Pro_Features::get_instance();
         if (!$pro_features->is_pro()) {
@@ -2373,4 +2462,52 @@ class WPAIC_REST_Controller {
             ],
         ], 200);
     }
+
+    /**
+     * Get the transient key for ephemeral session context.
+     * Used when save_history is OFF to keep multi-turn context without DB writes.
+     */
+    private function get_context_transient_key(string $session_id): string {
+        return 'wpaic_ctx_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+    }
+
+    /**
+     * Retrieve ephemeral context messages from transient (save_history OFF mode).
+     *
+     * @return array Array of ['role' => ..., 'content' => ...] entries.
+     */
+    private function get_transient_context(string $session_id): array {
+        $key = $this->get_context_transient_key($session_id);
+        $data = get_transient($key);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Append a message to the ephemeral context transient (save_history OFF mode).
+     * Keeps the most recent 20 entries (10 user + 10 assistant) with a 1-hour TTL.
+     */
+    private function append_transient_context(string $session_id, string $role, string $content): void {
+        $key = $this->get_context_transient_key($session_id);
+        $data = get_transient($key);
+        if (!is_array($data)) {
+            $data = [];
+        }
+        $data[] = ['role' => $role, 'content' => $content];
+        // Keep last 20 entries
+        if (count($data) > 20) {
+            $data = array_slice($data, -20);
+        }
+        set_transient($key, $data, HOUR_IN_SECONDS);
+    }
+
+    /**
+     * Increment monthly AI response counter (used when save_history is OFF).
+     * When save_history is ON, the counter is derived from the messages table.
+     */
+    private function increment_no_history_monthly_count(): void {
+        $option_key = 'wpaic_nohist_msg_count_' . gmdate('Y_m');
+        $count = (int) get_option($option_key, 0);
+        update_option($option_key, $count + 1, false);
+    }
+
 }

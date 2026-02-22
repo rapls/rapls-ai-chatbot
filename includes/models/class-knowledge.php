@@ -103,8 +103,8 @@ class WPAIC_Knowledge {
         $table = self::get_table_name();
 
         // Check if table exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$table}'");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 
         if (!$table_exists) {
             // Try to create table if not exists
@@ -368,8 +368,8 @@ class WPAIC_Knowledge {
         global $wpdb;
         $table = self::get_table_name();
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->query("TRUNCATE TABLE {$table}");
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
     }
 
     /**

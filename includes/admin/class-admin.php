@@ -1026,7 +1026,7 @@ class WPAIC_Admin {
         if (strpos($encrypted, 'encg:') === 0) {
             $data = base64_decode(substr($encrypted, 5), true);
             if ($data === false || strlen($data) <= 28) { // 12 (IV) + 16 (tag) = 28 minimum
-                error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 return '';
             }
 
@@ -1037,7 +1037,7 @@ class WPAIC_Admin {
             $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
 
             if ($decrypted === false) {
-                error_log('WPAIC: API key decryption failed (GCM auth failed — salt may have changed or data tampered). Please re-enter your API key in settings.');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (GCM auth failed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 if (!get_transient('wpaic_api_key_decryption_failed')) {
                     set_transient('wpaic_api_key_decryption_failed', true, HOUR_IN_SECONDS);
                 }
@@ -1056,13 +1056,13 @@ class WPAIC_Admin {
         $data = base64_decode($raw, true);
 
         if ($data === false) {
-            error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 
         $iv_length = openssl_cipher_iv_length('aes-256-cbc');
         if (strlen($data) <= $iv_length) {
-            error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 
@@ -1072,7 +1072,7 @@ class WPAIC_Admin {
         $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
 
         if ($decrypted === false) {
-            error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             if (!get_transient('wpaic_api_key_decryption_failed')) {
                 set_transient('wpaic_api_key_decryption_failed', true, HOUR_IN_SECONDS);
             }
@@ -1219,7 +1219,7 @@ class WPAIC_Admin {
         if ($is_gcm) {
             $data = base64_decode(substr($value, 5), true);
             if ($data === false || strlen($data) <= 28) { // 12 (IV) + 16 (tag) = 28 minimum
-                error_log('WPAIC: Secret decryption failed (invalid GCM data).');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: Secret decryption failed (invalid GCM data).'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 return '';
             }
 
@@ -1230,7 +1230,7 @@ class WPAIC_Admin {
             $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
 
             if ($decrypted === false) {
-                error_log('WPAIC: Secret decryption failed (GCM auth failed — salt may have changed or data tampered).');
+                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: Secret decryption failed (GCM auth failed).'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 return '';
             }
 
@@ -1241,7 +1241,7 @@ class WPAIC_Admin {
         $data = base64_decode(substr($value, 4), true);
 
         if ($data === false) {
-            error_log('WPAIC: Secret decryption failed (invalid base64).');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: Secret decryption failed (invalid base64).'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 
@@ -1256,7 +1256,7 @@ class WPAIC_Admin {
         $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
 
         if ($decrypted === false) {
-            error_log('WPAIC: Secret decryption failed (salt may have changed).');
+            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: Secret decryption failed (salt may have changed).'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             return '';
         }
 

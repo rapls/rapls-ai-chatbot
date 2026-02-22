@@ -83,9 +83,12 @@ class WPAIC_Pro_Features {
         $table = $wpdb->prefix . 'aichat_messages';
         // Use MySQL DATE_FORMAT(NOW()) to match CURRENT_TIMESTAMP stored in created_at (same TZ)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var(
+        $db_count = (int) $wpdb->get_var(
             "SELECT COUNT(*) FROM {$table} WHERE role = 'assistant' AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01 00:00:00')"
         );
+        // Include messages sent while save_history was OFF
+        $nohist_count = (int) get_option('wpaic_nohist_msg_count_' . gmdate('Y_m'), 0);
+        return $db_count + $nohist_count;
     }
 
     /**

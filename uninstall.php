@@ -67,8 +67,8 @@ function wpaic_uninstall_site() {
         ];
 
         foreach ($tables as $table) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $wpdb->query("DROP TABLE IF EXISTS {$table}");
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+            $wpdb->query("DROP TABLE IF EXISTS " . esc_sql($table));
         }
     }
 }
