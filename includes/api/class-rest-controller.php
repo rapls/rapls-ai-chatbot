@@ -1671,11 +1671,17 @@ class WPAIC_REST_Controller {
         }
 
         $pro_features = WPAIC_Pro_Features::get_instance();
-        $stats = $pro_features->get_usage_stats();
+        $limit = $pro_features->get_message_limit();
+        $remaining = $pro_features->get_remaining_messages();
 
         return new WP_REST_Response([
             'success' => true,
-            'data'    => $stats,
+            'data'    => [
+                'limit'     => $limit === PHP_INT_MAX ? null : $limit,
+                'remaining' => $remaining === PHP_INT_MAX ? null : $remaining,
+                'reached'   => $pro_features->is_limit_reached(),
+                'is_pro'    => $pro_features->is_pro(),
+            ],
         ], 200);
     }
 
@@ -2034,9 +2040,6 @@ class WPAIC_REST_Controller {
                 'ai_provider' => $settings['ai_provider'] ?? 'openai',
                 'ai_model' => $response['model'] ?? null,
             ]);
-
-            // Increment message count
-            $pro_features->increment_message_count();
 
             $sources = array_filter(array_map(function ($u) {
                     return esc_url_raw($u, ['http', 'https']);
