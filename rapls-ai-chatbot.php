@@ -61,6 +61,45 @@ function wpaic_deactivate()
 }
 register_deactivation_hook(__FILE__, 'wpaic_deactivate');
 
+
+/**
+ * Multibyte-safe string helpers with fallback for environments without mbstring.
+ *
+ * WordPress does not require mbstring, so these wrappers ensure the plugin
+ * degrades gracefully (ASCII-only behaviour) instead of triggering a Fatal.
+ */
+if (!function_exists('wpaic_mb_strtolower')) {
+    function wpaic_mb_strtolower(string $s): string {
+        return function_exists('mb_strtolower') ? mb_strtolower($s) : strtolower($s);
+    }
+}
+if (!function_exists('wpaic_mb_strlen')) {
+    function wpaic_mb_strlen(string $s): int {
+        return function_exists('mb_strlen') ? mb_strlen($s) : strlen($s);
+    }
+}
+if (!function_exists('wpaic_mb_strpos')) {
+    /**
+     * @return int|false
+     */
+    function wpaic_mb_strpos(string $haystack, string $needle, int $offset = 0) {
+        return function_exists('mb_strpos') ? mb_strpos($haystack, $needle, $offset) : strpos($haystack, $needle, $offset);
+    }
+}
+if (!function_exists('wpaic_mb_substr')) {
+    function wpaic_mb_substr(string $s, int $start, ?int $length = null): string {
+        if (function_exists('mb_substr')) {
+            return $length === null ? mb_substr($s, $start) : mb_substr($s, $start, $length);
+        }
+        return $length === null ? substr($s, $start) : substr($s, $start, $length);
+    }
+}
+if (!function_exists('wpaic_mb_substr_count')) {
+    function wpaic_mb_substr_count(string $haystack, string $needle): int {
+        return function_exists('mb_substr_count') ? mb_substr_count($haystack, $needle) : substr_count($haystack, $needle);
+    }
+}
+
 /**
  * Load and run the main plugin class
  */

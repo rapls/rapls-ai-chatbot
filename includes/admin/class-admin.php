@@ -1015,8 +1015,8 @@ class WPAIC_Admin {
 
         $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? 'openai'));
         $api_key = sanitize_text_field(wp_unslash($_POST['api_key'] ?? ''));
-        $use_saved = !empty($_POST['use_saved']);
-        $force_refresh = !empty($_POST['force_refresh']);
+        $use_saved = !empty(wp_unslash($_POST['use_saved']));
+        $force_refresh = !empty(wp_unslash($_POST['force_refresh']));
 
         // Use saved API key if requested
         if ($use_saved || empty($api_key)) {
@@ -1792,7 +1792,7 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
-        $include_knowledge = !empty($_POST['include_knowledge']);
+        $include_knowledge = !empty(wp_unslash($_POST['include_knowledge']));
 
         $export_data = [
             'version' => WPAIC_VERSION,

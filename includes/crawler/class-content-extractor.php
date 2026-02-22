@@ -475,8 +475,8 @@ class WPAIC_Content_Extractor {
                     // Add string values only
                     if (is_string($value) && !empty(trim($value))) {
                         // Truncate long values
-                        if (mb_strlen($value) > 500) {
-                            $value = mb_substr($value, 0, 500) . '...';
+                        if (wpaic_mb_strlen($value) > 500) {
+                            $value = wpaic_mb_substr($value, 0, 500) . '...';
                         }
                         $cf_parts[] = $key . ': ' . $value;
                     }

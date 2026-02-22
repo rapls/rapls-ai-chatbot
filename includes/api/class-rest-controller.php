@@ -2457,12 +2457,12 @@ class WPAIC_REST_Controller {
 
         // If content has a title matching the query closely, return the content as-is
         $title = $best['title'] ?? '';
-        $query_lower = mb_strtolower($query);
-        $title_lower = mb_strtolower($title);
+        $query_lower = wpaic_mb_strtolower($query);
+        $title_lower = wpaic_mb_strtolower($title);
 
         if (!empty($title) && (
-            mb_strpos($title_lower, $query_lower) !== false ||
-            mb_strpos($query_lower, $title_lower) !== false
+            wpaic_mb_strpos($title_lower, $query_lower) !== false ||
+            wpaic_mb_strpos($query_lower, $title_lower) !== false
         )) {
             return $content;
         }

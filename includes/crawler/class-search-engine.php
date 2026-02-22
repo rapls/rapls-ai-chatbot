@@ -390,7 +390,7 @@ class WPAIC_Search_Engine {
 
         // Add original query to search (symbol removal only)
         $original_query = trim(preg_replace('/[、。！？「」『』（）\[\]【】・,.!?\'"：:；;]+/u', '', $query));
-        if (mb_strlen($original_query) >= 2 && !in_array($original_query, $keywords, true)) {
+        if (wpaic_mb_strlen($original_query) >= 2 && !in_array($original_query, $keywords, true)) {
             array_unshift($keywords, $original_query);
         }
 
@@ -402,7 +402,7 @@ class WPAIC_Search_Engine {
         $params = [];
 
         foreach ($keywords as $keyword) {
-            if (mb_strlen($keyword) < 2) {
+            if (wpaic_mb_strlen($keyword) < 2) {
                 continue;
             }
             $where_clauses[] = "(title LIKE %s OR content LIKE %s)";
@@ -491,26 +491,26 @@ class WPAIC_Search_Engine {
             }
 
             // Exclude English stopwords
-            if (in_array(mb_strtolower($word), $en_stopwords, true)) {
+            if (in_array(wpaic_mb_strtolower($word), $en_stopwords, true)) {
                 continue;
             }
 
             // Remove leading/trailing particles
             foreach ($jp_particles as $p) {
-                if (mb_strlen($word) > mb_strlen($p)) {
+                if (wpaic_mb_strlen($word) > wpaic_mb_strlen($p)) {
                     // Remove trailing particle
-                    if (mb_substr($word, -mb_strlen($p)) === $p) {
-                        $word = mb_substr($word, 0, -mb_strlen($p));
+                    if (wpaic_mb_substr($word, -wpaic_mb_strlen($p)) === $p) {
+                        $word = wpaic_mb_substr($word, 0, -wpaic_mb_strlen($p));
                     }
                     // Remove leading particle
-                    if (mb_substr($word, 0, mb_strlen($p)) === $p) {
-                        $word = mb_substr($word, mb_strlen($p));
+                    if (wpaic_mb_substr($word, 0, wpaic_mb_strlen($p)) === $p) {
+                        $word = wpaic_mb_substr($word, wpaic_mb_strlen($p));
                     }
                 }
             }
 
             // Add keywords with 2+ characters
-            if (mb_strlen($word) >= 2) {
+            if (wpaic_mb_strlen($word) >= 2) {
                 $keywords[] = $word;
             }
         }
@@ -518,7 +518,7 @@ class WPAIC_Search_Engine {
         // If no keywords found, clean up and use original text
         if (empty($keywords)) {
             $cleaned = trim(preg_replace('/\s+/u', '', $cleaned));
-            if (mb_strlen($cleaned) >= 2) {
+            if (wpaic_mb_strlen($cleaned) >= 2) {
                 $keywords[] = $cleaned;
             }
         }
@@ -563,18 +563,18 @@ class WPAIC_Search_Engine {
      */
     private function calculate_keyword_score(array $item, array $keywords): float {
         $score = 0;
-        $text = mb_strtolower($item['title'] . ' ' . $item['content']);
+        $text = wpaic_mb_strtolower($item['title'] . ' ' . $item['content']);
 
         foreach ($keywords as $keyword) {
-            $keyword_lower = mb_strtolower($keyword);
+            $keyword_lower = wpaic_mb_strtolower($keyword);
 
             // Bonus if matched in title
-            if (mb_strpos(mb_strtolower($item['title']), $keyword_lower) !== false) {
+            if (wpaic_mb_strpos(wpaic_mb_strtolower($item['title']), $keyword_lower) !== false) {
                 $score += 3;
             }
 
             // Match count in body
-            $count = mb_substr_count($text, $keyword_lower);
+            $count = wpaic_mb_substr_count($text, $keyword_lower);
             $score += min($count, 5); // Max 5 points
         }
 
@@ -624,10 +624,10 @@ class WPAIC_Search_Engine {
             } else {
                 $content_limit = 2000;
             }
-            $content = mb_substr($content, 0, $content_limit);
+            $content = wpaic_mb_substr($content, 0, $content_limit);
 
             // Add "..." if truncated
-            if (mb_strlen($result['content']) > $content_limit && mb_strlen($content) >= $content_limit) {
+            if (wpaic_mb_strlen($result['content']) > $content_limit && wpaic_mb_strlen($content) >= $content_limit) {
                 $content .= '...';
             }
 
@@ -650,7 +650,7 @@ class WPAIC_Search_Engine {
                 }
             }
 
-            $part_length = mb_strlen($part);
+            $part_length = wpaic_mb_strlen($part);
 
             if ($current_length + $part_length > $max_length) {
                 break;
@@ -686,7 +686,7 @@ class WPAIC_Search_Engine {
         // Normalize query
         $query_normalized = $this->normalize_text($query);
         $query_semantic = $this->normalize_semantic($query);  // Semantic normalization
-        $query_lower = mb_strtolower($query);
+        $query_lower = wpaic_mb_strtolower($query);
 
         // Extract keywords from query
         $query_keywords = $this->extract_keywords($query);
@@ -718,8 +718,8 @@ class WPAIC_Search_Engine {
 
             // Calculate score
             $score = 0;
-            $block_lower = mb_strtolower($block);
-            $question_lower = mb_strtolower($question_line);
+            $block_lower = wpaic_mb_strtolower($block);
+            $question_lower = wpaic_mb_strtolower($question_line);
             $question_normalized = $this->normalize_text($question_line);
             $question_semantic = $this->normalize_semantic($question_line);  // Semantic normalization
 
@@ -732,53 +732,53 @@ class WPAIC_Search_Engine {
                 $score += 950; // Character exact match
             }
             // Semantic normalization contains
-            elseif (!empty($question_semantic) && mb_strpos($question_semantic, $query_semantic) !== false) {
+            elseif (!empty($question_semantic) && wpaic_mb_strpos($question_semantic, $query_semantic) !== false) {
                 $score += 850;
             }
-            elseif (!empty($query_semantic) && mb_strpos($query_semantic, $question_semantic) !== false) {
+            elseif (!empty($query_semantic) && wpaic_mb_strpos($query_semantic, $question_semantic) !== false) {
                 $score += 800;
             }
             // Normalized text contains
-            elseif (!empty($question_normalized) && mb_strpos($question_normalized, $query_normalized) !== false) {
+            elseif (!empty($question_normalized) && wpaic_mb_strpos($question_normalized, $query_normalized) !== false) {
                 $score += 750;
             }
-            elseif (!empty($query_normalized) && mb_strpos($query_normalized, $question_normalized) !== false) {
+            elseif (!empty($query_normalized) && wpaic_mb_strpos($query_normalized, $question_normalized) !== false) {
                 $score += 700;
             }
             // Full query contained in Question line
-            elseif (!empty($question_line) && mb_strpos($question_lower, $query_lower) !== false) {
+            elseif (!empty($question_line) && wpaic_mb_strpos($question_lower, $query_lower) !== false) {
                 $score += 500;
             }
             // Full query contained in block
-            elseif (mb_strpos($block_lower, $query_lower) !== false) {
+            elseif (wpaic_mb_strpos($block_lower, $query_lower) !== false) {
                 $score += 200;
             }
 
             // Important noun match (high weight)
             foreach ($important_nouns as $noun) {
-                $noun_lower = mb_strtolower($noun);
+                $noun_lower = wpaic_mb_strtolower($noun);
                 $noun_normalized = $this->normalize_text($noun);
 
                 // Search in normalized Question line (also use semantic normalization)
-                if (!empty($question_semantic) && mb_strpos($question_semantic, $noun_normalized) !== false) {
+                if (!empty($question_semantic) && wpaic_mb_strpos($question_semantic, $noun_normalized) !== false) {
                     $score += 150; // Higher score for semantic normalization match
-                } elseif (!empty($question_normalized) && mb_strpos($question_normalized, $noun_normalized) !== false) {
+                } elseif (!empty($question_normalized) && wpaic_mb_strpos($question_normalized, $noun_normalized) !== false) {
                     $score += 120; // Normalized match
-                } elseif (mb_strpos($question_lower, $noun_lower) !== false) {
+                } elseif (wpaic_mb_strpos($question_lower, $noun_lower) !== false) {
                     $score += 100; // High score if in Question line
-                } elseif (mb_strpos($block_lower, $noun_lower) !== false) {
+                } elseif (wpaic_mb_strpos($block_lower, $noun_lower) !== false) {
                     $score += 30;
                 }
             }
 
             // Check keyword matches
             foreach ($query_keywords as $keyword) {
-                $keyword_lower = mb_strtolower($keyword);
-                if (mb_strpos($block_lower, $keyword_lower) !== false) {
+                $keyword_lower = wpaic_mb_strtolower($keyword);
+                if (wpaic_mb_strpos($block_lower, $keyword_lower) !== false) {
                     $score += 20;
 
                     // Bonus if in Question line
-                    if (mb_strpos($question_lower, $keyword_lower) !== false) {
+                    if (wpaic_mb_strpos($question_lower, $keyword_lower) !== false) {
                         $score += 50;
                     }
                 }
@@ -833,7 +833,7 @@ class WPAIC_Search_Engine {
         $normalized = preg_replace('/[\s\t\r\n]+/u', '', $text);
         $normalized = preg_replace('/[、。！？「」『』（）\[\]【】・,.!?\'"：:；;？！\s]+/u', '', $normalized);
         // Convert to lowercase
-        $normalized = mb_strtolower($normalized);
+        $normalized = wpaic_mb_strtolower($normalized);
         return $normalized;
     }
 
@@ -859,7 +859,7 @@ class WPAIC_Search_Engine {
 
         // Remove whitespace and symbols
         $normalized = preg_replace('/[\s\t\r\n、。！？「」『』（）\[\]【】・,.!?\'"：:；;？！]+/u', '', $normalized);
-        $normalized = mb_strtolower($normalized);
+        $normalized = wpaic_mb_strtolower($normalized);
 
         return $normalized;
     }
@@ -892,7 +892,7 @@ class WPAIC_Search_Engine {
 
         foreach ($words as $word) {
             $word = trim($word);
-            if (mb_strlen($word) >= 2) {
+            if (wpaic_mb_strlen($word) >= 2) {
                 $nouns[] = $word;
             }
         }

@@ -288,8 +288,8 @@ class WPAIC_Message {
 
             if ($user_msg && !empty($user_msg['content'])) {
                 $examples[] = [
-                    'question' => mb_substr($user_msg['content'], 0, 200),
-                    'answer'   => mb_substr($msg['answer'], 0, 300),
+                    'question' => wpaic_mb_substr($user_msg['content'], 0, 200),
+                    'answer'   => wpaic_mb_substr($msg['answer'], 0, 300),
                 ];
 
                 if (count($examples) >= $limit) {
@@ -336,8 +336,8 @@ class WPAIC_Message {
 
             if ($user_msg && !empty($user_msg['content'])) {
                 $examples[] = [
-                    'question' => mb_substr($user_msg['content'], 0, 200),
-                    'answer'   => mb_substr($msg['answer'], 0, 500),
+                    'question' => wpaic_mb_substr($user_msg['content'], 0, 200),
+                    'answer'   => wpaic_mb_substr($msg['answer'], 0, 500),
                 ];
 
                 if (count($examples) >= $limit) {
@@ -412,7 +412,7 @@ class WPAIC_Message {
      */
     public static function build_cache_hash(string $message, string $context = ''): string {
         // Normalize: lowercase, trim whitespace
-        $normalized = mb_strtolower(trim($message)) . '||' . trim($context);
+        $normalized = wpaic_mb_strtolower(trim($message)) . '||' . trim($context);
         return hash('sha256', $normalized);
     }
 
