@@ -326,7 +326,7 @@ class WPAIC_REST_Controller {
         $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
         $bootstrap_hash = hash('sha256', $ip . $user_agent . wp_salt());
         $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
-        set_transient($transient_key, $bootstrap_hash, 10 * MINUTE_IN_SECONDS);
+        set_transient($transient_key, $bootstrap_hash, HOUR_IN_SECONDS);
 
         return new WP_REST_Response([
             'success'         => true,
@@ -2240,23 +2240,19 @@ class WPAIC_REST_Controller {
             ], 403);
         }
 
-        // Save as a lead with type 'offline_message'
-        global $wpdb;
-        $leads_table = $wpdb->prefix . 'aichat_leads';
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $result = $wpdb->insert($leads_table, [
+        // Save via WPAIC_Lead::create() for consistent sanitization and format specifiers
+        $lead = WPAIC_Lead::create([
             'conversation_id' => 0,
             'name'            => $name,
             'email'           => $email,
-            'custom_fields'   => wp_json_encode([
+            'custom_fields'   => [
                 'type'     => 'offline_message',
-                'message'  => $message,
-                'page_url' => $page_url,
-            ], JSON_UNESCAPED_UNICODE),
+                'message'  => sanitize_textarea_field($message),
+                'page_url' => esc_url_raw($page_url),
+            ],
         ]);
 
-        if (!$result) {
+        if (!$lead) {
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Failed to save message.', 'rapls-ai-chatbot'),
