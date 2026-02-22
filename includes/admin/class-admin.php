@@ -542,10 +542,11 @@ class WPAIC_Admin {
         }
 
         // Use AES-256-GCM (authenticated encryption with tamper detection)
-        $encryption_key = wp_salt('auth');
+        $encryption_key = self::get_encryption_key();
+        $aad = self::get_encryption_aad();
         $iv = openssl_random_pseudo_bytes(12); // 12 bytes recommended for GCM
         $tag = '';
-        $encrypted = openssl_encrypt($key, 'aes-256-gcm', $encryption_key, OPENSSL_RAW_DATA, $iv, $tag);
+        $encrypted = openssl_encrypt($key, 'aes-256-gcm', $encryption_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
 
         if ($encrypted === false) {
             return $key;
@@ -553,6 +554,22 @@ class WPAIC_Admin {
 
         // Format: encg: + base64(iv[12] + tag[16] + ciphertext)
         return 'encg:' . base64_encode($iv . $tag . $encrypted);
+    }
+
+    /**
+     * Derive a fixed-length 32-byte encryption key from wp_salt.
+     * Normalizes the key material to avoid OpenSSL truncation/padding issues.
+     */
+    private static function get_encryption_key(): string {
+        return hash('sha256', wp_salt('auth'), true);
+    }
+
+    /**
+     * Get Additional Authenticated Data (AAD) for GCM encryption.
+     * Prevents ciphertext reuse across different sites or contexts.
+     */
+    private static function get_encryption_aad(): string {
+        return 'wpaic_' . parse_url(get_site_url(), PHP_URL_HOST);
     }
 
     /**
@@ -1020,7 +1037,9 @@ class WPAIC_Admin {
             return '';
         }
 
-        $key = wp_salt('auth');
+        $new_key = self::get_encryption_key();
+        $aad = self::get_encryption_aad();
+        $old_key = wp_salt('auth'); // Legacy: raw salt string
 
         // AES-256-GCM (new format with tamper detection)
         if (strpos($encrypted, 'encg:') === 0) {
@@ -1034,7 +1053,18 @@ class WPAIC_Admin {
             $tag = substr($data, 12, 16);
             $encrypted_data = substr($data, 28);
 
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            // Try normalized key + AAD first (current format)
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
+
+            // Fallback: normalized key without AAD
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
+
+            // Fallback: legacy raw salt key without AAD
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $old_key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
 
             if ($decrypted === false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (GCM auth failed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -1069,7 +1099,11 @@ class WPAIC_Admin {
         $iv = substr($data, 0, $iv_length);
         $encrypted_data = substr($data, $iv_length);
 
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        // Try normalized key first, then legacy key
+        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
+        if ($decrypted === false) {
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
+        }
 
         if ($decrypted === false) {
             if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -1180,10 +1214,11 @@ class WPAIC_Admin {
         }
 
         // Use AES-256-GCM (authenticated encryption with tamper detection)
-        $encryption_key = wp_salt('auth');
+        $encryption_key = self::get_encryption_key();
+        $aad = self::get_encryption_aad();
         $iv = openssl_random_pseudo_bytes(12); // 12 bytes recommended for GCM
         $tag = '';
-        $encrypted = openssl_encrypt($value, 'aes-256-gcm', $encryption_key, OPENSSL_RAW_DATA, $iv, $tag);
+        $encrypted = openssl_encrypt($value, 'aes-256-gcm', $encryption_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
 
         if ($encrypted === false) {
             return $value;
@@ -1213,7 +1248,9 @@ class WPAIC_Admin {
             return '';
         }
 
-        $key = wp_salt('auth');
+        $new_key = self::get_encryption_key();
+        $aad = self::get_encryption_aad();
+        $old_key = wp_salt('auth');
 
         // AES-256-GCM (new format with tamper detection)
         if ($is_gcm) {
@@ -1227,7 +1264,14 @@ class WPAIC_Admin {
             $tag = substr($data, 12, 16);
             $encrypted_data = substr($data, 28);
 
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            // Try normalized key + AAD → normalized key → legacy key
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $old_key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
 
             if ($decrypted === false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: Secret decryption failed (GCM auth failed).'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

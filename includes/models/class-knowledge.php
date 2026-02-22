@@ -44,56 +44,35 @@ class WPAIC_Knowledge {
         dbDelta($sql);
     }
 
+
     /**
-     * Add required columns (for existing table upgrade)
+     * Run schema migration via Activator (activation/upgrade path).
+     * Guarded by option flag so it runs at most once per schema version.
      */
-    private static function maybe_add_columns($table) {
-        global $wpdb;
+    private static function maybe_migrate_schema($table) {
+        $schema_version = 2; // Increment when adding new migrations
+        $option_key = 'wpaic_knowledge_schema_version';
 
-        // Check if priority column exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $has_priority = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'priority'");
-
-        if (empty($has_priority)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN priority INT(11) DEFAULT 0 AFTER category");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD KEY priority (priority)");
+        if ((int) get_option($option_key, 0) >= $schema_version) {
+            return; // Already migrated
         }
 
-        // Check if is_active column exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $has_is_active = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'is_active'");
+        // Transient lock to prevent race conditions on concurrent requests
+        $lock_key = 'wpaic_knowledge_migration_lock';
+        if (get_transient($lock_key)) {
+            return; // Another process is running the migration
+        }
+        set_transient($lock_key, 1, 30); // 30-second lock
 
-        if (empty($has_is_active)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER priority");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD KEY is_active (is_active)");
+        // Delegate to Activator which handles all schema changes
+        if (class_exists('WPAIC_Activator')) {
+            WPAIC_Activator::upgrade_columns();
         }
 
-        // Check if status column exists
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $has_status = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'status'");
-
-        if (empty($has_status)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN status VARCHAR(20) DEFAULT 'published' AFTER is_active");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD KEY status (status)");
-        }
-
-        // Check if type column exists (qa or template)
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $has_type = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'type'");
-
-        if (empty($has_type)) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status");
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $wpdb->query("ALTER TABLE {$table} ADD KEY type (type)");
-        }
+        update_option($option_key, $schema_version, true);
+        delete_transient($lock_key);
     }
+
 
     /**
      * Create knowledge
@@ -111,8 +90,8 @@ class WPAIC_Knowledge {
             self::create_table();
         }
 
-        // Check and add columns if needed
-        self::maybe_add_columns($table);
+        // Schema migration runs only once, guarded by option flag
+        self::maybe_migrate_schema($table);
 
         $type = isset($data['type']) && in_array($data['type'], ['qa', 'template'], true) ? $data['type'] : 'qa';
 

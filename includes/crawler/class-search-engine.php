@@ -51,10 +51,13 @@ class WPAIC_Search_Engine {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $table_exists = (bool) $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table));
 
-        $has_priority = false;
-        $has_is_active = false;
+        // If knowledge schema migration has completed, columns are guaranteed to exist
+        $schema_version = (int) get_option('wpaic_knowledge_schema_version', 0);
+        $has_priority  = $table_exists && $schema_version >= 2;
+        $has_is_active = $table_exists && $schema_version >= 2;
 
-        if ($table_exists) {
+        // Fallback: check columns directly if migration hasn't run yet
+        if ($table_exists && $schema_version < 2) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $has_priority = !empty($wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'priority'"));
 

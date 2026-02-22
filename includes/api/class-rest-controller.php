@@ -289,11 +289,19 @@ class WPAIC_REST_Controller {
 
         $session_version = get_option('wpaic_session_version', 1);
 
-        // Reuse existing session from cookie if valid
+        // Reuse existing session from cookie only if it passes strict validation
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $existing_session = isset($_COOKIE['wpaic_session_id']) ? sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) : '';
         if (!empty($existing_session)) {
-            // Verify the session exists in DB (active conversation)
+            // Strict format check: must be UUID4 (8-4-4-4-12 hex)
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $existing_session)) {
+                // Invalid format — discard and fall through to new session
+                $existing_session = '';
+            }
+        }
+
+        if (!empty($existing_session)) {
+            // Only reuse if a conversation actually exists in DB
             $conversation = WPAIC_Conversation::get_by_session($existing_session);
             if ($conversation) {
                 return new WP_REST_Response([
@@ -302,13 +310,20 @@ class WPAIC_REST_Controller {
                     'session_version' => $session_version,
                 ], 200);
             }
-            // Session cookie exists but no active conversation — still reuse the ID
-            // (conversation will be created on first message)
-            return new WP_REST_Response([
-                'success'         => true,
-                'session_id'      => $existing_session,
-                'session_version' => $session_version,
-            ], 200);
+
+            // No DB conversation — only accept if bootstrap transient exists
+            // (proves this server issued the session_id recently)
+            $transient_key = 'wpaic_boot_' . substr(hash('sha256', $existing_session . wp_salt()), 0, 32);
+            if (get_transient($transient_key)) {
+                return new WP_REST_Response([
+                    'success'         => true,
+                    'session_id'      => $existing_session,
+                    'session_version' => $session_version,
+                ], 200);
+            }
+
+            // Neither DB nor transient — discard the cookie session (session fixation防止)
+            // Fall through to generate a new session below
         }
 
         // Generate new session
@@ -961,7 +976,9 @@ class WPAIC_REST_Controller {
             return '';
         }
 
-        $key = wp_salt('auth');
+        $new_key = hash('sha256', wp_salt('auth'), true);
+        $aad = 'wpaic_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
+        $old_key = wp_salt('auth'); // Legacy fallback
 
         // AES-256-GCM (new format with tamper detection)
         if (strpos($encrypted, 'encg:') === 0) {
@@ -973,7 +990,16 @@ class WPAIC_REST_Controller {
             $iv  = substr($data, 0, 12);
             $tag = substr($data, 12, 16);
             $encrypted_data = substr($data, 28);
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+            // Try normalized key + AAD → normalized key → legacy key
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $old_key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
+
             if ($decrypted === false) {
                 if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key GCM decryption failed (salt may have changed or data tampered). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 return '';
@@ -1003,7 +1029,10 @@ class WPAIC_REST_Controller {
         $iv = substr($data, 0, $iv_length);
         $encrypted_data = substr($data, $iv_length);
 
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
+        if ($decrypted === false) {
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
+        }
 
         if ($decrypted === false) {
             if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
