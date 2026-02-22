@@ -301,9 +301,23 @@ class WPAIC_REST_Controller {
         }
 
         if (!empty($existing_session)) {
+            // Short-lived cache to avoid hitting DB on every page view
+            $cache_key = 'wpaic_sess_' . substr(hash('sha256', $existing_session . wp_salt()), 0, 16);
+            $cached = get_transient($cache_key);
+
+            if ($cached === 'exists') {
+                return new WP_REST_Response([
+                    'success'         => true,
+                    'session_id'      => $existing_session,
+                    'session_token'   => $this->generate_session_token($existing_session),
+                    'session_version' => $session_version,
+                ], 200);
+            }
+
             // Only reuse if a conversation actually exists in DB
             $conversation = WPAIC_Conversation::get_by_session($existing_session);
             if ($conversation) {
+                set_transient($cache_key, 'exists', 60);
                 return new WP_REST_Response([
                     'success'         => true,
                     'session_id'      => $existing_session,
@@ -1700,13 +1714,12 @@ class WPAIC_REST_Controller {
         }
 
         $pro_features = WPAIC_Pro_Features::get_instance();
-        $limit = $pro_features->get_message_limit();
         $remaining = $pro_features->get_remaining_messages();
 
+        // Return only UI-necessary fields; omit raw limit to avoid exposing plan details
         return new WP_REST_Response([
             'success' => true,
             'data'    => [
-                'limit'     => $limit === PHP_INT_MAX ? null : $limit,
                 'remaining' => $remaining === PHP_INT_MAX ? null : $remaining,
                 'reached'   => $pro_features->is_limit_reached(),
             ],
