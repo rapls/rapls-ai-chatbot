@@ -315,19 +315,26 @@ jQuery(document).ready(function($) {
 
         $btn.prop('disabled', true).text('<?php echo esc_js(__('Resetting...', 'rapls-ai-chatbot')); ?>');
 
-        $.post(ajaxurl, {
-            action: 'wpaic_reset_usage',
-            nonce: wpaicAdmin.nonce
-        }, function(response) {
-            if (response.success) {
-                location.reload();
-            } else {
-                alert(response.data || '<?php echo esc_js(__('Failed to reset.', 'rapls-ai-chatbot')); ?>');
+        wpaicDestructiveAjax({
+            data: {
+                action: 'wpaic_reset_usage',
+                nonce: wpaicAdmin.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert(response.data || '<?php echo esc_js(__('Failed to reset.', 'rapls-ai-chatbot')); ?>');
+                    $btn.prop('disabled', false).html('🔄 <?php echo esc_js(__('Reset Statistics', 'rapls-ai-chatbot')); ?>');
+                }
+            },
+            fail: function() {
+                alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false).html('🔄 <?php echo esc_js(__('Reset Statistics', 'rapls-ai-chatbot')); ?>');
+            },
+            cancel: function() {
                 $btn.prop('disabled', false).html('🔄 <?php echo esc_js(__('Reset Statistics', 'rapls-ai-chatbot')); ?>');
             }
-        }).fail(function() {
-            alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
-            $btn.prop('disabled', false).html('🔄 <?php echo esc_js(__('Reset Statistics', 'rapls-ai-chatbot')); ?>');
         });
     });
 });

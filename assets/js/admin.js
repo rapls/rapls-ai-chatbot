@@ -5,6 +5,33 @@
 (function($) {
     'use strict';
 
+    /**
+     * Destructive AJAX helper — handles two-step confirmation tokens.
+     * First call returns confirm_required + token; second call sends token back.
+     */
+    window.wpaicDestructiveAjax = function(opts) {
+        var data = $.extend({}, opts.data);
+        $.post(opts.url || ajaxurl, data, function(response) {
+            if (response.success && response.data && response.data.confirm_required) {
+                // Server issued a token — confirm with user and retry
+                if (confirm(response.data.message)) {
+                    data.confirm_token = response.data.confirm_token;
+                    $.post(opts.url || ajaxurl, data, function(r2) {
+                        if (opts.success) opts.success(r2);
+                    }).fail(function() {
+                        if (opts.fail) opts.fail();
+                    });
+                } else {
+                    if (opts.cancel) opts.cancel();
+                }
+            } else {
+                if (opts.success) opts.success(response);
+            }
+        }).fail(function() {
+            if (opts.fail) opts.fail();
+        });
+    };
+
     $(document).ready(function() {
 
         // タブ切り替え
@@ -70,14 +97,16 @@
             $('#' + provider + '-settings').show();
         }).trigger('change');
 
-        // APIキー削除
+        // APIキー削除 — sets hidden delete flag; key removed on save
         $('.wpaic-clear-api-key').on('click', function() {
             var targetId = $(this).data('target');
             var $input = $('#' + targetId);
+            var $deleteFlag = $('#delete_' + targetId);
             var $wrapper = $(this).closest('.wpaic-api-key-wrapper');
 
             if (confirm('APIキーを削除しますか？\n削除後、設定を保存してください。')) {
                 $input.val('').attr('placeholder', '');
+                $deleteFlag.val('1');
                 $(this).hide();
                 $wrapper.find('.wpaic-key-status')
                     .removeClass('wpaic-key-set')
@@ -86,14 +115,15 @@
             }
         });
 
-        // API接続テスト
+        // API接続テスト — uses entered key, or saved key via 'use_saved' flag
         $('.wpaic-test-api').on('click', function() {
             var $button = $(this);
             var provider = $button.data('provider');
-            var $input = $button.prev('input[type="password"]');
+            var $input = $button.siblings('input[type="password"]');
             var apiKey = $input.val();
+            var useSaved = !apiKey && $input.attr('placeholder');
 
-            if (!apiKey) {
+            if (!apiKey && !useSaved) {
                 alert('APIキーを入力してください。');
                 return;
             }
@@ -107,7 +137,8 @@
                     action: 'wpaic_test_api',
                     nonce: wpaicAdmin.nonce,
                     provider: provider,
-                    api_key: apiKey
+                    api_key: apiKey,
+                    use_saved: useSaved ? '1' : ''
                 },
                 success: function(response) {
                     if (response.success) {

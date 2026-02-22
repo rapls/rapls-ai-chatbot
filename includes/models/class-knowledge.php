@@ -515,6 +515,12 @@ class WPAIC_Knowledge {
         $row_count = 0;
 
         if (($handle = fopen($filepath, 'r')) !== false) {
+            // Strip UTF-8 BOM if present (common in Excel CSV exports)
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+
             $headers = null;
 
             while (($row = fgetcsv($handle)) !== false) {

@@ -389,6 +389,12 @@ class WPAIC_REST_Controller {
      * Send chat message
      */
     public function send_message(WP_REST_Request $request): WP_REST_Response {
+        // Same-origin check for public POST
+        $origin_check = $this->check_same_origin();
+        if ($origin_check !== true) {
+            return $origin_check;
+        }
+
         // Route args apply sanitize_callback automatically;
         // re-sanitize here for defense-in-depth.
         $session_id      = sanitize_text_field($request->get_param('session_id'));
@@ -1424,6 +1430,39 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Check that a public POST request originates from the same site.
+     * Compares Origin or Referer header against home_url().
+     * Not bulletproof (headers can be spoofed) but raises the bar for casual abuse.
+     *
+     * @return true|WP_REST_Response True if OK, or 403 response.
+     */
+    private function check_same_origin() {
+        $home = wp_parse_url(home_url(), PHP_URL_HOST);
+        if (empty($home)) {
+            return true; // Can't determine; allow
+        }
+
+        $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST) : null;
+        $referer = isset($_SERVER['HTTP_REFERER']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])), PHP_URL_HOST) : null;
+
+        // Accept if either header matches (some browsers send one but not the other)
+        if (($origin && strtolower($origin) === strtolower($home)) ||
+            ($referer && strtolower($referer) === strtolower($home))) {
+            return true;
+        }
+
+        // No headers at all — allow (mobile apps, curl tests, etc.)
+        if (!$origin && !$referer) {
+            return true;
+        }
+
+        return new WP_REST_Response([
+            'success' => false,
+            'error'   => __('Cross-origin request denied.', 'rapls-ai-chatbot'),
+        ], 403);
+    }
+
+    /**
      * Verify reCAPTCHA
      *
      * @param string|null $token    reCAPTCHA token
@@ -1514,6 +1553,12 @@ class WPAIC_REST_Controller {
      * Submit lead form (Pro feature)
      */
     public function submit_lead(WP_REST_Request $request): WP_REST_Response {
+        // Same-origin check
+        $origin_check = $this->check_same_origin();
+        if ($origin_check !== true) {
+            return $origin_check;
+        }
+
         try {
             // Check if Pro feature is available
             $pro_features = WPAIC_Pro_Features::get_instance();
@@ -2494,9 +2539,27 @@ class WPAIC_REST_Controller {
      * Submit offline message (Pro feature)
      */
     public function submit_offline_message(WP_REST_Request $request): WP_REST_Response {
+        // Same-origin check
+        $origin_check = $this->check_same_origin();
+        if ($origin_check !== true) {
+            return $origin_check;
+        }
+
         $rate_check = $this->check_public_rate_limit('offl', 10, 60);
         if ($rate_check !== true) {
             return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+        }
+
+        // Honeypot: reject if hidden field is filled (bots auto-fill)
+        $hp = $request->get_param('website_url');
+        if (!empty($hp)) {
+            return new WP_REST_Response(['success' => true], 200); // Silent success to not reveal detection
+        }
+
+        // Timing check: reject if submitted faster than 3 seconds (bot speed)
+        $form_ts = (int) $request->get_param('_ts');
+        if ($form_ts > 0 && (time() - $form_ts) < 3) {
+            return new WP_REST_Response(['success' => true], 200); // Silent success
         }
 
         $name     = sanitize_text_field($request->get_param('name') ?? '');

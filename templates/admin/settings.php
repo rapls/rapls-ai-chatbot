@@ -66,9 +66,10 @@ if (!defined('ABSPATH')) {
                                 <div class="wpaic-api-key-wrapper">
                                     <input type="password" name="wpaic_settings[openai_api_key]"
                                            id="openai_api_key"
-                                           value="<?php echo esc_attr($settings['openai_api_key'] ?? ''); ?>"
+                                           value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['openai_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
+                                    <input type="hidden" name="wpaic_settings[delete_openai_api_key]" id="delete_openai_api_key" value="0">
                                     <button type="button" class="button wpaic-test-api" data-provider="openai"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['openai_api_key'])): ?>
                                         <button type="button" class="button wpaic-clear-api-key" data-target="openai_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
@@ -115,9 +116,10 @@ if (!defined('ABSPATH')) {
                                 <div class="wpaic-api-key-wrapper">
                                     <input type="password" name="wpaic_settings[claude_api_key]"
                                            id="claude_api_key"
-                                           value="<?php echo esc_attr($settings['claude_api_key'] ?? ''); ?>"
+                                           value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['claude_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
+                                    <input type="hidden" name="wpaic_settings[delete_claude_api_key]" id="delete_claude_api_key" value="0">
                                     <button type="button" class="button wpaic-test-api" data-provider="claude"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['claude_api_key'])): ?>
                                         <button type="button" class="button wpaic-clear-api-key" data-target="claude_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
@@ -164,9 +166,10 @@ if (!defined('ABSPATH')) {
                                 <div class="wpaic-api-key-wrapper">
                                     <input type="password" name="wpaic_settings[gemini_api_key]"
                                            id="gemini_api_key"
-                                           value="<?php echo esc_attr($settings['gemini_api_key'] ?? ''); ?>"
+                                           value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['gemini_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
+                                    <input type="hidden" name="wpaic_settings[delete_gemini_api_key]" id="delete_gemini_api_key" value="0">
                                     <button type="button" class="button wpaic-test-api" data-provider="gemini"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['gemini_api_key'])): ?>
                                         <button type="button" class="button wpaic-clear-api-key" data-target="gemini_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
@@ -1106,9 +1109,7 @@ jQuery(document).ready(function($) {
         $button.prop('disabled', true).text(i18n.resetting || 'Resetting...');
         $status.text('');
 
-        $.ajax({
-            url: wpaicAdmin.ajaxUrl,
-            method: 'POST',
+        wpaicDestructiveAjax({
             data: {
                 action: 'wpaic_reset_settings',
                 nonce: wpaicAdmin.nonce
@@ -1122,11 +1123,13 @@ jQuery(document).ready(function($) {
                 } else {
                     $status.html('<span style="color: red;">' + response.data + '</span>');
                 }
+                $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
             },
-            error: function() {
+            fail: function() {
                 $status.html('<span style="color: red;">' + (i18n.resetFailed || 'Reset failed.') + '</span>');
+                $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
             },
-            complete: function() {
+            cancel: function() {
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
             }
         });

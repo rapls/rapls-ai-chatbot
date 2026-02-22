@@ -376,20 +376,11 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        if (!confirm('<?php echo esc_js(__('Are you absolutely sure you want to delete all conversation history?', 'rapls-ai-chatbot')); ?>')) {
-            return;
-        }
-
         var $button = $(this);
         $button.prop('disabled', true).text(i18n.processing || '<?php echo esc_js(__('Deleting...', 'rapls-ai-chatbot')); ?>');
 
-        $.ajax({
-            url: wpaicAdmin.ajaxUrl,
-            method: 'POST',
-            data: {
-                action: 'wpaic_delete_all_conversations',
-                nonce: wpaicAdmin.nonce
-            },
+        wpaicDestructiveAjax({
+            data: { action: 'wpaic_delete_all_conversations', nonce: wpaicAdmin.nonce },
             success: function(response) {
                 if (response.success) {
                     alert(response.data);
@@ -399,7 +390,10 @@ jQuery(document).ready(function($) {
                     $button.prop('disabled', false).text('<?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
                 }
             },
-            error: function() {
+            cancel: function() {
+                $button.prop('disabled', false).text('<?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
+            },
+            fail: function() {
                 alert(i18n.error || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
             }

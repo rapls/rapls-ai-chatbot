@@ -260,15 +260,20 @@ class WPAIC_Admin {
         // AI settings
         $sanitized['ai_provider'] = sanitize_text_field($input['ai_provider'] ?? ($existing['ai_provider'] ?? 'openai'));
 
-        // Encrypt API keys (preserve existing if field not submitted, allow deletion if submitted empty)
+        // Encrypt API keys:
+        //  - New value submitted → encrypt and save
+        //  - Empty value → keep existing (value is never output to HTML)
+        //  - Explicit delete flag → clear the key
         foreach (['openai_api_key', 'claude_api_key', 'gemini_api_key'] as $key_field) {
-            if (array_key_exists($key_field, $input)) {
-                if ($input[$key_field] !== '') {
-                    $sanitized[$key_field] = $this->maybe_encrypt_api_key($input[$key_field]);
-                } else {
-                    $sanitized[$key_field] = '';
-                }
+            $delete_flag = 'delete_' . $key_field;
+            if (!empty($input[$delete_flag])) {
+                // Explicit deletion requested via hidden field
+                $sanitized[$key_field] = '';
+            } elseif (array_key_exists($key_field, $input) && $input[$key_field] !== '') {
+                // New key provided
+                $sanitized[$key_field] = $this->maybe_encrypt_api_key($input[$key_field]);
             } else {
+                // Empty or not submitted → preserve existing
                 $sanitized[$key_field] = $existing[$key_field] ?? '';
             }
         }
@@ -958,6 +963,10 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
+        if (!$this->verify_destructive_token('delete_all_index')) {
+            return;
+        }
+
         $result = WPAIC_Content_Index::truncate();
 
         // Update last crawl status
@@ -981,6 +990,17 @@ class WPAIC_Admin {
 
         $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? 'openai'));
         $api_key = sanitize_text_field(wp_unslash($_POST['api_key'] ?? ''));
+        $use_saved = !empty($_POST['use_saved']);
+
+        // If no key entered but use_saved flag set, decrypt the saved key
+        if (empty($api_key) && $use_saved) {
+            $settings = get_option('wpaic_settings', []);
+            $key_field = $provider . '_api_key';
+            $saved = $settings[$key_field] ?? '';
+            if (!empty($saved)) {
+                $api_key = $this->decrypt_api_key($saved);
+            }
+        }
 
         if (empty($api_key)) {
             wp_send_json_error(__('Please enter an API key.', 'rapls-ai-chatbot'));
@@ -1527,6 +1547,10 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
+        if (!$this->verify_destructive_token('delete_all_conversations')) {
+            return;
+        }
+
         WPAIC_Conversation::delete_all();
 
         wp_send_json_success(__('All conversation history deleted.', 'rapls-ai-chatbot'));
@@ -1996,6 +2020,10 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
+        if (!$this->verify_destructive_token('reset_settings')) {
+            return;
+        }
+
         // Default settings
         $default_settings = [
             'ai_provider'           => 'openai',
@@ -2055,6 +2083,10 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
+        if (!$this->verify_destructive_token('reset_usage')) {
+            return;
+        }
+
         $result = WPAIC_Cost_Calculator::reset_usage_stats();
 
         if ($result) {
@@ -2076,6 +2108,40 @@ class WPAIC_Admin {
 
         set_transient('wpaic_security_notice_dismissed', true, 30 * DAY_IN_SECONDS);
         wp_send_json_success();
+    }
+
+    /**
+     * Verify or issue a confirmation token for destructive operations.
+     *
+     * First call (no token): issues a short-lived token and returns false.
+     * Second call (with token): validates and consumes the token, returns true.
+     *
+     * @param string $action Unique action key (e.g. 'delete_all_conversations').
+     * @return bool True if confirmed, false if token was issued (caller should return).
+     */
+    private function verify_destructive_token(string $action): bool {
+        $token = sanitize_text_field(wp_unslash($_POST['confirm_token'] ?? ''));
+        $transient_key = 'wpaic_confirm_' . $action . '_' . get_current_user_id();
+
+        if (!empty($token)) {
+            $stored = get_transient($transient_key);
+            if ($stored && hash_equals($stored, $token)) {
+                delete_transient($transient_key);
+                return true;
+            }
+            wp_send_json_error(__('Confirmation expired or invalid. Please try again.', 'rapls-ai-chatbot'));
+            return false; // unreachable, but for clarity
+        }
+
+        // Issue new token (10 min TTL)
+        $new_token = wp_generate_password(32, false);
+        set_transient($transient_key, $new_token, 10 * MINUTE_IN_SECONDS);
+        wp_send_json_success([
+            'confirm_required' => true,
+            'confirm_token'    => $new_token,
+            'message'          => __('Are you sure? This action cannot be undone. Click again to confirm.', 'rapls-ai-chatbot'),
+        ]);
+        return false; // unreachable
     }
 
     /**

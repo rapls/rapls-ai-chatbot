@@ -67,8 +67,10 @@ function wpaic_uninstall_site() {
         ];
 
         foreach ($tables as $table) {
+            // Table name is safe: $wpdb->prefix (WordPress-controlled) + hardcoded suffix.
+            // Backtick-quoted as identifier; esc_sql() is not appropriate for identifiers.
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
-            $wpdb->query("DROP TABLE IF EXISTS " . esc_sql($table));
+            $wpdb->query("DROP TABLE IF EXISTS `{$table}`");
         }
     }
 }

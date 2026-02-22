@@ -335,25 +335,25 @@ jQuery(document).ready(function($) {
     $('#wpaic-delete-all-index').on('click', function() {
         var $btn = $(this);
 
-        if (!confirm('<?php echo esc_js(__('Are you sure you want to delete all indexed pages?\nThis action cannot be undone.', 'rapls-ai-chatbot')); ?>')) {
-            return;
-        }
-
         $btn.prop('disabled', true).text('<?php echo esc_js(__('Deleting...', 'rapls-ai-chatbot')); ?>');
 
-        $.post(ajaxurl, {
-            action: 'wpaic_delete_all_index',
-            nonce: wpaicAdmin.nonce
-        }, function(response) {
-            if (response.success) {
-                location.reload();
-            } else {
-                alert(response.data || '<?php echo esc_js(__('Failed to delete.', 'rapls-ai-chatbot')); ?>');
+        wpaicDestructiveAjax({
+            data: { action: 'wpaic_delete_all_index', nonce: wpaicAdmin.nonce },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert(response.data || '<?php echo esc_js(__('Failed to delete.', 'rapls-ai-chatbot')); ?>');
+                    $btn.prop('disabled', false).html('🗑️ <?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
+                }
+            },
+            cancel: function() {
+                $btn.prop('disabled', false).html('🗑️ <?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
+            },
+            fail: function() {
+                alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
                 $btn.prop('disabled', false).html('🗑️ <?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
             }
-        }).fail(function() {
-            alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
-            $btn.prop('disabled', false).html('🗑️ <?php echo esc_js(__('Delete All', 'rapls-ai-chatbot')); ?>');
         });
     });
 });

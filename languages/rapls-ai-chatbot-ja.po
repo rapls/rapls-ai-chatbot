@@ -3801,3 +3801,19 @@ msgstr "新しいリードを取得しました：\\n\\n名前: %1$s\\nメール
 #: includes/class-pro-features.php
 msgid "••••••••(configured)"
 msgstr "••••••••（設定済み）"
+
+#: includes/api/class-rest-controller.php
+msgid "Cross-origin request denied."
+msgstr "クロスオリジンリクエストが拒否されました。"
+
+#: includes/admin/class-admin.php
+msgid "Are you sure? This action cannot be undone. Click again to confirm."
+msgstr "本当によろしいですか？この操作は取り消せません。もう一度クリックして確認してください。"
+
+#: includes/admin/class-admin.php
+msgid "Confirmation expired or invalid. Please try again."
+msgstr "確認の有効期限が切れたか、無効です。もう一度お試しください。"
+
+#: templates/admin/knowledge.php
+msgid "CSV files must be UTF-8 encoded. If exporting from Excel, save as \"CSV UTF-8 (Comma delimited) (*.csv)\"."
+msgstr "CSV ファイルは UTF-8 エンコーディングである必要があります。Excel からエクスポートする場合は「CSV UTF-8（コンマ区切り）(*.csv)」で保存してください。"
