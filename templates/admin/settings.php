@@ -314,18 +314,15 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                             <?php
-                            $gpt5_multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
-                            $gpt5_multiplier = max(1, min(8, $gpt5_multiplier));
-                            $current_max = (int) ($settings['max_tokens'] ?? 1000);
-                            $effective_max = min($current_max * $gpt5_multiplier, 16384);
+                            $gpt5_info = WPAIC_OpenAI_Provider::get_gpt5_effective_tokens((int) ($settings['max_tokens'] ?? 1000));
                             ?>
                             <p class="description">
                                 <?php
                                 printf(
                                     /* translators: 1: multiplier value, 2: effective token limit */
                                     esc_html__('For GPT-5 and reasoning models, this value is automatically multiplied (current filter value: x%1$d, approximate effective limit: %2$s tokens, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the wpaic_gpt5_token_multiplier filter. The actual value may differ if the filter is context-dependent.', 'rapls-ai-chatbot'),
-                                    $gpt5_multiplier,
-                                    number_format_i18n($effective_max)
+                                    $gpt5_info['multiplier'],
+                                    number_format_i18n($gpt5_info['tokens'])
                                 );
                                 ?>
                             </p>

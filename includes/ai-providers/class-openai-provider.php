@@ -117,6 +117,36 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     }
 
     /**
+     * Calculate effective max output tokens for GPT-5 models.
+     * Used by both API request methods and the admin settings display.
+     *
+     * @param int $configured_max The user-configured max_tokens value.
+     * @return array ['tokens' => int, 'multiplier' => int]
+     */
+    public static function get_gpt5_effective_tokens(int $configured_max): array {
+        $multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
+        $multiplier = max(1, min(8, $multiplier));
+        return [
+            'tokens'     => min($configured_max * $multiplier, 16384),
+            'multiplier' => $multiplier,
+        ];
+    }
+
+    /**
+     * Check if debug logging is enabled.
+     * Requires WP_DEBUG + WP_DEBUG_LOG (file logging) to prevent casual dev
+     * environments from accumulating operational data in log files.
+     * Can be force-enabled via wpaic_debug_log_enabled filter.
+     */
+    private function should_log(): bool {
+        if (apply_filters('wpaic_debug_log_enabled', false)) {
+            return true;
+        }
+        return defined('WP_DEBUG') && WP_DEBUG
+            && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG;
+    }
+
+    /**
      * Send message (with automatic Responses API fallback)
      */
     public function send_message(array $messages, array $options = []): array {
@@ -165,7 +195,14 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         if (empty($options['_request_id'])) {
             $options['_request_id'] = wp_generate_uuid4();
         }
-        $options['_request_id_header'] = apply_filters('wpaic_request_id_header', 'X-WPAIC-Request-Id');
+        $header_name = apply_filters('wpaic_request_id_header', 'X-WPAIC-Request-Id');
+        // Validate: only allow safe header names (X-* custom or Idempotency-Key)
+        $allowed_headers = ['X-WPAIC-Request-Id', 'Idempotency-Key'];
+        if (!in_array($header_name, $allowed_headers, true)
+            && !preg_match('/^X-[A-Za-z0-9-]+$/', $header_name)) {
+            $header_name = 'X-WPAIC-Request-Id'; // fall back to default
+        }
+        $options['_request_id_header'] = $header_name;
 
         // Determine whether primary targets a known OpenAI endpoint.
         // Used to guard 404 fallback — only fall back if the 404 came from an
@@ -193,16 +230,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                 throw $e;
             }
 
-            // 409 Conflict: temporary concurrency issue — retry once on the
-            // same endpoint with a short jittered backoff instead of fallback.
+            // 409 Conflict: temporary concurrency issue. Don't fallback (same
+            // account/key) and don't sleep server-side (blocks PHP-FPM worker).
+            // Let the error propagate to the REST layer → client JS handles retry.
             if ($code === 409) {
-                // phpcs:ignore WordPress.WP.AlternativeFunctions.rand_mt_rand
-                usleep(mt_rand(250000, 500000)); // 250-500ms jitter
-                try {
-                    return call_user_func($primary, $messages, $options);
-                } catch (Exception $retry_e) {
-                    throw $retry_e; // second failure — give up
-                }
+                throw $e;
             }
 
             // ── Endpoint/model mismatch: 400/404 ──
@@ -230,12 +262,14 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             }
 
             // ── Transient server/network errors ──
-            // Communication errors from wp_remote_post have code 0 and include
-            // "API communication error". Server errors (5xx) carry the HTTP code.
-            // NOTE: Timeout/connection-reset fallback risks double billing because
-            // the server may have already processed the request. We allow it once
-            // since both calls carry the same request ID for correlation/audit.
-            $is_transient = ($code === 0 && stripos($msg, 'API communication error') !== false)
+            // WP_Error from wp_remote_post produces code=0 exceptions (timeout,
+            // DNS failure, connection reset, etc.). Rather than matching message
+            // text (fragile across translations/versions), treat any code=0 as a
+            // communication failure — HTTP error responses (401/403/etc.) always
+            // carry their status code and are already handled above.
+            // NOTE: Timeout fallback risks double billing; the request ID enables
+            // post-hoc audit.
+            $is_transient = ($code === 0)
                 || ($code >= 500 && $code < 600);
 
             if (!$is_endpoint_mismatch && !$is_transient) {
@@ -243,7 +277,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             }
         }
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+        if ($this->should_log()) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf('WPAIC OpenAI: primary API failed for model=%s, retrying with fallback (request_id=%s)', $this->model, $options['_request_id']));
         }
@@ -273,13 +307,8 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         if ($uses_new_api) {
             if ($this->is_gpt5_model()) {
-                // GPT-5 includes internal reasoning tokens in max_completion_tokens,
-                // so multiply the configured output limit to cover reasoning overhead.
-                // Default ×4 (capped at 16384) keeps responses complete without truncation.
-                // Override via wpaic_gpt5_token_multiplier filter (1-8) to control cost.
-                $multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
-                $multiplier = max(1, min(8, $multiplier));
-                $body['max_completion_tokens'] = min($configured_max * $multiplier, 16384);
+                $gpt5 = self::get_gpt5_effective_tokens((int) $configured_max);
+                $body['max_completion_tokens'] = $gpt5['tokens'];
             } else {
                 $body['max_completion_tokens'] = $configured_max;
             }
@@ -293,7 +322,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $body['temperature'] = $options['temperature'] ?? 0.7;
         }
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+        if ($this->should_log()) {
             $effective_tokens = $body['max_completion_tokens'] ?? $body['max_tokens'] ?? '?';
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf(
@@ -358,9 +387,8 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         $configured_max = $options['max_tokens'] ?? 4000;
         if ($this->is_gpt5_model()) {
-            $multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
-            $multiplier = max(1, min(8, $multiplier));
-            $body['max_output_tokens'] = min($configured_max * $multiplier, 16384);
+            $gpt5 = self::get_gpt5_effective_tokens((int) $configured_max);
+            $body['max_output_tokens'] = $gpt5['tokens'];
         } else {
             $body['max_output_tokens'] = $configured_max;
         }
@@ -369,7 +397,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $body['temperature'] = $options['temperature'] ?? 0.7;
         }
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+        if ($this->should_log()) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf(
                 'WPAIC OpenAI: endpoint=responses model=%s max_output_tokens=%s request_id=%s',
@@ -418,7 +446,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $error_type = $data['error']['type'] ?? '';
         $error_code = $data['error']['code'] ?? '';
 
-        if (defined('WP_DEBUG') && WP_DEBUG) {
+        if ($this->should_log()) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf(
                 'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',

@@ -984,7 +984,8 @@ class WPAIC_REST_Controller {
             if (!empty($request_id)) {
                 $rest_response->header('X-WPAIC-Request-Id', $request_id);
             }
-            return $rest_response;
+            // Prevent CDN/cache plugins from caching per-user AI responses
+            return $this->no_cache($rest_response);
 
         } catch (WPAIC_Quota_Exceeded_Exception $e) {
             // Return custom quota error message from settings
@@ -1018,6 +1019,15 @@ class WPAIC_REST_Controller {
                     'success' => false,
                     'error'   => __('The AI model is currently unavailable. Please contact the site administrator.', 'rapls-ai-chatbot'),
                 ], 500);
+            }
+
+            // 409 Conflict: return retryable status so client JS can retry with backoff
+            if ($code === 409) {
+                return new WP_REST_Response([
+                    'success'   => false,
+                    'error'     => __('Temporary conflict. Please try again.', 'rapls-ai-chatbot'),
+                    'retryable' => true,
+                ], 409);
             }
 
             return new WP_REST_Response([

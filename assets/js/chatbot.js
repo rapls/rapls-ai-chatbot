@@ -1295,8 +1295,10 @@
         /**
          * APIリクエスト
          */
-        apiRequest: function(method, endpoint, data) {
+        apiRequest: function(method, endpoint, data, _retryCount) {
+            var self = this;
             var url = this.config.api_base + endpoint;
+            _retryCount = _retryCount || 0;
 
             var headers = {
                 'Content-Type': 'application/json',
@@ -1331,6 +1333,16 @@
                     }
 
                     return response.json().then(function(json) {
+                        // 409 Conflict: client-side jittered retry (once only)
+                        if (response.status === 409 && json.retryable && _retryCount < 1) {
+                            var delay = 300 + Math.floor(Math.random() * 300); // 300-600ms
+                            return new Promise(function(resolve) {
+                                setTimeout(resolve, delay);
+                            }).then(function() {
+                                return self.apiRequest(method, endpoint, data, _retryCount + 1);
+                            });
+                        }
+
                         if (!response.ok) {
                             // サーバーからのエラーメッセージがあればそれを使う
                             var error = new Error(json.error || 'API error: ' + response.status);
