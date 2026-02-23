@@ -390,8 +390,9 @@ class WPAIC_REST_Controller {
      */
     public function send_message(WP_REST_Request $request): WP_REST_Response {
         // Same-origin check for public POST
+        // Session permission (nonce) provides primary auth, so allow missing headers.
         $origin_check = $this->check_same_origin();
-        if ($origin_check !== true) {
+        if ($origin_check instanceof WP_REST_Response) {
             return $origin_check;
         }
 
@@ -1440,18 +1441,23 @@ class WPAIC_REST_Controller {
 
     /**
      * Check that a public POST request originates from the same site.
-     * Compares Origin or Referer header against allowed hosts (home_url, site_url).
+     * Compares Origin or Referer header host against allowed hosts (home_url, site_url).
      * Not bulletproof (headers can be spoofed) but raises the bar for casual abuse.
      *
      * Extensible via 'wpaic_allowed_origins' filter for multi-domain/staging setups.
      *
-     * @return true|WP_REST_Response True if OK, or 403 response.
+     * Returns:
+     *   true              — Origin/Referer matched an allowed host.
+     *   'no_headers'      — Neither Origin nor Referer was present (caller decides policy).
+     *   WP_REST_Response  — Origin/Referer present but did NOT match (hard reject).
+     *
+     * @return true|string|WP_REST_Response
      */
     private function check_same_origin() {
         $home_host = wp_parse_url(home_url(), PHP_URL_HOST);
         $site_host = wp_parse_url(site_url(), PHP_URL_HOST);
 
-        // Build allowed hosts list (home_url + site_url + www variants)
+        // Build allowed hosts list: host-only, lowercase, exact-match comparison.
         $allowed = [];
         foreach (array_filter([$home_host, $site_host]) as $h) {
             $h = strtolower($h);
@@ -1467,7 +1473,7 @@ class WPAIC_REST_Controller {
 
         /**
          * Filter allowed origin hosts for public POST requests.
-         * Useful for multi-domain, staging, or custom proxy setups.
+         * Values must be lowercase hostnames (no scheme, no port, no path).
          *
          * @param string[] $allowed Array of lowercase hostnames.
          */
@@ -1480,17 +1486,18 @@ class WPAIC_REST_Controller {
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST) : null;
         $referer = isset($_SERVER['HTTP_REFERER']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])), PHP_URL_HOST) : null;
 
-        // Accept if either header matches any allowed host
+        // Accept if either header matches any allowed host (exact match)
         if (($origin && in_array(strtolower($origin), $allowed, true)) ||
             ($referer && in_array(strtolower($referer), $allowed, true))) {
             return true;
         }
 
-        // No headers at all — allow (mobile apps, curl tests, etc.)
+        // No headers at all — return sentinel so caller can decide based on other defenses
         if (!$origin && !$referer) {
-            return true;
+            return 'no_headers';
         }
 
+        // Headers present but don't match — hard reject
         return new WP_REST_Response([
             'success' => false,
             'error'   => __('Cross-origin request denied.', 'rapls-ai-chatbot'),
@@ -1499,13 +1506,15 @@ class WPAIC_REST_Controller {
 
     /**
      * Consolidated guard for public POST endpoints.
-     * Runs: same-origin check, public rate limit, honeypot, timing check.
-     * Optionally requires reCAPTCHA to be fully configured.
+     * Runs: same-origin, rate limit, honeypot, timing, reCAPTCHA.
      *
-     * @param WP_REST_Request $request       The REST request.
-     * @param string          $rate_key      Short identifier for rate limiting transient.
-     * @param int             $rate_limit    Max requests per window.
-     * @param int             $rate_window   Window in seconds.
+     * Return contract: always returns true (pass) or WP_REST_Response (reject).
+     * Callers must use: if ($guard !== true) { return $guard; }
+     *
+     * @param WP_REST_Request $request         The REST request.
+     * @param string          $rate_key        Short identifier for rate limiting transient.
+     * @param int             $rate_limit      Max requests per window.
+     * @param int             $rate_window     Window in seconds.
      * @param bool            $require_captcha Whether reCAPTCHA must be fully configured.
      * @param string          $captcha_action  reCAPTCHA action name (e.g. 'offline', 'lead').
      * @return true|WP_REST_Response True if all checks pass, or error response.
@@ -1519,9 +1528,21 @@ class WPAIC_REST_Controller {
         string $captcha_action = ''
     ) {
         // 1. Same-origin check
-        $origin_check = $this->check_same_origin();
-        if ($origin_check !== true) {
-            return $origin_check;
+        $origin_result = $this->check_same_origin();
+
+        // Hard reject: headers present but don't match
+        if ($origin_result instanceof WP_REST_Response) {
+            return $origin_result;
+        }
+
+        // No Origin/Referer headers: allow only when other defenses compensate.
+        // When captcha is required, the reCAPTCHA check below provides equivalent protection.
+        // Otherwise, log and allow to avoid blocking legitimate users behind proxies/extensions.
+        $origin_ok = ($origin_result === true);
+
+        if (!$origin_ok && !$require_captcha) {
+            // No headers and no captcha — still allow but rate limit will catch abuse
+            // (blocking here would reject legitimate users with strict privacy settings)
         }
 
         // 2. Public rate limit
@@ -1531,23 +1552,34 @@ class WPAIC_REST_Controller {
         }
 
         // 3. Honeypot: reject if hidden field is filled (bots auto-fill)
-        $hp = $request->get_param('website_url');
+        // Field name is unique to avoid collision with other plugins' forms.
+        $hp = $request->get_param('wpaic_hp');
         if (!empty($hp)) {
             return new WP_REST_Response(['success' => true], 200); // Silent success
         }
 
-        // 4. Timing check: reject if submitted faster than 3 seconds (bot speed)
+        // 4. Timing check: reject if submitted faster than 5 seconds (bot speed).
+        // Uses server Unix timestamp sent by JS; tolerant of minor clock drift.
         $form_ts = (int) $request->get_param('_ts');
-        if ($form_ts > 0 && (time() - $form_ts) < 3) {
+        if ($form_ts > 0 && (time() - $form_ts) < 5) {
             return new WP_REST_Response(['success' => true], 200); // Silent success
+        }
+
+        // When _ts is missing (JS disabled/delayed) and captcha is required, reject.
+        // Without both timing and captcha, bot detection is too weak.
+        if ($form_ts === 0 && $require_captcha && !$origin_ok) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Form validation failed. Please reload the page and try again.', 'rapls-ai-chatbot'),
+            ], 403);
         }
 
         // 5. reCAPTCHA (when required)
         if ($require_captcha) {
             $settings = get_option('wpaic_settings', []);
             $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
-            $recaptcha_site_key = $settings['recaptcha_site_key'] ?? '';
-            $recaptcha_secret_key = $settings['recaptcha_secret_key'] ?? '';
+            $recaptcha_site_key = trim($settings['recaptcha_site_key'] ?? '');
+            $recaptcha_secret_key = trim($settings['recaptcha_secret_key'] ?? '');
 
             if (!$recaptcha_enabled) {
                 return new WP_REST_Response([
@@ -1671,9 +1703,10 @@ class WPAIC_REST_Controller {
      * Submit lead form (Pro feature)
      */
     public function submit_lead(WP_REST_Request $request): WP_REST_Response {
-        // Same-origin check
+        // Same-origin check — session ownership provides primary auth,
+        // so allow missing headers (proxy/privacy extension scenarios).
         $origin_check = $this->check_same_origin();
-        if ($origin_check !== true) {
+        if ($origin_check instanceof WP_REST_Response) {
             return $origin_check;
         }
 

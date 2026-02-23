@@ -362,12 +362,12 @@ class WPAIC_Admin {
             $sanitized['excluded_pages'] = $existing['excluded_pages'] ?? [];
         }
 
-        // reCAPTCHA settings
+        // reCAPTCHA settings — trim keys to prevent whitespace-only values passing empty checks
         $sanitized['recaptcha_enabled'] = !empty($input['recaptcha_enabled']);
-        $sanitized['recaptcha_site_key'] = sanitize_text_field($input['recaptcha_site_key'] ?? ($existing['recaptcha_site_key'] ?? ''));
+        $sanitized['recaptcha_site_key'] = trim(sanitize_text_field($input['recaptcha_site_key'] ?? ($existing['recaptcha_site_key'] ?? '')));
         // Encrypt reCAPTCHA secret key (preserve existing if field submitted empty)
-        if (array_key_exists('recaptcha_secret_key', $input) && $input['recaptcha_secret_key'] !== '') {
-            $secret = sanitize_text_field($input['recaptcha_secret_key']);
+        if (array_key_exists('recaptcha_secret_key', $input) && trim($input['recaptcha_secret_key']) !== '') {
+            $secret = trim(sanitize_text_field($input['recaptcha_secret_key']));
             $sanitized['recaptcha_secret_key'] = $this->encrypt_secret($secret);
         } else {
             $sanitized['recaptcha_secret_key'] = $existing['recaptcha_secret_key'] ?? '';
@@ -483,20 +483,34 @@ class WPAIC_Admin {
                 $webhook_url_input = ''; // Reject invalid/internal URLs
             }
         }
-        // Post-resolution DNS check: verify resolved IP is not private/internal
+        // Post-resolution DNS check: verify all resolved IPs (A + AAAA) are not private/internal
         if (!empty($webhook_url_input)) {
             $wh_host = wp_parse_url($webhook_url_input, PHP_URL_HOST);
             if (!empty($wh_host) && !filter_var($wh_host, FILTER_VALIDATE_IP)) {
-                $wh_ip = gethostbyname($wh_host);
-                if ($wh_ip !== $wh_host &&
-                    !filter_var($wh_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    $webhook_url_input = ''; // Reject URLs resolving to private/internal IPs
-                    add_settings_error(
-                        'wpaic_settings',
-                        'webhook_url_private',
-                        __('Webhook URL was rejected because it resolves to a private or internal IP address.', 'rapls-ai-chatbot'),
-                        'error'
-                    );
+                $wh_ips = [];
+                if (function_exists('dns_get_record')) {
+                    foreach ((array) @dns_get_record($wh_host, DNS_A) as $r) {
+                        if (!empty($r['ip'])) { $wh_ips[] = $r['ip']; }
+                    }
+                    foreach ((array) @dns_get_record($wh_host, DNS_AAAA) as $r) {
+                        if (!empty($r['ipv6'])) { $wh_ips[] = $r['ipv6']; }
+                    }
+                }
+                if (empty($wh_ips)) {
+                    $wh_ipv4 = gethostbyname($wh_host);
+                    if ($wh_ipv4 !== $wh_host) { $wh_ips[] = $wh_ipv4; }
+                }
+                foreach ($wh_ips as $wh_ip) {
+                    if (!filter_var($wh_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                        $webhook_url_input = '';
+                        add_settings_error(
+                            'wpaic_settings',
+                            'webhook_url_private',
+                            __('Webhook URL was rejected because it resolves to a private or internal IP address.', 'rapls-ai-chatbot'),
+                            'error'
+                        );
+                        break;
+                    }
                 }
             }
         }
