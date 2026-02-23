@@ -36,7 +36,15 @@ class WPAIC_REST_Controller {
      * @return WP_REST_Response
      */
     private function silent_success(string $reason): WP_REST_Response {
-        $response = new WP_REST_Response(['success' => true], 200);
+        // Body looks like a normal success but includes a _dropped flag so the
+        // front-end can show a generic retry hint without revealing the reason.
+        $body = ['success' => true, '_dropped' => true];
+        $response = new WP_REST_Response($body, 200);
+        // Prevent intermediate caches from storing and re-serving this response.
+        // Critical when X-WPAIC-Dropped is present: without no-store, an admin's
+        // response could be cached and served to general users, leaking the header.
+        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->header('Vary', 'Cookie');
         if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can('manage_options')) {
             $response->header('X-WPAIC-Dropped', $reason);
         }
@@ -1652,8 +1660,16 @@ class WPAIC_REST_Controller {
         } else {
             // Sample 1-in-10 to reduce DB writes when under bot attack.
             // Counter value is multiplied by 10 when displayed for approximate total.
-            // Exception: future_ts is always counted exactly (rare, needs accurate diagnostics).
-            if (!$is_future_ts && wp_rand(1, 10) !== 1) {
+            // Exception: future_ts is always counted exactly (rare, needs accurate diagnostics)
+            // but rate-capped at 1 write/minute per IP to prevent abuse via crafted _ts values.
+            if ($is_future_ts) {
+                $ip_hash = substr(md5($this->get_client_ip()), 0, 12);
+                $cap_key = 'wpaic_fts_cap_' . $ip_hash;
+                if (get_transient($cap_key)) {
+                    return; // Already recorded for this IP within the window
+                }
+                set_transient($cap_key, 1, MINUTE_IN_SECONDS);
+            } elseif (wp_rand(1, 10) !== 1) {
                 return;
             }
             $count = (int) get_transient($key);
@@ -1704,6 +1720,8 @@ class WPAIC_REST_Controller {
         /**
          * Filter allowed origin hosts for public POST requests and reCAPTCHA hostname validation.
          * Values must be lowercase hostnames (no scheme, no port, no path).
+         * Port-based origin restriction is not supported: Origin/Referer matching
+         * uses hostname only, so any port entries are automatically stripped.
          *
          * @param string[] $allowed Array of lowercase hostnames.
          */

@@ -1017,7 +1017,7 @@ if (!defined('ABSPATH')) {
                                 echo '<em>' . esc_html__('No bot activity detected in the past hour.', 'rapls-ai-chatbot') . '</em>';
                             }
                             ?>
-                            <p class="description"><?php esc_html_e('Approximate count of requests blocked by bot detection in the past hour. High numbers may indicate your forms are being targeted.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><?php esc_html_e('Requests blocked by bot detection in the past hour. "(approx)" = sampled 1-in-10, shown as estimated total (×10). "Future clock" values are always exact. High numbers may indicate your forms are being targeted.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

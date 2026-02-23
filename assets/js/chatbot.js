@@ -1704,7 +1704,17 @@
             })
             .then(function(response) { return response.json(); })
             .then(function(data) {
-                if (data.success) {
+                if (data.success && data._dropped) {
+                    // Request was silently dropped by server-side validation.
+                    // Show a generic processing message, then a retry hint after delay.
+                    // No specific reason is revealed to avoid giving attackers clues.
+                    statusEl.textContent = 'Processing...';
+                    statusEl.className = 'wpaic-offline-status';
+                    setTimeout(function() {
+                        statusEl.textContent = 'Could not complete the request. Please reload the page and try again.';
+                        statusEl.className = 'wpaic-offline-status wpaic-offline-error';
+                    }, 3000);
+                } else if (data.success) {
                     statusEl.textContent = data.data.message || 'Message sent!';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-success';
                     form.reset();
