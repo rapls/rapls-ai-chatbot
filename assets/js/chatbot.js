@@ -1594,6 +1594,12 @@
                 '<div class="wpaic-offline-field">' +
                 '<textarea name="message" placeholder="' + this.escapeHtml('Message *') + '" required rows="4" class="wpaic-offline-input"></textarea>' +
                 '</div>' +
+                // Honeypot field: hidden from real users, bots auto-fill it
+                '<div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true" tabindex="-1">' +
+                '<input type="text" name="website_url" autocomplete="off" tabindex="-1">' +
+                '</div>' +
+                // Timing field: records when form was rendered
+                '<input type="hidden" name="_ts" value="' + Math.floor(Date.now() / 1000) + '">' +
                 '<button type="submit" class="wpaic-offline-submit">' + this.escapeHtml('Send Message') + '</button>' +
                 '<div class="wpaic-offline-status"></div>' +
                 '</form>' +
@@ -1635,11 +1641,17 @@
             statusEl.textContent = 'Sending...';
             statusEl.className = 'wpaic-offline-status';
 
+            // Honeypot (website_url) and timing (_ts) for bot detection
+            var honeypot = form.querySelector('[name="website_url"]');
+            var tsField = form.querySelector('[name="_ts"]');
+
             var requestBody = {
                 name: name,
                 email: email,
                 message: message,
-                page_url: window.location.href
+                page_url: window.location.href,
+                website_url: honeypot ? honeypot.value : '',
+                _ts: tsField ? parseInt(tsField.value, 10) : 0
             };
 
             // reCAPTCHAトークンを取得してから送信

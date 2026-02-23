@@ -483,6 +483,23 @@ class WPAIC_Admin {
                 $webhook_url_input = ''; // Reject invalid/internal URLs
             }
         }
+        // Post-resolution DNS check: verify resolved IP is not private/internal
+        if (!empty($webhook_url_input)) {
+            $wh_host = wp_parse_url($webhook_url_input, PHP_URL_HOST);
+            if (!empty($wh_host) && !filter_var($wh_host, FILTER_VALIDATE_IP)) {
+                $wh_ip = gethostbyname($wh_host);
+                if ($wh_ip !== $wh_host &&
+                    !filter_var($wh_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                    $webhook_url_input = ''; // Reject URLs resolving to private/internal IPs
+                    add_settings_error(
+                        'wpaic_settings',
+                        'webhook_url_private',
+                        __('Webhook URL was rejected because it resolves to a private or internal IP address.', 'rapls-ai-chatbot'),
+                        'error'
+                    );
+                }
+            }
+        }
         $sanitized['webhook_url'] = $webhook_url_input;
         $sanitized['webhook_secret'] = sanitize_text_field($input['webhook_secret'] ?? ($existing['webhook_secret'] ?? ''));
 

@@ -1440,23 +1440,49 @@ class WPAIC_REST_Controller {
 
     /**
      * Check that a public POST request originates from the same site.
-     * Compares Origin or Referer header against home_url().
+     * Compares Origin or Referer header against allowed hosts (home_url, site_url).
      * Not bulletproof (headers can be spoofed) but raises the bar for casual abuse.
+     *
+     * Extensible via 'wpaic_allowed_origins' filter for multi-domain/staging setups.
      *
      * @return true|WP_REST_Response True if OK, or 403 response.
      */
     private function check_same_origin() {
-        $home = wp_parse_url(home_url(), PHP_URL_HOST);
-        if (empty($home)) {
+        $home_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        $site_host = wp_parse_url(site_url(), PHP_URL_HOST);
+
+        // Build allowed hosts list (home_url + site_url + www variants)
+        $allowed = [];
+        foreach (array_filter([$home_host, $site_host]) as $h) {
+            $h = strtolower($h);
+            $allowed[] = $h;
+            // Also allow www / non-www counterpart
+            if (strpos($h, 'www.') === 0) {
+                $allowed[] = substr($h, 4);
+            } else {
+                $allowed[] = 'www.' . $h;
+            }
+        }
+        $allowed = array_unique($allowed);
+
+        /**
+         * Filter allowed origin hosts for public POST requests.
+         * Useful for multi-domain, staging, or custom proxy setups.
+         *
+         * @param string[] $allowed Array of lowercase hostnames.
+         */
+        $allowed = apply_filters('wpaic_allowed_origins', $allowed);
+
+        if (empty($allowed)) {
             return true; // Can't determine; allow
         }
 
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST) : null;
         $referer = isset($_SERVER['HTTP_REFERER']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])), PHP_URL_HOST) : null;
 
-        // Accept if either header matches (some browsers send one but not the other)
-        if (($origin && strtolower($origin) === strtolower($home)) ||
-            ($referer && strtolower($referer) === strtolower($home))) {
+        // Accept if either header matches any allowed host
+        if (($origin && in_array(strtolower($origin), $allowed, true)) ||
+            ($referer && in_array(strtolower($referer), $allowed, true))) {
             return true;
         }
 
@@ -1469,6 +1495,89 @@ class WPAIC_REST_Controller {
             'success' => false,
             'error'   => __('Cross-origin request denied.', 'rapls-ai-chatbot'),
         ], 403);
+    }
+
+    /**
+     * Consolidated guard for public POST endpoints.
+     * Runs: same-origin check, public rate limit, honeypot, timing check.
+     * Optionally requires reCAPTCHA to be fully configured.
+     *
+     * @param WP_REST_Request $request       The REST request.
+     * @param string          $rate_key      Short identifier for rate limiting transient.
+     * @param int             $rate_limit    Max requests per window.
+     * @param int             $rate_window   Window in seconds.
+     * @param bool            $require_captcha Whether reCAPTCHA must be fully configured.
+     * @param string          $captcha_action  reCAPTCHA action name (e.g. 'offline', 'lead').
+     * @return true|WP_REST_Response True if all checks pass, or error response.
+     */
+    private function guard_public_post(
+        WP_REST_Request $request,
+        string $rate_key = 'pub',
+        int $rate_limit = 30,
+        int $rate_window = 60,
+        bool $require_captcha = false,
+        string $captcha_action = ''
+    ) {
+        // 1. Same-origin check
+        $origin_check = $this->check_same_origin();
+        if ($origin_check !== true) {
+            return $origin_check;
+        }
+
+        // 2. Public rate limit
+        $rate_check = $this->check_public_rate_limit($rate_key, $rate_limit, $rate_window);
+        if ($rate_check !== true) {
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+        }
+
+        // 3. Honeypot: reject if hidden field is filled (bots auto-fill)
+        $hp = $request->get_param('website_url');
+        if (!empty($hp)) {
+            return new WP_REST_Response(['success' => true], 200); // Silent success
+        }
+
+        // 4. Timing check: reject if submitted faster than 3 seconds (bot speed)
+        $form_ts = (int) $request->get_param('_ts');
+        if ($form_ts > 0 && (time() - $form_ts) < 3) {
+            return new WP_REST_Response(['success' => true], 200); // Silent success
+        }
+
+        // 5. reCAPTCHA (when required)
+        if ($require_captcha) {
+            $settings = get_option('wpaic_settings', []);
+            $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
+            $recaptcha_site_key = $settings['recaptcha_site_key'] ?? '';
+            $recaptcha_secret_key = $settings['recaptcha_secret_key'] ?? '';
+
+            if (!$recaptcha_enabled) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => sprintf(
+                        /* translators: %s: feature name */
+                        __('%s requires reCAPTCHA to be enabled. Please configure reCAPTCHA in the plugin settings.', 'rapls-ai-chatbot'),
+                        ucfirst(str_replace('_', ' ', $captcha_action))
+                    ),
+                ], 403);
+            }
+
+            if (empty($recaptcha_site_key) || empty($recaptcha_secret_key)) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('reCAPTCHA is enabled but not fully configured (missing site key or secret key). Please complete the reCAPTCHA setup in plugin settings.', 'rapls-ai-chatbot'),
+                ], 403);
+            }
+
+            $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
+            $recaptcha_result = $this->verify_recaptcha($recaptcha_token, $captcha_action);
+            if (is_wp_error($recaptcha_result)) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => $recaptcha_result->get_error_message(),
+                ], 403);
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -2548,27 +2657,10 @@ class WPAIC_REST_Controller {
      * Submit offline message (Pro feature)
      */
     public function submit_offline_message(WP_REST_Request $request): WP_REST_Response {
-        // Same-origin check
-        $origin_check = $this->check_same_origin();
-        if ($origin_check !== true) {
-            return $origin_check;
-        }
-
-        $rate_check = $this->check_public_rate_limit('offl', 10, 60);
-        if ($rate_check !== true) {
-            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
-        }
-
-        // Honeypot: reject if hidden field is filled (bots auto-fill)
-        $hp = $request->get_param('website_url');
-        if (!empty($hp)) {
-            return new WP_REST_Response(['success' => true], 200); // Silent success to not reveal detection
-        }
-
-        // Timing check: reject if submitted faster than 3 seconds (bot speed)
-        $form_ts = (int) $request->get_param('_ts');
-        if ($form_ts > 0 && (time() - $form_ts) < 3) {
-            return new WP_REST_Response(['success' => true], 200); // Silent success
+        // Consolidated public POST guard: same-origin, rate limit, honeypot, timing, reCAPTCHA
+        $guard = $this->guard_public_post($request, 'offl', 10, 60, true, 'offline');
+        if ($guard !== true) {
+            return $guard;
         }
 
         $name     = sanitize_text_field($request->get_param('name') ?? '');
@@ -2609,7 +2701,7 @@ class WPAIC_REST_Controller {
             ], 400);
         }
 
-        // Rate limit: max 5 offline messages per IP per hour
+        // Additional per-IP hourly rate limit for offline messages
         $ip = $this->get_client_ip();
         if (!empty($ip)) {
             $ip_hash = hash('sha256', $ip . wp_salt());
@@ -2622,26 +2714,6 @@ class WPAIC_REST_Controller {
                 ], 429);
             }
             set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
-        }
-
-        // Offline messages require reCAPTCHA to be configured to prevent spam abuse.
-        // If reCAPTCHA is not enabled, reject with guidance for the admin.
-        $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
-        if (!$recaptcha_enabled) {
-            return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('Offline messages require reCAPTCHA to be enabled. Please configure reCAPTCHA in the plugin settings.', 'rapls-ai-chatbot'),
-            ], 403);
-        }
-
-        // Verify reCAPTCHA token
-        $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
-        $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'offline');
-        if (is_wp_error($recaptcha_result)) {
-            return new WP_REST_Response([
-                'success' => false,
-                'error'   => $recaptcha_result->get_error_message(),
-            ], 403);
         }
 
         // Save via WPAIC_Lead::create() for consistent sanitization and format specifiers
