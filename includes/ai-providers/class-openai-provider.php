@@ -433,8 +433,14 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Note: FPM request_terminate_timeout is not readable from PHP — hosting
         // providers may impose a lower limit that cannot be auto-detected.
         $max_exec = (int) ini_get('max_execution_time');
-        $upper    = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
-        $timeout  = max(10, min($upper, $requested));
+        if ($max_exec > 0) {
+            $upper        = min(300, max(10, $max_exec - 5));
+            $upper_source = 'max_exec';
+        } else {
+            $upper        = 300;
+            $upper_source = 'hard_cap'; // max_execution_time=0 (unlimited)
+        }
+        $timeout = max(10, min($upper, $requested));
 
         // Log timeout decision at 1-in-20 sample rate to limit log volume.
         // Always logs when timeout was clamped (indicates misconfiguration).
@@ -442,7 +448,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $was_clamped = ($timeout !== $requested);
             if ($was_clamped || wp_rand(1, 20) === 1) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log(sprintf('WPAIC timeout: requested=%ds | final=%ds | max_exec=%ds | upper=%ds | model=%s', $requested, $timeout, $max_exec, $upper, $this->model));
+                error_log(sprintf(
+                    'WPAIC timeout: requested=%ds | final=%ds | max_exec=%ds | upper=%ds(%s) | model=%s',
+                    $requested, $timeout, $max_exec, $upper, $upper_source, $this->model
+                ));
             }
         }
 

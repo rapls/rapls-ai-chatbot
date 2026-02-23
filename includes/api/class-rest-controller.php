@@ -573,8 +573,25 @@ class WPAIC_REST_Controller {
             if ($cached_result !== false) {
                 // Flag as cache-originated so client can distinguish dedup hits
                 // from fresh responses (helps diagnose _truncated false positives).
+                $now = time();
                 $cached_result['dedup_hit']   = true;
-                $cached_result['_server_now'] = time();
+                $cached_result['_server_now'] = $now;
+
+                // Log stale dedup hits (saved_at exists but age > 90s) — indicates
+                // object cache serving expired data past transient TTL.
+                $saved_at = $cached_result['data']['_saved_at'] ?? 0;
+                if (!empty($cached_result['data']['_truncated']) && $saved_at > 0 && ($now - $saved_at) >= 90) {
+                    if ($this->should_log_dedup()) {
+                        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                        error_log(sprintf(
+                            'WPAIC dedup: stale hit | key=%s | age=%ds | object_cache=%s',
+                            $dedup_key,
+                            $now - $saved_at,
+                            wp_using_ext_object_cache() ? 'yes' : 'no'
+                        ));
+                    }
+                }
+
                 $dedup_response = new WP_REST_Response($cached_result, 200);
                 return $this->no_cache($dedup_response);
             }
@@ -1008,8 +1025,9 @@ class WPAIC_REST_Controller {
             }
 
             $result_body = [
-                'success' => true,
-                'data'    => $response_data,
+                'success'     => true,
+                'data'        => $response_data,
+                '_server_now' => time(),
             ];
 
             // Cache result for dedup (60s window for 409 retries / network glitches).

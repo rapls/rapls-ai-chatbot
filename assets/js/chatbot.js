@@ -705,7 +705,7 @@
                             var staleRef = (response.data.client_request_id)
                                 ? ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')'
                                 : '';
-                            self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page.') + staleRef);
+                            self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                         } else {
                             self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment);
                             // Fetch related question suggestions (Pro)
@@ -1337,7 +1337,7 @@
             // Save current text to data attribute (survives DOM replacement by
             // page builders) and always update on each countdown start to handle
             // dynamic text changes from translations or theme overrides.
-            btn.setAttribute('data-wpaic-original-text', btn.textContent);
+            btn.setAttribute('data-wpaic-retry-original-text', btn.textContent);
             btn.disabled = true;
             self.isLoading = true;
 
@@ -1350,8 +1350,8 @@
                     return;
                 }
                 if (remaining <= 0) {
-                    currentBtn.textContent = currentBtn.getAttribute('data-wpaic-original-text') || '';
-                    currentBtn.removeAttribute('data-wpaic-original-text');
+                    currentBtn.textContent = currentBtn.getAttribute('data-wpaic-retry-original-text') || '';
+                    currentBtn.removeAttribute('data-wpaic-retry-original-text');
                     currentBtn.disabled = false;
                     self.isLoading = false;
                     self._retryTimerId = null;
