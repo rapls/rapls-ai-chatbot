@@ -10,6 +10,11 @@ if (!defined('ABSPATH')) {
 class WPAIC_REST_Controller {
 
     /**
+     * Sentinel returned by check_same_origin() when neither Origin nor Referer header is present.
+     */
+    const SAME_ORIGIN_NO_HEADERS = 'no_headers';
+
+    /**
      * Namespace
      */
     private string $namespace = 'wp-ai-chatbot/v1';
@@ -1188,16 +1193,23 @@ class WPAIC_REST_Controller {
             // Only trust XFF when the direct connection comes from a known proxy.
             // Private/loopback REMOTE_ADDR means a local reverse proxy (Nginx, Docker, etc.).
             // Additional trusted proxies can be added via filter.
-            $trusted_proxies = apply_filters('wpaic_trusted_proxies', []);
+            // Validate filter output: only accept valid IP addresses as trusted proxies
+            $trusted_proxies = array_filter(
+                (array) apply_filters('wpaic_trusted_proxies', []),
+                function ($ip) { return filter_var($ip, FILTER_VALIDATE_IP); }
+            );
             $remote_is_proxy = (
                 !filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) ||
                 in_array($remote, $trusted_proxies, true)
             );
 
             if ($remote_is_proxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $forwarded = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
-                $ips = array_map('trim', explode(',', $forwarded));
+                // Explode raw header, validate each candidate individually (no sanitize_text_field
+                // on full string to avoid corrupting IP separators)
+                $forwarded = wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']);
+                $ips = explode(',', $forwarded);
                 foreach ($ips as $candidate) {
+                    $candidate = trim($candidate);
                     if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                         return $candidate;
                     }
@@ -1505,7 +1517,26 @@ class WPAIC_REST_Controller {
          *
          * @param string[] $allowed Array of lowercase hostnames.
          */
-        return apply_filters('wpaic_allowed_origins', $allowed);
+        $filtered = apply_filters('wpaic_allowed_origins', $allowed);
+
+        // Re-sanitize filter output: normalize to lowercase hostnames, strip schemes/paths/ports.
+        $sanitized = [];
+        foreach ((array) $filtered as $entry) {
+            if (!is_string($entry) || $entry === '') {
+                continue;
+            }
+            // If someone passed a full URL, extract host only.
+            $host = wp_parse_url($entry, PHP_URL_HOST);
+            if ($host === null || $host === false) {
+                // Not a URL — treat as bare hostname.
+                $host = $entry;
+            }
+            $host = strtolower(trim($host));
+            if ($host !== '') {
+                $sanitized[] = $host;
+            }
+        }
+        return array_values(array_unique($sanitized));
     }
 
     /**
@@ -1515,8 +1546,8 @@ class WPAIC_REST_Controller {
      *
      * Returns:
      *   true              — Origin/Referer matched an allowed host.
-     *   'no_headers'      — Neither Origin nor Referer was present (caller decides policy).
-     *   WP_REST_Response  — Origin/Referer present but did NOT match (hard reject).
+     *   self::SAME_ORIGIN_NO_HEADERS — Neither Origin nor Referer was present (caller decides policy).
+     *   WP_REST_Response             — Origin/Referer present but did NOT match (hard reject).
      *
      * @return true|string|WP_REST_Response
      */
@@ -1524,7 +1555,7 @@ class WPAIC_REST_Controller {
         $allowed = $this->get_allowed_origin_hosts();
 
         if (empty($allowed)) {
-            return 'no_headers'; // Can't determine site host; delegate to caller policy
+            return self::SAME_ORIGIN_NO_HEADERS; // Can't determine site host; delegate to caller policy
         }
 
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST) : null;
@@ -1538,7 +1569,7 @@ class WPAIC_REST_Controller {
 
         // No headers at all — return sentinel so caller can decide based on other defenses
         if (!$origin && !$referer) {
-            return 'no_headers';
+            return self::SAME_ORIGIN_NO_HEADERS;
         }
 
         // Headers present but don't match — hard reject
@@ -1728,10 +1759,14 @@ class WPAIC_REST_Controller {
         // Verify hostname matches this site (prevents token from other sites).
         // Uses the same allowed-hosts logic as check_same_origin() to handle
         // www/non-www, home_url/site_url differences, and custom origins.
-        if (!empty($body['hostname'])) {
-            $allowed_hosts = $this->get_allowed_origin_hosts();
+        // Fail-closed: if hostname is empty or missing, reject (Google should always provide it).
+        $allowed_hosts = $this->get_allowed_origin_hosts();
+        if (!empty($allowed_hosts)) {
+            if (empty($body['hostname'])) {
+                return new WP_Error('recaptcha_hostname_missing', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
+            }
             $token_host = strtolower($body['hostname']);
-            if (!empty($allowed_hosts) && !in_array($token_host, $allowed_hosts, true)) {
+            if (!in_array($token_host, $allowed_hosts, true)) {
                 return new WP_Error('recaptcha_hostname_mismatch', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
             }
         }
