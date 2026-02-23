@@ -571,6 +571,9 @@ class WPAIC_REST_Controller {
             $dedup_key = 'wpaic_dedup_' . substr(hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id()), 0, 16);
             $cached_result = get_transient($dedup_key);
             if ($cached_result !== false) {
+                // Flag as cache-originated so client can distinguish dedup hits
+                // from fresh responses (helps diagnose _truncated false positives).
+                $cached_result['dedup_hit'] = true;
                 $dedup_response = new WP_REST_Response($cached_result, 200);
                 return $this->no_cache($dedup_response);
             }
@@ -1028,7 +1031,8 @@ class WPAIC_REST_Controller {
                     ],
                 ];
                 $encoded = wp_json_encode($dedup_data);
-                if ($encoded === false || strlen($encoded) > 32768) {
+                $dedup_size = ($encoded !== false) ? strlen($encoded) : 0;
+                if ($encoded === false || $dedup_size > 32768) {
                     // Payload too large for DB-backed transient — store a minimal
                     // "done marker" so the dedup key exists (prevents double AI call)
                     // but omit the heavy content/sources. client_request_id included
@@ -1042,8 +1046,10 @@ class WPAIC_REST_Controller {
                             'sources'           => [],
                             '_truncated'        => true,
                             'client_request_id' => $client_request_id,
+                            '_history_saved'    => $save_history,
                         ],
                     ];
+                    $dedup_size = 256; // done marker is always small
                 }
                 $stored = set_transient($dedup_key, $dedup_data, 60);
                 if (!$stored && $this->should_log_dedup()) {
@@ -1051,7 +1057,7 @@ class WPAIC_REST_Controller {
                     error_log(sprintf(
                         'WPAIC dedup: set_transient failed | key=%s | size=%d | object_cache=%s',
                         $dedup_key,
-                        strlen(wp_json_encode($dedup_data) ?: ''),
+                        $dedup_size,
                         wp_using_ext_object_cache() ? 'yes' : 'no'
                     ));
                 }

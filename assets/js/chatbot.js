@@ -628,6 +628,11 @@
                     console.error('Chat error:', error);
                     var errorMessage = error.message || '申し訳ありません。エラーが発生しました。もう一度お試しください。';
                     self.addMessage('bot', errorMessage);
+
+                    // 429/503 rate limit: disable input for retry_after seconds
+                    if (error.response && error.response.retry_after > 0) {
+                        self.startRetryCountdown(error.response.retry_after);
+                    }
                 })
                 .finally(function() {
                     self.setLoading(false);
@@ -675,8 +680,17 @@
                         // Dedup done-marker: server processed the request but the
                         // cached payload was too large to store. Show a gentle
                         // notice instead of an empty bubble to avoid "blank reply" UX.
-                        if (response.data && response.data._truncated) {
-                            self.addMessage('bot', self.config.strings.dedup_truncated || 'Your message was received and processed. Please reload the page to see the response.');
+                        if (response.dedup_hit && response.data && response.data._truncated) {
+                            var truncMsg;
+                            if (response.data._history_saved) {
+                                truncMsg = self.config.strings.dedup_truncated || 'Your message was received and processed. Please reload the page to see the response.';
+                            } else {
+                                truncMsg = self.config.strings.dedup_truncated_no_history || 'Your message was processed but the response could not be cached. Please try sending a new message.';
+                            }
+                            if (response.data.client_request_id) {
+                                truncMsg += ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')';
+                            }
+                            self.addMessage('bot', truncMsg);
                         } else {
                             self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment);
                             // Fetch related question suggestions (Pro)
@@ -1288,6 +1302,33 @@
             if (loading) {
                 this.scrollToBottom();
             }
+        },
+
+        /**
+         * Disable send button for N seconds with countdown (rate limit cooldown).
+         * Called when server returns retry_after on 429/503.
+         */
+        startRetryCountdown: function(seconds) {
+            var self = this;
+            var btn = this.inputForm.querySelector('button[type="submit"]');
+            if (!btn) return;
+            var remaining = Math.min(Math.max(1, Math.ceil(seconds)), 120);
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            self.isLoading = true;
+
+            var tick = function() {
+                if (remaining <= 0) {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    self.isLoading = false;
+                    return;
+                }
+                btn.textContent = remaining + 's';
+                remaining--;
+                setTimeout(tick, 1000);
+            };
+            tick();
         },
 
         /**
