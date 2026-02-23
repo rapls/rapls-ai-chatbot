@@ -344,25 +344,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $headers[$options['_request_id_header']] = $options['_request_id'];
         }
 
-        $response = wp_remote_post($this->api_url, [
-            'headers' => $headers,
-            'body'    => wp_json_encode($body),
-            'timeout' => 120,
-        ]);
-
-        if (is_wp_error($response)) {
-            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
-        }
-
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = wp_remote_retrieve_body($response);
-        $data = json_decode($response_body, true);
-
-        if ($response_code !== 200) {
-            $this->handle_api_error($response_code, $data);
-        }
-
-        return $this->parse_response($data);
+        return $this->send_http_request($this->api_url, $headers, $body);
     }
 
     /**
@@ -418,14 +400,33 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $headers[$options['_request_id_header']] = $options['_request_id'];
         }
 
-        $response = wp_remote_post($this->responses_api_url, [
+        return $this->send_http_request($this->responses_api_url, $headers, $body);
+    }
+
+    /**
+     * Send an HTTP POST to an OpenAI endpoint and return parsed data.
+     *
+     * Centralizes WP_Error → WPAIC_Communication_Exception conversion and
+     * HTTP error code handling so every send method goes through one path.
+     *
+     * @param string $url     API endpoint URL.
+     * @param array  $headers HTTP headers.
+     * @param array  $body    Request body (will be JSON-encoded).
+     * @return array Parsed response data.
+     * @throws WPAIC_Communication_Exception On network/transport failure.
+     * @throws Exception|WPAIC_Quota_Exceeded_Exception On API errors.
+     */
+    private function send_http_request(string $url, array $headers, array $body): array {
+        $response = wp_remote_post($url, [
             'headers' => $headers,
             'body'    => wp_json_encode($body),
             'timeout' => 120,
         ]);
 
         if (is_wp_error($response)) {
-            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new WPAIC_Communication_Exception(
+                esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message())
+            );
         }
 
         $response_code = wp_remote_retrieve_response_code($response);

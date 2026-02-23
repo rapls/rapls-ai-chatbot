@@ -552,9 +552,11 @@ class WPAIC_REST_Controller {
 
         // Dedup: if client_request_id was already processed, return cached result.
         // Prevents double sends from 409 retries or network glitches.
+        // Key includes session_id + client_request_id + server salt to prevent
+        // cross-session cache poisoning (session ownership already verified above).
         $dedup_key = '';
         if (!empty($client_request_id)) {
-            $dedup_key = 'wpaic_dedup_' . substr(md5($session_id . $client_request_id), 0, 16);
+            $dedup_key = 'wpaic_dedup_' . substr(hash('sha256', $session_id . $client_request_id . wp_salt()), 0, 16);
             $cached_result = get_transient($dedup_key);
             if ($cached_result !== false) {
                 $dedup_response = new WP_REST_Response($cached_result, 200);
@@ -994,9 +996,23 @@ class WPAIC_REST_Controller {
                 'data'    => $response_data,
             ];
 
-            // Cache result for dedup (60s window for 409 retries / network glitches)
+            // Cache result for dedup (60s window for 409 retries / network glitches).
+            // Store minimal data only — skip if payload exceeds 32KB to protect DB
+            // on sites without object cache (transients go to wp_options).
             if (!empty($dedup_key)) {
-                set_transient($dedup_key, $result_body, 60);
+                $dedup_data = [
+                    'success' => true,
+                    'data'    => [
+                        'message_id'  => $response_data['message_id'] ?? 0,
+                        'content'     => $response_data['content'] ?? '',
+                        'tokens_used' => $response_data['tokens_used'] ?? 0,
+                        'sources'     => $response_data['sources'] ?? [],
+                    ],
+                ];
+                $encoded = wp_json_encode($dedup_data);
+                if ($encoded !== false && strlen($encoded) <= 32768) {
+                    set_transient($dedup_key, $dedup_data, 60);
+                }
             }
 
             $rest_response = new WP_REST_Response($result_body, 200);
