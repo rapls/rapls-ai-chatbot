@@ -323,7 +323,7 @@ if (!defined('ABSPATH')) {
                                 <?php
                                 printf(
                                     /* translators: 1: multiplier value, 2: effective token limit */
-                                    esc_html__('For GPT-5 and reasoning models, this value is automatically multiplied (current: x%1$d, effective limit: %2$s tokens, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the wpaic_gpt5_token_multiplier filter.', 'rapls-ai-chatbot'),
+                                    esc_html__('For GPT-5 and reasoning models, this value is automatically multiplied (current filter value: x%1$d, approximate effective limit: %2$s tokens, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the wpaic_gpt5_token_multiplier filter. The actual value may differ if the filter is context-dependent.', 'rapls-ai-chatbot'),
                                     $gpt5_multiplier,
                                     number_format_i18n($effective_max)
                                 );
@@ -914,9 +914,9 @@ if (!defined('ABSPATH')) {
                             <p class="description">
                                 <?php esc_html_e('When enabled, user ID persistence (localStorage) and conversion tracking are disabled unless a consent management plugin (WP Consent API) is active and the user has granted consent. When disabled, these features work as usual regardless of consent status.', 'rapls-ai-chatbot'); ?>
                             </p>
-                            <p class="description" style="color: #d63638;">
-                                <?php esc_html_e('Note: When strict mode is ON and no Consent API plugin is installed, window size memory, session persistence, and conversion tracking will be disabled. The chatbot itself will still work normally.', 'rapls-ai-chatbot'); ?>
-                            </p>
+                            <div class="notice notice-warning inline" style="margin: 8px 0; padding: 4px 12px;">
+                                <p><?php esc_html_e('Note: When strict mode is ON and no Consent API plugin is installed, window size memory, session persistence, and conversion tracking will be disabled. The chatbot itself will still work normally.', 'rapls-ai-chatbot'); ?></p>
+                            </div>
                         </td>
                     </tr>
                     <tr>

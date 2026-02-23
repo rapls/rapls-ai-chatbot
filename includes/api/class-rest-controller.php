@@ -888,9 +888,13 @@ class WPAIC_REST_Controller {
             $max_tokens = max(1, min(16384, (int) ($settings['max_tokens'] ?? 1000)));
             $temperature = max(0.0, min(2.0, (float) ($settings['temperature'] ?? 0.7)));
 
+            // Generate request ID at the REST layer for response header correlation
+            $request_id = wp_generate_uuid4();
+
             $response = $ai_provider->send_message($messages, [
-                'max_tokens'  => $max_tokens,
-                'temperature' => $temperature,
+                'max_tokens'   => $max_tokens,
+                'temperature'  => $temperature,
+                '_request_id'  => $request_id,
             ]);
 
             // Save AI response
@@ -972,10 +976,15 @@ class WPAIC_REST_Controller {
                 $response_data['sentiment'] = $sentiment;
             }
 
-            return new WP_REST_Response([
+            $rest_response = new WP_REST_Response([
                 'success' => true,
                 'data'    => $response_data,
             ], 200);
+            // Expose request ID in response header for debugging/support correlation
+            if (!empty($request_id)) {
+                $rest_response->header('X-WPAIC-Request-Id', $request_id);
+            }
+            return $rest_response;
 
         } catch (WPAIC_Quota_Exceeded_Exception $e) {
             // Return custom quota error message from settings

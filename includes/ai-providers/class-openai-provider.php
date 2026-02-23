@@ -157,10 +157,21 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * @throws Exception On non-recoverable errors.
      */
     private function send_with_fallback(callable $primary, callable $secondary, array $messages, array $options): array {
-        // Generate a unique request ID for diagnostics and idempotency.
-        // Both primary and fallback calls carry the same ID so logs can be correlated
-        // and the server (if it supports Idempotency-Key) won't double-process.
-        $options['_request_id'] = wp_generate_uuid4();
+        // Request ID for log correlation and diagnostics. Use caller-provided
+        // ID if available (e.g. from REST controller) to enable response header
+        // correlation. NOTE: This is a tracking ID only — it does NOT prevent
+        // double billing. OpenAI does not currently honour custom idempotency
+        // headers. When Idempotency-Key support is added, change via filter.
+        if (empty($options['_request_id'])) {
+            $options['_request_id'] = wp_generate_uuid4();
+        }
+        $options['_request_id_header'] = apply_filters('wpaic_request_id_header', 'X-WPAIC-Request-Id');
+
+        // Determine whether primary targets a known OpenAI endpoint.
+        // Used to guard 404 fallback — only fall back if the 404 came from an
+        // endpoint we control, not from WAF/proxy/URL-construction errors.
+        $primary_is_known_endpoint = ($primary === [$this, 'send_via_chat_completions']
+            || $primary === [$this, 'send_via_responses_api']);
 
         try {
             return call_user_func($primary, $messages, $options);
@@ -176,17 +187,31 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             // ── Hard errors: never fallback ──
             // These apply equally to both APIs (same key/account) or indicate
             // unrecoverable request issues. Fallback would waste a request.
-            // 401=auth, 402=billing, 403=access, 409=conflict, 422=validation
-            $no_fallback_codes = [401, 402, 403, 409, 422];
+            // 401=auth, 402=billing, 403=access, 422=validation
+            $no_fallback_codes = [401, 402, 403, 422];
             if (in_array($code, $no_fallback_codes, true)) {
                 throw $e;
+            }
+
+            // 409 Conflict: temporary concurrency issue — retry once on the
+            // same endpoint with a short jittered backoff instead of fallback.
+            if ($code === 409) {
+                // phpcs:ignore WordPress.WP.AlternativeFunctions.rand_mt_rand
+                usleep(mt_rand(250000, 500000)); // 250-500ms jitter
+                try {
+                    return call_user_func($primary, $messages, $options);
+                } catch (Exception $retry_e) {
+                    throw $retry_e; // second failure — give up
+                }
             }
 
             // ── Endpoint/model mismatch: 400/404 ──
             // Priority: structured error code → HTTP status → message text (last resort)
             $is_endpoint_mismatch = false;
-            if ($code === 404) {
-                // 404 is almost always a model/endpoint issue
+            if ($code === 404 && $primary_is_known_endpoint) {
+                // 404 from a known OpenAI endpoint = model/endpoint mismatch.
+                // If the primary isn't a known endpoint (e.g. misconfigured URL),
+                // don't fallback — the other endpoint would likely fail the same way.
                 $is_endpoint_mismatch = true;
             } elseif ($code === 400) {
                 // Structured codes (most reliable, survive message text changes)
@@ -209,7 +234,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             // "API communication error". Server errors (5xx) carry the HTTP code.
             // NOTE: Timeout/connection-reset fallback risks double billing because
             // the server may have already processed the request. We allow it once
-            // since both calls carry the same request ID for correlation.
+            // since both calls carry the same request ID for correlation/audit.
             $is_transient = ($code === 0 && stripos($msg, 'API communication error') !== false)
                 || ($code >= 500 && $code < 600);
 
@@ -269,16 +294,22 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
+            $effective_tokens = $body['max_completion_tokens'] ?? $body['max_tokens'] ?? '?';
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC OpenAI: endpoint=chat/completions model=%s', $this->model));
+            error_log(sprintf(
+                'WPAIC OpenAI: endpoint=chat/completions model=%s max_tokens=%s request_id=%s',
+                $this->model,
+                $effective_tokens,
+                $options['_request_id'] ?? 'none'
+            ));
         }
 
         $headers = [
             'Authorization' => 'Bearer ' . $this->api_key,
             'Content-Type'  => 'application/json',
         ];
-        if (!empty($options['_request_id'])) {
-            $headers['X-WPAIC-Request-Id'] = $options['_request_id'];
+        if (!empty($options['_request_id']) && !empty($options['_request_id_header'])) {
+            $headers[$options['_request_id_header']] = $options['_request_id'];
         }
 
         $response = wp_remote_post($this->api_url, [
@@ -340,15 +371,20 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC OpenAI: endpoint=responses model=%s', $this->model));
+            error_log(sprintf(
+                'WPAIC OpenAI: endpoint=responses model=%s max_output_tokens=%s request_id=%s',
+                $this->model,
+                $body['max_output_tokens'] ?? '?',
+                $options['_request_id'] ?? 'none'
+            ));
         }
 
         $headers = [
             'Authorization' => 'Bearer ' . $this->api_key,
             'Content-Type'  => 'application/json',
         ];
-        if (!empty($options['_request_id'])) {
-            $headers['X-WPAIC-Request-Id'] = $options['_request_id'];
+        if (!empty($options['_request_id']) && !empty($options['_request_id_header'])) {
+            $headers[$options['_request_id_header']] = $options['_request_id'];
         }
 
         $response = wp_remote_post($this->responses_api_url, [
