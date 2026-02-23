@@ -29,6 +29,10 @@ class WPAIC_REST_Controller {
      * Ensure no-cache headers on public GET routes regardless of response status.
      * Hooked to rest_post_dispatch so ALL code paths (success, error, exception) are covered.
      *
+     * Uses structural matching: any GET request under our namespace gets no-cache.
+     * This avoids the fragility of a hardcoded route list — new public GET routes
+     * automatically inherit no-cache behavior without manual updates.
+     *
      * @param WP_REST_Response $response REST response.
      * @param WP_REST_Server   $server   REST server.
      * @param WP_REST_Request  $request  REST request.
@@ -36,12 +40,13 @@ class WPAIC_REST_Controller {
      */
     public function ensure_no_cache_public_gets(WP_REST_Response $response, WP_REST_Server $server, WP_REST_Request $request): WP_REST_Response {
         $route = $request->get_route();
-        $no_cache_routes = [
-            '/' . $this->namespace . '/session',
-            '/' . $this->namespace . '/lead-config',
-            '/' . $this->namespace . '/message-limit',
-        ];
-        if (in_array($route, $no_cache_routes, true)) {
+        $prefix = '/' . $this->namespace . '/';
+
+        // Apply no-cache to all GET requests under our namespace.
+        // Public GET endpoints (/session, /lead-config, /message-limit) return per-user
+        // dynamic data that must never be cached. Authenticated GETs (history, summary)
+        // also benefit from no-cache to prevent stale data behind proxies.
+        if (strpos($route, $prefix) === 0 && $request->get_method() === 'GET') {
             return $this->no_cache($response);
         }
         return $response;
@@ -468,8 +473,9 @@ class WPAIC_REST_Controller {
         $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'chat');
         if (is_wp_error($recaptcha_result)) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => $recaptcha_result->get_error_message(),
+                'success'    => false,
+                'error'      => $recaptcha_result->get_error_message(),
+                'error_code' => $recaptcha_result->get_error_code(),
             ], 403);
         }
 
@@ -2005,8 +2011,9 @@ class WPAIC_REST_Controller {
             $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'lead');
             if (is_wp_error($recaptcha_result)) {
                 return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => $recaptcha_result->get_error_message(),
+                    'success'    => false,
+                    'error'      => $recaptcha_result->get_error_message(),
+                    'error_code' => $recaptcha_result->get_error_code(),
                 ], 403);
             }
 

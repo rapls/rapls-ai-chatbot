@@ -564,6 +564,8 @@
 
             sendPromise
                 .catch(function(error) {
+                    // Skip if already handled (e.g. recaptcha_not_ready)
+                    if (error === 'recaptcha_not_ready') return;
                     console.error('Chat error:', error);
                     var errorMessage = error.message || '申し訳ありません。エラーが発生しました。もう一度お試しください。';
                     self.addMessage('bot', errorMessage);
@@ -587,6 +589,12 @@
             // reCAPTCHAトークンを取得してから送信
             return this.getRecaptchaToken('chat')
                 .then(function(token) {
+                    // reCAPTCHA enabled but token empty (script not loaded yet)
+                    if (!token && self.config.recaptcha_enabled) {
+                        self.addMessage('bot', 'Security verification loading. Please try again in a moment.');
+                        return Promise.reject('recaptcha_not_ready');
+                    }
+
                     var requestData = {
                         session_id: self.sessionId,
                         user_id: self.userId,

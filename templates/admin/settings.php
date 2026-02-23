@@ -936,8 +936,13 @@ if (!defined('ABSPATH')) {
                                      . '<strong>Cloudflare example:</strong> 172.64.0.0/13, 104.16.0.0/13, 173.245.48.0/20, etc.<br>'
                                      . '<strong>AWS ALB example:</strong> Your VPC CIDR (e.g. 10.0.0.0/8)<br>'
                                      . '<strong>If misconfigured:</strong> Rate limiting applies to the proxy IP instead of real visitors, or attackers can bypass rate limits by forging the X-Forwarded-For header.<br>'
-                                     . '<span style="color:#d63638;"><strong>Important:</strong> Cloudflare IP ranges change periodically. If you hardcode CIDRs, they may become stale and cause XFF to be ignored (rate limiting / IP detection will fall back to the proxy IP). Check <code>https://www.cloudflare.com/ips/</code> regularly and update your filter accordingly.</span>', 'rapls-ai-chatbot'),
-                                    ['code' => [], 'br' => [], 'strong' => []]
+                                     . '<span style="color:#d63638;"><strong>Important:</strong> Cloudflare IP ranges change periodically. If you hardcode CIDRs, they may become stale and cause XFF to be ignored (rate limiting / IP detection will fall back to the proxy IP). Check <code>https://www.cloudflare.com/ips/</code> regularly and update your filter accordingly.</span><br>'
+                                     . '<strong>Setup checklist:</strong><br>'
+                                     . '1. Confirm REMOTE_ADDR shows your proxy IP (not the visitor IP) before enabling<br>'
+                                     . '2. For Cloudflare: enable "Trust Cloudflare" above (uses CF-Connecting-IP, no CIDR needed)<br>'
+                                     . '3. For other proxies: add their IPs/CIDRs via the <code>wpaic_trusted_proxies</code> filter<br>'
+                                     . '4. Verify in Security Diagnostics that client IPs are detected correctly', 'rapls-ai-chatbot'),
+                                    ['code' => [], 'br' => [], 'strong' => [], 'span' => ['style' => []]]
                                 );
                             ?></p>
                         </td>
