@@ -426,21 +426,23 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
          * @param string $url     Target API endpoint URL.
          * @param string $model   Current model name.
          */
-        $timeout = (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model);
+        // Filter must return a deterministic value — avoid wp_rand() or
+        // request-scoped state in callbacks.
+        $requested = (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model);
         // Clamp to 10-300s, but never exceed PHP max_execution_time (0 = unlimited).
         // Note: FPM request_terminate_timeout is not readable from PHP — hosting
         // providers may impose a lower limit that cannot be auto-detected.
         $max_exec = (int) ini_get('max_execution_time');
         $upper    = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
-        $timeout  = max(10, min($upper, $timeout));
+        $timeout  = max(10, min($upper, $requested));
 
         // Log timeout decision at 1-in-20 sample rate to limit log volume.
         // Always logs when timeout was clamped (indicates misconfiguration).
         if ($this->should_log()) {
-            $was_clamped = ($timeout !== (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model));
+            $was_clamped = ($timeout !== $requested);
             if ($was_clamped || wp_rand(1, 20) === 1) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log(sprintf('WPAIC timeout: final=%ds | max_exec=%ds | upper=%ds | model=%s', $timeout, $max_exec, $upper, $this->model));
+                error_log(sprintf('WPAIC timeout: requested=%ds | final=%ds | max_exec=%ds | upper=%ds | model=%s', $requested, $timeout, $max_exec, $upper, $this->model));
             }
         }
 

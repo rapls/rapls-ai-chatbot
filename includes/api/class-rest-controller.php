@@ -573,7 +573,8 @@ class WPAIC_REST_Controller {
             if ($cached_result !== false) {
                 // Flag as cache-originated so client can distinguish dedup hits
                 // from fresh responses (helps diagnose _truncated false positives).
-                $cached_result['dedup_hit'] = true;
+                $cached_result['dedup_hit']   = true;
+                $cached_result['_server_now'] = time();
                 $dedup_response = new WP_REST_Response($cached_result, 200);
                 return $this->no_cache($dedup_response);
             }

@@ -681,10 +681,13 @@
                         // cached payload was too large to store. Show a gentle
                         // notice instead of an empty bubble to avoid "blank reply" UX.
                         // Dedup freshness check: only trust _truncated if saved
-                        // within 90s (transient TTL=60s + clock skew margin).
+                        // within 90s (transient TTL=60s + margin). Uses server
+                        // timestamps to avoid client clock skew issues.
+                        var dedupAge = (response._server_now && response.data && response.data._saved_at)
+                            ? (response._server_now - response.data._saved_at)
+                            : 999;
                         var isDedupFresh = response.dedup_hit && response.data && response.data._truncated
-                            && response.data._saved_at
-                            && (Math.floor(Date.now() / 1000) - response.data._saved_at) < 90;
+                            && dedupAge >= 0 && dedupAge < 90;
                         if (isDedupFresh) {
                             var truncMsg;
                             if (response.data._history_saved) {
@@ -696,6 +699,13 @@
                                 truncMsg += ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')';
                             }
                             self.addMessage('bot', truncMsg);
+                        } else if (response.dedup_hit && response.data && response.data._truncated) {
+                            // Stale dedup hit (>90s or missing timestamps) — show
+                            // reload notice instead of empty content bubble.
+                            var staleRef = (response.data.client_request_id)
+                                ? ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')'
+                                : '';
+                            self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page.') + staleRef);
                         } else {
                             self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment);
                             // Fetch related question suggestions (Pro)
@@ -1324,7 +1334,10 @@
             var btn = this.inputForm.querySelector('button[type="submit"]');
             if (!btn) return;
             var remaining = Math.min(Math.max(1, Math.ceil(seconds)), 120);
-            this._retryBtnOriginalText = this._retryBtnOriginalText || btn.textContent;
+            // Save current text to data attribute (survives DOM replacement by
+            // page builders) and always update on each countdown start to handle
+            // dynamic text changes from translations or theme overrides.
+            btn.setAttribute('data-wpaic-original-text', btn.textContent);
             btn.disabled = true;
             self.isLoading = true;
 
@@ -1337,11 +1350,11 @@
                     return;
                 }
                 if (remaining <= 0) {
-                    currentBtn.textContent = self._retryBtnOriginalText || '';
+                    currentBtn.textContent = currentBtn.getAttribute('data-wpaic-original-text') || '';
+                    currentBtn.removeAttribute('data-wpaic-original-text');
                     currentBtn.disabled = false;
                     self.isLoading = false;
                     self._retryTimerId = null;
-                    self._retryBtnOriginalText = null;
                     return;
                 }
                 currentBtn.textContent = remaining + 's';
