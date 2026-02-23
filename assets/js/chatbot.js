@@ -1645,19 +1645,31 @@
             var honeypot = form.querySelector('[name="wpaic_hp"]');
             var tsField = form.querySelector('[name="_ts"]');
 
+            // Ensure _ts is set even if form was rendered late (JS optimization/deferred load)
+            var tsValue = tsField ? parseInt(tsField.value, 10) : 0;
+            if (!tsValue) {
+                tsValue = Math.floor(Date.now() / 1000);
+            }
+
             var requestBody = {
                 name: name,
                 email: email,
                 message: message,
                 page_url: window.location.href,
                 wpaic_hp: honeypot ? honeypot.value : '',
-                _ts: tsField ? parseInt(tsField.value, 10) : 0
+                _ts: tsValue
             };
 
             // reCAPTCHAトークンを取得してから送信
             this.getRecaptchaToken('offline').then(function(token) {
                 if (token) {
                     requestBody.recaptcha_token = token;
+                } else if (config.recaptchaEnabled) {
+                    // reCAPTCHA is configured but token is empty (script not loaded yet)
+                    statusEl.textContent = 'Security verification loading. Please try again in a moment.';
+                    statusEl.className = 'wpaic-offline-status wpaic-offline-error';
+                    submitBtn.disabled = false;
+                    return Promise.reject('recaptcha_not_ready');
                 }
 
                 return fetch(config.restUrl + 'offline-message', {
@@ -1680,7 +1692,9 @@
                     statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                 }
             })
-            .catch(function() {
+            .catch(function(err) {
+                // Skip if already handled (e.g. recaptcha_not_ready)
+                if (err === 'recaptcha_not_ready') return;
                 statusEl.textContent = 'Failed to send. Please try again.';
                 statusEl.className = 'wpaic-offline-status wpaic-offline-error';
             })

@@ -1015,6 +1015,29 @@ if (!defined('ABSPATH')) {
                             <p class="description"><?php esc_html_e('Approximate count of requests blocked by bot detection in the past hour. High numbers may indicate your forms are being targeted.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Environment', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $env_items = [];
+                            $env_items[] = 'PHP ' . PHP_VERSION;
+                            $env_items[] = 'WP ' . get_bloginfo('version');
+                            $env_items[] = wp_using_ext_object_cache()
+                                ? __('Object cache: active', 'rapls-ai-chatbot')
+                                : __('Object cache: not available (bot counters use DB sampling)', 'rapls-ai-chatbot');
+                            if (!function_exists('dns_get_record')) {
+                                $env_items[] = '<span style="color:#d63638;">' . esc_html__('dns_get_record: not available (IPv6 SSRF validation limited)', 'rapls-ai-chatbot') . '</span>';
+                            }
+                            echo wp_kses(implode(' &middot; ', $env_items), ['span' => ['style' => []]]);
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Compatibility Note', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <p class="description"><?php esc_html_e('If users cannot submit forms (offline messages, lead capture), check that your JS optimization plugin (e.g. Autoptimize, WP Rocket, LiteSpeed Cache) does not defer or exclude the chatbot scripts. Excluding the chatbot page from optimization usually resolves this.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
                 </table>
 
                 <hr style="margin: 30px 0;">

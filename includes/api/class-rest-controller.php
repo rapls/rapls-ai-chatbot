@@ -21,6 +21,7 @@ class WPAIC_REST_Controller {
     private function no_cache(WP_REST_Response $response): WP_REST_Response {
         $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
         $response->header('Pragma', 'no-cache');
+        $response->header('Expires', '0');
         return $response;
     }
 
@@ -1193,7 +1194,7 @@ class WPAIC_REST_Controller {
         // Trust reverse proxy X-Forwarded-For only when explicitly enabled AND
         // REMOTE_ADDR is a trusted proxy (private/loopback = local proxy, or in allowlist).
         if (!empty($settings['trust_proxy_ip'])) {
-            $remote = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? ''));
+            $remote = $this->normalize_ip(sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? '')));
 
             // Only trust XFF when the direct connection comes from a known proxy.
             // Private/loopback REMOTE_ADDR means a local reverse proxy (Nginx, Docker, etc.).
@@ -1233,11 +1234,18 @@ class WPAIC_REST_Controller {
             );
 
             if ($remote_is_proxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                // Explode raw header, validate each candidate individually (no sanitize_text_field
-                // on full string to avoid corrupting IP separators)
                 $forwarded = wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']);
+
+                // Guard against oversized XFF headers (DoS via CPU-expensive parsing).
+                // Normal XFF rarely exceeds a few hundred bytes; cap at 2KB / 20 entries.
+                if (strlen($forwarded) > 2048) {
+                    $forwarded = substr($forwarded, 0, 2048);
+                }
+
                 $ips = explode(',', $forwarded);
-                foreach ($ips as $candidate) {
+                $max_entries = 20;
+                foreach ($ips as $i => $candidate) {
+                    if ($i >= $max_entries) { break; }
                     $candidate = trim($candidate);
                     if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
                         return $candidate;
@@ -1253,6 +1261,19 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Normalize an IP address: convert IPv4-mapped IPv6 (::ffff:x.x.x.x) to plain IPv4.
+     * Some environments (e.g. dual-stack servers) report REMOTE_ADDR in mapped form,
+     * which would fail IPv4 CIDR matching without normalization.
+     */
+    private function normalize_ip(string $ip): string {
+        // Match ::ffff:x.x.x.x (IPv4-mapped IPv6)
+        if (preg_match('/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i', $ip, $m)) {
+            return $m[1];
+        }
+        return $ip;
+    }
+
+    /**
      * Check if an IP address falls within any of the given CIDR ranges.
      *
      * @param string   $ip    IP address to check.
@@ -1263,6 +1284,8 @@ class WPAIC_REST_Controller {
         if (empty($cidrs) || !filter_var($ip, FILTER_VALIDATE_IP)) {
             return false;
         }
+        // Normalize IPv4-mapped IPv6 (::ffff:1.2.3.4) to plain IPv4 for CIDR matching
+        $ip = $this->normalize_ip($ip);
         $ip_bin = inet_pton($ip);
         if ($ip_bin === false) {
             return false;
@@ -1689,12 +1712,16 @@ class WPAIC_REST_Controller {
      * Return contract: always returns true (pass) or WP_REST_Response (reject).
      * Callers must use: if ($guard !== true) { return $guard; }
      *
-     * @param WP_REST_Request $request         The REST request.
-     * @param string          $rate_key        Short identifier for rate limiting transient.
-     * @param int             $rate_limit      Max requests per window.
-     * @param int             $rate_window     Window in seconds.
-     * @param bool            $require_captcha Whether reCAPTCHA must be fully configured.
-     * @param string          $captcha_action  reCAPTCHA action name (e.g. 'offline', 'lead').
+     * @param WP_REST_Request $request          The REST request.
+     * @param string          $rate_key         Short identifier for rate limiting transient.
+     * @param int             $rate_limit       Max requests per window.
+     * @param int             $rate_window      Window in seconds.
+     * @param bool            $require_captcha  Whether reCAPTCHA must be fully configured.
+     * @param string          $captcha_action   reCAPTCHA action name (e.g. 'offline', 'lead').
+     * @param bool            $allow_no_headers If true, allow requests with no Origin/Referer.
+     *                                          Use for endpoints where other auth (session, nonce)
+     *                                          compensates. Currently no caller sets this to true;
+     *                                          offline-message relies on require_captcha instead.
      * @return true|WP_REST_Response True if all checks pass, or error response.
      */
     private function guard_public_post(
@@ -1912,9 +1939,6 @@ class WPAIC_REST_Controller {
                     'error'   => __('Lead capture feature requires Pro license.', 'rapls-ai-chatbot'),
                 ], 403);
             }
-
-            // Session ownership already verified by check_session_permission()
-            $session_id = sanitize_text_field($request->get_param('session_id'));
 
             // Rate limit: max 10 lead submissions per IP per hour
             $ip = $this->get_client_ip();
