@@ -37,8 +37,16 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     private array $legacy_reasoning_models = ['o1-mini', 'o1-preview'];
 
     /**
-     * Models using max_completion_tokens instead of max_tokens
-     * All models from GPT-4.1 onwards and reasoning models use this parameter
+     * Models that only work with Chat Completions API (legacy, no Responses API support).
+     * Everything NOT in this list tries Responses API first.
+     * This is an "opt-out" list so new models automatically get Responses API
+     * without requiring prefix updates.
+     */
+    private array $legacy_chat_only_models = ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+
+    /**
+     * Models using max_completion_tokens instead of max_tokens.
+     * All models from GPT-4.1 onwards and reasoning models use this parameter.
      */
     private array $new_api_models = ['gpt-5', 'gpt-4.1', 'o1', 'o3', 'o4'];
 
@@ -95,6 +103,20 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     }
 
     /**
+     * Check if model only supports Chat Completions API (legacy).
+     * Models NOT in this list use Responses API as first choice.
+     */
+    private function is_legacy_chat_only(): bool {
+        foreach ($this->legacy_chat_only_models as $prefix) {
+            if (strpos($this->model, $prefix) === 0) {
+                return true;
+            }
+        }
+        // GPT-4o is special: not legacy, supports both APIs
+        return false;
+    }
+
+    /**
      * Send message (with automatic Responses API fallback)
      */
     public function send_message(array $messages, array $options = []): array {
@@ -102,12 +124,42 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             throw new Exception(esc_html__('OpenAI API key is not configured.', 'rapls-ai-chatbot'));
         }
 
-        // Try Chat Completions API first
+        // Routing strategy:
+        // - Legacy models (GPT-4, GPT-3.5-turbo): Chat Completions first, Responses API fallback
+        // - All others (GPT-4o, GPT-4.1, GPT-5, o-series): Responses API first, Chat Completions fallback
+        // This "opt-out" approach means new models automatically use Responses API
+        // without requiring code changes (per OpenAI's migration guidance).
+        if ($this->is_legacy_chat_only()) {
+            return $this->send_with_fallback(
+                [$this, 'send_via_chat_completions'],
+                [$this, 'send_via_responses_api'],
+                $messages,
+                $options
+            );
+        }
+
+        return $this->send_with_fallback(
+            [$this, 'send_via_responses_api'],
+            [$this, 'send_via_chat_completions'],
+            $messages,
+            $options
+        );
+    }
+
+    /**
+     * Try primary API, fall back to secondary on endpoint mismatch errors.
+     *
+     * @param callable $primary   Primary send method.
+     * @param callable $secondary Fallback send method.
+     * @param array    $messages  Chat messages.
+     * @param array    $options   Provider options.
+     * @return array Parsed response.
+     * @throws Exception On non-recoverable errors.
+     */
+    private function send_with_fallback(callable $primary, callable $secondary, array $messages, array $options): array {
         try {
-            return $this->send_via_chat_completions($messages, $options);
+            return call_user_func($primary, $messages, $options);
         } catch (Exception $e) {
-            // Only retry with Responses API on 400-level errors that suggest
-            // the model doesn't support chat/completions endpoint
             $code = $e->getCode();
             $msg = $e->getMessage();
             $is_endpoint_mismatch = ($code === 400 || $code === 404)
@@ -117,16 +169,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                     || stripos($msg, 'invalid') !== false);
 
             if (!$is_endpoint_mismatch) {
-                throw $e; // Re-throw non-endpoint errors (auth, quota, server, etc.)
+                throw $e;
             }
         }
 
-        // Fallback: try Responses API
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC OpenAI: chat/completions failed for model=%s, retrying with Responses API', $this->model));
+            error_log(sprintf('WPAIC OpenAI: primary API failed for model=%s, retrying with fallback', $this->model));
         }
-        return $this->send_via_responses_api($messages, $options);
+        return call_user_func($secondary, $messages, $options);
     }
 
     /**
@@ -153,9 +204,12 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         if ($uses_new_api) {
             if ($this->is_gpt5_model()) {
                 // GPT-5 includes internal reasoning tokens in max_completion_tokens,
-                // so multiply the configured output limit by 4 (reasoning overhead),
-                // capped at 16384 to prevent cost spikes
-                $body['max_completion_tokens'] = min($configured_max * 4, 16384);
+                // so multiply the configured output limit to cover reasoning overhead.
+                // Default ×4 (capped at 16384) keeps responses complete without truncation.
+                // Override via wpaic_gpt5_token_multiplier filter (1-8) to control cost.
+                $multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
+                $multiplier = max(1, min(8, $multiplier));
+                $body['max_completion_tokens'] = min($configured_max * $multiplier, 16384);
             } else {
                 $body['max_completion_tokens'] = $configured_max;
             }
@@ -223,7 +277,9 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         $configured_max = $options['max_tokens'] ?? 4000;
         if ($this->is_gpt5_model()) {
-            $body['max_output_tokens'] = min($configured_max * 4, 16384);
+            $multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
+            $multiplier = max(1, min(8, $multiplier));
+            $body['max_output_tokens'] = min($configured_max * $multiplier, 16384);
         } else {
             $body['max_output_tokens'] = $configured_max;
         }
@@ -468,12 +524,13 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             'gpt-4.1'       => 'GPT-4.1 (' . __('Long context (1M tokens)', 'rapls-ai-chatbot') . ')',
             'gpt-4.1-mini'  => 'GPT-4.1 mini (' . __('Fast, long context', 'rapls-ai-chatbot') . ')',
             'gpt-4.1-nano'  => 'GPT-4.1 nano (' . __('Fastest, long context', 'rapls-ai-chatbot') . ')',
-            'gpt-4'         => 'GPT-4 (' . __('Legacy', 'rapls-ai-chatbot') . ')',
-            'gpt-4-turbo'   => 'GPT-4 Turbo (' . __('Legacy, vision', 'rapls-ai-chatbot') . ')',
-            'gpt-3.5-turbo' => 'GPT-3.5 Turbo (' . __('Legacy, cheapest', 'rapls-ai-chatbot') . ')',
             // Non-versioned GPT (gpt-4o — "4o" not purely numeric)
             'gpt-4o'        => 'GPT-4o (' . __('★ Recommended — multimodal', 'rapls-ai-chatbot') . ')',
             'gpt-4o-mini'   => 'GPT-4o mini (' . __('★ Recommended — affordable', 'rapls-ai-chatbot') . ')',
+            // Legacy models
+            'gpt-4'         => 'GPT-4 (' . __('Legacy', 'rapls-ai-chatbot') . ')',
+            'gpt-4-turbo'   => 'GPT-4 Turbo (' . __('Legacy, vision', 'rapls-ai-chatbot') . ')',
+            'gpt-3.5-turbo' => 'GPT-3.5 Turbo (' . __('Legacy, cheapest', 'rapls-ai-chatbot') . ')',
             // Reasoning models (non-GPT prefix)
             'o1'            => 'o1 (' . __('Reasoning model', 'rapls-ai-chatbot') . ')',
             'o1-pro'        => 'o1 Pro (' . __('Reasoning, highest accuracy', 'rapls-ai-chatbot') . ')',
