@@ -427,7 +427,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
          * @param string $model   Current model name.
          */
         $timeout = (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model);
-        $timeout = max(10, min(300, $timeout));
+        // Clamp to 10-300s, but never exceed PHP max_execution_time (0 = unlimited).
+        $max_exec = (int) ini_get('max_execution_time');
+        $upper    = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
+        $timeout  = max(10, min($upper, $timeout));
 
         $response = wp_remote_post($url, [
             'headers' => $headers,
@@ -524,18 +527,16 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             );
         }
 
-        // Rate limit errors — propagate Retry-After hint when available
+        // Rate limit errors — propagate Retry-After as structured property
         if ($response_code === 429) {
-            $retry_after = '';
+            $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
             if ($raw_response && !is_wp_error($raw_response)) {
                 $retry_after = wp_remote_retrieve_header($raw_response, 'retry-after');
+                if (is_numeric($retry_after) && (int) $retry_after > 0) {
+                    $ex->set_retry_after((int) $retry_after);
+                }
             }
-            $msg_429 = $error_message;
-            if (!empty($retry_after)) {
-                /* translators: 1: original error message, 2: seconds until retry */
-                $msg_429 = sprintf(__('%1$s (retry after %2$s seconds)', 'rapls-ai-chatbot'), $error_message, $retry_after);
-            }
-            throw new WPAIC_Quota_Exceeded_Exception(esc_html($msg_429));
+            throw $ex;
         }
 
         // Invalid parameter / model mismatch errors — use code for fallback detection

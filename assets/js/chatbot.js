@@ -672,11 +672,18 @@
                 })
                 .then(function(response) {
                     if (response.success) {
-                        self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment);
-                        // Fetch related question suggestions (Pro)
-                        self.fetchSuggestions();
-                        // Save context for memory (Pro) - async, don't wait
-                        self.saveContext();
+                        // Dedup done-marker: server processed the request but the
+                        // cached payload was too large to store. Show a gentle
+                        // notice instead of an empty bubble to avoid "blank reply" UX.
+                        if (response.data && response.data._truncated) {
+                            self.addMessage('bot', self.config.strings.dedup_truncated || 'Your message was received and processed. Please reload the page to see the response.');
+                        } else {
+                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment);
+                            // Fetch related question suggestions (Pro)
+                            self.fetchSuggestions();
+                            // Save context for memory (Pro) - async, don't wait
+                            self.saveContext();
+                        }
                     } else {
                         self.addMessage('bot', response.error || 'エラーが発生しました。');
                     }

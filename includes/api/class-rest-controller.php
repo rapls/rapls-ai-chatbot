@@ -1009,9 +1009,10 @@ class WPAIC_REST_Controller {
             ];
 
             // Cache result for dedup (60s window for 409 retries / network glitches).
-            // Store minimal data — sources trimmed to top 5. If still > 32KB, fall
-            // back to a "done marker" (no content) so the dedup key exists and
-            // prevents a second AI call, even though the client gets an empty body.
+            // Store minimal data — sources trimmed to top 5 for cache only (the
+            // full source list is returned in $result_body above). If still > 32KB,
+            // fall back to a "done marker" so the dedup key exists and prevents a
+            // second AI call.
             if (!empty($dedup_key)) {
                 $dedup_sources = $response_data['sources'] ?? [];
                 if (count($dedup_sources) > 5) {
@@ -1030,22 +1031,29 @@ class WPAIC_REST_Controller {
                 if ($encoded === false || strlen($encoded) > 32768) {
                     // Payload too large for DB-backed transient — store a minimal
                     // "done marker" so the dedup key exists (prevents double AI call)
-                    // but omit the heavy content/sources.
+                    // but omit the heavy content/sources. client_request_id included
+                    // as fallback lookup key when message_id is 0 (save_history OFF).
                     $dedup_data = [
                         'success' => true,
                         'data'    => [
-                            'message_id'  => $response_data['message_id'] ?? 0,
-                            'content'     => '',
-                            'tokens_used' => $response_data['tokens_used'] ?? 0,
-                            'sources'     => [],
-                            '_truncated'  => true,
+                            'message_id'        => $response_data['message_id'] ?? 0,
+                            'content'           => '',
+                            'tokens_used'       => $response_data['tokens_used'] ?? 0,
+                            'sources'           => [],
+                            '_truncated'        => true,
+                            'client_request_id' => $client_request_id,
                         ],
                     ];
                 }
                 $stored = set_transient($dedup_key, $dedup_data, 60);
                 if (!$stored && $this->should_log_dedup()) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC dedup: set_transient failed for key ' . $dedup_key);
+                    error_log(sprintf(
+                        'WPAIC dedup: set_transient failed | key=%s | size=%d | object_cache=%s',
+                        $dedup_key,
+                        strlen(wp_json_encode($dedup_data) ?: ''),
+                        wp_using_ext_object_cache() ? 'yes' : 'no'
+                    ));
                 }
             }
 
@@ -1061,10 +1069,15 @@ class WPAIC_REST_Controller {
         } catch (WPAIC_Quota_Exceeded_Exception $e) {
             // Return custom quota error message from settings
             $quota_message = $settings['quota_error_message'] ?? 'Currently recharging. Please try again later.';
-            return new WP_REST_Response([
+            $quota_body = [
                 'success' => false,
                 'error'   => $quota_message,
-            ], 503);
+            ];
+            $retry_after = $e->get_retry_after();
+            if ($retry_after > 0) {
+                $quota_body['retry_after'] = $retry_after;
+            }
+            return new WP_REST_Response($quota_body, 503);
 
         } catch (Exception $e) {
             $error_message = $e->getMessage();
