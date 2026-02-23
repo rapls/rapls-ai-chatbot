@@ -1047,6 +1047,7 @@ class WPAIC_REST_Controller {
                             '_truncated'        => true,
                             'client_request_id' => $client_request_id,
                             '_history_saved'    => $save_history,
+                            '_saved_at'         => time(),
                         ],
                     ];
                     $dedup_size = 256; // done marker is always small

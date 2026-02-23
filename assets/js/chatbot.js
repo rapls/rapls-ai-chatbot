@@ -680,12 +680,17 @@
                         // Dedup done-marker: server processed the request but the
                         // cached payload was too large to store. Show a gentle
                         // notice instead of an empty bubble to avoid "blank reply" UX.
-                        if (response.dedup_hit && response.data && response.data._truncated) {
+                        // Dedup freshness check: only trust _truncated if saved
+                        // within 90s (transient TTL=60s + clock skew margin).
+                        var isDedupFresh = response.dedup_hit && response.data && response.data._truncated
+                            && response.data._saved_at
+                            && (Math.floor(Date.now() / 1000) - response.data._saved_at) < 90;
+                        if (isDedupFresh) {
                             var truncMsg;
                             if (response.data._history_saved) {
                                 truncMsg = self.config.strings.dedup_truncated || 'Your message was received and processed. Please reload the page to see the response.';
                             } else {
-                                truncMsg = self.config.strings.dedup_truncated_no_history || 'Your message was processed but the response could not be cached. Please try sending a new message.';
+                                truncMsg = self.config.strings.dedup_truncated_no_history || 'Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.';
                             }
                             if (response.data.client_request_id) {
                                 truncMsg += ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')';
@@ -1307,26 +1312,41 @@
         /**
          * Disable send button for N seconds with countdown (rate limit cooldown).
          * Called when server returns retry_after on 429/503.
+         * Stores timer ID to prevent concurrent countdowns from stacking.
          */
         startRetryCountdown: function(seconds) {
             var self = this;
+            // Clear any existing countdown to prevent timer stacking
+            if (this._retryTimerId) {
+                clearTimeout(this._retryTimerId);
+                this._retryTimerId = null;
+            }
             var btn = this.inputForm.querySelector('button[type="submit"]');
             if (!btn) return;
             var remaining = Math.min(Math.max(1, Math.ceil(seconds)), 120);
-            var originalText = btn.textContent;
+            this._retryBtnOriginalText = this._retryBtnOriginalText || btn.textContent;
             btn.disabled = true;
             self.isLoading = true;
 
             var tick = function() {
-                if (remaining <= 0) {
-                    btn.textContent = originalText;
-                    btn.disabled = false;
+                // Re-query button in case DOM was replaced (page builders / SPA)
+                var currentBtn = self.inputForm.querySelector('button[type="submit"]');
+                if (!currentBtn) {
+                    self._retryTimerId = null;
                     self.isLoading = false;
                     return;
                 }
-                btn.textContent = remaining + 's';
+                if (remaining <= 0) {
+                    currentBtn.textContent = self._retryBtnOriginalText || '';
+                    currentBtn.disabled = false;
+                    self.isLoading = false;
+                    self._retryTimerId = null;
+                    self._retryBtnOriginalText = null;
+                    return;
+                }
+                currentBtn.textContent = remaining + 's';
                 remaining--;
-                setTimeout(tick, 1000);
+                self._retryTimerId = setTimeout(tick, 1000);
             };
             tick();
         },

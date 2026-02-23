@@ -434,9 +434,14 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $upper    = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
         $timeout  = max(10, min($upper, $timeout));
 
+        // Log timeout decision at 1-in-20 sample rate to limit log volume.
+        // Always logs when timeout was clamped (indicates misconfiguration).
         if ($this->should_log()) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC timeout: final=%ds | max_exec=%ds | upper=%ds | model=%s', $timeout, $max_exec, $upper, $this->model));
+            $was_clamped = ($timeout !== (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model));
+            if ($was_clamped || wp_rand(1, 20) === 1) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log(sprintf('WPAIC timeout: final=%ds | max_exec=%ds | upper=%ds | model=%s', $timeout, $max_exec, $upper, $this->model));
+            }
         }
 
         $response = wp_remote_post($url, [
