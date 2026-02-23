@@ -80,6 +80,7 @@ class WPAIC_Main {
 
         // Exceptions
         require_once WPAIC_PLUGIN_DIR . 'includes/exceptions/class-quota-exceeded-exception.php';
+        require_once WPAIC_PLUGIN_DIR . 'includes/exceptions/class-communication-exception.php';
 
         // AI Providers
         require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/interface-ai-provider.php';

@@ -521,11 +521,12 @@ class WPAIC_REST_Controller {
 
         // Route args apply sanitize_callback automatically;
         // re-sanitize here for defense-in-depth.
-        $session_id      = sanitize_text_field($request->get_param('session_id'));
-        $message         = sanitize_textarea_field($request->get_param('message'));
-        $page_url        = esc_url_raw($request->get_param('page_url') ?? '');
-        $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
-        $image           = $request->get_param('image');
+        $session_id        = sanitize_text_field($request->get_param('session_id'));
+        $message           = sanitize_textarea_field($request->get_param('message'));
+        $page_url          = esc_url_raw($request->get_param('page_url') ?? '');
+        $recaptcha_token   = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
+        $client_request_id = sanitize_text_field($request->get_param('client_request_id') ?? '');
+        $image             = $request->get_param('image');
 
         // Reject image if multimodal is not enabled (Pro feature)
         if (!empty($image)) {
@@ -547,6 +548,18 @@ class WPAIC_REST_Controller {
                 'success' => false,
                 'error'   => __('Message is empty or too long.', 'rapls-ai-chatbot'),
             ], 400);
+        }
+
+        // Dedup: if client_request_id was already processed, return cached result.
+        // Prevents double sends from 409 retries or network glitches.
+        $dedup_key = '';
+        if (!empty($client_request_id)) {
+            $dedup_key = 'wpaic_dedup_' . substr(md5($session_id . $client_request_id), 0, 16);
+            $cached_result = get_transient($dedup_key);
+            if ($cached_result !== false) {
+                $dedup_response = new WP_REST_Response($cached_result, 200);
+                return $this->no_cache($dedup_response);
+            }
         }
 
         // Verify reCAPTCHA
@@ -976,15 +989,23 @@ class WPAIC_REST_Controller {
                 $response_data['sentiment'] = $sentiment;
             }
 
-            $rest_response = new WP_REST_Response([
+            $result_body = [
                 'success' => true,
                 'data'    => $response_data,
-            ], 200);
+            ];
+
+            // Cache result for dedup (60s window for 409 retries / network glitches)
+            if (!empty($dedup_key)) {
+                set_transient($dedup_key, $result_body, 60);
+            }
+
+            $rest_response = new WP_REST_Response($result_body, 200);
             // Expose request ID in response header for debugging/support correlation
             if (!empty($request_id)) {
                 $rest_response->header('X-WPAIC-Request-Id', $request_id);
             }
             // Prevent CDN/cache plugins from caching per-user AI responses
+            $this->append_header_csv($rest_response, 'Vary', 'Cookie');
             return $this->no_cache($rest_response);
 
         } catch (WPAIC_Quota_Exceeded_Exception $e) {

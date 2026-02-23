@@ -659,7 +659,8 @@
                         user_id: self.userId,
                         message: message,
                         page_url: window.location.href,
-                        recaptcha_token: token
+                        recaptcha_token: token,
+                        client_request_id: self.generateRequestId()
                     };
 
                     // 画像がある場合は追加
@@ -1813,6 +1814,13 @@
             .finally(function() {
                 submitBtn.disabled = false;
             });
+        },
+
+        /**
+         * Generate a unique request ID for deduplication.
+         */
+        generateRequestId: function() {
+            return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
         },
 
         /**

@@ -196,11 +196,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $options['_request_id'] = wp_generate_uuid4();
         }
         $header_name = apply_filters('wpaic_request_id_header', 'X-WPAIC-Request-Id');
-        // Validate: only allow safe header names (X-* custom or Idempotency-Key)
+        // Validate: only allow known safe header names by default.
+        // Custom X-* names require admin + WP_DEBUG (developer mode).
         $allowed_headers = ['X-WPAIC-Request-Id', 'Idempotency-Key'];
-        if (!in_array($header_name, $allowed_headers, true)
-            && !preg_match('/^X-[A-Za-z0-9-]+$/', $header_name)) {
-            $header_name = 'X-WPAIC-Request-Id'; // fall back to default
+        if (!in_array($header_name, $allowed_headers, true)) {
+            $is_dev_mode = (defined('WP_DEBUG') && WP_DEBUG)
+                && function_exists('current_user_can') && current_user_can('manage_options');
+            if (!$is_dev_mode || !preg_match('/^X-[A-Za-z0-9-]+$/', $header_name)) {
+                $header_name = 'X-WPAIC-Request-Id';
+            }
         }
         $options['_request_id_header'] = $header_name;
 
@@ -262,14 +266,13 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             }
 
             // ── Transient server/network errors ──
-            // WP_Error from wp_remote_post produces code=0 exceptions (timeout,
-            // DNS failure, connection reset, etc.). Rather than matching message
-            // text (fragile across translations/versions), treat any code=0 as a
-            // communication failure — HTTP error responses (401/403/etc.) always
-            // carry their status code and are already handled above.
+            // WPAIC_Communication_Exception = WP_Error from wp_remote_post
+            // (timeout, DNS failure, connection reset). Using instanceof avoids
+            // catching generic Exception(code=0) from JSON decode failures,
+            // runtime errors, etc. Server errors (5xx) carry their HTTP code.
             // NOTE: Timeout fallback risks double billing; the request ID enables
             // post-hoc audit.
-            $is_transient = ($code === 0)
+            $is_transient = ($e instanceof WPAIC_Communication_Exception)
                 || ($code >= 500 && $code < 600);
 
             if (!$is_endpoint_mismatch && !$is_transient) {
@@ -348,7 +351,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
@@ -422,7 +425,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
