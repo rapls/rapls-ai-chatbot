@@ -82,6 +82,18 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Whether to log dedup-related diagnostics.
+     * Gated on WP_DEBUG + WP_DEBUG_LOG (same policy as provider should_log).
+     */
+    private function should_log_dedup(): bool {
+        if (apply_filters('wpaic_debug_log_enabled', false)) {
+            return true;
+        }
+        return defined('WP_DEBUG') && WP_DEBUG
+            && defined('WP_DEBUG_LOG') && WP_DEBUG_LOG;
+    }
+
+    /**
      * Ensure no-cache headers on public GET routes regardless of response status.
      * Hooked to rest_post_dispatch so ALL code paths (success, error, exception) are covered.
      *
@@ -556,7 +568,7 @@ class WPAIC_REST_Controller {
         // cross-session cache poisoning (session ownership already verified above).
         $dedup_key = '';
         if (!empty($client_request_id)) {
-            $dedup_key = 'wpaic_dedup_' . substr(hash('sha256', $session_id . $client_request_id . wp_salt()), 0, 16);
+            $dedup_key = 'wpaic_dedup_' . substr(hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id()), 0, 16);
             $cached_result = get_transient($dedup_key);
             if ($cached_result !== false) {
                 $dedup_response = new WP_REST_Response($cached_result, 200);
@@ -997,21 +1009,43 @@ class WPAIC_REST_Controller {
             ];
 
             // Cache result for dedup (60s window for 409 retries / network glitches).
-            // Store minimal data only — skip if payload exceeds 32KB to protect DB
-            // on sites without object cache (transients go to wp_options).
+            // Store minimal data — sources trimmed to top 5. If still > 32KB, fall
+            // back to a "done marker" (no content) so the dedup key exists and
+            // prevents a second AI call, even though the client gets an empty body.
             if (!empty($dedup_key)) {
+                $dedup_sources = $response_data['sources'] ?? [];
+                if (count($dedup_sources) > 5) {
+                    $dedup_sources = array_slice($dedup_sources, 0, 5);
+                }
                 $dedup_data = [
                     'success' => true,
                     'data'    => [
                         'message_id'  => $response_data['message_id'] ?? 0,
                         'content'     => $response_data['content'] ?? '',
                         'tokens_used' => $response_data['tokens_used'] ?? 0,
-                        'sources'     => $response_data['sources'] ?? [],
+                        'sources'     => $dedup_sources,
                     ],
                 ];
                 $encoded = wp_json_encode($dedup_data);
-                if ($encoded !== false && strlen($encoded) <= 32768) {
-                    set_transient($dedup_key, $dedup_data, 60);
+                if ($encoded === false || strlen($encoded) > 32768) {
+                    // Payload too large for DB-backed transient — store a minimal
+                    // "done marker" so the dedup key exists (prevents double AI call)
+                    // but omit the heavy content/sources.
+                    $dedup_data = [
+                        'success' => true,
+                        'data'    => [
+                            'message_id'  => $response_data['message_id'] ?? 0,
+                            'content'     => '',
+                            'tokens_used' => $response_data['tokens_used'] ?? 0,
+                            'sources'     => [],
+                            '_truncated'  => true,
+                        ],
+                    ];
+                }
+                $stored = set_transient($dedup_key, $dedup_data, 60);
+                if (!$stored && $this->should_log_dedup()) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log('WPAIC dedup: set_transient failed for key ' . $dedup_key);
                 }
             }
 

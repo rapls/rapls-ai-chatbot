@@ -417,10 +417,22 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * @throws Exception|WPAIC_Quota_Exceeded_Exception On API errors.
      */
     private function send_http_request(string $url, array $headers, array $body): array {
+        /**
+         * Filter the timeout (seconds) for AI provider API requests.
+         * Default 120s accommodates long-running reasoning models (o1, o3).
+         * Reduce for faster failure detection in environments with reliable networking.
+         *
+         * @param int    $timeout Timeout in seconds (clamped to 10-300).
+         * @param string $url     Target API endpoint URL.
+         * @param string $model   Current model name.
+         */
+        $timeout = (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model);
+        $timeout = max(10, min(300, $timeout));
+
         $response = wp_remote_post($url, [
             'headers' => $headers,
             'body'    => wp_json_encode($body),
-            'timeout' => 120,
+            'timeout' => $timeout,
         ]);
 
         if (is_wp_error($response)) {
@@ -434,7 +446,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $data = json_decode($response_body, true);
 
         if ($response_code !== 200) {
-            $this->handle_api_error($response_code, $data);
+            $this->handle_api_error($response_code, $data, $response);
         }
 
         return $this->parse_response($data);
@@ -443,9 +455,12 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     /**
      * Handle API error responses (shared between both endpoints)
      *
+     * @param int              $response_code HTTP status code.
+     * @param array|null       $data          Decoded response body.
+     * @param array|WP_Error   $raw_response  Raw wp_remote_post response (for headers).
      * @throws Exception|WPAIC_Quota_Exceeded_Exception
      */
-    private function handle_api_error(int $response_code, ?array $data): void {
+    private function handle_api_error(int $response_code, ?array $data, $raw_response = null): void {
         $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
         $error_type = $data['error']['type'] ?? '';
         $error_code = $data['error']['code'] ?? '';
@@ -509,9 +524,18 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             );
         }
 
-        // Rate limit errors
+        // Rate limit errors — propagate Retry-After hint when available
         if ($response_code === 429) {
-            throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+            $retry_after = '';
+            if ($raw_response && !is_wp_error($raw_response)) {
+                $retry_after = wp_remote_retrieve_header($raw_response, 'retry-after');
+            }
+            $msg_429 = $error_message;
+            if (!empty($retry_after)) {
+                /* translators: 1: original error message, 2: seconds until retry */
+                $msg_429 = sprintf(__('%1$s (retry after %2$s seconds)', 'rapls-ai-chatbot'), $error_message, $retry_after);
+            }
+            throw new WPAIC_Quota_Exceeded_Exception(esc_html($msg_429));
         }
 
         // Invalid parameter / model mismatch errors — use code for fallback detection
