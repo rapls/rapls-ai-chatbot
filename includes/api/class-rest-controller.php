@@ -26,6 +26,28 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Append a value to an existing Vary header without overwriting.
+     * Merges with any existing Vary directives (e.g. Origin, Accept-Encoding)
+     * set by WordPress core, other plugins, or CDN layers.
+     *
+     * @param WP_REST_Response $response REST response.
+     * @param string           $value    Vary directive to add (e.g. 'Cookie').
+     */
+    private function append_vary(WP_REST_Response $response, string $value): void {
+        $headers = $response->get_headers();
+        $existing = $headers['Vary'] ?? '';
+        // Check if the value is already present (case-insensitive).
+        $parts = array_filter(array_map('trim', explode(',', $existing)));
+        foreach ($parts as $part) {
+            if (strcasecmp($part, $value) === 0) {
+                return; // Already present.
+            }
+        }
+        $parts[] = $value;
+        $response->header('Vary', implode(', ', $parts));
+    }
+
+    /**
      * Build a "silent success" response for bot-detected requests.
      * Returns HTTP 200 with {'success': true} so bots learn nothing,
      * but adds an X-WPAIC-Dropped header (reason) when WP_DEBUG is on
@@ -43,8 +65,8 @@ class WPAIC_REST_Controller {
         // Prevent intermediate caches from storing and re-serving this response.
         // Critical when X-WPAIC-Dropped is present: without no-store, an admin's
         // response could be cached and served to general users, leaking the header.
-        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
-        $response->header('Vary', 'Cookie');
+        $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+        $this->append_vary($response, 'Cookie');
         if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can('manage_options')) {
             $response->header('X-WPAIC-Dropped', $reason);
         }
@@ -59,23 +81,38 @@ class WPAIC_REST_Controller {
      * This avoids the fragility of a hardcoded route list — new public GET routes
      * automatically inherit no-cache behavior without manual updates.
      *
-     * @param WP_REST_Response $response REST response.
-     * @param WP_REST_Server   $server   REST server.
-     * @param WP_REST_Request  $request  REST request.
-     * @return WP_REST_Response
+     * IMPORTANT: rest_post_dispatch can pass WP_REST_Response, WP_HTTP_Response,
+     * WP_Error, or null — never use strict type hints on the first parameter.
+     *
+     * @param mixed           $result  REST response (WP_REST_Response|WP_HTTP_Response|WP_Error|null).
+     * @param WP_REST_Server  $server  REST server.
+     * @param WP_REST_Request $request REST request.
+     * @return mixed
      */
-    public function ensure_no_cache_public_gets(WP_REST_Response $response, WP_REST_Server $server, WP_REST_Request $request): WP_REST_Response {
+    public function ensure_no_cache_public_gets($result, WP_REST_Server $server, WP_REST_Request $request) {
+        if ($request->get_method() !== 'GET') {
+            return $result;
+        }
+
         $route = $request->get_route();
         $prefix = '/' . $this->namespace . '/';
-
-        // Apply no-cache to all GET requests under our namespace.
-        // Public GET endpoints (/session, /lead-config, /message-limit) return per-user
-        // dynamic data that must never be cached. Authenticated GETs (history, summary)
-        // also benefit from no-cache to prevent stale data behind proxies.
-        if (strpos($route, $prefix) === 0 && $request->get_method() === 'GET') {
-            return $this->no_cache($response);
+        if (strpos($route, $prefix) !== 0) {
+            return $result;
         }
-        return $response;
+
+        // WP_Error or null — nothing to add headers to.
+        if ($result === null || is_wp_error($result)) {
+            return $result;
+        }
+
+        // WP_REST_Response and WP_HTTP_Response both have header().
+        if (is_object($result) && method_exists($result, 'header')) {
+            $result->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+            $result->header('Pragma', 'no-cache');
+            $result->header('Expires', '0');
+        }
+
+        return $result;
     }
 
     /**
@@ -1663,12 +1700,22 @@ class WPAIC_REST_Controller {
             // Exception: future_ts is always counted exactly (rare, needs accurate diagnostics)
             // but rate-capped at 1 write/minute per IP to prevent abuse via crafted _ts values.
             if ($is_future_ts) {
-                $ip_hash = substr(md5($this->get_client_ip()), 0, 12);
-                $cap_key = 'wpaic_fts_cap_' . $ip_hash;
-                if (get_transient($cap_key)) {
-                    return; // Already recorded for this IP within the window
+                $ip = $this->get_client_ip();
+                if ($ip !== '') {
+                    // Rate-cap: 1 write/minute per IP to prevent abuse via crafted _ts values.
+                    $ip_hash = substr(md5($ip), 0, 12);
+                    $cap_key = 'wpaic_fts_cap_' . $ip_hash;
+                    if (get_transient($cap_key)) {
+                        return; // Already recorded for this IP within the window
+                    }
+                    set_transient($cap_key, 1, MINUTE_IN_SECONDS);
+                } else {
+                    // IP unavailable — fall back to 1-in-10 sampling to limit DB writes
+                    // while still recording some events for diagnostics.
+                    if (wp_rand(1, 10) !== 1) {
+                        return;
+                    }
                 }
-                set_transient($cap_key, 1, MINUTE_IN_SECONDS);
             } elseif (wp_rand(1, 10) !== 1) {
                 return;
             }

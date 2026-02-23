@@ -1646,11 +1646,20 @@
         /**
          * Submit offline message form
          */
+        /** Timer ID for _dropped retry hint — cleared on re-submit to prevent stale overwrite. */
+        _droppedTimer: null,
+
         submitOfflineForm: function(form) {
             var self = this;
             var config = window.wpAiChatbotConfig || {};
             var statusEl = form.querySelector('.wpaic-offline-status');
             var submitBtn = form.querySelector('.wpaic-offline-submit');
+
+            // Cancel any pending _dropped retry timer from a previous submission.
+            if (self._droppedTimer) {
+                clearTimeout(self._droppedTimer);
+                self._droppedTimer = null;
+            }
 
             var name = form.querySelector('[name="name"]').value;
             var email = form.querySelector('[name="email"]').value;
@@ -1710,7 +1719,8 @@
                     // No specific reason is revealed to avoid giving attackers clues.
                     statusEl.textContent = 'Processing...';
                     statusEl.className = 'wpaic-offline-status';
-                    setTimeout(function() {
+                    self._droppedTimer = setTimeout(function() {
+                        self._droppedTimer = null;
                         statusEl.textContent = 'Could not complete the request. Please reload the page and try again.';
                         statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                     }, 3000);
