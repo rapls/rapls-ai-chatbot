@@ -9,6 +9,7 @@
 .claude
 .serena
 CLAUDE.md
+**/CLAUDE.md
 
 # Documentation and server-side files (contains credentials)
 docs/
