@@ -35,15 +35,32 @@
         return wpaicHasConsent('functional') || wpaicHasConsent('preferences');
     }
 
-    // localStorage wrappers — gate reads/writes on consent, allow removal always
-    function wpaicLsGet(k) { return wpaicStorageAllowed() ? localStorage.getItem(k) : null; }
-    function wpaicLsSet(k, v) { if (wpaicStorageAllowed()) localStorage.setItem(k, v); }
-    function wpaicLsRemove(k) { localStorage.removeItem(k); }
+    // localStorage wrappers — gate reads/writes on consent, allow removal always.
+    // try/catch guards against Safari private mode and other environments that throw.
+    function wpaicLsGet(k) {
+        if (!wpaicStorageAllowed()) return null;
+        try { return localStorage.getItem(k); } catch (e) { return null; }
+    }
+    function wpaicLsSet(k, v) {
+        if (!wpaicStorageAllowed()) return;
+        try { localStorage.setItem(k, v); } catch (e) { /* quota exceeded or private mode */ }
+    }
+    function wpaicLsRemove(k) {
+        try { localStorage.removeItem(k); } catch (e) { /* noop */ }
+    }
 
     // sessionStorage wrappers — session data also gated on functional consent
-    function wpaicSsGet(k) { return wpaicStorageAllowed() ? sessionStorage.getItem(k) : null; }
-    function wpaicSsSet(k, v) { if (wpaicStorageAllowed()) sessionStorage.setItem(k, v); }
-    function wpaicSsRemove(k) { sessionStorage.removeItem(k); }
+    function wpaicSsGet(k) {
+        if (!wpaicStorageAllowed()) return null;
+        try { return sessionStorage.getItem(k); } catch (e) { return null; }
+    }
+    function wpaicSsSet(k, v) {
+        if (!wpaicStorageAllowed()) return;
+        try { sessionStorage.setItem(k, v); } catch (e) { /* quota exceeded or private mode */ }
+    }
+    function wpaicSsRemove(k) {
+        try { sessionStorage.removeItem(k); } catch (e) { /* noop */ }
+    }
 
     const WPAIChatbot = {
 
@@ -1808,15 +1825,23 @@
                         wpaicLsSet('wpaic_user_id', self.userId);
                     }
                 } else {
-                    // Consent revoked — remove all persisted data
-                    wpaicLsRemove('wpaic_user_id');
-                    wpaicLsRemove('wpaic_session');
-                    wpaicLsRemove('wpaic_session_token');
-                    wpaicLsRemove('wpaic_window_size');
-                    // Clear conversion markers from sessionStorage
-                    if (self.sessionId) {
-                        wpaicSsRemove('wpaic_converted_' + self.sessionId);
-                    }
+                    // Consent revoked — remove ALL wpaic_ keys from both storages.
+                    // Walk all keys to catch conversion markers from old sessions, etc.
+                    try {
+                        var i;
+                        var lsKeys = Object.keys(localStorage);
+                        for (i = 0; i < lsKeys.length; i++) {
+                            if (lsKeys[i].indexOf('wpaic_') === 0) {
+                                localStorage.removeItem(lsKeys[i]);
+                            }
+                        }
+                        var ssKeys = Object.keys(sessionStorage);
+                        for (i = 0; i < ssKeys.length; i++) {
+                            if (ssKeys[i].indexOf('wpaic_') === 0) {
+                                sessionStorage.removeItem(ssKeys[i]);
+                            }
+                        }
+                    } catch (e) { /* private mode or storage unavailable */ }
                 }
                 // Re-evaluate conversion tracking
                 self.initConversionTracking();

@@ -157,14 +157,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * @throws Exception On non-recoverable errors.
      */
     private function send_with_fallback(callable $primary, callable $secondary, array $messages, array $options): array {
+        // Generate a unique request ID for diagnostics and idempotency.
+        // Both primary and fallback calls carry the same ID so logs can be correlated
+        // and the server (if it supports Idempotency-Key) won't double-process.
+        $options['_request_id'] = wp_generate_uuid4();
+
         try {
             return call_user_func($primary, $messages, $options);
         } catch (Exception $e) {
-            // Decide whether to fallback based on error type:
-            // 1. Endpoint/model mismatch (400/404): model doesn't work on this API
-            // 2. Server/network errors (5xx, timeouts): transient failure, other API may work
-            // Never fallback on: auth (401), billing (402), rate limit (429), access (403)
-            // — those apply equally to both APIs and fallback would waste a request.
+            // Quota/billing exceptions are never recoverable by switching endpoints
             if ($e instanceof WPAIC_Quota_Exceeded_Exception) {
                 throw $e; // 429/402/quota — never retry
             }
@@ -172,35 +173,54 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $code = $e->getCode();
             $msg = $e->getMessage();
 
-            // Model/endpoint mismatch: tight matching to avoid false positives.
-            // "not supported" alone is too broad — catches parameter errors that aren't
-            // endpoint issues. Require model/endpoint context for that phrase.
-            $has_model_context = stripos($msg, 'model') !== false
-                || stripos($msg, 'chat/completions') !== false
-                || stripos($msg, 'responses') !== false;
+            // ── Hard errors: never fallback ──
+            // These apply equally to both APIs (same key/account) or indicate
+            // unrecoverable request issues. Fallback would waste a request.
+            // 401=auth, 402=billing, 403=access, 409=conflict, 422=validation
+            $no_fallback_codes = [401, 402, 403, 409, 422];
+            if (in_array($code, $no_fallback_codes, true)) {
+                throw $e;
+            }
 
-            $is_endpoint_mismatch = ($code === 400 || $code === 404)
-                && (stripos($msg, 'model_not_found') !== false
-                    || stripos($msg, 'does not exist') !== false
-                    || (stripos($msg, 'not supported') !== false && $has_model_context));
+            // ── Endpoint/model mismatch: 400/404 ──
+            // Priority: structured error code → HTTP status → message text (last resort)
+            $is_endpoint_mismatch = false;
+            if ($code === 404) {
+                // 404 is almost always a model/endpoint issue
+                $is_endpoint_mismatch = true;
+            } elseif ($code === 400) {
+                // Structured codes (most reliable, survive message text changes)
+                if (stripos($msg, 'model_not_found') !== false
+                    || stripos($msg, 'does not exist') !== false) {
+                    $is_endpoint_mismatch = true;
+                }
+                // Message text fallback — require model/endpoint context to avoid
+                // false positives on generic parameter errors
+                if (!$is_endpoint_mismatch && stripos($msg, 'not supported') !== false) {
+                    $has_model_context = stripos($msg, 'model') !== false
+                        || stripos($msg, 'chat/completions') !== false
+                        || stripos($msg, 'responses') !== false;
+                    $is_endpoint_mismatch = $has_model_context;
+                }
+            }
 
-            // Transient server/network errors: the other API endpoint may be on a
-            // different backend and succeed. Communication errors from wp_remote_post
-            // have code 0. Server errors (5xx) are set by handle_api_error.
+            // ── Transient server/network errors ──
+            // Communication errors from wp_remote_post have code 0 and include
+            // "API communication error". Server errors (5xx) carry the HTTP code.
+            // NOTE: Timeout/connection-reset fallback risks double billing because
+            // the server may have already processed the request. We allow it once
+            // since both calls carry the same request ID for correlation.
             $is_transient = ($code === 0 && stripos($msg, 'API communication error') !== false)
                 || ($code >= 500 && $code < 600);
 
-            // Hard errors: never fallback (auth, access — both APIs share the same key)
-            $is_hard_error = ($code === 401 || $code === 403);
-
-            if ($is_hard_error || (!$is_endpoint_mismatch && !$is_transient)) {
+            if (!$is_endpoint_mismatch && !$is_transient) {
                 throw $e;
             }
         }
 
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC OpenAI: primary API failed for model=%s, retrying with fallback', $this->model));
+            error_log(sprintf('WPAIC OpenAI: primary API failed for model=%s, retrying with fallback (request_id=%s)', $this->model, $options['_request_id']));
         }
         return call_user_func($secondary, $messages, $options);
     }
@@ -253,11 +273,16 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             error_log(sprintf('WPAIC OpenAI: endpoint=chat/completions model=%s', $this->model));
         }
 
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->api_key,
+            'Content-Type'  => 'application/json',
+        ];
+        if (!empty($options['_request_id'])) {
+            $headers['X-WPAIC-Request-Id'] = $options['_request_id'];
+        }
+
         $response = wp_remote_post($this->api_url, [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->api_key,
-                'Content-Type'  => 'application/json',
-            ],
+            'headers' => $headers,
             'body'    => wp_json_encode($body),
             'timeout' => 120,
         ]);
@@ -318,11 +343,16 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             error_log(sprintf('WPAIC OpenAI: endpoint=responses model=%s', $this->model));
         }
 
+        $headers = [
+            'Authorization' => 'Bearer ' . $this->api_key,
+            'Content-Type'  => 'application/json',
+        ];
+        if (!empty($options['_request_id'])) {
+            $headers['X-WPAIC-Request-Id'] = $options['_request_id'];
+        }
+
         $response = wp_remote_post($this->responses_api_url, [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $this->api_key,
-                'Content-Type'  => 'application/json',
-            ],
+            'headers' => $headers,
             'body'    => wp_json_encode($body),
             'timeout' => 120,
         ]);
@@ -369,7 +399,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             throw new Exception(esc_html__('OpenAI API key is invalid or has been revoked.', 'rapls-ai-chatbot'), 401);
         }
 
-        // Quota/billing errors
+        // Quota/billing errors (402 / insufficient_quota)
         if ($response_code === 402 ||
             $error_code === 'insufficient_quota' ||
             $error_type === 'insufficient_quota' ||
@@ -377,6 +407,38 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             stripos($error_message, 'billing') !== false ||
             stripos($error_message, 'exceeded') !== false) {
             throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+        }
+
+        // Model access denied
+        if ($response_code === 403) {
+            throw new Exception(
+                sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model)),
+                403
+            );
+        }
+
+        // Model not found — structured code check first (H-5: prioritize error.code)
+        if ($error_code === 'model_not_found' || $response_code === 404) {
+            throw new Exception(
+                sprintf(esc_html__('OpenAI model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model)),
+                404
+            );
+        }
+
+        // Conflict (409) — pass code for fallback exclusion
+        if ($response_code === 409) {
+            throw new Exception(
+                sprintf(esc_html__('OpenAI API conflict error (HTTP 409): %s', 'rapls-ai-chatbot'), esc_html($error_message)),
+                409
+            );
+        }
+
+        // Validation error (422) — pass code for fallback exclusion
+        if ($response_code === 422) {
+            throw new Exception(
+                sprintf(esc_html__('OpenAI API validation error: %s', 'rapls-ai-chatbot'), esc_html($error_message)),
+                422
+            );
         }
 
         // Rate limit errors
@@ -390,28 +452,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             stripos($error_message, 'not supported') !== false ||
             stripos($error_message, 'invalid') !== false
         )) {
-            $exception = new Exception(
+            throw new Exception(
                 sprintf(esc_html__('OpenAI API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message)),
                 400
             );
-            throw $exception;
-        }
-
-        // Model access denied
-        if ($response_code === 403) {
-            throw new Exception(
-                sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model)),
-                403
-            );
-        }
-
-        // Model not found
-        if ($response_code === 404 || $error_code === 'model_not_found') {
-            $exception = new Exception(
-                sprintf(esc_html__('OpenAI model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model)),
-                404
-            );
-            throw $exception;
         }
 
         // Server errors — pass HTTP code so send_with_fallback() can detect 5xx
@@ -422,7 +466,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             );
         }
 
-        throw new Exception(esc_html__('OpenAI API error: ', 'rapls-ai-chatbot') . esc_html($error_message));
+        // Catch-all — preserve HTTP code for fallback classification
+        throw new Exception(
+            esc_html__('OpenAI API error: ', 'rapls-ai-chatbot') . esc_html($error_message),
+            $response_code
+        );
     }
 
     /**
