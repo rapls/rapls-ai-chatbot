@@ -930,6 +930,15 @@ if (!defined('ABSPATH')) {
                             </label>
                             <p class="description"><?php esc_html_e('Enable if your site is behind a reverse proxy (Nginx, AWS ALB, etc.) that sets X-Forwarded-For. Uses the first public IP from the header for rate limiting.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description" style="color: #d63638;"><strong><?php esc_html_e('Security warning: Only enable this if ALL traffic passes through your trusted proxy. Otherwise attackers can forge this header.', 'rapls-ai-chatbot'); ?></strong></p>
+                            <p class="description"><?php
+                                echo wp_kses(
+                                    __('To add trusted proxy IPs or CIDR ranges, use the <code>wpaic_trusted_proxies</code> filter in your theme or a custom plugin.<br>'
+                                     . '<strong>Cloudflare example:</strong> 172.64.0.0/13, 104.16.0.0/13, 173.245.48.0/20, etc.<br>'
+                                     . '<strong>AWS ALB example:</strong> Your VPC CIDR (e.g. 10.0.0.0/8)<br>'
+                                     . '<strong>If misconfigured:</strong> Rate limiting applies to the proxy IP instead of real visitors, or attackers can bypass rate limits by forging the X-Forwarded-For header.', 'rapls-ai-chatbot'),
+                                    ['code' => [], 'br' => [], 'strong' => []]
+                                );
+                            ?></p>
                         </td>
                     </tr>
                     <tr>

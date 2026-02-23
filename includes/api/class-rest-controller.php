@@ -1192,15 +1192,28 @@ class WPAIC_REST_Controller {
 
             // Only trust XFF when the direct connection comes from a known proxy.
             // Private/loopback REMOTE_ADDR means a local reverse proxy (Nginx, Docker, etc.).
-            // Additional trusted proxies can be added via filter.
-            // Validate filter output: only accept valid IP addresses as trusted proxies
-            $trusted_proxies = array_filter(
-                (array) apply_filters('wpaic_trusted_proxies', []),
-                function ($ip) { return filter_var($ip, FILTER_VALIDATE_IP); }
-            );
+            // Additional trusted proxies can be added via filter (IP or CIDR notation).
+            // Validate filter output: only accept valid IPs or CIDR ranges.
+            $raw_proxies = (array) apply_filters('wpaic_trusted_proxies', []);
+            $trusted_ips   = [];
+            $trusted_cidrs = [];
+            foreach ($raw_proxies as $entry) {
+                if (!is_string($entry)) { continue; }
+                $entry = trim($entry);
+                if (strpos($entry, '/') !== false) {
+                    // CIDR notation (e.g. 172.64.0.0/13)
+                    list($cidr_ip, $cidr_bits) = explode('/', $entry, 2);
+                    if (filter_var($cidr_ip, FILTER_VALIDATE_IP) && is_numeric($cidr_bits)) {
+                        $trusted_cidrs[] = $entry;
+                    }
+                } elseif (filter_var($entry, FILTER_VALIDATE_IP)) {
+                    $trusted_ips[] = $entry;
+                }
+            }
             $remote_is_proxy = (
                 !filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) ||
-                in_array($remote, $trusted_proxies, true)
+                in_array($remote, $trusted_ips, true) ||
+                $this->ip_in_cidrs($remote, $trusted_cidrs)
             );
 
             if ($remote_is_proxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
@@ -1221,6 +1234,41 @@ class WPAIC_REST_Controller {
         $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? ''));
 
         return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
+    }
+
+    /**
+     * Check if an IP address falls within any of the given CIDR ranges.
+     *
+     * @param string   $ip    IP address to check.
+     * @param string[] $cidrs Array of CIDR notation strings (e.g. '172.64.0.0/13').
+     * @return bool
+     */
+    private function ip_in_cidrs(string $ip, array $cidrs): bool {
+        if (empty($cidrs) || !filter_var($ip, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+        $ip_bin = inet_pton($ip);
+        if ($ip_bin === false) {
+            return false;
+        }
+        foreach ($cidrs as $cidr) {
+            list($subnet, $bits) = explode('/', $cidr, 2);
+            $subnet_bin = inet_pton($subnet);
+            if ($subnet_bin === false || strlen($ip_bin) !== strlen($subnet_bin)) {
+                continue; // IPv4/IPv6 mismatch
+            }
+            $bits = (int) $bits;
+            // Build bitmask
+            $mask = str_repeat("\xff", (int) ($bits / 8));
+            if ($bits % 8) {
+                $mask .= chr(0xff << (8 - ($bits % 8)) & 0xff);
+            }
+            $mask = str_pad($mask, strlen($ip_bin), "\x00");
+            if (($ip_bin & $mask) === ($subnet_bin & $mask)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1482,10 +1530,32 @@ class WPAIC_REST_Controller {
      *
      * @param string $type Detection type ('honeypot', 'timing').
      */
+    /**
+     * Allowed bot counter types. Fixed set to prevent key proliferation under attack.
+     */
+    private static array $allowed_bot_types = [
+        'honeypot_offl', 'timing_offl',
+        'honeypot_pub', 'timing_pub',
+        'honeypot_lead', 'timing_lead',
+    ];
+
     private function increment_bot_counter(string $type): void {
+        // Only allow predefined counter types to prevent transient key proliferation
+        if (!in_array($type, self::$allowed_bot_types, true)) {
+            return;
+        }
+
         $key = 'wpaic_bot_drop_' . $type;
-        $count = (int) get_transient($key);
-        set_transient($key, $count + 1, HOUR_IN_SECONDS);
+
+        // Prefer object cache (Redis/Memcached) to avoid wp_options DB writes under attack.
+        // wp_cache_* with a non-default group avoids alloptions autoload bloat.
+        if (wp_using_ext_object_cache()) {
+            $count = (int) wp_cache_get($key, 'wpaic_bot');
+            wp_cache_set($key, $count + 1, 'wpaic_bot', HOUR_IN_SECONDS);
+        } else {
+            $count = (int) get_transient($key);
+            set_transient($key, $count + 1, HOUR_IN_SECONDS);
+        }
     }
 
     /**
@@ -1600,7 +1670,8 @@ class WPAIC_REST_Controller {
         int $rate_limit = 30,
         int $rate_window = 60,
         bool $require_captcha = false,
-        string $captcha_action = ''
+        string $captcha_action = '',
+        bool $allow_no_headers = false
     ) {
         // 1. Same-origin check
         $origin_result = $this->check_same_origin();
@@ -1610,11 +1681,19 @@ class WPAIC_REST_Controller {
             return $origin_result;
         }
 
-        // No Origin/Referer headers: allow only when other defenses compensate.
-        // When captcha is required, the reCAPTCHA check below provides equivalent protection.
-        // Without captcha, rate limiting is the primary defense for headerless requests
-        // (blocking would reject legitimate users behind proxies/privacy extensions).
+        // No Origin/Referer headers policy — context-dependent:
+        //   allow_no_headers=true:  permit (rate limit is primary defense; avoids rejecting
+        //                           legitimate users behind proxies/privacy extensions)
+        //   allow_no_headers=false: require captcha as compensating control, or reject
+        //                           with a diagnostic message to help admins troubleshoot
         $origin_ok = ($origin_result === true);
+
+        if ($origin_result === self::SAME_ORIGIN_NO_HEADERS && !$allow_no_headers && !$require_captcha) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Request blocked: missing Origin/Referer header. If you use a caching or JS optimization plugin, ensure it does not defer or block the chatbot scripts.', 'rapls-ai-chatbot'),
+            ], 403);
+        }
 
         // 2. Public rate limit
         $rate_check = $this->check_public_rate_limit($rate_key, $rate_limit, $rate_window);
