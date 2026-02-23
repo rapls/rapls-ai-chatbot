@@ -1662,7 +1662,7 @@ class WPAIC_REST_Controller {
      *
      * @return string[] Array of lowercase hostnames.
      */
-    protected function get_allowed_origin_hosts(): array {
+    public function get_allowed_origin_hosts(): array {
         $home_host = wp_parse_url(home_url(), PHP_URL_HOST);
         $site_host = wp_parse_url(site_url(), PHP_URL_HOST);
 
@@ -1732,27 +1732,51 @@ class WPAIC_REST_Controller {
         $allowed = $this->get_allowed_origin_hosts();
 
         if (empty($allowed)) {
-            return true; // Can't determine site host; let other defenses compensate
+            // Allowed hosts should never be empty in a properly configured site.
+            // If they are, reject with a diagnostic error rather than silently allowing.
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => __('Security configuration error. Please contact the site administrator.', 'rapls-ai-chatbot'),
+                'error_code' => 'origin_config_invalid',
+            ], 403);
         }
 
-        $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST) : null;
-        $referer = isset($_SERVER['HTTP_REFERER']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_REFERER'])), PHP_URL_HOST) : null;
+        $has_headers = $this->has_origin_headers();
+
+        // Parse host from Origin/Referer (use esc_url_raw for predictable sanitization)
+        $origin_host  = isset($_SERVER['HTTP_ORIGIN'])
+            ? wp_parse_url(esc_url_raw(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST)
+            : null;
+        $referer_host = isset($_SERVER['HTTP_REFERER'])
+            ? wp_parse_url(esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])), PHP_URL_HOST)
+            : null;
 
         // Accept if either header matches any allowed host (exact match)
-        if (($origin && in_array(strtolower($origin), $allowed, true)) ||
-            ($referer && in_array(strtolower($referer), $allowed, true))) {
+        if (($origin_host && in_array(strtolower($origin_host), $allowed, true)) ||
+            ($referer_host && in_array(strtolower($referer_host), $allowed, true))) {
             return true;
         }
 
+        // Headers exist but host could not be parsed (e.g. "Origin: null", malformed URL).
+        // This is distinct from "no headers" and must be rejected.
+        if ($has_headers && !$origin_host && !$referer_host) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => __('Invalid Origin/Referer header.', 'rapls-ai-chatbot'),
+                'error_code' => 'origin_invalid',
+            ], 403);
+        }
+
         // No headers at all — permissive (callers use has_origin_headers() for stricter policy)
-        if (!$origin && !$referer) {
+        if (!$origin_host && !$referer_host) {
             return true;
         }
 
         // Headers present but don't match — hard reject
         return new WP_REST_Response([
-            'success' => false,
-            'error'   => __('Cross-origin request denied.', 'rapls-ai-chatbot'),
+            'success'    => false,
+            'error'      => __('Cross-origin request denied.', 'rapls-ai-chatbot'),
+            'error_code' => 'origin_mismatch',
         ], 403);
     }
 

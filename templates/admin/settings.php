@@ -968,26 +968,19 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Allowed Origin Hosts', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
-                            $home_host = wp_parse_url(home_url(), PHP_URL_HOST);
-                            $site_host = wp_parse_url(site_url(), PHP_URL_HOST);
-                            $diag_hosts = [];
-                            foreach (array_filter([$home_host, $site_host]) as $dh) {
-                                $dh = strtolower($dh);
-                                $diag_hosts[] = $dh;
-                                if (strpos($dh, 'www.') === 0) {
-                                    $diag_hosts[] = substr($dh, 4);
-                                } else {
-                                    $diag_hosts[] = 'www.' . $dh;
-                                }
-                            }
-                            $diag_hosts = array_unique($diag_hosts);
+                            // Use the same function as runtime to guarantee display matches actual checks.
+                            $rest_controller = new WPAIC_REST_Controller();
+                            $diag_hosts = $rest_controller->get_allowed_origin_hosts();
                             ?>
                             <code><?php echo esc_html(implode(', ', $diag_hosts)); ?></code>
-                            <p class="description"><?php esc_html_e('These hostnames are accepted for Origin/Referer checks and reCAPTCHA hostname validation. Custom hosts can be added via the wpaic_allowed_origins filter.', 'rapls-ai-chatbot'); ?></p>
+                            <?php if (empty($diag_hosts)) : ?>
+                                <span style="color:#d63638;"><strong><?php esc_html_e('Warning: No allowed hosts detected. Origin/Referer checks will reject all requests.', 'rapls-ai-chatbot'); ?></strong></span>
+                            <?php endif; ?>
+                            <p class="description"><?php esc_html_e('These hostnames are accepted for Origin/Referer checks and reCAPTCHA hostname validation (same source as runtime). Custom hosts can be added via the wpaic_allowed_origins filter.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Recent Bot Detections', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('Recent Bot Detections (past hour)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
                             $bot_types = [
@@ -1022,7 +1015,7 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('XFF Truncated', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('XFF Truncated (past hour)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
                             $xff_key = 'wpaic_xff_truncated';
@@ -1042,7 +1035,7 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Recent Admin Failures', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('Recent Admin Failures (past 24h)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
                             $diag_events = get_transient('wpaic_diag_events');
