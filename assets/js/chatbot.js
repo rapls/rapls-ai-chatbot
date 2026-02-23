@@ -1514,6 +1514,17 @@
             this.getRecaptchaToken('lead').then(function(token) {
                 if (token) {
                     formData.recaptcha_token = token;
+                } else if (self.config.recaptcha_enabled) {
+                    // reCAPTCHA is configured but token is empty (script not loaded yet)
+                    if (errorEl) {
+                        errorEl.textContent = 'Security verification loading. Please try again in a moment.';
+                        errorEl.hidden = false;
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'チャットを開始';
+                    }
+                    return Promise.reject('recaptcha_not_ready');
                 }
 
                 return fetch(url, {
@@ -1547,6 +1558,8 @@
                 }
             })
             .catch(function(error) {
+                // Skip if already handled (e.g. recaptcha_not_ready)
+                if (error === 'recaptcha_not_ready') return;
                 console.error('Lead submit error:', error);
                 if (errorEl) {
                     errorEl.textContent = error.message || '送信に失敗しました。';

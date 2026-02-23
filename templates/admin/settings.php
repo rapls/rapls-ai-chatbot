@@ -935,7 +935,8 @@ if (!defined('ABSPATH')) {
                                     __('To add trusted proxy IPs or CIDR ranges, use the <code>wpaic_trusted_proxies</code> filter in your theme or a custom plugin.<br>'
                                      . '<strong>Cloudflare example:</strong> 172.64.0.0/13, 104.16.0.0/13, 173.245.48.0/20, etc.<br>'
                                      . '<strong>AWS ALB example:</strong> Your VPC CIDR (e.g. 10.0.0.0/8)<br>'
-                                     . '<strong>If misconfigured:</strong> Rate limiting applies to the proxy IP instead of real visitors, or attackers can bypass rate limits by forging the X-Forwarded-For header.', 'rapls-ai-chatbot'),
+                                     . '<strong>If misconfigured:</strong> Rate limiting applies to the proxy IP instead of real visitors, or attackers can bypass rate limits by forging the X-Forwarded-For header.<br>'
+                                     . '<span style="color:#d63638;"><strong>Important:</strong> Cloudflare IP ranges change periodically. If you hardcode CIDRs, they may become stale and cause XFF to be ignored (rate limiting / IP detection will fall back to the proxy IP). Check <code>https://www.cloudflare.com/ips/</code> regularly and update your filter accordingly.</span>', 'rapls-ai-chatbot'),
                                     ['code' => [], 'br' => [], 'strong' => []]
                                 );
                             ?></p>
@@ -1013,6 +1014,48 @@ if (!defined('ABSPATH')) {
                             }
                             ?>
                             <p class="description"><?php esc_html_e('Approximate count of requests blocked by bot detection in the past hour. High numbers may indicate your forms are being targeted.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('XFF Truncated', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $xff_key = 'wpaic_xff_truncated';
+                            $xff_count = $use_cache
+                                ? (int) wp_cache_get($xff_key, 'wpaic_bot')
+                                : (int) get_transient($xff_key);
+                            if (!$use_cache && $xff_count > 0) {
+                                $xff_count *= 10;
+                            }
+                            if ($xff_count > 0) {
+                                echo '<strong>' . esc_html($xff_count) . '</strong>';
+                            } else {
+                                echo '<em>' . esc_html__('None in the past hour.', 'rapls-ai-chatbot') . '</em>';
+                            }
+                            ?>
+                            <p class="description"><?php esc_html_e('Number of oversized X-Forwarded-For headers truncated (past hour). High numbers may indicate a CDN/proxy chain issue or an attack. Check your trusted proxy configuration.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Recent Admin Failures', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $diag_events = get_transient('wpaic_diag_events');
+                            if (is_array($diag_events) && !empty($diag_events)) {
+                                $recent = array_reverse($diag_events);
+                                echo '<ul style="margin:0;">';
+                                foreach ($recent as $evt) {
+                                    $time_ago = human_time_diff($evt['time'], time());
+                                    echo '<li><code>' . esc_html($evt['code']) . '</code> — '
+                                         . /* translators: %s: time difference */ sprintf(esc_html__('%s ago', 'rapls-ai-chatbot'), esc_html($time_ago))
+                                         . '</li>';
+                                }
+                                echo '</ul>';
+                            } else {
+                                echo '<em>' . esc_html__('No recent failures recorded.', 'rapls-ai-chatbot') . '</em>';
+                            }
+                            ?>
+                            <p class="description"><?php esc_html_e('Last 10 admin operation failure codes (no sensitive details). Helps diagnose API key testing, import, and other configuration issues.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

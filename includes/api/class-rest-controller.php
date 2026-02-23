@@ -26,9 +26,36 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Ensure no-cache headers on public GET routes regardless of response status.
+     * Hooked to rest_post_dispatch so ALL code paths (success, error, exception) are covered.
+     *
+     * @param WP_REST_Response $response REST response.
+     * @param WP_REST_Server   $server   REST server.
+     * @param WP_REST_Request  $request  REST request.
+     * @return WP_REST_Response
+     */
+    public function ensure_no_cache_public_gets(WP_REST_Response $response, WP_REST_Server $server, WP_REST_Request $request): WP_REST_Response {
+        $route = $request->get_route();
+        $no_cache_routes = [
+            '/' . $this->namespace . '/session',
+            '/' . $this->namespace . '/lead-config',
+            '/' . $this->namespace . '/message-limit',
+        ];
+        if (in_array($route, $no_cache_routes, true)) {
+            return $this->no_cache($response);
+        }
+        return $response;
+    }
+
+    /**
      * Register routes
      */
     public function register_routes(): void {
+        // Ensure no-cache headers on ALL responses (including errors) for public GET routes.
+        // Using rest_post_dispatch guarantees headers are set regardless of which code path
+        // generates the response (success, rate limit, exception, etc.).
+        add_filter('rest_post_dispatch', [$this, 'ensure_no_cache_public_gets'], 10, 3);
+
         // Get/Create session
         register_rest_route($this->namespace, '/session', [
             'methods'             => 'GET',
@@ -1240,6 +1267,7 @@ class WPAIC_REST_Controller {
                 // Normal XFF rarely exceeds a few hundred bytes; cap at 2KB / 20 entries.
                 if (strlen($forwarded) > 2048) {
                     $forwarded = substr($forwarded, 0, 2048);
+                    $this->increment_xff_truncated();
                 }
 
                 $ips = explode(',', $forwarded);
@@ -1599,6 +1627,23 @@ class WPAIC_REST_Controller {
             if (wp_rand(1, 10) !== 1) {
                 return;
             }
+            $count = (int) get_transient($key);
+            set_transient($key, $count + 1, HOUR_IN_SECONDS);
+        }
+    }
+
+    /**
+     * Increment the XFF truncation counter (1-hour window).
+     * Tracks how often oversized X-Forwarded-For headers are truncated.
+     * Uses the same sampling strategy as bot counters.
+     */
+    private function increment_xff_truncated(): void {
+        $key = 'wpaic_xff_truncated';
+        if (wp_using_ext_object_cache()) {
+            $count = (int) wp_cache_get($key, 'wpaic_bot');
+            wp_cache_set($key, $count + 1, 'wpaic_bot', HOUR_IN_SECONDS);
+        } else {
+            if (wp_rand(1, 10) !== 1) { return; }
             $count = (int) get_transient($key);
             set_transient($key, $count + 1, HOUR_IN_SECONDS);
         }

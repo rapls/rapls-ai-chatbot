@@ -10,6 +10,29 @@ if (!defined('ABSPATH')) {
 class WPAIC_Admin {
 
     /**
+     * Log a diagnostic event code for display in Security Diagnostics.
+     * Stores last 10 events in a transient (codes only, no sensitive data).
+     *
+     * @param string $code Short event code (e.g. 'api_test_failed', 'import_parse_error').
+     */
+    public static function log_diagnostic_event(string $code): void {
+        $key = 'wpaic_diag_events';
+        $events = get_transient($key);
+        if (!is_array($events)) {
+            $events = [];
+        }
+        $events[] = [
+            'code' => sanitize_key($code),
+            'time' => time(),
+        ];
+        // Keep last 10 entries
+        if (count($events) > 10) {
+            $events = array_slice($events, -10);
+        }
+        set_transient($key, $events, DAY_IN_SECONDS);
+    }
+
+    /**
      * Add admin menu
      */
     public function add_admin_menu(): void {
@@ -1060,6 +1083,7 @@ class WPAIC_Admin {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 error_log('WPAIC ajax_test_api: ' . $e->getMessage());
             }
+            self::log_diagnostic_event('api_test_failed');
             wp_send_json_error(__('API request failed. Please check your API key and try again.', 'rapls-ai-chatbot'));
         }
     }
@@ -1706,6 +1730,7 @@ class WPAIC_Admin {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log('WPAIC import error [' . $code . ']: ' . $result->get_error_message());
                 }
+                self::log_diagnostic_event('import_' . $code);
                 wp_send_json_error($msg);
             }
 
@@ -1719,8 +1744,10 @@ class WPAIC_Admin {
                 'title'   => $result['title'] ?? '',
             ]);
         } catch (Exception $e) {
+            self::log_diagnostic_event('import_exception');
             wp_send_json_error(__('An error occurred.', 'rapls-ai-chatbot'));
         } catch (Error $e) {
+            self::log_diagnostic_event('import_fatal');
             wp_send_json_error(__('An error occurred.', 'rapls-ai-chatbot'));
         }
     }
@@ -1930,6 +1957,7 @@ class WPAIC_Admin {
 
         $import_data = json_decode($import_json, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
+            self::log_diagnostic_event('settings_import_invalid_json');
             wp_send_json_error(__('Invalid JSON data.', 'rapls-ai-chatbot'));
         }
 
