@@ -10,14 +10,19 @@ if (!defined('ABSPATH')) {
 class WPAIC_REST_Controller {
 
     /**
-     * Sentinel returned by check_same_origin() when neither Origin nor Referer header is present.
-     */
-    const SAME_ORIGIN_NO_HEADERS = 'no_headers';
-
-    /**
      * Namespace
      */
     private string $namespace = 'wp-ai-chatbot/v1';
+
+    /**
+     * Add no-cache headers to a REST response.
+     * Prevents page caching plugins from caching dynamic per-user responses.
+     */
+    private function no_cache(WP_REST_Response $response): WP_REST_Response {
+        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->header('Pragma', 'no-cache');
+        return $response;
+    }
 
     /**
      * Register routes
@@ -382,12 +387,12 @@ class WPAIC_REST_Controller {
         // Generate HMAC session token for cookie-less environments
         $session_token = $this->generate_session_token($session_id);
 
-        return new WP_REST_Response([
+        return $this->no_cache(new WP_REST_Response([
             'success'         => true,
             'session_id'      => $session_id,
             'session_token'   => $session_token,
             'session_version' => $session_version,
-        ], 200);
+        ], 200));
     }
 
     /**
@@ -1628,22 +1633,32 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Check whether Origin or Referer headers are present in the current request.
+     *
+     * @return bool True if at least one header is present, false if neither.
+     */
+    protected function has_origin_headers(): bool {
+        return !empty($_SERVER['HTTP_ORIGIN']) || !empty($_SERVER['HTTP_REFERER']);
+    }
+
+    /**
      * Check that a public POST request originates from the same site.
      * Compares Origin or Referer header host against allowed hosts (home_url, site_url).
      * Not bulletproof (headers can be spoofed) but raises the bar for casual abuse.
      *
-     * Returns:
-     *   true              — Origin/Referer matched an allowed host.
-     *   self::SAME_ORIGIN_NO_HEADERS — Neither Origin nor Referer was present (caller decides policy).
-     *   WP_REST_Response             — Origin/Referer present but did NOT match (hard reject).
+     * Return contract: always returns true (pass) or WP_REST_Response (reject).
+     * To check whether headers were present at all, use has_origin_headers() separately.
      *
-     * @return true|string|WP_REST_Response
+     * When no Origin/Referer headers are present, returns true (permissive).
+     * Callers that need stricter policy should check has_origin_headers() and decide.
+     *
+     * @return true|WP_REST_Response
      */
     protected function check_same_origin() {
         $allowed = $this->get_allowed_origin_hosts();
 
         if (empty($allowed)) {
-            return self::SAME_ORIGIN_NO_HEADERS; // Can't determine site host; delegate to caller policy
+            return true; // Can't determine site host; let other defenses compensate
         }
 
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_parse_url(sanitize_url(wp_unslash($_SERVER['HTTP_ORIGIN'])), PHP_URL_HOST) : null;
@@ -1655,9 +1670,9 @@ class WPAIC_REST_Controller {
             return true;
         }
 
-        // No headers at all — return sentinel so caller can decide based on other defenses
+        // No headers at all — permissive (callers use has_origin_headers() for stricter policy)
         if (!$origin && !$referer) {
-            return self::SAME_ORIGIN_NO_HEADERS;
+            return true;
         }
 
         // Headers present but don't match — hard reject
@@ -1691,22 +1706,21 @@ class WPAIC_REST_Controller {
         string $captcha_action = '',
         bool $allow_no_headers = false
     ) {
-        // 1. Same-origin check
+        // 1. Same-origin check (returns true or WP_REST_Response)
         $origin_result = $this->check_same_origin();
-
-        // Hard reject: headers present but don't match
         if ($origin_result instanceof WP_REST_Response) {
             return $origin_result;
         }
 
-        // No Origin/Referer headers policy — context-dependent:
-        //   allow_no_headers=true:  permit (rate limit is primary defense; avoids rejecting
-        //                           legitimate users behind proxies/privacy extensions)
-        //   allow_no_headers=false: require captcha as compensating control, or reject
-        //                           with a diagnostic message to help admins troubleshoot
-        $origin_ok = ($origin_result === true);
+        // 2. No-headers policy — context-dependent:
+        //   When Origin/Referer are absent (proxies, privacy extensions, JS optimization):
+        //   - allow_no_headers=true:  permit (rate limit is primary defense)
+        //   - require_captcha=true:   permit (reCAPTCHA compensates below)
+        //   - otherwise:              reject with diagnostic message
+        $has_headers = $this->has_origin_headers();
+        $origin_ok = $has_headers; // Used later for timing+captcha interaction
 
-        if ($origin_result === self::SAME_ORIGIN_NO_HEADERS && !$allow_no_headers && !$require_captcha) {
+        if (!$has_headers && !$allow_no_headers && !$require_captcha) {
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Request blocked: missing Origin/Referer header. If you use a caching or JS optimization plugin, ensure it does not defer or block the chatbot scripts.', 'rapls-ai-chatbot'),
@@ -1773,8 +1787,9 @@ class WPAIC_REST_Controller {
             $recaptcha_result = $this->verify_recaptcha($recaptcha_token, $captcha_action);
             if (is_wp_error($recaptcha_result)) {
                 return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => $recaptcha_result->get_error_message(),
+                    'success'    => false,
+                    'error'      => $recaptcha_result->get_error_message(),
+                    'error_code' => $recaptcha_result->get_error_code(),
                 ], 403);
             }
         }
@@ -2067,7 +2082,7 @@ class WPAIC_REST_Controller {
                 }
             }
 
-            return new WP_REST_Response([
+            return $this->no_cache(new WP_REST_Response([
                 'success' => true,
                 'data'    => [
                     'enabled'     => true,
@@ -2076,7 +2091,7 @@ class WPAIC_REST_Controller {
                     'description' => $pro_settings['lead_form_description'] ?? __('Please enter your information', 'rapls-ai-chatbot'),
                     'fields'      => $fields,
                 ],
-            ], 200);
+            ], 200));
 
         } catch (\Throwable $e) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
@@ -2106,13 +2121,13 @@ class WPAIC_REST_Controller {
         $remaining = $pro_features->get_remaining_messages();
 
         // Return only UI-necessary fields; omit raw limit to avoid exposing plan details
-        return new WP_REST_Response([
+        return $this->no_cache(new WP_REST_Response([
             'success' => true,
             'data'    => [
                 'remaining' => $remaining === PHP_INT_MAX ? null : $remaining,
                 'reached'   => $pro_features->is_limit_reached(),
             ],
-        ], 200);
+        ], 200));
     }
 
     /**

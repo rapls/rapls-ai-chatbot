@@ -1056,7 +1056,11 @@ class WPAIC_Admin {
                 wp_send_json_error(__('Invalid API key.', 'rapls-ai-chatbot'));
             }
         } catch (Exception $e) {
-            wp_send_json_error(__('Error: ', 'rapls-ai-chatbot') . $e->getMessage());
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC ajax_test_api: ' . $e->getMessage());
+            }
+            wp_send_json_error(__('API request failed. Please check your API key and try again.', 'rapls-ai-chatbot'));
         }
     }
 
@@ -1668,7 +1672,7 @@ class WPAIC_Admin {
                     UPLOAD_ERR_NO_TMP_DIR => __('Missing temporary folder', 'rapls-ai-chatbot'),
                     UPLOAD_ERR_CANT_WRITE => __('Failed to write to disk', 'rapls-ai-chatbot'),
                 ];
-                $error_msg = $upload_errors[$file['error']] ?? __('Upload error: ', 'rapls-ai-chatbot') . $file['error'];
+                $error_msg = $upload_errors[$file['error']] ?? __('Upload failed due to a server error.', 'rapls-ai-chatbot');
                 wp_send_json_error($error_msg);
             }
 
@@ -1690,7 +1694,19 @@ class WPAIC_Admin {
             $result = WPAIC_Knowledge::import_from_file($file, $category);
 
             if (is_wp_error($result)) {
-                wp_send_json_error($result->get_error_message());
+                // Return the error code (safe, fixed string) rather than potentially dynamic message
+                $safe_messages = [
+                    'invalid_file_type' => __('Invalid file type. Please upload a CSV or JSON file.', 'rapls-ai-chatbot'),
+                    'empty_file'        => __('The uploaded file is empty.', 'rapls-ai-chatbot'),
+                    'parse_error'       => __('Could not parse the file. Please check the format.', 'rapls-ai-chatbot'),
+                ];
+                $code = $result->get_error_code();
+                $msg = $safe_messages[$code] ?? __('Import failed. Please check the file format and try again.', 'rapls-ai-chatbot');
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log('WPAIC import error [' . $code . ']: ' . $result->get_error_message());
+                }
+                wp_send_json_error($msg);
             }
 
             if (empty($result) || !is_array($result)) {
