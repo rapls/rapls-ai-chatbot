@@ -26,6 +26,24 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Build a "silent success" response for bot-detected requests.
+     * Returns HTTP 200 with {'success': true} so bots learn nothing,
+     * but adds an X-WPAIC-Dropped header (reason) when WP_DEBUG is on
+     * or the current user has manage_options — allowing admins / support
+     * to diagnose false positives from DevTools without exposing info to attackers.
+     *
+     * @param string $reason Short reason code (e.g. 'honeypot', 'timing').
+     * @return WP_REST_Response
+     */
+    private function silent_success(string $reason): WP_REST_Response {
+        $response = new WP_REST_Response(['success' => true], 200);
+        if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can('manage_options')) {
+            $response->header('X-WPAIC-Dropped', $reason);
+        }
+        return $response;
+    }
+
+    /**
      * Ensure no-cache headers on public GET routes regardless of response status.
      * Hooked to rest_post_dispatch so ALL code paths (success, error, exception) are covered.
      *
@@ -1623,6 +1641,10 @@ class WPAIC_REST_Controller {
 
         $key = 'wpaic_bot_drop_' . $type;
 
+        // future_ts events are rare (only client-clock-ahead) — always count exactly.
+        // honeypot/timing can spike under bot attack — sample 1-in-10 to limit DB writes.
+        $is_future_ts = strpos($type, 'future_ts_') === 0;
+
         // Prefer object cache (Redis/Memcached) to avoid wp_options DB writes under attack.
         if (wp_using_ext_object_cache()) {
             $count = (int) wp_cache_get($key, 'wpaic_bot');
@@ -1630,7 +1652,8 @@ class WPAIC_REST_Controller {
         } else {
             // Sample 1-in-10 to reduce DB writes when under bot attack.
             // Counter value is multiplied by 10 when displayed for approximate total.
-            if (wp_rand(1, 10) !== 1) {
+            // Exception: future_ts is always counted exactly (rare, needs accurate diagnostics).
+            if (!$is_future_ts && wp_rand(1, 10) !== 1) {
                 return;
             }
             $count = (int) get_transient($key);
@@ -1709,7 +1732,7 @@ class WPAIC_REST_Controller {
                 $host = preg_replace('/:\d+$/', '', $host);
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC: Port stripped from allowed origin host. Use hostname only (no :port).');
+                    error_log('WPAIC: Port stripped from allowed origin host — port is ignored by design (Origin/Referer matching uses hostname only). Use hostname without :port in wpaic_allowed_origins filter.');
                 }
             }
             if ($host !== '') {
@@ -1854,7 +1877,7 @@ class WPAIC_REST_Controller {
         $hp = $request->get_param('wpaic_hp');
         if (!empty($hp)) {
             $this->increment_bot_counter('honeypot_' . $rate_key);
-            return new WP_REST_Response(['success' => true], 200); // Silent success
+            return $this->silent_success('honeypot');
         }
 
         // 4. Timing check: reject if submitted faster than 5 seconds (bot speed).
@@ -1868,7 +1891,7 @@ class WPAIC_REST_Controller {
             $this->increment_bot_counter('future_ts_' . $rate_key);
         } elseif ($form_ts > 0 && ($now - $form_ts) < 5) {
             $this->increment_bot_counter('timing_' . $rate_key);
-            return new WP_REST_Response(['success' => true], 200); // Silent success
+            return $this->silent_success('timing');
         }
 
         // When _ts is missing (JS disabled/delayed) and captcha is required, reject.

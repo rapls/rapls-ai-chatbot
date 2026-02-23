@@ -1001,13 +1001,16 @@ if (!defined('ABSPATH')) {
                                 $bcount = $use_cache
                                     ? (int) wp_cache_get($tkey, 'wpaic_bot')
                                     : (int) get_transient($tkey);
-                                // Without external cache, counter is sampled 1-in-10; approximate total
-                                if (!$use_cache && $bcount > 0) {
+                                // future_ts counters are always exact; others are sampled 1-in-10
+                                $is_future_ts = strpos($bkey, 'future_ts_') === 0;
+                                $is_sampled = (!$use_cache && !$is_future_ts);
+                                if ($is_sampled && $bcount > 0) {
                                     $bcount *= 10;
                                 }
                                 if ($bcount > 0) {
                                     $has_detections = true;
-                                    echo '<span style="margin-right:16px;">' . esc_html($blabel) . ': <strong>' . esc_html($bcount) . '</strong></span>';
+                                    $suffix = $is_sampled ? ' ' . esc_html__('(approx)', 'rapls-ai-chatbot') : '';
+                                    echo '<span style="margin-right:16px;">' . esc_html($blabel) . ': <strong>' . esc_html($bcount) . '</strong>' . $suffix . '</span>';
                                 }
                             }
                             if (!$has_detections) {
