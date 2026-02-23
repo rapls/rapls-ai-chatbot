@@ -922,6 +922,14 @@ if (!defined('ABSPATH')) {
                             </label>
                             <p class="description"><?php esc_html_e('Enable only if your site is behind Cloudflare. Uses Cloudflare\'s header to detect the real visitor IP for rate limiting.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description" style="color: #d63638;"><strong><?php esc_html_e('Security warning: Only enable this if ALL traffic to your server passes through Cloudflare. If your server is directly accessible (bypassing Cloudflare), attackers can forge this header to bypass rate limiting and IP blocking.', 'rapls-ai-chatbot'); ?></strong></p>
+                            <br>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[trust_proxy_ip]" value="1"
+                                    <?php checked($settings['trust_proxy_ip'] ?? false); ?>>
+                                <?php esc_html_e('Trust reverse proxy X-Forwarded-For header', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Enable if your site is behind a reverse proxy (Nginx, AWS ALB, etc.) that sets X-Forwarded-For. Uses the first public IP from the header for rate limiting.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description" style="color: #d63638;"><strong><?php esc_html_e('Security warning: Only enable this if ALL traffic passes through your trusted proxy. Otherwise attackers can forge this header.', 'rapls-ai-chatbot'); ?></strong></p>
                         </td>
                     </tr>
                     <tr>

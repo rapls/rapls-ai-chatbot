@@ -388,6 +388,8 @@ class WPAIC_Admin {
 
         // Cloudflare IP trust
         $sanitized['trust_cloudflare_ip'] = !empty($input['trust_cloudflare_ip']);
+        // Reverse proxy X-Forwarded-For trust (Nginx, ALB, etc.)
+        $sanitized['trust_proxy_ip'] = !empty($input['trust_proxy_ip']);
 
         // reCAPTCHA failure mode
         $sanitized['recaptcha_fail_mode'] = in_array($input['recaptcha_fail_mode'] ?? '', ['open', 'closed'], true)

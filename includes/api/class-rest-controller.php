@@ -1180,6 +1180,20 @@ class WPAIC_REST_Controller {
             }
         }
 
+        // Trust reverse proxy X-Forwarded-For only when explicitly enabled (Nginx, ALB, etc.)
+        if (!empty($settings['trust_proxy_ip'])) {
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                // Use the leftmost (client) IP only; ignore private/reserved IPs
+                $forwarded = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
+                $ips = array_map('trim', explode(',', $forwarded));
+                foreach ($ips as $candidate) {
+                    if (filter_var($candidate, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+                        return $candidate;
+                    }
+                }
+            }
+        }
+
         // Default: use REMOTE_ADDR (cannot be spoofed by client)
         $ip = sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? ''));
 
@@ -1440,6 +1454,18 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Increment a bot detection counter (transient-based, 1-hour window).
+     * Used by guard_public_post() to track honeypot/timing drops for admin visibility.
+     *
+     * @param string $type Detection type ('honeypot', 'timing').
+     */
+    private function increment_bot_counter(string $type): void {
+        $key = 'wpaic_bot_drop_' . $type;
+        $count = (int) get_transient($key);
+        set_transient($key, $count + 1, HOUR_IN_SECONDS);
+    }
+
+    /**
      * Check that a public POST request originates from the same site.
      * Compares Origin or Referer header host against allowed hosts (home_url, site_url).
      * Not bulletproof (headers can be spoofed) but raises the bar for casual abuse.
@@ -1453,7 +1479,7 @@ class WPAIC_REST_Controller {
      *
      * @return true|string|WP_REST_Response
      */
-    private function check_same_origin() {
+    protected function check_same_origin() {
         $home_host = wp_parse_url(home_url(), PHP_URL_HOST);
         $site_host = wp_parse_url(site_url(), PHP_URL_HOST);
 
@@ -1537,13 +1563,9 @@ class WPAIC_REST_Controller {
 
         // No Origin/Referer headers: allow only when other defenses compensate.
         // When captcha is required, the reCAPTCHA check below provides equivalent protection.
-        // Otherwise, log and allow to avoid blocking legitimate users behind proxies/extensions.
+        // Without captcha, rate limiting is the primary defense for headerless requests
+        // (blocking would reject legitimate users behind proxies/privacy extensions).
         $origin_ok = ($origin_result === true);
-
-        if (!$origin_ok && !$require_captcha) {
-            // No headers and no captcha — still allow but rate limit will catch abuse
-            // (blocking here would reject legitimate users with strict privacy settings)
-        }
 
         // 2. Public rate limit
         $rate_check = $this->check_public_rate_limit($rate_key, $rate_limit, $rate_window);
@@ -1555,13 +1577,15 @@ class WPAIC_REST_Controller {
         // Field name is unique to avoid collision with other plugins' forms.
         $hp = $request->get_param('wpaic_hp');
         if (!empty($hp)) {
+            $this->increment_bot_counter('honeypot');
             return new WP_REST_Response(['success' => true], 200); // Silent success
         }
 
         // 4. Timing check: reject if submitted faster than 5 seconds (bot speed).
-        // Uses server Unix timestamp sent by JS; tolerant of minor clock drift.
+        // _ts is a client-side Unix timestamp set by JS when the form renders.
         $form_ts = (int) $request->get_param('_ts');
         if ($form_ts > 0 && (time() - $form_ts) < 5) {
+            $this->increment_bot_counter('timing');
             return new WP_REST_Response(['success' => true], 200); // Silent success
         }
 
