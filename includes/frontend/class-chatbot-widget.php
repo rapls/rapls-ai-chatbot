@@ -84,8 +84,9 @@ class WPAIC_Chatbot_Widget {
         $recaptcha_use_existing = !empty($settings['recaptcha_use_existing']);
 
         if ($recaptcha_enabled && !empty($recaptcha_site_key) && !$recaptcha_use_existing) {
-            // Check if reCAPTCHA is already loaded
-            if (!wp_script_is('google-recaptcha', 'enqueued') && !wp_script_is('google-recaptcha', 'registered')) {
+            // Check if reCAPTCHA is already loaded (by us or another plugin)
+            if (!wp_script_is('wpaic-recaptcha', 'enqueued') &&
+                !wp_script_is('google-recaptcha', 'enqueued') && !wp_script_is('google-recaptcha', 'registered')) {
                 wp_enqueue_script(
                     'wpaic-recaptcha',
                     'https://www.google.com/recaptcha/api.js?render=' . esc_attr($recaptcha_site_key),

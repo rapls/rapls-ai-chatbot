@@ -16,6 +16,7 @@ class WPAIC_Lead {
         global $wpdb;
         return $wpdb->prefix . 'aichat_leads';
     }
+    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Check if leads table exists
@@ -40,7 +41,7 @@ class WPAIC_Lead {
         $table = self::get_table_name();
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE IF NOT EXISTS {$table} (
+        $sql = "CREATE TABLE IF NOT EXISTS `{$table}` (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             conversation_id BIGINT(20) UNSIGNED NOT NULL,
             name VARCHAR(255) DEFAULT NULL,
@@ -112,7 +113,7 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $lead = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $id),
+            $wpdb->prepare("SELECT * FROM `{$table}` WHERE id = %d", $id),
             ARRAY_A
         );
 
@@ -146,7 +147,7 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $lead = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM {$table} WHERE conversation_id = %d", $conversation_id),
+            $wpdb->prepare("SELECT * FROM `{$table}` WHERE conversation_id = %d", $conversation_id),
             ARRAY_A
         );
 
@@ -175,7 +176,7 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $lead = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM {$table} WHERE email = %s ORDER BY created_at DESC LIMIT 1", $email),
+            $wpdb->prepare("SELECT * FROM `{$table}` WHERE email = %s ORDER BY created_at DESC LIMIT 1", $email),
             ARRAY_A
         );
 
@@ -245,7 +246,7 @@ class WPAIC_Lead {
         $offset = ($args['page'] - 1) * $args['per_page'];
 
         // Build query - table name, orderby, and order are validated/sanitized above
-        $query = "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
+        $query = "SELECT * FROM `{$table}` WHERE {$where_sql} ORDER BY {$orderby} {$order} LIMIT %d OFFSET %d";
         $where_values[] = $args['per_page'];
         $where_values[] = $offset;
 
@@ -299,7 +300,7 @@ class WPAIC_Lead {
 
         $where_sql = implode(' AND ', $where_clauses);
 
-        $query = "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}";
+        $query = "SELECT COUNT(*) FROM `{$table}` WHERE {$where_sql}";
 
         if (!empty($where_values)) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -325,17 +326,17 @@ class WPAIC_Lead {
             case 'today':
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 return (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$table} WHERE DATE(created_at) = CURDATE()"
+                    "SELECT COUNT(*) FROM `{$table}` WHERE DATE(created_at) = CURDATE()"
                 );
             case 'week':
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 return (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+                    "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
                 );
             case 'month':
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 return (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
+                    "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
                 );
             default:
                 return 0;

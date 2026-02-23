@@ -128,7 +128,7 @@ $is_pro = $pro_features->is_pro();
                         <td>
                             <input type="file" id="knowledge-file" name="file" accept=".txt,.csv,.md">
                             <p class="description"><?php esc_html_e('Supported formats: TXT, CSV, MD (max 5MB)', 'rapls-ai-chatbot'); ?></p>
-                            <p class="description"><?php esc_html_e('CSV files must be UTF-8 encoded. If exporting from Excel, save as "CSV UTF-8 (Comma delimited) (*.csv)".', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><?php esc_html_e('CSV files must be UTF-8 encoded. If exporting from Excel, save as "CSV UTF-8 (Comma delimited) (*.csv)". Shift_JIS and CP932 (Japanese Windows) are also supported when available.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

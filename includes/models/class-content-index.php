@@ -16,6 +16,7 @@ class WPAIC_Content_Index {
         global $wpdb;
         return $wpdb->prefix . 'aichat_index';
     }
+    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Create index
@@ -47,7 +48,7 @@ class WPAIC_Content_Index {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE post_id = %d ORDER BY chunk_index ASC",
+            "SELECT * FROM `{$table}` WHERE post_id = %d ORDER BY chunk_index ASC",
             $post_id
         ), ARRAY_A);
     }
@@ -72,7 +73,7 @@ class WPAIC_Content_Index {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $exists = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE post_id = %d AND content_hash = %s",
+            "SELECT COUNT(*) FROM `{$table}` WHERE post_id = %d AND content_hash = %s",
             $post_id,
             $content_hash
         ));
@@ -88,7 +89,7 @@ class WPAIC_Content_Index {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->get_col("SELECT DISTINCT post_id FROM {$table}");
+        return $wpdb->get_col("SELECT DISTINCT post_id FROM `{$table}`");
     }
 
     /**
@@ -99,7 +100,7 @@ class WPAIC_Content_Index {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var("SELECT COUNT(DISTINCT post_id) FROM {$table}");
+        return (int) $wpdb->get_var("SELECT COUNT(DISTINCT post_id) FROM `{$table}`");
     }
 
     /**
@@ -110,11 +111,11 @@ class WPAIC_Content_Index {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $result = $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
+        $result = $wpdb->query("TRUNCATE TABLE `" . esc_sql($table) . "`");
         if ($result === false) {
             // Fallback: TRUNCATE may fail due to DB permissions or configuration
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->query("DELETE FROM " . esc_sql($table));
+            $result = $wpdb->query("DELETE FROM `" . esc_sql($table) . "`");
         }
         return $result;
     }
@@ -154,7 +155,7 @@ class WPAIC_Content_Index {
         $params[] = $offset;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, WHERE, and ORDER BY are safe internal values
-        $sql = "SELECT * FROM {$table} WHERE {$where} ORDER BY {$orderby_col} {$order} LIMIT %d OFFSET %d";
+        $sql = "SELECT * FROM `{$table}` WHERE {$where} ORDER BY {$orderby_col} {$order} LIMIT %d OFFSET %d";
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
@@ -169,7 +170,7 @@ class WPAIC_Content_Index {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $results = $wpdb->get_results(
-            "SELECT post_type, COUNT(DISTINCT post_id) as count FROM {$table} GROUP BY post_type ORDER BY count DESC",
+            "SELECT post_type, COUNT(DISTINCT post_id) as count FROM `{$table}` GROUP BY post_type ORDER BY count DESC",
             ARRAY_A
         );
 

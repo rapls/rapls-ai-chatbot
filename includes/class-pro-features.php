@@ -90,7 +90,7 @@ class WPAIC_Pro_Features {
         $month_start = wp_date('Y-m-01 00:00:00');
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $db_count = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE role = 'assistant' AND created_at >= %s",
+            "SELECT COUNT(*) FROM `{$table}` WHERE role = 'assistant' AND created_at >= %s",
             $month_start
         ));
         // Include messages sent while save_history was OFF (same TZ key)

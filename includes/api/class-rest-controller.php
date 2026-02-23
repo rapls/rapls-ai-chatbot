@@ -877,6 +877,15 @@ class WPAIC_REST_Controller {
                 ], 500);
             }
 
+            // Model not found / deprecated — admin needs to update model selection
+            $code = $e->getCode();
+            if ($code === 404 || stripos($error_message, 'not found') !== false || stripos($error_message, 'deprecated') !== false) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('The AI model is currently unavailable. Please contact the site administrator.', 'rapls-ai-chatbot'),
+                ], 500);
+            }
+
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot'),
@@ -2400,7 +2409,7 @@ class WPAIC_REST_Controller {
 
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $kb_titles = $wpdb->get_col($wpdb->prepare(
-                    "SELECT title FROM {$kb_table}
+                    "SELECT title FROM `{$kb_table}`
                      WHERE is_active = 1 AND status = 'published'
                      AND title LIKE %s
                      ORDER BY priority DESC
@@ -2426,7 +2435,7 @@ class WPAIC_REST_Controller {
 
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                     $past_questions = $wpdb->get_col($wpdb->prepare(
-                        "SELECT DISTINCT content FROM {$msg_table}
+                        "SELECT DISTINCT content FROM `{$msg_table}`
                          WHERE role = 'user'
                          AND conversation_id = %d
                          AND content LIKE %s
@@ -2615,7 +2624,17 @@ class WPAIC_REST_Controller {
             set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
         }
 
-        // Verify reCAPTCHA if enabled
+        // Offline messages require reCAPTCHA to be configured to prevent spam abuse.
+        // If reCAPTCHA is not enabled, reject with guidance for the admin.
+        $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
+        if (!$recaptcha_enabled) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Offline messages require reCAPTCHA to be enabled. Please configure reCAPTCHA in the plugin settings.', 'rapls-ai-chatbot'),
+            ], 403);
+        }
+
+        // Verify reCAPTCHA token
         $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
         $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'offline');
         if (is_wp_error($recaptcha_result)) {

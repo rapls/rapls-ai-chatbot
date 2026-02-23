@@ -16,6 +16,7 @@ class WPAIC_Conversation {
         global $wpdb;
         return $wpdb->prefix . 'aichat_conversations';
     }
+    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Get or create conversation by session ID
@@ -26,7 +27,7 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $conversation = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE session_id = %s AND status = 'active'",
+            "SELECT * FROM `{$table}` WHERE session_id = %s AND status = 'active'",
             $session_id
         ), ARRAY_A);
 
@@ -72,7 +73,7 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE id = %d",
+            "SELECT * FROM `{$table}` WHERE id = %d",
             $id
         ), ARRAY_A);
     }
@@ -86,7 +87,7 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE session_id = %s AND status = 'active' ORDER BY created_at DESC LIMIT 1",
+            "SELECT * FROM `{$table}` WHERE session_id = %s AND status = 'active' ORDER BY created_at DESC LIMIT 1",
             $session_id
         ), ARRAY_A);
     }
@@ -138,7 +139,7 @@ class WPAIC_Conversation {
         $params[] = $offset;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, WHERE and ORDER BY are safe internal values
-        $sql = "SELECT * FROM {$table} WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
+        $sql = "SELECT * FROM `{$table}` WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
@@ -154,13 +155,13 @@ class WPAIC_Conversation {
         if ($status) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             return (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE status = %s",
+                "SELECT COUNT(*) FROM `{$table}` WHERE status = %s",
                 $status
             ));
         }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}`");
     }
 
     /**
@@ -173,7 +174,7 @@ class WPAIC_Conversation {
         // Use MySQL CURDATE() to match CURRENT_TIMESTAMP stored in created_at (same TZ)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$table} WHERE DATE(created_at) = CURDATE()"
+            "SELECT COUNT(*) FROM `{$table}` WHERE DATE(created_at) = CURDATE()"
         );
     }
 
@@ -243,11 +244,11 @@ class WPAIC_Conversation {
 
         // Delete all conversations
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $result = $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
+        $result = $wpdb->query("TRUNCATE TABLE `" . esc_sql($table) . "`");
         if ($result === false) {
             // Fallback: TRUNCATE may fail due to DB permissions or configuration
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->query("DELETE FROM " . esc_sql($table));
+            $result = $wpdb->query("DELETE FROM `" . esc_sql($table) . "`");
         }
         return $result;
     }
@@ -283,7 +284,7 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query($wpdb->prepare(
-            "UPDATE {$table} SET converted_at = NOW(), conversion_goal = %s WHERE session_id = %s AND converted_at IS NULL",
+            "UPDATE `{$table}` SET converted_at = NOW(), conversion_goal = %s WHERE session_id = %s AND converted_at IS NULL",
             $goal,
             $session_id
         ));
@@ -304,14 +305,14 @@ class WPAIC_Conversation {
         // Total conversations in period
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $total = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
+            "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
             $days
         ));
 
         // Converted conversations
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $converted = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE converted_at IS NOT NULL AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
+            "SELECT COUNT(*) FROM `{$table}` WHERE converted_at IS NOT NULL AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
             $days
         ));
 
@@ -322,7 +323,7 @@ class WPAIC_Conversation {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $by_goal = $wpdb->get_results($wpdb->prepare(
             "SELECT conversion_goal, COUNT(*) as count
-            FROM {$table}
+            FROM `{$table}`
             WHERE converted_at IS NOT NULL AND conversion_goal != '' AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
             GROUP BY conversion_goal
             ORDER BY count DESC",
@@ -333,7 +334,7 @@ class WPAIC_Conversation {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $daily = $wpdb->get_results($wpdb->prepare(
             "SELECT DATE(converted_at) as date, COUNT(*) as count
-            FROM {$table}
+            FROM `{$table}`
             WHERE converted_at IS NOT NULL AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
             GROUP BY DATE(converted_at)
             ORDER BY date",

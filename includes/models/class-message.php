@@ -16,6 +16,7 @@ class WPAIC_Message {
         global $wpdb;
         return $wpdb->prefix . 'aichat_messages';
     }
+    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Create message
@@ -55,7 +56,7 @@ class WPAIC_Message {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE id = %d",
+            "SELECT * FROM `{$table}` WHERE id = %d",
             $id
         ), ARRAY_A);
     }
@@ -69,7 +70,7 @@ class WPAIC_Message {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE conversation_id = %d ORDER BY created_at ASC LIMIT %d",
+            "SELECT * FROM `{$table}` WHERE conversation_id = %d ORDER BY created_at ASC LIMIT %d",
             $conversation_id,
             $limit
         ), ARRAY_A);
@@ -85,7 +86,7 @@ class WPAIC_Message {
         // Get latest messages (fetch in reverse order and reorder)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $messages = $wpdb->get_results($wpdb->prepare(
-            "SELECT role, content FROM {$table}
+            "SELECT role, content FROM `{$table}`
              WHERE conversation_id = %d AND role IN ('user', 'assistant')
              ORDER BY created_at DESC LIMIT %d",
             $conversation_id,
@@ -104,7 +105,7 @@ class WPAIC_Message {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE conversation_id = %d",
+            "SELECT COUNT(*) FROM `{$table}` WHERE conversation_id = %d",
             $conversation_id
         ));
     }
@@ -119,7 +120,7 @@ class WPAIC_Message {
         // Use MySQL CURDATE() to match CURRENT_TIMESTAMP stored in created_at (same TZ)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$table} WHERE DATE(created_at) = CURDATE()"
+            "SELECT COUNT(*) FROM `{$table}` WHERE DATE(created_at) = CURDATE()"
         );
     }
 
@@ -132,7 +133,7 @@ class WPAIC_Message {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT SUM(tokens_used) FROM {$table} WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
+            "SELECT SUM(tokens_used) FROM `{$table}` WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
             $days
         ));
     }
@@ -160,11 +161,11 @@ class WPAIC_Message {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $result = $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
+        $result = $wpdb->query("TRUNCATE TABLE `" . esc_sql($table) . "`");
         if ($result === false) {
             // Fallback: TRUNCATE may fail due to DB permissions or configuration
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->query("DELETE FROM " . esc_sql($table));
+            $result = $wpdb->query("DELETE FROM `" . esc_sql($table) . "`");
         }
         return $result;
     }
@@ -214,7 +215,7 @@ class WPAIC_Message {
                 COUNT(CASE WHEN feedback = 1 THEN 1 END) as positive,
                 COUNT(CASE WHEN feedback = -1 THEN 1 END) as negative,
                 COUNT(CASE WHEN feedback IS NOT NULL AND feedback != 0 THEN 1 END) as total
-            FROM {$table}
+            FROM `{$table}`
             WHERE role = 'assistant'
             AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
             $days
@@ -246,8 +247,8 @@ class WPAIC_Message {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare(
             "SELECT m.*, c.page_url
-            FROM {$table} m
-            LEFT JOIN {$conv_table} c ON m.conversation_id = c.id
+            FROM `{$table}` m
+            LEFT JOIN `{$conv_table}` c ON m.conversation_id = c.id
             WHERE m.feedback = -1 AND m.role = 'assistant'
             ORDER BY m.created_at DESC
             LIMIT %d",
@@ -269,7 +270,7 @@ class WPAIC_Message {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $negative_messages = $wpdb->get_results($wpdb->prepare(
             "SELECT m.id, m.conversation_id, m.content as answer, m.created_at
-            FROM {$table} m
+            FROM `{$table}` m
             WHERE m.feedback = -1 AND m.role = 'assistant'
             ORDER BY m.created_at DESC
             LIMIT %d",
@@ -281,7 +282,7 @@ class WPAIC_Message {
             // Get the user message that preceded this assistant message
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $user_msg = $wpdb->get_row($wpdb->prepare(
-                "SELECT content FROM {$table}
+                "SELECT content FROM `{$table}`
                 WHERE conversation_id = %d AND role = 'user' AND id < %d
                 ORDER BY id DESC LIMIT 1",
                 $msg['conversation_id'],
@@ -317,7 +318,7 @@ class WPAIC_Message {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $positive_messages = $wpdb->get_results($wpdb->prepare(
             "SELECT m.id, m.conversation_id, m.content as answer, m.created_at
-            FROM {$table} m
+            FROM `{$table}` m
             WHERE m.feedback = 1 AND m.role = 'assistant'
             ORDER BY m.created_at DESC
             LIMIT %d",
@@ -329,7 +330,7 @@ class WPAIC_Message {
             // Get the user message that preceded this assistant message
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $user_msg = $wpdb->get_row($wpdb->prepare(
-                "SELECT content FROM {$table}
+                "SELECT content FROM `{$table}`
                 WHERE conversation_id = %d AND role = 'user' AND id < %d
                 ORDER BY id DESC LIMIT 1",
                 $msg['conversation_id'],
@@ -366,7 +367,7 @@ class WPAIC_Message {
         // positive or neutral feedback, and within TTL
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table}
+            "SELECT * FROM `{$table}`
             WHERE cache_hash = %s
               AND role = 'assistant'
               AND (feedback IS NULL OR feedback >= 0)
@@ -431,7 +432,7 @@ class WPAIC_Message {
         // Count total assistant messages with cache_hash (cacheable responses)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $total_cached = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table}
+            "SELECT COUNT(*) FROM `{$table}`
             WHERE role = 'assistant'
               AND cache_hash IS NOT NULL
               AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
@@ -441,7 +442,7 @@ class WPAIC_Message {
         // Count cache hits (messages flagged as cache_hit)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $cache_hits = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table}
+            "SELECT COUNT(*) FROM `{$table}`
             WHERE role = 'assistant'
               AND cache_hit = 1
               AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
@@ -451,7 +452,7 @@ class WPAIC_Message {
         // Total AI calls (non-cache-hit assistant messages)
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $total_ai_calls = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table}
+            "SELECT COUNT(*) FROM `{$table}`
             WHERE role = 'assistant'
               AND (cache_hit IS NULL OR cache_hit = 0)
               AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
@@ -461,7 +462,7 @@ class WPAIC_Message {
         // Estimated saved tokens from cache hits
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $saved_tokens = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COALESCE(SUM(tokens_used), 0) FROM {$table}
+            "SELECT COALESCE(SUM(tokens_used), 0) FROM `{$table}`
             WHERE role = 'assistant'
               AND cache_hit = 1
               AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
@@ -491,7 +492,7 @@ class WPAIC_Message {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $wpdb->query("UPDATE {$table} SET cache_hash = NULL WHERE cache_hash IS NOT NULL");
+        $wpdb->query("UPDATE `{$table}` SET cache_hash = NULL WHERE cache_hash IS NOT NULL");
 
         return $wpdb->rows_affected;
     }

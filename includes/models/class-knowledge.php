@@ -16,6 +16,7 @@ class WPAIC_Knowledge {
         global $wpdb;
         return $wpdb->prefix . 'aichat_knowledge';
     }
+    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Create table
@@ -25,7 +26,7 @@ class WPAIC_Knowledge {
         $table = self::get_table_name();
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE IF NOT EXISTS {$table} (
+        $sql = "CREATE TABLE IF NOT EXISTS `{$table}` (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             title VARCHAR(255) NOT NULL,
             content LONGTEXT NOT NULL,
@@ -125,7 +126,7 @@ class WPAIC_Knowledge {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$table} WHERE id = %d",
+            "SELECT * FROM `{$table}` WHERE id = %d",
             $id
         ), ARRAY_A);
     }
@@ -191,7 +192,7 @@ class WPAIC_Knowledge {
         $params[] = $offset;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, WHERE and ORDER BY are safe internal values
-        $sql = "SELECT * FROM {$table} WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
+        $sql = "SELECT * FROM `{$table}` WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
@@ -230,13 +231,13 @@ class WPAIC_Knowledge {
         if (!empty($params)) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             return (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$table} WHERE {$where}",
+                "SELECT COUNT(*) FROM `{$table}` WHERE {$where}",
                 ...$params
             ));
         }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}`");
     }
 
     /**
@@ -253,7 +254,7 @@ class WPAIC_Knowledge {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $results = $wpdb->get_results(
-            "SELECT id, title, content, category FROM {$table} WHERE type = 'template' AND is_active = 1 AND status = 'published' ORDER BY category, priority DESC, title",
+            "SELECT id, title, content, category FROM `{$table}` WHERE type = 'template' AND is_active = 1 AND status = 'published' ORDER BY category, priority DESC, title",
             ARRAY_A
         );
 
@@ -349,11 +350,11 @@ class WPAIC_Knowledge {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $result = $wpdb->query("TRUNCATE TABLE " . esc_sql($table));
+        $result = $wpdb->query("TRUNCATE TABLE `" . esc_sql($table) . "`");
         if ($result === false) {
             // Fallback: TRUNCATE may fail due to DB permissions or configuration
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->query("DELETE FROM " . esc_sql($table));
+            $result = $wpdb->query("DELETE FROM `" . esc_sql($table) . "`");
         }
         return $result;
     }
@@ -367,7 +368,7 @@ class WPAIC_Knowledge {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_col(
-            "SELECT DISTINCT category FROM {$table} WHERE category != '' ORDER BY category ASC"
+            "SELECT DISTINCT category FROM `{$table}` WHERE category != '' ORDER BY category ASC"
         );
     }
 
@@ -443,9 +444,21 @@ class WPAIC_Knowledge {
 
         // Convert to UTF-8 (only if mbstring extension is available)
         if (function_exists('mb_detect_encoding') && function_exists('mb_convert_encoding')) {
-            $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS', 'EUC-JP', 'ISO-8859-1']);
+            // CP932 (Windows-31J) is common in Japanese Excel exports
+            $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS', 'CP932', 'SJIS-win', 'EUC-JP', 'ISO-8859-1'], true);
             if ($encoding && $encoding !== 'UTF-8') {
-                $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+                $converted = mb_convert_encoding($content, 'UTF-8', $encoding);
+                if ($converted !== false) {
+                    $content = $converted;
+                }
+            }
+        } else {
+            // mbstring unavailable: warn if content looks non-UTF-8
+            if (!preg_match('//u', $content)) {
+                return new WP_Error(
+                    'encoding_error',
+                    __('The file does not appear to be UTF-8 encoded. Please save the file as UTF-8 (with BOM recommended for Excel) and try again.', 'rapls-ai-chatbot')
+                );
             }
         }
 
