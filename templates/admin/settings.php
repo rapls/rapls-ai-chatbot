@@ -984,12 +984,15 @@ if (!defined('ABSPATH')) {
                         <td>
                             <?php
                             $bot_types = [
-                                'honeypot_offl' => __('Honeypot (Offline)', 'rapls-ai-chatbot'),
-                                'timing_offl'   => __('Timing (Offline)', 'rapls-ai-chatbot'),
-                                'honeypot_pub'  => __('Honeypot (Chat)', 'rapls-ai-chatbot'),
-                                'timing_pub'    => __('Timing (Chat)', 'rapls-ai-chatbot'),
-                                'honeypot_lead' => __('Honeypot (Lead)', 'rapls-ai-chatbot'),
-                                'timing_lead'   => __('Timing (Lead)', 'rapls-ai-chatbot'),
+                                'honeypot_offl'  => __('Honeypot (Offline)', 'rapls-ai-chatbot'),
+                                'timing_offl'    => __('Timing (Offline)', 'rapls-ai-chatbot'),
+                                'future_ts_offl' => __('Future clock (Offline)', 'rapls-ai-chatbot'),
+                                'honeypot_pub'   => __('Honeypot (Chat)', 'rapls-ai-chatbot'),
+                                'timing_pub'     => __('Timing (Chat)', 'rapls-ai-chatbot'),
+                                'future_ts_pub'  => __('Future clock (Chat)', 'rapls-ai-chatbot'),
+                                'honeypot_lead'  => __('Honeypot (Lead)', 'rapls-ai-chatbot'),
+                                'timing_lead'    => __('Timing (Lead)', 'rapls-ai-chatbot'),
+                                'future_ts_lead' => __('Future clock (Lead)', 'rapls-ai-chatbot'),
                             ];
                             $has_detections = false;
                             $use_cache = wp_using_ext_object_cache();

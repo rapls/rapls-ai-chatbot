@@ -1601,9 +1601,9 @@ class WPAIC_REST_Controller {
      * Allowed bot counter types. Fixed set to prevent transient key proliferation under attack.
      */
     private static array $allowed_bot_types = [
-        'honeypot_offl', 'timing_offl',
-        'honeypot_pub', 'timing_pub',
-        'honeypot_lead', 'timing_lead',
+        'honeypot_offl', 'timing_offl', 'future_ts_offl',
+        'honeypot_pub', 'timing_pub', 'future_ts_pub',
+        'honeypot_lead', 'timing_lead', 'future_ts_lead',
     ];
 
     /**
@@ -1699,6 +1699,19 @@ class WPAIC_REST_Controller {
                 $host = $entry;
             }
             $host = strtolower(trim($host));
+            if ($host === '') {
+                continue;
+            }
+            // Strip port from hostname (e.g. "example.com:8443" → "example.com").
+            // Origin/Referer matching uses PHP_URL_HOST which excludes port,
+            // so a port-bearing entry would never match. Auto-strip and warn.
+            if (strpos($host, ':') !== false && !filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $host = preg_replace('/:\d+$/', '', $host);
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log('WPAIC: Port stripped from allowed origin host. Use hostname only (no :port).');
+                }
+            }
             if ($host !== '') {
                 $sanitized[] = $host;
             }
@@ -1824,8 +1837,9 @@ class WPAIC_REST_Controller {
 
         if (!$has_headers && !$allow_no_headers && !$require_captcha) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('Request blocked: missing Origin/Referer header. If you use a caching or JS optimization plugin, ensure it does not defer or block the chatbot scripts.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('Request blocked: missing Origin/Referer header. If you use a caching or JS optimization plugin, ensure it does not defer or block the chatbot scripts.', 'rapls-ai-chatbot'),
+                'error_code' => 'origin_headers_missing',
             ], 403);
         }
 
@@ -1845,8 +1859,14 @@ class WPAIC_REST_Controller {
 
         // 4. Timing check: reject if submitted faster than 5 seconds (bot speed).
         // _ts is a client-side Unix timestamp set by JS when the form renders.
+        // Future timestamps (client clock ahead of server) are excluded from timing
+        // rejection to avoid false positives on VM/corporate/NTP-broken environments.
         $form_ts = (int) $request->get_param('_ts');
-        if ($form_ts > 0 && (time() - $form_ts) < 5) {
+        $now = time();
+        if ($form_ts > $now) {
+            // Client clock is ahead — skip timing check, log for diagnostics
+            $this->increment_bot_counter('future_ts_' . $rate_key);
+        } elseif ($form_ts > 0 && ($now - $form_ts) < 5) {
             $this->increment_bot_counter('timing_' . $rate_key);
             return new WP_REST_Response(['success' => true], 200); // Silent success
         }
