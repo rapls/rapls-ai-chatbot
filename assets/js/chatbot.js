@@ -1345,7 +1345,7 @@
                 // Re-query button in case DOM was replaced (page builders / SPA)
                 var currentBtn = self.inputForm.querySelector('button[type="submit"]');
                 if (!currentBtn) {
-                    if (window.wpaicConfig && window.wpaicConfig.debug) {
+                    if (self.config && self.config.debug) {
                         console.debug('WPAIC: retry countdown cancelled — submit button removed from DOM');
                     }
                     self._retryTimerId = null;

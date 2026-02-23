@@ -19,7 +19,7 @@ class WPAIC_REST_Controller {
      * Prevents page caching plugins from caching dynamic per-user responses.
      */
     private function no_cache(WP_REST_Response $response): WP_REST_Response {
-        $response->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', '0');
         return $response;
@@ -577,30 +577,37 @@ class WPAIC_REST_Controller {
                 $cached_result['dedup_hit']   = true;
                 $cached_result['_server_now'] = $now;
 
-                // Log anomalous dedup hits: stale data, missing structure, or
-                // missing timestamps — any of these indicate object cache or
-                // transient layer misbehaviour.
-                if ($this->should_log_dedup()) {
-                    $dedup_data_arr = $cached_result['data'] ?? null;
-                    $saved_at       = is_array($dedup_data_arr) ? ($dedup_data_arr['_saved_at'] ?? 0) : 0;
-                    $log_reason     = '';
-                    if (!is_array($dedup_data_arr)) {
-                        $log_reason = 'malformed_data';
-                    } elseif ($saved_at <= 0) {
-                        $log_reason = 'missing_saved_at';
-                    } elseif (($now - $saved_at) >= 90) {
-                        $log_reason = 'stale_age';
+                // Detect anomalous dedup hits: malformed data, missing timestamps,
+                // or stale entries past transient TTL. malformed_data always logs
+                // (indicates corruption); other anomalies gated on should_log_dedup.
+                $dedup_data_arr = $cached_result['data'] ?? null;
+                $saved_at       = is_array($dedup_data_arr) ? ($dedup_data_arr['_saved_at'] ?? 0) : 0;
+                $log_reason     = '';
+                if (!is_array($dedup_data_arr)) {
+                    $log_reason = 'malformed_data';
+                } elseif ($saved_at <= 0) {
+                    $log_reason = 'missing_saved_at';
+                } elseif (($now - $saved_at) >= 90) {
+                    $log_reason = 'stale_age';
+                }
+                // malformed_data = corruption, always log; others = operational, gated.
+                $should_log = ($log_reason === 'malformed_data') || $this->should_log_dedup();
+                if (!empty($log_reason) && $should_log) {
+                    $log_extra = '';
+                    if ($log_reason === 'malformed_data') {
+                        $log_extra = sprintf(' | data_type=%s', gettype($dedup_data_arr));
+                    } elseif ($saved_at > 0) {
+                        $log_extra = sprintf(' | saved_at=%d | now=%d', $saved_at, $now);
                     }
-                    if (!empty($log_reason)) {
-                        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                        error_log(sprintf(
-                            'WPAIC dedup: anomaly=%s | key=%s | age=%s | object_cache=%s',
-                            $log_reason,
-                            substr($dedup_key, 0, 20),
-                            ($saved_at > 0) ? ($now - $saved_at) . 's' : 'n/a',
-                            wp_using_ext_object_cache() ? 'yes' : 'no'
-                        ));
-                    }
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log(sprintf(
+                        'WPAIC dedup: anomaly=%s | keyhash=%s | age=%s | object_cache=%s%s',
+                        $log_reason,
+                        substr($dedup_key, 12, 12),
+                        ($saved_at > 0) ? ($now - $saved_at) . 's' : 'n/a',
+                        wp_using_ext_object_cache() ? 'yes' : 'no',
+                        $log_extra
+                    ));
                 }
 
                 $dedup_response = new WP_REST_Response($cached_result, 200);
@@ -1087,8 +1094,8 @@ class WPAIC_REST_Controller {
                 if (!$stored && $this->should_log_dedup()) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
-                        'WPAIC dedup: set_transient failed | key=%s | size=%d | object_cache=%s',
-                        substr($dedup_key, 0, 20),
+                        'WPAIC dedup: set_transient failed | keyhash=%s | size=%d | object_cache=%s',
+                        substr($dedup_key, 12, 12),
                         $dedup_size,
                         wp_using_ext_object_cache() ? 'yes' : 'no'
                     ));

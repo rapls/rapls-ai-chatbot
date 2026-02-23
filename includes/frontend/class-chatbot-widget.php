@@ -138,6 +138,7 @@ class WPAIC_Chatbot_Widget {
             'conversion_goals'     => !empty($pro_features['conversion_tracking_enabled']) ? ($pro_features['conversion_goals'] ?? []) : [],
             'offline_message'      => $this->get_offline_config($pro_features),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
+            'debug'                => (defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
         ]);
     }
 
