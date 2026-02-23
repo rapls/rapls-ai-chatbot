@@ -26,16 +26,24 @@ class WPAIC_REST_Controller {
     }
 
     /**
-     * Append a value to an existing Vary header without overwriting.
-     * Merges with any existing Vary directives (e.g. Origin, Accept-Encoding)
-     * set by WordPress core, other plugins, or CDN layers.
+     * Append a comma-separated value to a response header without overwriting.
+     * Handles case-insensitive header key lookup and duplicate detection.
+     * Use for headers like Vary and Cache-Control that accumulate directives.
      *
      * @param WP_REST_Response $response REST response.
-     * @param string           $value    Vary directive to add (e.g. 'Cookie').
+     * @param string           $header   Header name (e.g. 'Vary', 'Cache-Control').
+     * @param string           $value    Directive to add (e.g. 'Cookie', 'no-store').
      */
-    private function append_vary(WP_REST_Response $response, string $value): void {
+    private function append_header_csv(WP_REST_Response $response, string $header, string $value): void {
+        // get_headers() key casing varies — normalize to case-insensitive lookup.
         $headers = $response->get_headers();
-        $existing = $headers['Vary'] ?? '';
+        $existing = '';
+        foreach ($headers as $k => $v) {
+            if (strcasecmp($k, $header) === 0) {
+                $existing = $v;
+                break;
+            }
+        }
         // Check if the value is already present (case-insensitive).
         $parts = array_filter(array_map('trim', explode(',', $existing)));
         foreach ($parts as $part) {
@@ -44,7 +52,7 @@ class WPAIC_REST_Controller {
             }
         }
         $parts[] = $value;
-        $response->header('Vary', implode(', ', $parts));
+        $response->header($header, implode(', ', $parts));
     }
 
     /**
@@ -66,7 +74,7 @@ class WPAIC_REST_Controller {
         // Critical when X-WPAIC-Dropped is present: without no-store, an admin's
         // response could be cached and served to general users, leaking the header.
         $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
-        $this->append_vary($response, 'Cookie');
+        $this->append_header_csv($response, 'Vary', 'Cookie');
         if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can('manage_options')) {
             $response->header('X-WPAIC-Dropped', $reason);
         }
@@ -106,7 +114,16 @@ class WPAIC_REST_Controller {
         }
 
         // WP_REST_Response and WP_HTTP_Response both have header().
-        if (is_object($result) && method_exists($result, 'header')) {
+        // Merge no-cache directives instead of overwriting to preserve existing
+        // directives (e.g. 'private') set by other plugins or CDN layers.
+        if ($result instanceof WP_REST_Response) {
+            foreach (['no-store', 'no-cache', 'must-revalidate', 'max-age=0'] as $directive) {
+                $this->append_header_csv($result, 'Cache-Control', $directive);
+            }
+            $result->header('Pragma', 'no-cache');
+            $result->header('Expires', '0');
+        } elseif (is_object($result) && method_exists($result, 'header')) {
+            // WP_HTTP_Response — no get_headers(), fall back to direct set.
             $result->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
             $result->header('Pragma', 'no-cache');
             $result->header('Expires', '0');
