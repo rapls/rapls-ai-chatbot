@@ -5,6 +5,28 @@
 (function() {
     'use strict';
 
+    /**
+     * WP Consent API integration.
+     * Returns true if consent is granted for the given category, or if no
+     * Consent API / CMP is active (backwards-compatible default).
+     * When wpAiChatbotConfig.consent_strict_mode is true, returns false
+     * when no Consent API is detected (GDPR-strict sites).
+     *
+     * @param {string} category Consent category (e.g. 'functional', 'statistics', 'marketing').
+     * @returns {boolean}
+     */
+    function wpaicHasConsent(category) {
+        if (typeof window.wp_has_consent === 'function') {
+            return window.wp_has_consent(category);
+        }
+        if (typeof window.wp_get_consent === 'function') {
+            return window.wp_get_consent(category) === 'allow';
+        }
+        // No Consent API present — respect strict mode setting.
+        var config = window.wpAiChatbotConfig || {};
+        return !config.consent_strict_mode;
+    }
+
     const WPAIChatbot = {
 
         // DOM要素
@@ -54,14 +76,21 @@
             this.bindLeadFormEvents();
             this.initOfflineForm();
             this.initConversionTracking();
+            this.listenForConsentChange();
             this.isInitialized = true;
         },
 
         /**
          * ユーザーIDを初期化（コンテキスト記憶用）
          * localStorageに保存してブラウザセッション間で永続化
+         * WP Consent API: functional/preferences 同意がない場合はセッション内のみのIDを使用
          */
         initUserId: function() {
+            if (!wpaicHasConsent('functional') && !wpaicHasConsent('preferences')) {
+                // No consent for persistent storage — use ephemeral session-only ID
+                this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                return;
+            }
             var storedUserId = localStorage.getItem('wpaic_user_id');
             if (storedUserId) {
                 this.userId = storedUserId;
@@ -1754,11 +1783,34 @@
         },
 
         /**
+         * Listen for WP Consent API consent changes.
+         * Re-initialize consent-gated features when user updates preferences.
+         */
+        listenForConsentChange: function() {
+            var self = this;
+            document.addEventListener('wp_listen_for_consent_change', function() {
+                // Re-evaluate: if functional consent is now granted and we have
+                // an ephemeral userId, persist it to localStorage.
+                if (wpaicHasConsent('functional') || wpaicHasConsent('preferences')) {
+                    if (self.userId && !localStorage.getItem('wpaic_user_id')) {
+                        localStorage.setItem('wpaic_user_id', self.userId);
+                    }
+                }
+                // Re-evaluate conversion tracking
+                self.initConversionTracking();
+            });
+        },
+
+        /**
          * Initialize conversion tracking
          */
         initConversionTracking: function() {
             var config = window.wpAiChatbotConfig || {};
             if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
+                return;
+            }
+            // WP Consent API: conversion tracking requires statistics or marketing consent
+            if (!wpaicHasConsent('statistics') && !wpaicHasConsent('marketing')) {
                 return;
             }
 

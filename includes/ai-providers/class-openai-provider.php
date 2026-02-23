@@ -160,15 +160,35 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         try {
             return call_user_func($primary, $messages, $options);
         } catch (Exception $e) {
+            // Decide whether to fallback based on error type:
+            // 1. Endpoint/model mismatch (400/404): model doesn't work on this API
+            // 2. Server/network errors (5xx, timeouts): transient failure, other API may work
+            // Never fallback on: auth (401), billing (402), rate limit (429), access (403)
+            // — those apply equally to both APIs and fallback would waste a request.
+            if ($e instanceof WPAIC_Quota_Exceeded_Exception) {
+                throw $e; // 429/402/quota — never retry
+            }
+
             $code = $e->getCode();
             $msg = $e->getMessage();
-            $is_endpoint_mismatch = ($code === 400 || $code === 404)
-                && (stripos($msg, 'not supported') !== false
-                    || stripos($msg, 'model_not_found') !== false
-                    || stripos($msg, 'not found') !== false
-                    || stripos($msg, 'invalid') !== false);
 
-            if (!$is_endpoint_mismatch) {
+            // Model/endpoint mismatch: tight matching to avoid false positives.
+            // "invalid" alone is too broad — catches param errors that aren't endpoint issues.
+            $is_endpoint_mismatch = ($code === 400 || $code === 404)
+                && (stripos($msg, 'model_not_found') !== false
+                    || stripos($msg, 'does not exist') !== false
+                    || stripos($msg, 'not supported') !== false);
+
+            // Transient server/network errors: the other API endpoint may be on a
+            // different backend and succeed. Communication errors from wp_remote_post
+            // have code 0. Server errors (5xx) are set by handle_api_error.
+            $is_transient = ($code === 0 && stripos($msg, 'API communication error') !== false)
+                || ($code >= 500 && $code < 600);
+
+            // Hard errors: never fallback (auth, access — both APIs share the same key)
+            $is_hard_error = ($code === 401 || $code === 403);
+
+            if ($is_hard_error || (!$is_endpoint_mismatch && !$is_transient)) {
                 throw $e;
             }
         }

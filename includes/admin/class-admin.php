@@ -246,7 +246,7 @@ class WPAIC_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'save_history', 'show_feedback_buttons', 'crawler_enabled'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -404,6 +404,9 @@ class WPAIC_Admin {
 
         // Uninstall settings
         $sanitized['delete_data_on_uninstall'] = !empty($input['delete_data_on_uninstall']);
+
+        // WP Consent API: strict mode (require Consent API for storage/tracking)
+        $sanitized['consent_strict_mode'] = !empty($input['consent_strict_mode']);
 
         // Rate limiting
         $sanitized['rate_limit'] = max(1, absint($input['rate_limit'] ?? ($existing['rate_limit'] ?? 20)));
@@ -2070,6 +2073,9 @@ class WPAIC_Admin {
             // History Settings
             'save_history'          => true,
             'retention_days'        => 90,
+
+            // Privacy / Consent
+            'consent_strict_mode'   => false,
 
             // Rate Limiting
             'rate_limit'            => 20,

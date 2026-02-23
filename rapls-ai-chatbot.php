@@ -173,6 +173,14 @@ function wpaic_run()
 wpaic_run();
 
 /**
+ * WP Consent API: declare that this plugin is compatible.
+ * When the WP Consent API plugin is active, this tells consent management
+ * plugins that we respect consent categories for localStorage and tracking.
+ */
+$wpaic_plugin_basename = plugin_basename(__FILE__);
+add_filter("wp_consent_api_registered_{$wpaic_plugin_basename}", '__return_true');
+
+/**
  * Modify plugin action links
  */
 function wpaic_plugin_action_links($actions)

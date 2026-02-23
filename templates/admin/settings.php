@@ -888,6 +888,19 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Consent Strict Mode', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[consent_strict_mode]" value="1"
+                                    <?php checked($settings['consent_strict_mode'] ?? false); ?>>
+                                <?php esc_html_e('Require WP Consent API for localStorage and conversion tracking (GDPR strict)', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When enabled, user ID persistence (localStorage) and conversion tracking are disabled unless a consent management plugin (WP Consent API) is active and the user has granted consent. When disabled, these features work as usual regardless of consent status.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Rate Limit', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
