@@ -173,11 +173,16 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $msg = $e->getMessage();
 
             // Model/endpoint mismatch: tight matching to avoid false positives.
-            // "invalid" alone is too broad — catches param errors that aren't endpoint issues.
+            // "not supported" alone is too broad — catches parameter errors that aren't
+            // endpoint issues. Require model/endpoint context for that phrase.
+            $has_model_context = stripos($msg, 'model') !== false
+                || stripos($msg, 'chat/completions') !== false
+                || stripos($msg, 'responses') !== false;
+
             $is_endpoint_mismatch = ($code === 400 || $code === 404)
                 && (stripos($msg, 'model_not_found') !== false
                     || stripos($msg, 'does not exist') !== false
-                    || stripos($msg, 'not supported') !== false);
+                    || (stripos($msg, 'not supported') !== false && $has_model_context));
 
             // Transient server/network errors: the other API endpoint may be on a
             // different backend and succeed. Communication errors from wp_remote_post
@@ -361,7 +366,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         // Authentication errors
         if ($response_code === 401 || $error_code === 'invalid_api_key') {
-            throw new Exception(esc_html__('OpenAI API key is invalid or has been revoked.', 'rapls-ai-chatbot'));
+            throw new Exception(esc_html__('OpenAI API key is invalid or has been revoked.', 'rapls-ai-chatbot'), 401);
         }
 
         // Quota/billing errors
@@ -395,7 +400,8 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Model access denied
         if ($response_code === 403) {
             throw new Exception(
-                sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model))
+                sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model)),
+                403
             );
         }
 
@@ -408,10 +414,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             throw $exception;
         }
 
-        // Server errors
+        // Server errors — pass HTTP code so send_with_fallback() can detect 5xx
         if ($response_code >= 500) {
             throw new Exception(
-                sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
+                sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code),
+                $response_code
             );
         }
 

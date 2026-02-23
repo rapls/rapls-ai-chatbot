@@ -313,6 +313,9 @@ if (!defined('ABSPATH')) {
                             <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_max_tokens" data-default="1000">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
+                            <p class="description">
+                                <?php esc_html_e('For GPT-5 and reasoning models, this value is automatically multiplied (default: x4, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the wpaic_gpt5_token_multiplier filter.', 'rapls-ai-chatbot'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>

@@ -27,6 +27,24 @@
         return !config.consent_strict_mode;
     }
 
+    /**
+     * Check if persistent storage (localStorage) is allowed by consent.
+     * Requires functional or preferences consent.
+     */
+    function wpaicStorageAllowed() {
+        return wpaicHasConsent('functional') || wpaicHasConsent('preferences');
+    }
+
+    // localStorage wrappers — gate reads/writes on consent, allow removal always
+    function wpaicLsGet(k) { return wpaicStorageAllowed() ? localStorage.getItem(k) : null; }
+    function wpaicLsSet(k, v) { if (wpaicStorageAllowed()) localStorage.setItem(k, v); }
+    function wpaicLsRemove(k) { localStorage.removeItem(k); }
+
+    // sessionStorage wrappers — session data also gated on functional consent
+    function wpaicSsGet(k) { return wpaicStorageAllowed() ? sessionStorage.getItem(k) : null; }
+    function wpaicSsSet(k, v) { if (wpaicStorageAllowed()) sessionStorage.setItem(k, v); }
+    function wpaicSsRemove(k) { sessionStorage.removeItem(k); }
+
     const WPAIChatbot = {
 
         // DOM要素
@@ -86,18 +104,13 @@
          * WP Consent API: functional/preferences 同意がない場合はセッション内のみのIDを使用
          */
         initUserId: function() {
-            if (!wpaicHasConsent('functional') && !wpaicHasConsent('preferences')) {
-                // No consent for persistent storage — use ephemeral session-only ID
-                this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                return;
-            }
-            var storedUserId = localStorage.getItem('wpaic_user_id');
+            var storedUserId = wpaicLsGet('wpaic_user_id');
             if (storedUserId) {
                 this.userId = storedUserId;
             } else {
                 // 新しいユーザーIDを生成
                 this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('wpaic_user_id', this.userId);
+                wpaicLsSet('wpaic_user_id', this.userId);
             }
         },
 
@@ -140,7 +153,7 @@
          * 保存されたウィンドウサイズを読み込み
          */
         loadWindowSize: function() {
-            var savedSize = localStorage.getItem('wpaic_window_size');
+            var savedSize = wpaicLsGet('wpaic_window_size');
             if (savedSize) {
                 try {
                     var size = JSON.parse(savedSize);
@@ -162,7 +175,7 @@
                 width: this.window.offsetWidth,
                 height: this.window.offsetHeight
             };
-            localStorage.setItem('wpaic_window_size', JSON.stringify(size));
+            wpaicLsSet('wpaic_window_size', JSON.stringify(size));
         },
 
         /**
@@ -330,7 +343,7 @@
             this.window.setAttribute('aria-hidden', 'true');
 
             // リサイズ状態をリセット
-            localStorage.removeItem('wpaic_window_size');
+            wpaicLsRemove('wpaic_window_size');
             this.window.style.width = '';
             this.window.style.height = '';
         },
@@ -355,8 +368,8 @@
             }
 
             // セッションバージョンチェック（sessionStorageを使用）
-            var storedVersion = sessionStorage.getItem('wpaic_session_version');
-            var storedSessionId = sessionStorage.getItem('wpaic_session');
+            var storedVersion = wpaicSsGet('wpaic_session_version');
+            var storedSessionId = wpaicSsGet('wpaic_session');
             var currentVersion = parseInt(this.config.session_version, 10) || 1;
 
             // セッションをクリアすべき条件:
@@ -374,8 +387,8 @@
             }
 
             // セッションストレージからセッションID取得（sessionStorage優先、localStorageフォールバック）
-            this.sessionId = sessionStorage.getItem('wpaic_session')
-                || localStorage.getItem('wpaic_session');
+            this.sessionId = wpaicSsGet('wpaic_session')
+                || wpaicLsGet('wpaic_session');
 
             var finishLoading = function() {
                 self.sessionLoading = false;
@@ -391,12 +404,12 @@
                 this.apiRequest('GET', '/session')
                     .then(function(response) {
                         self.sessionId = response.session_id;
-                        sessionStorage.setItem('wpaic_session', self.sessionId);
-                        sessionStorage.setItem('wpaic_session_version', String(currentVersion));
-                        localStorage.setItem('wpaic_session', self.sessionId);
+                        wpaicSsSet('wpaic_session', self.sessionId);
+                        wpaicSsSet('wpaic_session_version', String(currentVersion));
+                        wpaicLsSet('wpaic_session', self.sessionId);
                         // HMAC トークンを保存（IP 変動時のフォールバック認証用）
                         if (response.session_token) {
-                            localStorage.setItem('wpaic_session_token', response.session_token);
+                            wpaicLsSet('wpaic_session_token', response.session_token);
                         }
                         // セッション作成後にリード設定を読み込み
                         return self.loadLeadConfig();
@@ -436,21 +449,21 @@
          */
         clearSession: function() {
             // 古いセッションのリード送信フラグを取得してクリア
-            var oldSessionId = sessionStorage.getItem('wpaic_session');
+            var oldSessionId = wpaicSsGet('wpaic_session');
             if (oldSessionId) {
-                sessionStorage.removeItem('wpaic_lead_submitted_' + oldSessionId);
+                wpaicSsRemove('wpaic_lead_submitted_' + oldSessionId);
             }
 
-            sessionStorage.removeItem('wpaic_session');
-            sessionStorage.removeItem('wpaic_session_version');
-            localStorage.removeItem('wpaic_session');
-            localStorage.removeItem('wpaic_session_token');
+            wpaicSsRemove('wpaic_session');
+            wpaicSsRemove('wpaic_session_version');
+            wpaicLsRemove('wpaic_session');
+            wpaicLsRemove('wpaic_session_token');
 
             // すべてのリード送信済みフラグをクリア
             var keys = Object.keys(sessionStorage);
             keys.forEach(function(key) {
                 if (key.startsWith('wpaic_lead_submitted_')) {
-                    sessionStorage.removeItem(key);
+                    wpaicSsRemove(key);
                 }
             });
 
@@ -581,9 +594,9 @@
                 sendPromise = this.apiRequest('GET', '/session')
                     .then(function(response) {
                         self.sessionId = response.session_id;
-                        sessionStorage.setItem('wpaic_session', self.sessionId);
+                        wpaicSsSet('wpaic_session', self.sessionId);
                         if (response.session_token) {
-                            localStorage.setItem('wpaic_session_token', response.session_token);
+                            wpaicLsSet('wpaic_session_token', response.session_token);
                         }
                         return self.doSendMessage(message);
                     });
@@ -1278,7 +1291,7 @@
             }
 
             // HMAC トークンを送信（IP 変動時のフォールバック認証用）
-            var sessionToken = localStorage.getItem('wpaic_session_token');
+            var sessionToken = wpaicLsGet('wpaic_session_token');
             if (sessionToken) {
                 headers['X-WPAIC-Session-Token'] = sessionToken;
             }
@@ -1325,7 +1338,7 @@
 
             // 既にリードを送信済みかチェック
             var leadSubmittedKey = 'wpaic_lead_submitted_' + this.sessionId;
-            var leadSubmitted = sessionStorage.getItem(leadSubmittedKey);
+            var leadSubmitted = wpaicSsGet(leadSubmittedKey);
             if (leadSubmitted) {
                 this.leadSubmitted = true;
                 return Promise.resolve();
@@ -1583,7 +1596,7 @@
             .then(function(data) {
                 if (data.success) {
                     self.leadSubmitted = true;
-                    sessionStorage.setItem('wpaic_lead_submitted_' + self.sessionId, 'true');
+                    wpaicSsSet('wpaic_lead_submitted_' + self.sessionId, 'true');
                     self.hideLeadForm();
                     self.showChat();
                 } else {
@@ -1789,11 +1802,20 @@
         listenForConsentChange: function() {
             var self = this;
             document.addEventListener('wp_listen_for_consent_change', function() {
-                // Re-evaluate: if functional consent is now granted and we have
-                // an ephemeral userId, persist it to localStorage.
-                if (wpaicHasConsent('functional') || wpaicHasConsent('preferences')) {
-                    if (self.userId && !localStorage.getItem('wpaic_user_id')) {
-                        localStorage.setItem('wpaic_user_id', self.userId);
+                if (wpaicStorageAllowed()) {
+                    // Consent granted — persist ephemeral userId if we have one
+                    if (self.userId && !wpaicLsGet('wpaic_user_id')) {
+                        wpaicLsSet('wpaic_user_id', self.userId);
+                    }
+                } else {
+                    // Consent revoked — remove all persisted data
+                    wpaicLsRemove('wpaic_user_id');
+                    wpaicLsRemove('wpaic_session');
+                    wpaicLsRemove('wpaic_session_token');
+                    wpaicLsRemove('wpaic_window_size');
+                    // Clear conversion markers from sessionStorage
+                    if (self.sessionId) {
+                        wpaicSsRemove('wpaic_converted_' + self.sessionId);
                     }
                 }
                 // Re-evaluate conversion tracking
@@ -1804,6 +1826,8 @@
         /**
          * Initialize conversion tracking
          */
+        conversionTrackingInitialized: false,
+
         initConversionTracking: function() {
             var config = window.wpAiChatbotConfig || {};
             if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
@@ -1820,21 +1844,34 @@
             // Check current URL against goals on page load (for SPA or redirect-back scenarios)
             this.checkConversionGoals(goals);
 
+            // Only install History API hooks once to prevent accumulation on consent changes
+            if (this.conversionTrackingInitialized) {
+                return;
+            }
+            this.conversionTrackingInitialized = true;
+
             // Monitor navigation via History API
             var originalPushState = history.pushState;
             history.pushState = function() {
                 originalPushState.apply(this, arguments);
-                self.checkConversionGoals(goals);
+                // Re-check consent at call time (may have been revoked since hook was installed)
+                if (wpaicHasConsent('statistics') || wpaicHasConsent('marketing')) {
+                    self.checkConversionGoals(goals);
+                }
             };
 
             var originalReplaceState = history.replaceState;
             history.replaceState = function() {
                 originalReplaceState.apply(this, arguments);
-                self.checkConversionGoals(goals);
+                if (wpaicHasConsent('statistics') || wpaicHasConsent('marketing')) {
+                    self.checkConversionGoals(goals);
+                }
             };
 
             window.addEventListener('popstate', function() {
-                self.checkConversionGoals(goals);
+                if (wpaicHasConsent('statistics') || wpaicHasConsent('marketing')) {
+                    self.checkConversionGoals(goals);
+                }
             });
         },
 
@@ -1849,7 +1886,7 @@
 
             // Check if already tracked this session
             var trackingKey = 'wpaic_converted_' + sessionId;
-            if (sessionStorage.getItem(trackingKey)) return;
+            if (wpaicSsGet(trackingKey)) return;
 
             for (var i = 0; i < goals.length; i++) {
                 var goal = goals[i];
@@ -1859,14 +1896,14 @@
                     var regex = new RegExp(goal.url_pattern);
                     if (regex.test(currentUrl)) {
                         this.trackConversion(sessionId, goal.name || '');
-                        sessionStorage.setItem(trackingKey, '1');
+                        wpaicSsSet(trackingKey, '1');
                         break;
                     }
                 } catch (e) {
                     // Invalid regex pattern - try simple contains match
                     if (currentUrl.indexOf(goal.url_pattern) !== -1) {
                         this.trackConversion(sessionId, goal.name || '');
-                        sessionStorage.setItem(trackingKey, '1');
+                        wpaicSsSet(trackingKey, '1');
                         break;
                     }
                 }
