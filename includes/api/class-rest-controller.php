@@ -1204,7 +1204,18 @@ class WPAIC_REST_Controller {
                     // CIDR notation (e.g. 172.64.0.0/13)
                     list($cidr_ip, $cidr_bits) = explode('/', $entry, 2);
                     if (filter_var($cidr_ip, FILTER_VALIDATE_IP) && is_numeric($cidr_bits)) {
-                        $trusted_cidrs[] = $entry;
+                        $bits = (int) $cidr_bits;
+                        $is_v6 = filter_var($cidr_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                        $max_bits = $is_v6 ? 128 : 32;
+                        // Reject dangerously broad CIDRs: IPv4 < /8, IPv6 < /32
+                        // (e.g. 0.0.0.0/0 would trust everything, defeating XFF security)
+                        $min_bits = $is_v6 ? 32 : 8;
+                        if ($bits >= $min_bits && $bits <= $max_bits) {
+                            $trusted_cidrs[] = $entry;
+                        } elseif (defined('WP_DEBUG') && WP_DEBUG) {
+                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                            error_log('WPAIC: Rejected overly broad trusted proxy CIDR: ' . sanitize_text_field($entry));
+                        }
                     }
                 } elseif (filter_var($entry, FILTER_VALIDATE_IP)) {
                     $trusted_ips[] = $entry;
@@ -1525,13 +1536,7 @@ class WPAIC_REST_Controller {
     }
 
     /**
-     * Increment a bot detection counter (transient-based, 1-hour window).
-     * Used by guard_public_post() to track honeypot/timing drops for admin visibility.
-     *
-     * @param string $type Detection type ('honeypot', 'timing').
-     */
-    /**
-     * Allowed bot counter types. Fixed set to prevent key proliferation under attack.
+     * Allowed bot counter types. Fixed set to prevent transient key proliferation under attack.
      */
     private static array $allowed_bot_types = [
         'honeypot_offl', 'timing_offl',
@@ -1539,6 +1544,15 @@ class WPAIC_REST_Controller {
         'honeypot_lead', 'timing_lead',
     ];
 
+    /**
+     * Increment a bot detection counter (1-hour window).
+     * Used by guard_public_post() to track honeypot/timing drops for admin visibility.
+     *
+     * - External object cache (Redis/Memcached): always records (no DB writes).
+     * - No external cache: samples 1-in-10 to minimize wp_options writes under attack.
+     *
+     * @param string $type Detection type (must be in $allowed_bot_types).
+     */
     private function increment_bot_counter(string $type): void {
         // Only allow predefined counter types to prevent transient key proliferation
         if (!in_array($type, self::$allowed_bot_types, true)) {
@@ -1548,11 +1562,15 @@ class WPAIC_REST_Controller {
         $key = 'wpaic_bot_drop_' . $type;
 
         // Prefer object cache (Redis/Memcached) to avoid wp_options DB writes under attack.
-        // wp_cache_* with a non-default group avoids alloptions autoload bloat.
         if (wp_using_ext_object_cache()) {
             $count = (int) wp_cache_get($key, 'wpaic_bot');
             wp_cache_set($key, $count + 1, 'wpaic_bot', HOUR_IN_SECONDS);
         } else {
+            // Sample 1-in-10 to reduce DB writes when under bot attack.
+            // Counter value is multiplied by 10 when displayed for approximate total.
+            if (wp_rand(1, 10) !== 1) {
+                return;
+            }
             $count = (int) get_transient($key);
             set_transient($key, $count + 1, HOUR_IN_SECONDS);
         }

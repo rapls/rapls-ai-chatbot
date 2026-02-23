@@ -955,6 +955,70 @@ if (!defined('ABSPATH')) {
 
                 <hr style="margin: 30px 0;">
 
+                <h2><?php esc_html_e('Security Diagnostics', 'rapls-ai-chatbot'); ?></h2>
+                <p class="description"><?php esc_html_e('Current security configuration status (read-only).', 'rapls-ai-chatbot'); ?></p>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Allowed Origin Hosts', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $home_host = wp_parse_url(home_url(), PHP_URL_HOST);
+                            $site_host = wp_parse_url(site_url(), PHP_URL_HOST);
+                            $diag_hosts = [];
+                            foreach (array_filter([$home_host, $site_host]) as $dh) {
+                                $dh = strtolower($dh);
+                                $diag_hosts[] = $dh;
+                                if (strpos($dh, 'www.') === 0) {
+                                    $diag_hosts[] = substr($dh, 4);
+                                } else {
+                                    $diag_hosts[] = 'www.' . $dh;
+                                }
+                            }
+                            $diag_hosts = array_unique($diag_hosts);
+                            ?>
+                            <code><?php echo esc_html(implode(', ', $diag_hosts)); ?></code>
+                            <p class="description"><?php esc_html_e('These hostnames are accepted for Origin/Referer checks and reCAPTCHA hostname validation. Custom hosts can be added via the wpaic_allowed_origins filter.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Recent Bot Detections', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $bot_types = [
+                                'honeypot_offl' => __('Honeypot (Offline)', 'rapls-ai-chatbot'),
+                                'timing_offl'   => __('Timing (Offline)', 'rapls-ai-chatbot'),
+                                'honeypot_pub'  => __('Honeypot (Chat)', 'rapls-ai-chatbot'),
+                                'timing_pub'    => __('Timing (Chat)', 'rapls-ai-chatbot'),
+                                'honeypot_lead' => __('Honeypot (Lead)', 'rapls-ai-chatbot'),
+                                'timing_lead'   => __('Timing (Lead)', 'rapls-ai-chatbot'),
+                            ];
+                            $has_detections = false;
+                            $use_cache = wp_using_ext_object_cache();
+                            foreach ($bot_types as $bkey => $blabel) {
+                                $tkey = 'wpaic_bot_drop_' . $bkey;
+                                $bcount = $use_cache
+                                    ? (int) wp_cache_get($tkey, 'wpaic_bot')
+                                    : (int) get_transient($tkey);
+                                // Without external cache, counter is sampled 1-in-10; approximate total
+                                if (!$use_cache && $bcount > 0) {
+                                    $bcount *= 10;
+                                }
+                                if ($bcount > 0) {
+                                    $has_detections = true;
+                                    echo '<span style="margin-right:16px;">' . esc_html($blabel) . ': <strong>' . esc_html($bcount) . '</strong></span>';
+                                }
+                            }
+                            if (!$has_detections) {
+                                echo '<em>' . esc_html__('No bot activity detected in the past hour.', 'rapls-ai-chatbot') . '</em>';
+                            }
+                            ?>
+                            <p class="description"><?php esc_html_e('Approximate count of requests blocked by bot detection in the past hour. High numbers may indicate your forms are being targeted.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr style="margin: 30px 0;">
+
                 <h2><?php esc_html_e('Import/Export Settings', 'rapls-ai-chatbot'); ?></h2>
                 <p class="description"><?php esc_html_e('Export or import all settings as a JSON file.', 'rapls-ai-chatbot'); ?></p>
 

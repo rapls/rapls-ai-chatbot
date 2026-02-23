@@ -243,12 +243,13 @@ class WPAIC_Conversation {
         WPAIC_Message::delete_all();
 
         // Delete all conversations
+        // Table name is $wpdb->prefix + hardcoded suffix — never user input. Backtick-only for identifiers.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $result = $wpdb->query("TRUNCATE TABLE `" . esc_sql($table) . "`");
+        $result = $wpdb->query("TRUNCATE TABLE `{$table}`");
         if ($result === false) {
             // Fallback: TRUNCATE may fail due to DB permissions or configuration
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $result = $wpdb->query("DELETE FROM `" . esc_sql($table) . "`");
+            $result = $wpdb->query("DELETE FROM `{$table}`");
         }
         return $result;
     }
