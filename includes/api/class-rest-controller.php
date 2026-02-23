@@ -577,22 +577,34 @@ class WPAIC_REST_Controller {
                 $cached_result['dedup_hit']   = true;
                 $cached_result['_server_now'] = $now;
 
-                // Log stale dedup hits (saved_at exists but age > 90s) — indicates
-                // object cache serving expired data past transient TTL.
-                $saved_at = $cached_result['data']['_saved_at'] ?? 0;
-                if (!empty($cached_result['data']['_truncated']) && $saved_at > 0 && ($now - $saved_at) >= 90) {
-                    if ($this->should_log_dedup()) {
+                // Log anomalous dedup hits: stale data, missing structure, or
+                // missing timestamps — any of these indicate object cache or
+                // transient layer misbehaviour.
+                if ($this->should_log_dedup()) {
+                    $dedup_data_arr = $cached_result['data'] ?? null;
+                    $saved_at       = is_array($dedup_data_arr) ? ($dedup_data_arr['_saved_at'] ?? 0) : 0;
+                    $log_reason     = '';
+                    if (!is_array($dedup_data_arr)) {
+                        $log_reason = 'malformed_data';
+                    } elseif ($saved_at <= 0) {
+                        $log_reason = 'missing_saved_at';
+                    } elseif (($now - $saved_at) >= 90) {
+                        $log_reason = 'stale_age';
+                    }
+                    if (!empty($log_reason)) {
                         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                         error_log(sprintf(
-                            'WPAIC dedup: stale hit | key=%s | age=%ds | object_cache=%s',
-                            $dedup_key,
-                            $now - $saved_at,
+                            'WPAIC dedup: anomaly=%s | key=%s | age=%s | object_cache=%s',
+                            $log_reason,
+                            substr($dedup_key, 0, 20),
+                            ($saved_at > 0) ? ($now - $saved_at) . 's' : 'n/a',
                             wp_using_ext_object_cache() ? 'yes' : 'no'
                         ));
                     }
                 }
 
                 $dedup_response = new WP_REST_Response($cached_result, 200);
+                $this->append_header_csv($dedup_response, 'Vary', 'Cookie');
                 return $this->no_cache($dedup_response);
             }
         }
@@ -1076,7 +1088,7 @@ class WPAIC_REST_Controller {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
                         'WPAIC dedup: set_transient failed | key=%s | size=%d | object_cache=%s',
-                        $dedup_key,
+                        substr($dedup_key, 0, 20),
                         $dedup_size,
                         wp_using_ext_object_cache() ? 'yes' : 'no'
                     ));
