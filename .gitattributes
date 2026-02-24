@@ -4,6 +4,7 @@
 .gitattributes export-ignore
 .git export-ignore
 .github export-ignore
+.ci export-ignore
 .claude export-ignore
 .serena export-ignore
 CLAUDE.md export-ignore

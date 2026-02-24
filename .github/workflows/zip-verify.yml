@@ -29,22 +29,39 @@ jobs:
           if [ -n "$UNEXPECTED" ]; then
             echo "::error::Unexpected files in ZIP (not in allow-list):"
             echo "$UNEXPECTED"
+            echo ""
+            echo "If these files are intentional, add them to the ALLOWED pattern"
+            echo "in .github/workflows/zip-verify.yml and re-run."
             exit 1
           fi
           echo "OK: all files match allow-list"
 
       - name: Catch-swallow check (completed_at-sensitive files)
         run: |
-          # Single-source list: must match CLAUDE.md "completed_at-sensitive files"
-          SENSITIVE="uninstall.php includes/class-activator.php"
-          for f in $SENSITIVE; do
-            if [ -f "$f" ]; then
-              SWALLOW=$(grep -n 'catch' "$f" | grep -v 'rethrow\|throw' || true)
-              if [ -n "$SWALLOW" ]; then
-                echo "::error::Possible exception swallow in $f:"
-                echo "$SWALLOW"
-                exit 1
+          # Source list: .ci/sensitive-files.txt (single source of truth)
+          if [ ! -f .ci/sensitive-files.txt ]; then
+            echo "::error::.ci/sensitive-files.txt not found"
+            exit 1
+          fi
+          FAIL=0
+          while IFS= read -r f || [ -n "$f" ]; do
+            # Skip blank lines and comments
+            [[ -z "$f" || "$f" == \#* ]] && continue
+            if [ ! -f "$f" ]; then continue; fi
+            # For each catch block, check if throw/rethrow appears within 20 lines after
+            CATCH_LINES=$(grep -n 'catch' "$f" | grep -v '^#' || true)
+            if [ -z "$CATCH_LINES" ]; then continue; fi
+            while IFS=: read -r lineno _rest; do
+              END=$((lineno + 20))
+              HAS_THROW=$(sed -n "${lineno},${END}p" "$f" | grep -c 'throw\|rethrow' || true)
+              if [ "$HAS_THROW" -eq 0 ]; then
+                echo "::warning::$f:$lineno — catch block without throw/rethrow within 20 lines"
+                FAIL=1
               fi
-            fi
-          done
+            done <<< "$CATCH_LINES"
+          done < .ci/sensitive-files.txt
+          if [ "$FAIL" -ne 0 ]; then
+            echo "::error::Possible exception swallow detected (see warnings above)"
+            exit 1
+          fi
           echo "OK: no catch-swallow detected"

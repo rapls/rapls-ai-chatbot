@@ -256,6 +256,10 @@ The plugin displays a customizable error message when quota limits are reached.
 
 The Pro add-on is a separate plugin that extends this free version with advanced features like analytics, lead capture, business hours, and more. The free version works fully on its own.
 
+= What happens to my data when I uninstall? =
+
+By default, the plugin keeps your settings and conversation data so you can re-install without losing anything. To delete all data on uninstall, enable "Delete data on uninstall" in the plugin settings. Temporary cache and diagnostic counters are always removed regardless of this setting.
+
 = How can I adjust multisite uninstall performance? =
 
 On large multisite networks, uninstall batch size is adjustable via filters. Add to your `functions.php` or an MU-plugin:

@@ -1,0 +1,5 @@
+# Files where catch-swallow breaks completed_at accuracy.
+# CI grep checks these files for catch blocks without throw/rethrow.
+# Update this file when adding new uninstall/upgrade logic files.
+uninstall.php
+includes/class-activator.php

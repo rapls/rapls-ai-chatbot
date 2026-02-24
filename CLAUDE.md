@@ -46,11 +46,9 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
   # Detect catch blocks without throw in critical paths (target files only to reduce false positives)
   grep -n 'catch' uninstall.php includes/class-activator.php | grep -v 'rethrow\|throw'
   ```
-  **completed_at-sensitive files** (update this list AND `.github/workflows/zip-verify.yml` together):
-  - `uninstall.php`
-  - `includes/class-activator.php`
-
-  CI runs the same grep automatically via the `Catch-swallow check` step. If you add files here, add them to the `SENSITIVE` variable in `zip-verify.yml` too (single-source pair).
+  **completed_at-sensitive files** — single source of truth: `.ci/sensitive-files.txt`
+  CI reads this file directly in the `Catch-swallow check` step.
+  To add a file, edit `.ci/sensitive-files.txt` only (no need to touch the workflow).
 
 ### Option Key Naming & Cleanup
 
