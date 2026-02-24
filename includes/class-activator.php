@@ -34,7 +34,9 @@ class WPAIC_Activator {
         self::schedule_cron();
         self::migrate_diag_options();
 
-        // Clear transient diag flags that indicate resolved issues.
+        // Clear bootstrap-order diag flag. Safe to clear unconditionally here:
+        // reaching this point means WPAIC_PLUGIN_DIR was defined and activator
+        // loaded correctly, so the condition the flag detects is not present.
         delete_option('wpaic_diag_upgrade_order_issue');
 
         // Save version
