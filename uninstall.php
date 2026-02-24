@@ -90,9 +90,28 @@ function wpaic_uninstall_site() {
     }
 }
 
+/**
+ * Run wpaic_uninstall_site() in another blog's context.
+ * Centralizes switch_to_blog/restore_current_blog so callers cannot
+ * accidentally bypass restore via break/continue/return.
+ *
+ * @param int $blog_id Blog ID to switch to.
+ */
+function wpaic_uninstall_blog( int $blog_id ) {
+    switch_to_blog( $blog_id );
+    try {
+        wpaic_uninstall_site();
+    } finally {
+        restore_current_blog();
+    }
+}
+
+// Track partial completion: if completed_at is absent after uninstall,
+// the process was interrupted (idempotent — safe to re-run).
+update_option( 'wpaic_diag_uninstall_started_at', time(), false );
+
 // Multisite: auto-select snapshot (<10k sites) or batched (>=10k) mode.
 // Each site operation is idempotent (safe to re-run if interrupted).
-// try/finally ensures restore_current_blog() runs even on exception.
 if (is_multisite()) {
     $site_count = (int) get_sites(['count' => true]);
     // Threshold filterable for memory-constrained hosts (default 10000).
@@ -108,16 +127,12 @@ if (is_multisite()) {
             'order'   => 'ASC',
         ]);
         foreach ($all_ids as $site_id) {
-            switch_to_blog((int) $site_id);
-            try {
-                wpaic_uninstall_site();
-            } finally {
-                restore_current_blog();
-            }
+            wpaic_uninstall_blog((int) $site_id);
         }
     } else {
         // Batched: for large networks or count=0 fallback.
         // Batch size filterable (default 100, clamped 20–500).
+        // Guide: low-memory/slow-DB → 20–50, standard → 100, fast → 200–500.
         $offset = 0;
         $batch  = (int) apply_filters('wpaic_uninstall_batch_size', 100);
         $batch  = max(20, min($batch, 500));
@@ -130,12 +145,7 @@ if (is_multisite()) {
                 'order'   => 'ASC',
             ]);
             foreach ($sites as $site_id) {
-                switch_to_blog((int) $site_id);
-                try {
-                    wpaic_uninstall_site();
-                } finally {
-                    restore_current_blog();
-                }
+                wpaic_uninstall_blog((int) $site_id);
             }
             $offset += $batch;
         } while (count($sites) === $batch);
@@ -143,3 +153,5 @@ if (is_multisite()) {
 } else {
     wpaic_uninstall_site();
 }
+
+update_option( 'wpaic_diag_uninstall_completed_at', time(), false );
