@@ -42,7 +42,7 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **Uninstall, upgrade, and migration** functions may be interrupted and re-run. Keep them idempotent (DB deletes, option updates only).
 - **Do NOT** add external side effects (file I/O, remote API calls, email sends) to these paths — they are not transactional and cannot be safely retried.
 - **Do NOT** add `catch` blocks that swallow exceptions in uninstall/upgrade paths — silent catch breaks `completed_at` accuracy. Always rethrow.
-- **Catch blocks in sensitive files must be ≤40 lines** and end with `throw`/`rethrow`. CI checks this automatically (40-line window). If a catch block needs more logic, extract a helper and rethrow at the end.
+- **Catch blocks in sensitive files must be ≤40 lines** and end with `throw`/`rethrow`. CI enforces this (40-line window). Violations are intentional CI failures — fix by extracting a helper, not by increasing the window.
 - **completed_at-sensitive files** — single source of truth: `.ci/sensitive-files.txt`
   CI reads this file directly. To add a file, edit `.ci/sensitive-files.txt` only.
 

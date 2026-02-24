@@ -25,6 +25,7 @@ function wpaic_uninstall_site() {
     // Check if user opted to delete data on uninstall.
     // Multisite: reads each blog's own wpaic_settings (switch_to_blog sets the context).
     // There is no network-level override — each site controls its own data deletion.
+    // Future: if bulk control is needed, add wpaic_network_delete_data (site_option, overrides per-blog).
     $settings = get_option('wpaic_settings', []);
     $delete_data = !empty($settings['delete_data_on_uninstall']);
 

@@ -424,7 +424,7 @@ When uninstalled, the plugin removes all database tables, options, and transient
 
 == Development ==
 
-Contributions are welcome. CI checks (`.github/workflows/`) validate distribution ZIP contents and code quality. Development-only files (`.ci/`, `.github/`) are excluded from release ZIPs via `.gitattributes`.
+CI checks validate distribution ZIP contents and code quality. Dev-only files are excluded from release ZIPs.
 
 == Changelog ==
 
