@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   verify-zip:
@@ -19,7 +20,11 @@ jobs:
 
       - name: Check for forbidden files
         run: |
-          FORBIDDEN='(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/|\.github/|\.gitignore|\.gitattributes|\.serena/|Thumbs\.db)'
+          # Deny-list: known dev/OS artifacts that must never ship.
+          # Future-proof note: if new file types leak in, add them here.
+          # For stricter control, consider an allow-list approach
+          # (fail on anything outside readme.txt, *.php, includes/, assets/, etc.).
+          FORBIDDEN='(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/|\.github/|\.gitignore|\.gitattributes|\.serena/|Thumbs\.db|\.env|\.log$|composer\.lock)'
           FOUND=$(unzip -l dist.zip | grep -E "$FORBIDDEN" || true)
           if [ -n "$FOUND" ]; then
             echo "::error::Forbidden files found in ZIP:"

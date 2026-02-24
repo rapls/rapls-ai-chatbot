@@ -46,7 +46,11 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
   # Detect catch blocks without throw in critical paths (target files only to reduce false positives)
   grep -n 'catch' uninstall.php includes/class-activator.php | grep -v 'rethrow\|throw'
   ```
-  Scope is intentionally limited to `uninstall.php` and `includes/class-activator.php` — the only files where catch-swallow breaks `completed_at`. Broader grep risks false positives from normal error handling elsewhere.
+  **completed_at-sensitive files** (update this list if new files affect uninstall/upgrade flow):
+  - `uninstall.php`
+  - `includes/class-activator.php`
+
+  Broader grep risks false positives from normal error handling elsewhere. If you split uninstall/upgrade logic into new files, add them to both the grep command and this list.
 
 ### Diagnostic Options Naming
 

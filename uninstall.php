@@ -165,5 +165,6 @@ if (is_multisite()) {
 // completed_at = "script reached this line" (best-effort).
 // It does NOT guarantee every DB operation above succeeded —
 // individual DROP/DELETE may have silently failed at the DB level.
-// Residual diag options are harmless. If concerned, re-run uninstall (idempotent).
+// Residual keys are wpaic_diag_* only (runtime metrics, not functional data).
+// They are harmless. If concerned, re-run uninstall (idempotent).
 update_option( 'wpaic_diag_uninstall_completed_at', time(), false );
