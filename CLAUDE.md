@@ -20,7 +20,7 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **Local environment**: Local by Flywheel (Local Sites)
 - **PHP/JS/CSS**: Edit directly, no compilation step
 - **Translations**: Compile `.po` to `.mo` with `msgfmt languages/rapls-ai-chatbot-ja.po -o languages/rapls-ai-chatbot-ja.mo`
-- **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md)
+- **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md). Release ZIPs must be generated via CI or `git archive` — never by manual file selection.
 - **ZIP verification**: Automated via `.github/workflows/zip-verify.yml` (runs on tags + PRs). Manual check:
   ```bash
   # Cross-platform: use unzip -l (not tar -t) so it works on Windows/BusyBox too

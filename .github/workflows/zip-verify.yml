@@ -94,7 +94,10 @@ jobs:
           #   WP cron   : wp_schedule_event, wp_next_scheduled, wp_clear_scheduled_hook
           #   WP utils  : wp_salt, flush_rewrite_rules, error_log, maybe_create_table
           # Everything else (posts, users, files, HTTP, hooks, code execution) is forbidden.
-          # $wpdb->insert/update/delete are forbidden by default — require design review.
+          # $wpdb->insert/update/delete are forbidden by default — require design review:
+          #   1. Target must be plugin-owned table only (wp_aichat_*)
+          #   2. No unsanitized user input (use $wpdb->prepare or type-cast)
+          #   3. Must be idempotent (safe to re-run on interrupted upgrade)
           # When adding new WordPress APIs, check if they belong to the categories above.
           # Keep patterns in execution-form only (\() to avoid comment/string false positives.
           DENY=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -E '(^|[^A-Za-z0-9_])(eval|assert|exec|system|passthru|shell_exec|popen|proc_open|pcntl_exec|wp_remote_(get|post|head|request)|wp_mail|wp_insert_post|wp_update_post|wp_delete_post|wp_insert_user|wp_update_user|wp_upload_bits|file_put_contents|file_get_contents|fopen|fwrite|curl_exec|add_action|add_filter|register_activation_hook|register_deactivation_hook)[[:space:]]*\(' || true)

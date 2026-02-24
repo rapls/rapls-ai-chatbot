@@ -1338,7 +1338,7 @@ class WPAIC_Admin {
 
         // Check WP-Cron (informational — chat works without it, but crawl/cleanup won't run)
         if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) {
-            $warnings[] = __('WP-Cron is disabled (DISABLE_WP_CRON). Scheduled tasks (site crawl, conversation cleanup) will not run automatically. Chat functionality is not affected.', 'rapls-ai-chatbot');
+            $warnings[] = __('WP-Cron is disabled (DISABLE_WP_CRON). Scheduled tasks (site crawl, conversation cleanup) will not run automatically. Chat functionality is not affected. If you use a server-side cron (crontab) to trigger wp-cron.php, you can safely ignore this notice.', 'rapls-ai-chatbot');
         }
 
         $settings_url = admin_url('admin.php?page=wpaic-settings');
