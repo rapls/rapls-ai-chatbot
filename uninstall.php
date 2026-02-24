@@ -9,7 +9,11 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 /**
- * Clean up data for a single site
+ * Clean up data for a single site.
+ *
+ * Idempotent: only performs DB deletes (options, transients, tables).
+ * Do NOT add external side effects (file I/O, remote API calls) here —
+ * this function may be re-run after a partial failure.
  */
 function wpaic_uninstall_site() {
     global $wpdb;
@@ -86,8 +90,9 @@ function wpaic_uninstall_site() {
     }
 }
 
-// Multisite: snapshot all site IDs first, then process in batches.
-// Snapshot-then-iterate avoids offset drift from concurrent site changes.
+// Multisite: snapshot all site IDs (int array, ~4 bytes/site + zval overhead).
+// Safe for typical networks (<10k sites). For 100k+ site networks, consider
+// batched approach, but snapshot avoids offset-drift skip/duplicate issues.
 // Each site operation is idempotent (safe to re-run if interrupted).
 // try/finally ensures restore_current_blog() runs even on exception.
 if (is_multisite()) {

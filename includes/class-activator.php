@@ -34,6 +34,9 @@ class WPAIC_Activator {
         self::schedule_cron();
         self::migrate_diag_options();
 
+        // Clear transient diag flags that indicate resolved issues.
+        delete_option('wpaic_diag_upgrade_order_issue');
+
         // Save version
         update_option('wpaic_version', WPAIC_VERSION);
     }
