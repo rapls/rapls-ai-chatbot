@@ -34,6 +34,15 @@ function wpaic_uninstall_site() {
         )
     );
 
+    // Always clear diagnostic counters (wpaic_diag_*)
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like('wpaic_diag_') . '%'
+        )
+    );
+
     // Always clear scheduled hooks
     wp_clear_scheduled_hook('wpaic_crawl_site');
     wp_clear_scheduled_hook('wpaic_cleanup_old_conversations');

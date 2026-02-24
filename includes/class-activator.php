@@ -32,6 +32,7 @@ class WPAIC_Activator {
         self::upgrade_columns();
         self::set_default_options();
         self::schedule_cron();
+        self::migrate_diag_options();
 
         // Save version
         update_option('wpaic_version', WPAIC_VERSION);
@@ -507,6 +508,24 @@ class WPAIC_Activator {
         // Set default if no existing settings
         if (!get_option('wpaic_settings')) {
             update_option('wpaic_settings', $default_settings);
+        }
+    }
+
+    /**
+     * Migrate renamed diagnostic options (one-time on upgrade).
+     * Merges old key value into new key and removes old key.
+     */
+    private static function migrate_diag_options() {
+        $migrations = [
+            'wpaic_hash_unexpected_count' => 'wpaic_diag_hash_unexpected',
+        ];
+        foreach ($migrations as $old_key => $new_key) {
+            $old_val = get_option($old_key);
+            if ($old_val !== false) {
+                $new_val = (int) get_option($new_key, 0);
+                update_option($new_key, $new_val + (int) $old_val, false);
+                delete_option($old_key);
+            }
         }
     }
 
