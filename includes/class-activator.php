@@ -75,6 +75,7 @@ class WPAIC_Activator {
      *
      * Convention: all column names and index names MUST be lowercase_snake_case.
      * CI (zip-verify.yml) relies on this to distinguish SQL from PHP identifiers.
+     * Note: all versions since v1.0 have used lowercase — no legacy uppercase columns exist.
      */
     private static function create_tables() {
         global $wpdb;
@@ -573,7 +574,12 @@ class WPAIC_Activator {
     }
 
     /**
-     * Schedule cron jobs
+     * Schedule cron jobs (activation-time only).
+     *
+     * Idempotent: wp_next_scheduled() guards prevent duplicate registration
+     * on repeated activation. Deactivation clears hooks via wp_clear_scheduled_hook().
+     * If WP-Cron is disabled (DISABLE_WP_CRON), these events won't fire but
+     * cause no harm — the plugin works without them (crawl/cleanup are optional).
      */
     private static function schedule_cron() {
         if (!wp_next_scheduled('wpaic_crawl_site')) {
