@@ -70,17 +70,27 @@ jobs:
 
       - name: Activator side-effect check
         run: |
-          # class-activator.php must not register hooks — it is require'd by uninstall.php.
-          # Skip comment lines (// and #) to avoid false positives.
-          # Match call patterns (function_name followed by '(') to reduce noise.
+          # class-activator.php is require'd by uninstall.php for get_table_suffixes().
+          # It must not have load-time side effects. Check two categories:
           FILE="includes/class-activator.php"
+          FAIL=0
+          # 1) Hook registration (would fire during uninstall)
           HOOKS=$(grep -nE '(add_action|add_filter|register_activation_hook|register_deactivation_hook)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
           if [ -n "$HOOKS" ]; then
-            echo "::error::Hook registration found in $FILE (breaks uninstall):"
+            echo "::error::Hook registration in $FILE (breaks uninstall):"
             echo "$HOOKS"
-            exit 1
+            FAIL=1
           fi
-          echo "OK: no hook registration in activator"
+          # 2) Forbidden APIs (external side effects, not safe in uninstall context)
+          # Allowed: $wpdb, get_option, update_option, delete_option, dbDelta, require_once
+          FORBIDDEN_API=$(grep -nE '(wp_remote_|wp_schedule_|wp_mail|file_put_contents|curl_init|curl_exec|\bexec\s*\(|\bsystem\s*\(|\bmail\s*\(|wp_cron\b)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          if [ -n "$FORBIDDEN_API" ]; then
+            echo "::error::Forbidden API in $FILE (external side effects):"
+            echo "$FORBIDDEN_API"
+            FAIL=1
+          fi
+          if [ "$FAIL" -ne 0 ]; then exit 1; fi
+          echo "OK: no side effects in activator"
 
       - name: Gitattributes essential entries check
         run: |
@@ -105,3 +115,30 @@ jobs:
             exit 1
           fi
           echo "OK: essential .gitattributes entries present"
+
+      - name: REST debug key exposure check
+        run: |
+          # Ensure 'debug' data in REST responses is gated behind capability checks.
+          # Flag any wp_send_json / rest_ensure_response that includes 'debug' without a guard.
+          REST="includes/api/class-rest-controller.php"
+          if [ ! -f "$REST" ]; then exit 0; fi
+          # Find lines that add 'debug' to response arrays (simple heuristic)
+          DEBUG_LINES=$(grep -n "'debug'" "$REST" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          if [ -n "$DEBUG_LINES" ]; then
+            # Verify each debug line has a capability guard within 20 lines before it
+            FAIL=0
+            while IFS=: read -r lineno _rest; do
+              START=$((lineno - 20))
+              [ "$START" -lt 1 ] && START=1
+              GUARD=$(sed -n "${START},${lineno}p" "$REST" | grep -c 'current_user_can\|is_user_logged_in\|WP_DEBUG' || true)
+              if [ "$GUARD" -eq 0 ]; then
+                echo "::warning::$REST:$lineno — 'debug' in response without capability guard within 20 lines"
+                FAIL=1
+              fi
+            done <<< "$DEBUG_LINES"
+            if [ "$FAIL" -ne 0 ]; then
+              echo "::error::Unguarded debug data in REST responses (see warnings above)"
+              exit 1
+            fi
+          fi
+          echo "OK: debug keys are properly guarded"
