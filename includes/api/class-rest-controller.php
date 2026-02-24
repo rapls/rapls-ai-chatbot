@@ -571,22 +571,29 @@ class WPAIC_REST_Controller {
         $dedup_key  = '';
         $keyhash    = '';
         if (!empty($client_request_id)) {
-            $dedup_hash = hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id());
+            $blog_id    = get_current_blog_id();
+            $dedup_hash = hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . $blog_id);
             $keyhash    = substr($dedup_hash, 0, 12);
             // Defensive: if hash() ever returns unexpected result, fall back to
             // a per-site static key so rate limiting still works (DoS protection
-            // priority). blog_id isolates sites; log helps diagnose environment.
+            // priority). blog_id isolates sites; log + option counter help diagnose.
             if (strlen($keyhash) < 8) {
-                $keyhash = 'fb' . str_pad((string) get_current_blog_id(), 10, '0', STR_PAD_LEFT);
-                // Log once per process to alert operators about broken environment.
+                $keyhash = 'fb' . str_pad((string) $blog_id, 10, '0', STR_PAD_LEFT);
+                // Persist count in option so admins can detect even if error_log
+                // is disabled by hosting. Lightweight: single int, no autoload.
+                $opt_key = 'wpaic_hash_unexpected_count';
+                $count   = (int) get_option($opt_key, 0);
+                update_option($opt_key, $count + 1, false);
+                // Log once per process (static guard prevents log DoS).
                 static $hash_unexpected_logged = false;
                 if (!$hash_unexpected_logged) {
                     $hash_unexpected_logged = true;
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
-                        'WPAIC dedup: note=hash_unexpected | hash_len=%d | blog_id=%d',
+                        'WPAIC dedup: note=hash_unexpected | hash_len=%d | blog_id=%d | total=%d',
                         strlen($dedup_hash),
-                        get_current_blog_id()
+                        $blog_id,
+                        $count + 1
                     ));
                 }
             }
@@ -619,7 +626,7 @@ class WPAIC_REST_Controller {
                 if ($log_reason === 'malformed_data') {
                     // Per-source rate key: blog_id + keyhash (12 chars) for isolation.
                     // Debug mode: 3s cooldown (diagnostic). Non-debug: 10s cooldown.
-                    $rate_key    = 'wpaic_mf_' . get_current_blog_id() . '_' . $keyhash;
+                    $rate_key    = 'wpaic_mf_' . $blog_id . '_' . $keyhash;
                     $cooldown    = $should_log ? 3 : 10;
                     $last_logged = (int) get_transient($rate_key);
                     // Static fallback: if object cache is unreliable during anomaly,
