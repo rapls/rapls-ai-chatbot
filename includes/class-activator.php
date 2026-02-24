@@ -27,6 +27,7 @@ class WPAIC_Activator {
     /**
      * Run on version upgrade (lighter than activate - no rewrite flush)
      */
+    // Idempotent path: no external side effects (DB + options only).
     public static function upgrade() {
         self::create_tables();
         self::upgrade_columns();
@@ -34,10 +35,10 @@ class WPAIC_Activator {
         self::schedule_cron();
         self::migrate_diag_options();
 
-        // Clear bootstrap-order diag flag. Safe to clear unconditionally here:
-        // reaching this point means WPAIC_PLUGIN_DIR was defined and activator
-        // loaded correctly, so the condition the flag detects is not present.
-        delete_option('wpaic_diag_upgrade_order_issue');
+        // WHY: Do NOT delete wpaic_diag_upgrade_order_issue here.
+        // The stored timestamp shows when the issue last occurred (post-mortem).
+        // Successful upgrade proves the issue is resolved; the timestamp
+        // becomes historical. If it recurs, the sentinel overwrites it.
 
         // Save version
         update_option('wpaic_version', WPAIC_VERSION);
@@ -520,6 +521,7 @@ class WPAIC_Activator {
      * Migrate renamed diagnostic options (one-time on upgrade).
      * Merges old key value into new key and removes old key.
      */
+    // Idempotent path: no external side effects (DB + options only).
     private static function migrate_diag_options() {
         $migrations = [
             'wpaic_hash_unexpected_count' => 'wpaic_diag_hash_unexpected',
