@@ -79,17 +79,10 @@ function wpaic_uninstall_site() {
         delete_option('wpaic_pro_license_revoked');
 
         // Delete database tables.
-        // Whitelist of known table suffixes — only these are ever dropped.
-        // If you add a table, add its suffix here AND in WPAIC_Activator::create_tables().
-        $allowed_suffixes = [
-            'aichat_conversations',
-            'aichat_messages',
-            'aichat_index',
-            'aichat_knowledge',
-            'aichat_leads',
-            'aichat_user_context',
-            'aichat_audit_log',
-        ];
+        // Single source: WPAIC_Activator::get_table_suffixes().
+        // Never duplicate this list — always read from activator.
+        require_once __DIR__ . '/includes/class-activator.php';
+        $allowed_suffixes = WPAIC_Activator::get_table_suffixes();
 
         foreach ($allowed_suffixes as $suffix) {
             $table = $wpdb->prefix . $suffix;

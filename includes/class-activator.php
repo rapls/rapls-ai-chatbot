@@ -10,6 +10,24 @@ if (!defined('ABSPATH')) {
 class WPAIC_Activator {
 
     /**
+     * Single source of truth for all plugin table suffixes.
+     * Used by create_tables() and uninstall.php — never duplicate this list.
+     *
+     * @return string[] Table suffixes (without $wpdb->prefix).
+     */
+    public static function get_table_suffixes(): array {
+        return [
+            'aichat_conversations',
+            'aichat_messages',
+            'aichat_index',
+            'aichat_knowledge',
+            'aichat_leads',
+            'aichat_user_context',
+            'aichat_audit_log',
+        ];
+    }
+
+    /**
      * Run on activation
      */
     public static function activate() {

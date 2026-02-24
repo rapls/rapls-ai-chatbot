@@ -424,7 +424,7 @@ When uninstalled, the plugin removes all database tables, options, and transient
 
 == Development ==
 
-All release ZIPs are CI-verified for correctness. If you encounter unexpected files in a release, please report via the support forum.
+Release ZIPs are CI-verified for packaging correctness. If you encounter unexpected files in a release, please report via the support forum.
 
 == Changelog ==
 
