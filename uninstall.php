@@ -86,16 +86,27 @@ function wpaic_uninstall_site() {
     }
 }
 
-// Multisite: loop through all sites in batches to avoid timeout on large networks.
+// Multisite: batched with stable ordering to minimize skip/duplicate risk
+// if sites change during uninstall. try/finally ensures restore_current_blog()
+// runs even if wpaic_uninstall_site() throws an exception.
 if (is_multisite()) {
     $offset = 0;
     $batch  = 100;
     do {
-        $sites = get_sites(['fields' => 'ids', 'number' => $batch, 'offset' => $offset]);
+        $sites = get_sites([
+            'fields'  => 'ids',
+            'number'  => $batch,
+            'offset'  => $offset,
+            'orderby' => 'id',
+            'order'   => 'ASC',
+        ]);
         foreach ($sites as $site_id) {
-            switch_to_blog($site_id);
-            wpaic_uninstall_site();
-            restore_current_blog();
+            switch_to_blog((int) $site_id);
+            try {
+                wpaic_uninstall_site();
+            } finally {
+                restore_current_blog();
+            }
         }
         $offset += $batch;
     } while (count($sites) === $batch);
