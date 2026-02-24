@@ -87,11 +87,15 @@ jobs:
           FAIL=0
 
           # --- Layer 1: Deny-list safety net (catches critical APIs even if allow-list is wrong) ---
-          # NEVER add these to ALLOWED_CALLS — they are external side effects or code execution.
-          # Keep this list minimal and execution-form only (\() to avoid comment/string false positives.
-          DENY=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -E '(^|[^A-Za-z0-9_])(eval|assert|exec|system|passthru|shell_exec|popen|proc_open|pcntl_exec|wp_remote_(get|post|head|request)|wp_mail|file_put_contents|fwrite|curl_exec|add_action|add_filter|register_activation_hook|register_deactivation_hook)[[:space:]]*\(' || true)
+          # Policy: Activator's allowed side effects are ONLY:
+          #   - DB schema: dbDelta, $wpdb->query/prepare/get_var/get_col/get_results
+          #   - Options/transients: get_option, update_option, delete_option, set_transient, etc.
+          #   - WP cron: wp_schedule_event, wp_clear_scheduled_hook (activation-time only)
+          # Everything else (posts, users, files, HTTP, hooks, code execution) is forbidden.
+          # Keep patterns in execution-form only (\() to avoid comment/string false positives.
+          DENY=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -E '(^|[^A-Za-z0-9_])(eval|assert|exec|system|passthru|shell_exec|popen|proc_open|pcntl_exec|wp_remote_(get|post|head|request)|wp_mail|wp_insert_post|wp_update_post|wp_delete_post|wp_insert_user|wp_update_user|wp_upload_bits|file_put_contents|file_get_contents|fopen|fwrite|curl_exec|add_action|add_filter|register_activation_hook|register_deactivation_hook)[[:space:]]*\(' || true)
           # Also catch indirect calls: call_user_func('wp_remote_...') etc.
-          INDIRECT=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -E "call_user_func(_array)?[[:space:]]*\([[:space:]]*['\"]wp_(remote_|mail|schedule_)" || true)
+          INDIRECT=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -E "call_user_func(_array)?[[:space:]]*\([[:space:]]*['\"]wp_(remote_|mail|insert_|update_|delete_|upload_)" || true)
           DENY="${DENY}${INDIRECT}"
           if [ -n "$DENY" ]; then
             echo "::error::CRITICAL: Dangerous API in $FILE (deny-list):"

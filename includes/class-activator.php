@@ -5,6 +5,11 @@
  * MUST: No load-time side effects (no add_action, no add_filter, no DB writes
  * at file-include time). This file is require_once'd by uninstall.php to read
  * get_table_suffixes() — any side effects here would fire during uninstall.
+ *
+ * Allowed side effects (methods only, never at include-time):
+ *   DB schema (dbDelta, $wpdb), options/transients, WP cron scheduling.
+ * Forbidden: posts, users, files, HTTP, hooks, eval, variable functions ($fn()).
+ * CI enforces this — see .github/workflows/zip-verify.yml.
  */
 
 if (!defined('ABSPATH')) {
@@ -66,7 +71,10 @@ class WPAIC_Activator {
     }
 
     /**
-     * Create database tables
+     * Create database tables.
+     *
+     * Convention: all column names and index names MUST be lowercase_snake_case.
+     * CI (zip-verify.yml) relies on this to distinguish SQL from PHP identifiers.
      */
     private static function create_tables() {
         global $wpdb;
