@@ -46,17 +46,25 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
   # Detect catch blocks without throw in critical paths (target files only to reduce false positives)
   grep -n 'catch' uninstall.php includes/class-activator.php | grep -v 'rethrow\|throw'
   ```
-  **completed_at-sensitive files** (update this list if new files affect uninstall/upgrade flow):
+  **completed_at-sensitive files** (update this list AND `.github/workflows/zip-verify.yml` together):
   - `uninstall.php`
   - `includes/class-activator.php`
 
-  Broader grep risks false positives from normal error handling elsewhere. If you split uninstall/upgrade logic into new files, add them to both the grep command and this list.
+  CI runs the same grep automatically via the `Catch-swallow check` step. If you add files here, add them to the `SENSITIVE` variable in `zip-verify.yml` too (single-source pair).
 
-### Diagnostic Options Naming
+### Option Key Naming & Cleanup
 
-- All diagnostic/telemetry options **must** use the `wpaic_diag_` prefix (e.g. `wpaic_diag_hash_unexpected`).
-- This ensures `uninstall.php` cleanup (`DELETE WHERE option_name LIKE 'wpaic_diag_%'`) covers all diagnostic data.
-- Never use other prefixes for diagnostic counters, timestamps, or flags.
+All plugin option keys must follow these category prefixes so `uninstall.php` can clean them reliably:
+
+| Prefix | Category | Uninstall behavior |
+|--------|----------|-------------------|
+| `wpaic_diag_` | Diagnostic/telemetry (counters, timestamps) | Always deleted (LIKE query) |
+| `wpaic_settings` | User settings | Deleted only if `delete_data_on_uninstall` |
+| `wpaic_version`, `wpaic_db_version`, etc. | Plugin state | Deleted only if `delete_data_on_uninstall` |
+| `wpaic_pro_*` | Pro license/state | Deleted only if `delete_data_on_uninstall` |
+
+- **New options must fit one of these categories.** If a new prefix is needed, add it to `uninstall.php`'s delete logic first.
+- Never create options outside `wpaic_` namespace — they won't be cleaned up.
 
 ### Translation Style Guide (WordPress.org Japanese)
 

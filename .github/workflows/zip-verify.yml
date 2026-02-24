@@ -18,17 +18,33 @@ jobs:
       - name: Build ZIP via git archive
         run: git archive --format=zip HEAD -o dist.zip
 
-      - name: Check for forbidden files
+      - name: Allow-list check (unknown files = fail)
         run: |
-          # Deny-list: known dev/OS artifacts that must never ship.
-          # Future-proof note: if new file types leak in, add them here.
-          # For stricter control, consider an allow-list approach
-          # (fail on anything outside readme.txt, *.php, includes/, assets/, etc.).
-          FORBIDDEN='(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/|\.github/|\.gitignore|\.gitattributes|\.serena/|Thumbs\.db|\.env|\.log$|composer\.lock)'
-          FOUND=$(unzip -l dist.zip | grep -E "$FORBIDDEN" || true)
-          if [ -n "$FOUND" ]; then
-            echo "::error::Forbidden files found in ZIP:"
-            echo "$FOUND"
+          # Allow-list: only these top-level entries may exist in the ZIP.
+          # If you add a new top-level file/dir, add it here.
+          ALLOWED='^rapls-ai-chatbot/(assets/|includes/|languages/|templates/|rapls-ai-chatbot\.php|readme\.txt|uninstall\.php)'
+          # Extract file paths from unzip listing (skip header/footer lines)
+          ENTRIES=$(unzip -l dist.zip | awk 'NR>3 && /^ / && NF>=4 {print $NF}' | grep -v '^-' | grep -v '^$')
+          UNEXPECTED=$(echo "$ENTRIES" | grep -vE "$ALLOWED" || true)
+          if [ -n "$UNEXPECTED" ]; then
+            echo "::error::Unexpected files in ZIP (not in allow-list):"
+            echo "$UNEXPECTED"
             exit 1
           fi
-          echo "OK: no forbidden files in ZIP"
+          echo "OK: all files match allow-list"
+
+      - name: Catch-swallow check (completed_at-sensitive files)
+        run: |
+          # Single-source list: must match CLAUDE.md "completed_at-sensitive files"
+          SENSITIVE="uninstall.php includes/class-activator.php"
+          for f in $SENSITIVE; do
+            if [ -f "$f" ]; then
+              SWALLOW=$(grep -n 'catch' "$f" | grep -v 'rethrow\|throw' || true)
+              if [ -n "$SWALLOW" ]; then
+                echo "::error::Possible exception swallow in $f:"
+                echo "$SWALLOW"
+                exit 1
+              fi
+            fi
+          done
+          echo "OK: no catch-swallow detected"

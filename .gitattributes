@@ -22,3 +22,4 @@ tests/ export-ignore
 *.DS_Store export-ignore
 **/.DS_Store export-ignore
 Thumbs.db export-ignore
+.env* export-ignore
