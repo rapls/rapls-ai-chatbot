@@ -143,7 +143,7 @@ class WPAIC_Chatbot_Widget {
             // Minimum cap (default edit_posts) required even when filter overrides,
             // to prevent misuse granting debug to all logged-in subscribers.
             // Use wpaic_frontend_debug_min_cap filter to change the minimum capability.
-            'debug'                => is_user_logged_in() && current_user_can(apply_filters('wpaic_frontend_debug_min_cap', 'edit_posts')) && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
+            'debug'                => is_user_logged_in() && current_user_can($this->get_debug_min_cap()) && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
         ]);
     }
 
@@ -281,6 +281,17 @@ class WPAIC_Chatbot_Widget {
             'title'       => $pro_features['offline_form_title'] ?? __('We are currently offline', 'rapls-ai-chatbot'),
             'description' => $pro_features['offline_form_description'] ?? __('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
         ];
+    }
+
+    /**
+     * Get the minimum capability required for frontend debug mode.
+     * Defaults to 'edit_posts'; filterable via wpaic_frontend_debug_min_cap.
+     * Falls back to default if filter returns non-string or empty value.
+     */
+    private function get_debug_min_cap(): string {
+        $default = 'edit_posts';
+        $cap = apply_filters('wpaic_frontend_debug_min_cap', $default);
+        return (is_string($cap) && $cap !== '') ? $cap : $default;
     }
 
     /**

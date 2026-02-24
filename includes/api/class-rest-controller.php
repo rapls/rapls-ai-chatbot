@@ -573,6 +573,11 @@ class WPAIC_REST_Controller {
         if (!empty($client_request_id)) {
             $dedup_hash = hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id());
             $keyhash    = substr($dedup_hash, 0, 12);
+            // Defensive: if hash() ever returns unexpected result, fall back to
+            // a static key so rate limiting still works (DoS protection priority).
+            if (strlen($keyhash) < 8) {
+                $keyhash = 'fallback0000';
+            }
             $dedup_key  = 'wpaic_dedup_' . substr($dedup_hash, 0, 16);
             $cached_result = get_transient($dedup_key);
             if ($cached_result !== false) {
