@@ -1,0 +1,21 @@
+# Exclude from git archive (distribution ZIPs)
+.distignore export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.git export-ignore
+.github export-ignore
+.claude export-ignore
+.serena export-ignore
+CLAUDE.md export-ignore
+**/CLAUDE.md export-ignore
+docs/ export-ignore
+build/ export-ignore
+node_modules/ export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+.travis.yml export-ignore
+phpunit.xml export-ignore
+phpcs.xml export-ignore
+tests/ export-ignore

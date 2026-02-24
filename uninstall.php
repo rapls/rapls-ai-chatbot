@@ -14,6 +14,8 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
  * Idempotent: only performs DB deletes (options, transients, tables).
  * Do NOT add external side effects (file I/O, remote API calls) here —
  * this function may be re-run after a partial failure.
+ * MUST: Do NOT swallow exceptions/errors silently — let failures propagate
+ * so the completed_at marker accurately reflects success.
  */
 function wpaic_uninstall_site() {
     global $wpdb;
