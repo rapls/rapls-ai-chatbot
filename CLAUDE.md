@@ -20,7 +20,7 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **Local environment**: Local by Flywheel (Local Sites)
 - **PHP/JS/CSS**: Edit directly, no compilation step
 - **Translations**: Compile `.po` to `.mo` with `msgfmt languages/rapls-ai-chatbot-ja.po -o languages/rapls-ai-chatbot-ja.mo`
-- **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md). Release ZIPs must be generated via CI or `git archive` — never by manual file selection.
+- **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md). Release ZIPs must be generated via CI or `git archive` — never by manual file selection. Release checklist: (1) CI green, (2) `git archive` or CI artifact, (3) verify with `unzip -l`.
 - **ZIP verification**: Automated via `.github/workflows/zip-verify.yml` (runs on tags + PRs). Manual check:
   ```bash
   # Cross-platform: use unzip -l (not tar -t) so it works on Windows/BusyBox too
@@ -41,7 +41,7 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 
 - **Uninstall, upgrade, and migration** functions may be interrupted and re-run. Keep them idempotent (DB deletes, option updates only).
 - **Do NOT** add external side effects (file I/O, remote API calls, email sends) to these paths — they are not transactional and cannot be safely retried.
-- **Activator (`class-activator.php`)**: allowed side effects are DB schema (`dbDelta`, `$wpdb`), options/transients, and WP cron only. Posts, users, files, HTTP, hooks, `eval`, and variable functions (`$fn()`) are all forbidden. CI enforces this via deny-list + allow-list.
+- **Activator (`class-activator.php`)**: allowed side effects are DB schema (`dbDelta`, `$wpdb`), options/transients, and WP cron only. Posts, users, files, HTTP, hooks, `eval`, and variable functions (`$fn()`) are all forbidden. CI enforces this via deny-list + allow-list. If `$wpdb->insert/update/delete` is needed, verify: (1) plugin table only, (2) sanitized input, (3) idempotent.
 - **Do NOT** add `catch` blocks that swallow exceptions in uninstall/upgrade paths — silent catch breaks `completed_at` accuracy. Always rethrow.
 - **Catch blocks in sensitive files must be ≤40 lines** and end with `throw`/`rethrow`. CI enforces this (40-line window). Violations are intentional CI failures — fix by extracting a helper, not by increasing the window.
 - **completed_at-sensitive files** — single source of truth: `.ci/sensitive-files.txt`
