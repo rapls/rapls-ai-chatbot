@@ -22,7 +22,9 @@ function wpaic_uninstall_site() {
     // Silent catch breaks completed_at accuracy (see PHPDoc above).
     global $wpdb;
 
-    // Check if user opted to delete data on uninstall
+    // Check if user opted to delete data on uninstall.
+    // Multisite: reads each blog's own wpaic_settings (switch_to_blog sets the context).
+    // There is no network-level override — each site controls its own data deletion.
     $settings = get_option('wpaic_settings', []);
     $delete_data = !empty($settings['delete_data_on_uninstall']);
 

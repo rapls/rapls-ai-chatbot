@@ -258,7 +258,7 @@ The Pro add-on is a separate plugin that extends this free version with advanced
 
 = What happens to my data when I uninstall? =
 
-By default, the plugin keeps your settings and conversation data so you can re-install without losing anything. To delete all data on uninstall, enable "Delete data on uninstall" in the plugin settings. Temporary cache and diagnostic counters are always removed regardless of this setting.
+By default, the plugin keeps your settings and conversation data so you can re-install without losing anything. To delete all data on uninstall, enable "Delete data on uninstall" in the plugin settings. Temporary cache and diagnostic counters are always removed regardless of this setting. On multisite, each site has its own setting — there is no network-level override.
 
 = How can I adjust multisite uninstall performance? =
 
@@ -421,6 +421,10 @@ The plugin creates the following database tables:
 When uninstalled, the plugin removes all database tables, options, and transients. Conversation history will be permanently deleted.
 
 
+
+== Development ==
+
+Contributions are welcome. CI checks (`.github/workflows/`) validate distribution ZIP contents and code quality. Development-only files (`.ci/`, `.github/`) are excluded from release ZIPs via `.gitattributes`.
 
 == Changelog ==
 

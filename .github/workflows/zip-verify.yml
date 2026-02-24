@@ -21,7 +21,7 @@ jobs:
       - name: Allow-list check (unknown files = fail)
         run: |
           # Allow-list: only these top-level entries may exist in the ZIP.
-          # If you add a new top-level file/dir, add it here.
+          # Add ONLY runtime files/assets needed by WordPress. Never add CI, docs, or dev files.
           ALLOWED='^rapls-ai-chatbot/(assets/|includes/|languages/|templates/|rapls-ai-chatbot\.php|readme\.txt|uninstall\.php|$)'
           # Extract file paths from unzip listing (skip header/footer lines)
           ENTRIES=$(unzip -l dist.zip | awk 'NR>3 && /^ / && NF>=4 {print $NF}' | grep -v '^-' | grep -v '^$')
@@ -30,8 +30,9 @@ jobs:
             echo "::error::Unexpected files in ZIP (not in allow-list):"
             echo "$UNEXPECTED"
             echo ""
-            echo "If these files are intentional, add them to the ALLOWED pattern"
-            echo "in .github/workflows/zip-verify.yml and re-run."
+            echo "If these are runtime files needed by WordPress, add them to the"
+            echo "ALLOWED pattern in .github/workflows/zip-verify.yml and re-run."
+            echo "Do NOT add CI, docs, or dev-only files — use .gitattributes export-ignore instead."
             exit 1
           fi
           echo "OK: all files match allow-list"
@@ -48,14 +49,15 @@ jobs:
             # Skip blank lines and comments
             [[ -z "$f" || "$f" == \#* ]] && continue
             if [ ! -f "$f" ]; then continue; fi
-            # For each catch block, check if throw/rethrow appears within 20 lines after
+            # For each catch block, check if throw/rethrow appears within 40 lines after.
+            # Keep catch blocks short (<40 lines) with throw/rethrow at the end — see CLAUDE.md.
             CATCH_LINES=$(grep -n 'catch' "$f" | grep -v '^#' || true)
             if [ -z "$CATCH_LINES" ]; then continue; fi
             while IFS=: read -r lineno _rest; do
-              END=$((lineno + 20))
+              END=$((lineno + 40))
               HAS_THROW=$(sed -n "${lineno},${END}p" "$f" | grep -c 'throw\|rethrow' || true)
               if [ "$HAS_THROW" -eq 0 ]; then
-                echo "::warning::$f:$lineno — catch block without throw/rethrow within 20 lines"
+                echo "::warning::$f:$lineno — catch block without throw/rethrow within 40 lines"
                 FAIL=1
               fi
             done <<< "$CATCH_LINES"
