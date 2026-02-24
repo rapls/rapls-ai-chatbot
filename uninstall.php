@@ -162,4 +162,8 @@ if (is_multisite()) {
     wpaic_uninstall_site();
 }
 
+// completed_at = "script reached this line" (best-effort).
+// It does NOT guarantee every DB operation above succeeded —
+// individual DROP/DELETE may have silently failed at the DB level.
+// To detect partial failure, compare DB state against expected empty state.
 update_option( 'wpaic_diag_uninstall_completed_at', time(), false );

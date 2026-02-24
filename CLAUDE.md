@@ -21,6 +21,11 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **PHP/JS/CSS**: Edit directly, no compilation step
 - **Translations**: Compile `.po` to `.mo` with `msgfmt languages/rapls-ai-chatbot-ja.po -o languages/rapls-ai-chatbot-ja.mo`
 - **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md)
+- **ZIP verification** (run after every `git archive`):
+  ```bash
+  # Fail if CLAUDE.md, .DS_Store, node_modules, or .claude/ leak into the ZIP
+  git archive HEAD | tar -t | grep -E '(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/)' && echo "FAIL: forbidden files in archive" && exit 1 || echo "OK"
+  ```
 - **Output location**: ZIP files, reports, and all generated artifacts must be placed in `/Users/min/Local Sites/hash/app/public/wp-content/plugins/` — **NEVER on Desktop or any other location**
 
 ### WordPress Hook/Filter Type Safety Rules
@@ -34,6 +39,11 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 
 - **Uninstall, upgrade, and migration** functions may be interrupted and re-run. Keep them idempotent (DB deletes, option updates only).
 - **Do NOT** add external side effects (file I/O, remote API calls, email sends) to these paths — they are not transactional and cannot be safely retried.
+- **Do NOT** add `catch` blocks that swallow exceptions in uninstall/upgrade paths — silent catch breaks `completed_at` accuracy. Always rethrow. Verify with:
+  ```bash
+  # Detect catch blocks without throw in critical paths (manual review)
+  grep -n 'catch' uninstall.php includes/class-activator.php | grep -v 'rethrow\|throw'
+  ```
 
 ### Diagnostic Options Naming
 
