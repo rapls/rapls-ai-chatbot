@@ -86,14 +86,19 @@ function wpaic_uninstall_site() {
     }
 }
 
-// Multisite: loop through all sites
+// Multisite: loop through all sites in batches to avoid timeout on large networks.
 if (is_multisite()) {
-    $sites = get_sites(['fields' => 'ids', 'number' => 0]);
-    foreach ($sites as $site_id) {
-        switch_to_blog($site_id);
-        wpaic_uninstall_site();
-        restore_current_blog();
-    }
+    $offset = 0;
+    $batch  = 100;
+    do {
+        $sites = get_sites(['fields' => 'ids', 'number' => $batch, 'offset' => $offset]);
+        foreach ($sites as $site_id) {
+            switch_to_blog($site_id);
+            wpaic_uninstall_site();
+            restore_current_blog();
+        }
+        $offset += $batch;
+    } while (count($sites) === $batch);
 } else {
     wpaic_uninstall_site();
 }

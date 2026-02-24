@@ -586,7 +586,7 @@ class WPAIC_REST_Controller {
                 // FPM workers hit the fallback simultaneously.
                 // Concurrent requests may both pass the 60s check (no row-level
                 // lock); this is acceptable — purpose is detection/throttling,
-                // not precise accounting. Count may under-report.
+                // not precise accounting. Count may under- or over-report.
                 static $hash_unexpected_logged = false;
                 if (!$hash_unexpected_logged) {
                     $hash_unexpected_logged = true;

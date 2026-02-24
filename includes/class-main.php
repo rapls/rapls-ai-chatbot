@@ -56,7 +56,10 @@ class WPAIC_Main {
         $current_version = get_option('wpaic_version', '0');
 
         if (version_compare($current_version, $this->version, '<')) {
-            // Run lightweight upgrade (no rewrite flush)
+            // Run lightweight upgrade (no rewrite flush).
+            // Activator is require_once'd here; all model classes are already
+            // available via load_dependencies() which runs before this method.
+            // Upgrade must only use early WP APIs ($wpdb, options, transients).
             require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
             WPAIC_Activator::upgrade();
         }
