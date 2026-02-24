@@ -574,9 +574,21 @@ class WPAIC_REST_Controller {
             $dedup_hash = hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id());
             $keyhash    = substr($dedup_hash, 0, 12);
             // Defensive: if hash() ever returns unexpected result, fall back to
-            // a static key so rate limiting still works (DoS protection priority).
+            // a per-site static key so rate limiting still works (DoS protection
+            // priority). blog_id isolates sites; log helps diagnose environment.
             if (strlen($keyhash) < 8) {
-                $keyhash = 'fallback0000';
+                $keyhash = 'fb' . str_pad((string) get_current_blog_id(), 10, '0', STR_PAD_LEFT);
+                // Log once per process to alert operators about broken environment.
+                static $hash_unexpected_logged = false;
+                if (!$hash_unexpected_logged) {
+                    $hash_unexpected_logged = true;
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log(sprintf(
+                        'WPAIC dedup: note=hash_unexpected | hash_len=%d | blog_id=%d',
+                        strlen($dedup_hash),
+                        get_current_blog_id()
+                    ));
+                }
             }
             $dedup_key  = 'wpaic_dedup_' . substr($dedup_hash, 0, 16);
             $cached_result = get_transient($dedup_key);
