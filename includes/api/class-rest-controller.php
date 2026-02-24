@@ -571,6 +571,8 @@ class WPAIC_REST_Controller {
         $dedup_key  = '';
         $keyhash    = '';
         if (!empty($client_request_id)) {
+            // Note: $blog_id is captured once; assumes no switch_to_blog() mid-request
+            // in the REST handler path (standard WordPress REST lifecycle).
             $blog_id    = get_current_blog_id();
             $dedup_hash = hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . $blog_id);
             $keyhash    = substr($dedup_hash, 0, 12);
@@ -579,15 +581,16 @@ class WPAIC_REST_Controller {
             // priority). blog_id isolates sites; log + option counter help diagnose.
             if (strlen($keyhash) < 8) {
                 $keyhash = 'fb' . str_pad((string) $blog_id, 10, '0', STR_PAD_LEFT);
-                // Persist count in option so admins can detect even if error_log
-                // is disabled by hosting. Lightweight: single int, no autoload.
-                $opt_key = 'wpaic_hash_unexpected_count';
-                $count   = (int) get_option($opt_key, 0);
-                update_option($opt_key, $count + 1, false);
-                // Log once per process (static guard prevents log DoS).
+                // Once-per-process: both DB increment and error_log are gated by
+                // static guard to prevent DB write storms if environment is broken.
+                // Count may under-report due to concurrent lost updates — acceptable
+                // since purpose is detection, not precise accounting.
                 static $hash_unexpected_logged = false;
                 if (!$hash_unexpected_logged) {
                     $hash_unexpected_logged = true;
+                    $opt_key = 'wpaic_diag_hash_unexpected';
+                    $count   = (int) get_option($opt_key, 0);
+                    update_option($opt_key, $count + 1, false);
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
                         'WPAIC dedup: note=hash_unexpected | hash_len=%d | blog_id=%d | total=%d',
