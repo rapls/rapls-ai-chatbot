@@ -90,25 +90,49 @@ function wpaic_uninstall_site() {
     }
 }
 
-// Multisite: snapshot all site IDs (int array, ~4 bytes/site + zval overhead).
-// Safe for typical networks (<10k sites). For memory-constrained hosts or
-// 100k+ site networks, consider batched approach with cursor pagination.
+// Multisite: auto-select snapshot (<10k sites) or batched (>=10k) mode.
 // Each site operation is idempotent (safe to re-run if interrupted).
 // try/finally ensures restore_current_blog() runs even on exception.
 if (is_multisite()) {
-    $all_ids = get_sites([
-        'fields'  => 'ids',
-        'number'  => 0,
-        'orderby' => 'id',
-        'order'   => 'ASC',
-    ]);
-    foreach ($all_ids as $site_id) {
-        switch_to_blog((int) $site_id);
-        try {
-            wpaic_uninstall_site();
-        } finally {
-            restore_current_blog();
+    $site_count = (int) get_sites(['count' => true]);
+    if ($site_count < 10000) {
+        // Snapshot: load all IDs at once (~4 bytes/site + zval overhead).
+        $all_ids = get_sites([
+            'fields'  => 'ids',
+            'number'  => 0,
+            'orderby' => 'id',
+            'order'   => 'ASC',
+        ]);
+        foreach ($all_ids as $site_id) {
+            switch_to_blog((int) $site_id);
+            try {
+                wpaic_uninstall_site();
+            } finally {
+                restore_current_blog();
+            }
         }
+    } else {
+        // Batched: for large networks, process in chunks of 100.
+        $offset = 0;
+        $batch  = 100;
+        do {
+            $sites = get_sites([
+                'fields'  => 'ids',
+                'number'  => $batch,
+                'offset'  => $offset,
+                'orderby' => 'id',
+                'order'   => 'ASC',
+            ]);
+            foreach ($sites as $site_id) {
+                switch_to_blog((int) $site_id);
+                try {
+                    wpaic_uninstall_site();
+                } finally {
+                    restore_current_blog();
+                }
+            }
+            $offset += $batch;
+        } while (count($sites) === $batch);
     }
 } else {
     wpaic_uninstall_site();

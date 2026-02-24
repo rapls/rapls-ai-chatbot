@@ -416,6 +416,8 @@ When uninstalled, the plugin removes all database tables, options, and transient
 * Added: Server-side PDF export (Pro) — download analytics reports as PDF files using Dompdf, one-click download from the analytics page
 * Added: Rate limiting stub methods in Free plugin for Pro compatibility
 * Improved: Rate limit error messages are now customizable (returns specific message instead of generic text)
+* Improved: Diagnostic options renamed to `wpaic_diag_*` namespace (old `wpaic_hash_unexpected_count` and `wpaic_diag_upgrade_order_issue` keys auto-migrated on upgrade)
+* Improved: Frontend debug minimum capability is now filterable via `wpaic_frontend_debug_min_cap`
 
 = 1.3.0 =
 * Added: Response caching (Pro) — SHA-256 hash-based cache reduces API costs by 30-50%, with configurable TTL and cache statistics dashboard
