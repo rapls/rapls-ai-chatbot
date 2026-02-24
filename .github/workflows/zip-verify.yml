@@ -1,3 +1,5 @@
+# SYNC: When adding new check steps, consider if the same check applies to
+# rapls-ai-chatbot-pro/.github/workflows/zip-verify.yml (Pro uses allow-list + vendor deny).
 name: Verify distribution ZIP
 
 on:
@@ -75,7 +77,8 @@ jobs:
           FILE="includes/class-activator.php"
           FAIL=0
           # 1) Hook registration (would fire during uninstall)
-          HOOKS=$(grep -nE '(add_action|add_filter|register_activation_hook|register_deactivation_hook)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          # Word-boundary aware to avoid matching inside other identifiers.
+          HOOKS=$(grep -nE '(^|[^A-Za-z0-9_\\])(add_action|add_filter|register_activation_hook|register_deactivation_hook)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
           if [ -n "$HOOKS" ]; then
             echo "::error::Hook registration in $FILE (breaks uninstall):"
             echo "$HOOKS"
@@ -83,7 +86,12 @@ jobs:
           fi
           # 2) Forbidden APIs (external side effects, not safe in uninstall context)
           # Allowed: $wpdb, get_option, update_option, delete_option, dbDelta, require_once
-          FORBIDDEN_API=$(grep -nE '(wp_remote_|wp_schedule_|wp_mail|file_put_contents|curl_init|curl_exec|\bexec\s*\(|\bsystem\s*\(|\bmail\s*\(|wp_cron\b)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          FORBIDDEN_API=$(grep -nE '(^|[^A-Za-z0-9_\\])(wp_remote_(get|post|head|request)|wp_schedule_event|wp_schedule_single_event|wp_mail|file_put_contents|curl_init|curl_exec|curl_setopt|\bexec|\bsystem|\bpassthru|\bshell_exec|\bmail|wp_cron)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          # 3) Indirect calls that bypass direct name detection
+          INDIRECT=$(grep -nE "call_user_func\s*\(\s*['\"]wp_(remote_|schedule_|mail)" "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          if [ -n "$INDIRECT" ]; then
+            FORBIDDEN_API="${FORBIDDEN_API}${INDIRECT}"
+          fi
           if [ -n "$FORBIDDEN_API" ]; then
             echo "::error::Forbidden API in $FILE (external side effects):"
             echo "$FORBIDDEN_API"
@@ -122,8 +130,8 @@ jobs:
           # Flag any wp_send_json / rest_ensure_response that includes 'debug' without a guard.
           REST="includes/api/class-rest-controller.php"
           if [ ! -f "$REST" ]; then exit 0; fi
-          # Find lines that add 'debug' to response arrays (simple heuristic)
-          DEBUG_LINES=$(grep -n "'debug'" "$REST" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          # Find lines that add debug/diagnostic keys to response arrays
+          DEBUG_LINES=$(grep -nE "'(debug|debug_info|diag|diagnostic|trace)'" "$REST" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
           if [ -n "$DEBUG_LINES" ]; then
             # Verify each debug line has a capability guard within 20 lines before it
             FAIL=0
