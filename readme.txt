@@ -256,6 +256,9 @@ The plugin displays a customizable error message when quota limits are reached.
 
 The Pro add-on is a separate plugin that extends this free version with advanced features like analytics, lead capture, business hours, and more. The free version works fully on its own.
 
+= How can I adjust multisite uninstall performance? =
+
+On large multisite networks, uninstall batch size is adjustable via the `wpaic_uninstall_batch_size` filter (default: 100, range: 20–500). Guide: low-memory/slow-DB → 20–50, standard → 100, fast/large-scale → 200–500.
 
 
 == External Services ==

@@ -95,6 +95,9 @@ function wpaic_uninstall_site() {
  * Centralizes switch_to_blog/restore_current_blog so callers cannot
  * accidentally bypass restore via break/continue/return.
  *
+ * MUST: All blog-context switches in this file go through this helper.
+ * Do NOT call switch_to_blog() directly elsewhere in uninstall.php.
+ *
  * @param int $blog_id Blog ID to switch to.
  */
 function wpaic_uninstall_blog( int $blog_id ) {
@@ -106,8 +109,9 @@ function wpaic_uninstall_blog( int $blog_id ) {
     }
 }
 
-// Track partial completion: if completed_at is absent after uninstall,
-// the process was interrupted (idempotent — safe to re-run).
+// Track partial completion: started_at is overwritten on each attempt
+// (re-run after failure updates the timestamp). If completed_at is absent
+// after uninstall, the process was interrupted (idempotent — safe to re-run).
 update_option( 'wpaic_diag_uninstall_started_at', time(), false );
 
 // Multisite: auto-select snapshot (<10k sites) or batched (>=10k) mode.
