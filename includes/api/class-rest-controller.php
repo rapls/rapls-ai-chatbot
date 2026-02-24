@@ -17,6 +17,8 @@ class WPAIC_REST_Controller {
     /**
      * Add no-cache headers to a REST response.
      * Prevents page caching plugins from caching dynamic per-user responses.
+     * Intentionally overwrites any existing Cache-Control — only used on
+     * chat/dedup responses that must never be cached.
      */
     private function no_cache(WP_REST_Response $response): WP_REST_Response {
         $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
@@ -590,14 +592,25 @@ class WPAIC_REST_Controller {
                 } elseif (($now - $saved_at) >= 90) {
                     $log_reason = 'stale_age';
                 }
-                // malformed_data = corruption, always log; others = operational, gated.
-                $should_log = ($log_reason === 'malformed_data') || $this->should_log_dedup();
+                // malformed_data = corruption, always log (rate-limited to 1/10s to
+                // prevent log DoS if transients are persistently broken);
+                // other anomalies are operational noise, gated on should_log_dedup.
+                $should_log = $this->should_log_dedup();
+                if ($log_reason === 'malformed_data' && !$should_log) {
+                    // Rate-limit: only log if the last malformed log was >10s ago.
+                    $rate_key    = 'wpaic_malformed_log_ts';
+                    $last_logged = (int) get_transient($rate_key);
+                    if ($now - $last_logged >= 10) {
+                        set_transient($rate_key, $now, 30);
+                        $should_log = true;
+                    }
+                }
                 if (!empty($log_reason) && $should_log) {
                     $log_extra = '';
                     if ($log_reason === 'malformed_data') {
                         $log_extra = sprintf(' | data_type=%s', gettype($dedup_data_arr));
                     } elseif ($saved_at > 0) {
-                        $log_extra = sprintf(' | saved_at=%d | now=%d', $saved_at, $now);
+                        $log_extra = sprintf(' | saved_at=%d | now=%d | note=clock_skew_possible', $saved_at, $now);
                     }
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
