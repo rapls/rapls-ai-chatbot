@@ -264,7 +264,7 @@ On large multisite networks, uninstall batch size is adjustable via filters. Add
 
 `add_filter( 'wpaic_uninstall_snapshot_threshold', function() { return 1000; } );`
 
-Guide: low-memory/slow-DB → batch size 20–50, standard → 100, fast/large-scale → 200–500. Snapshot threshold (default 10000) controls when the plugin switches from snapshot to batched mode.
+Guide: low-memory/slow-DB → batch size 20–50, standard → 100, fast/large-scale → 200–500. Snapshot threshold (default 10000) controls when the plugin switches from snapshot to batched mode. Note: actual performance depends on host DB speed and memory limits — start with 20–50 if unsure.
 
 
 == External Services ==

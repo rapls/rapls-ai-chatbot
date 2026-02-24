@@ -20,7 +20,7 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **Local environment**: Local by Flywheel (Local Sites)
 - **PHP/JS/CSS**: Edit directly, no compilation step
 - **Translations**: Compile `.po` to `.mo` with `msgfmt languages/rapls-ai-chatbot-ja.po -o languages/rapls-ai-chatbot-ja.mo`
-- **Distribution**: Manual ZIP creation
+- **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md)
 - **Output location**: ZIP files, reports, and all generated artifacts must be placed in `/Users/min/Local Sites/hash/app/public/wp-content/plugins/` — **NEVER on Desktop or any other location**
 
 ### WordPress Hook/Filter Type Safety Rules
