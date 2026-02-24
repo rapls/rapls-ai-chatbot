@@ -25,7 +25,8 @@ function wpaic_uninstall_site() {
     // Check if user opted to delete data on uninstall.
     // Multisite: reads each blog's own wpaic_settings (switch_to_blog sets the context).
     // There is no network-level override — each site controls its own data deletion.
-    // Future: if bulk control is needed, add wpaic_network_delete_data (site_option, overrides per-blog).
+    // Future: if bulk control is needed, add wpaic_network_delete_data (site_option).
+    // Policy: site_option true → force delete on all blogs. Unset → fall back to per-blog setting.
     $settings = get_option('wpaic_settings', []);
     $delete_data = !empty($settings['delete_data_on_uninstall']);
 
@@ -77,18 +78,21 @@ function wpaic_uninstall_site() {
         delete_option('wpaic_pro_license_type');
         delete_option('wpaic_pro_license_revoked');
 
-        // Delete database tables
-        $tables = [
-            $wpdb->prefix . 'aichat_conversations',
-            $wpdb->prefix . 'aichat_messages',
-            $wpdb->prefix . 'aichat_index',
-            $wpdb->prefix . 'aichat_knowledge',
-            $wpdb->prefix . 'aichat_leads',
-            $wpdb->prefix . 'aichat_user_context',
-            $wpdb->prefix . 'aichat_audit_log',
+        // Delete database tables.
+        // Whitelist of known table suffixes — only these are ever dropped.
+        // If you add a table, add its suffix here AND in WPAIC_Activator::create_tables().
+        $allowed_suffixes = [
+            'aichat_conversations',
+            'aichat_messages',
+            'aichat_index',
+            'aichat_knowledge',
+            'aichat_leads',
+            'aichat_user_context',
+            'aichat_audit_log',
         ];
 
-        foreach ($tables as $table) {
+        foreach ($allowed_suffixes as $suffix) {
+            $table = $wpdb->prefix . $suffix;
             // Table name is safe: $wpdb->prefix (WordPress-controlled) + hardcoded suffix.
             // Backtick-quoted as identifier; esc_sql() is not appropriate for identifiers.
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
