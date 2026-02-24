@@ -67,3 +67,33 @@ jobs:
             exit 1
           fi
           echo "OK: no catch-swallow detected"
+
+      - name: Activator side-effect check
+        run: |
+          # class-activator.php must not register hooks — it is require'd by uninstall.php.
+          # Legitimate DB calls inside methods (create_tables, upgrade) are fine.
+          # Only hook registration at any scope is forbidden.
+          FILE="includes/class-activator.php"
+          HOOKS=$(grep -nE 'add_action|add_filter|register_activation_hook|register_deactivation_hook' "$FILE" || true)
+          if [ -n "$HOOKS" ]; then
+            echo "::error::Hook registration found in $FILE (breaks uninstall):"
+            echo "$HOOKS"
+            exit 1
+          fi
+          echo "OK: no hook registration in activator"
+
+      - name: Gitattributes essential entries check
+        run: |
+          # Verify that key export-ignore entries haven't been accidentally removed.
+          REQUIRED="CLAUDE.md .github .claude .env"
+          MISSING=""
+          for entry in $REQUIRED; do
+            if ! grep -q "$entry.*export-ignore" .gitattributes; then
+              MISSING="$MISSING $entry"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::warning::Missing export-ignore entries in .gitattributes:$MISSING"
+            echo "::warning::Also check rapls-ai-chatbot-pro/.gitattributes for sync."
+          fi
+          echo "OK: essential .gitattributes entries present"
