@@ -88,9 +88,14 @@ jobs:
           # Allowed: $wpdb, get_option, update_option, delete_option, dbDelta, require_once
           FORBIDDEN_API=$(grep -nE '(^|[^A-Za-z0-9_\\])(wp_remote_(get|post|head|request)|wp_schedule_event|wp_schedule_single_event|wp_mail|file_put_contents|curl_init|curl_exec|curl_setopt|\bexec|\bsystem|\bpassthru|\bshell_exec|\bmail|wp_cron)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
           # 3) Indirect calls that bypass direct name detection
-          INDIRECT=$(grep -nE "call_user_func\s*\(\s*['\"]wp_(remote_|schedule_|mail)" "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          INDIRECT=$(grep -nE "call_user_func(_array)?\s*\(\s*['\"]wp_(remote_|schedule_|mail)" "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
           if [ -n "$INDIRECT" ]; then
             FORBIDDEN_API="${FORBIDDEN_API}${INDIRECT}"
+          fi
+          # 4) Variable function assignment (e.g. $fn = 'wp_remote_post')
+          VARFUNC=$(grep -nE "=\s*['\"]wp_(remote_|schedule_|mail)" "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
+          if [ -n "$VARFUNC" ]; then
+            FORBIDDEN_API="${FORBIDDEN_API}${VARFUNC}"
           fi
           if [ -n "$FORBIDDEN_API" ]; then
             echo "::error::Forbidden API in $FILE (external side effects):"
@@ -126,8 +131,9 @@ jobs:
 
       - name: REST debug key exposure check
         run: |
-          # Ensure 'debug' data in REST responses is gated behind capability checks.
-          # Flag any wp_send_json / rest_ensure_response that includes 'debug' without a guard.
+          # Ensure debug/diagnostic data in REST responses is gated behind capability checks.
+          # Future: unify REST response output into a single helper to make this check exact.
+          # For now, heuristic: debug-like keys must have a capability guard within 20 lines.
           REST="includes/api/class-rest-controller.php"
           if [ ! -f "$REST" ]; then exit 0; fi
           # Find lines that add debug/diagnostic keys to response arrays
