@@ -1336,6 +1336,11 @@ class WPAIC_Admin {
             $warnings[] = __('Rate limiting is disabled. Public API endpoints have no request frequency restrictions.', 'rapls-ai-chatbot');
         }
 
+        // Check WP-Cron (informational — chat works without it, but crawl/cleanup won't run)
+        if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON) {
+            $warnings[] = __('WP-Cron is disabled (DISABLE_WP_CRON). Scheduled tasks (site crawl, conversation cleanup) will not run automatically. Chat functionality is not affected.', 'rapls-ai-chatbot');
+        }
+
         $settings_url = admin_url('admin.php?page=wpaic-settings');
 
         // Critical errors (red, not dismissible, shown on all admin pages)
