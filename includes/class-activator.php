@@ -1,6 +1,10 @@
 <?php
 /**
  * Plugin activation handler
+ *
+ * MUST: No load-time side effects (no add_action, no add_filter, no DB writes
+ * at file-include time). This file is require_once'd by uninstall.php to read
+ * get_table_suffixes() — any side effects here would fire during uninstall.
  */
 
 if (!defined('ABSPATH')) {

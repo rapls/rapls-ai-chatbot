@@ -1,4 +1,6 @@
 # Exclude from git archive (distribution ZIPs)
+# SYNC: When changing this file, apply the same rules to rapls-ai-chatbot-pro/.gitattributes.
+# Pro has additional entries (tools/) but the base rules must match.
 .distignore export-ignore
 .gitignore export-ignore
 .gitattributes export-ignore
