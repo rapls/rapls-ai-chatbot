@@ -568,9 +568,12 @@ class WPAIC_REST_Controller {
         // Prevents double sends from 409 retries or network glitches.
         // Key includes session_id + client_request_id + server salt to prevent
         // cross-session cache poisoning (session ownership already verified above).
-        $dedup_key = '';
+        $dedup_key  = '';
+        $keyhash    = '';
         if (!empty($client_request_id)) {
-            $dedup_key = 'wpaic_dedup_' . substr(hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id()), 0, 16);
+            $dedup_hash = hash('sha256', $session_id . $client_request_id . wp_salt() . '|' . get_current_blog_id());
+            $keyhash    = substr($dedup_hash, 0, 12);
+            $dedup_key  = 'wpaic_dedup_' . substr($dedup_hash, 0, 16);
             $cached_result = get_transient($dedup_key);
             if ($cached_result !== false) {
                 // Flag as cache-originated so client can distinguish dedup hits
@@ -598,9 +601,9 @@ class WPAIC_REST_Controller {
                 $should_log = $this->should_log_dedup();
                 if ($log_reason === 'malformed_data') {
                     // Per-source rate key: blog_id + keyhash (12 chars) for isolation.
-                    // Debug mode: 1s cooldown (verbose). Non-debug: 10s cooldown.
-                    $rate_key    = 'wpaic_mf_' . get_current_blog_id() . '_' . substr($dedup_key, 12, 12);
-                    $cooldown    = $should_log ? 1 : 10;
+                    // Debug mode: 3s cooldown (diagnostic). Non-debug: 10s cooldown.
+                    $rate_key    = 'wpaic_mf_' . get_current_blog_id() . '_' . $keyhash;
+                    $cooldown    = $should_log ? 3 : 10;
                     $last_logged = (int) get_transient($rate_key);
                     // Static fallback: if object cache is unreliable during anomaly,
                     // transient may fail. In-process static array guarantees at least
@@ -627,7 +630,7 @@ class WPAIC_REST_Controller {
                     error_log(sprintf(
                         'WPAIC dedup: anomaly=%s | keyhash=%s | age=%s | object_cache=%s%s',
                         $log_reason,
-                        substr($dedup_key, 12, 12),
+                        $keyhash,
                         ($saved_at > 0) ? ($now - $saved_at) . 's' : 'n/a',
                         wp_using_ext_object_cache() ? 'yes' : 'no',
                         $log_extra
@@ -1119,7 +1122,7 @@ class WPAIC_REST_Controller {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
                         'WPAIC dedup: set_transient failed | keyhash=%s | size=%d | object_cache=%s',
-                        substr($dedup_key, 12, 12),
+                        $keyhash,
                         $dedup_size,
                         wp_using_ext_object_cache() ? 'yes' : 'no'
                     ));
