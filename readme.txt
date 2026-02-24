@@ -511,7 +511,7 @@ When uninstalled, the plugin removes all database tables, options, and transient
 == Upgrade Notice ==
 
 = 1.3.1 =
-Enhanced rate limiting (two-tier burst + sustained throttling) and server-side PDF analytics export. Recommended update for Pro users.
+Enhanced rate limiting, server-side PDF export, and diagnostic option namespace migration (`wpaic_diag_*`). Recommended update for all users.
 
 = 1.3.0 =
 Major feature release: Response caching, audit logs, conversion tracking, offline messages, and answer templates. Reduces API costs and adds business-critical Pro features. Recommended update for all users.

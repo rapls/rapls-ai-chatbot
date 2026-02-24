@@ -95,7 +95,10 @@ function wpaic_uninstall_site() {
 // try/finally ensures restore_current_blog() runs even on exception.
 if (is_multisite()) {
     $site_count = (int) get_sites(['count' => true]);
-    if ($site_count < 10000) {
+    // Threshold filterable for memory-constrained hosts (default 10000).
+    // Falls back to batch if count returns 0 (query failure = safe side).
+    $threshold = (int) apply_filters('wpaic_uninstall_snapshot_threshold', 10000);
+    if ($site_count > 0 && $site_count < $threshold) {
         // Snapshot: load all IDs at once (~4 bytes/site + zval overhead).
         $all_ids = get_sites([
             'fields'  => 'ids',
