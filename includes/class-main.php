@@ -60,9 +60,12 @@ class WPAIC_Main {
             // Activator is require_once'd here; all model classes are already
             // available via load_dependencies() which runs before this method.
             // Upgrade must only use early WP APIs ($wpdb, options, transients).
-            if (defined('WP_DEBUG') && WP_DEBUG && !class_exists('WPAIC_Lead', false)) {
+            // Sentinel check: WPAIC_VERSION is defined at plugin entry and never
+            // removed. If missing, something loaded upgrade before the plugin bootstrap.
+            if (defined('WP_DEBUG') && WP_DEBUG && !defined('WPAIC_PLUGIN_DIR')) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC: maybe_upgrade() called before load_dependencies() — model classes missing');
+                error_log('WPAIC: maybe_upgrade() called before plugin bootstrap — constants missing');
+                update_option('wpaic_diag_upgrade_order_issue', time(), false);
             }
             require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
             WPAIC_Activator::upgrade();
