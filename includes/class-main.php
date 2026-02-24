@@ -76,6 +76,7 @@ class WPAIC_Main {
                     $now     = time();
                     $last_ts = (int) get_option('wpaic_diag_boot_order_last_seen', 0);
                     // Throttle: update at most once per 60s across all workers.
+                    // Note: last_seen may lag up to 60s behind actual occurrence.
                     if (($now - $last_ts) >= 60) {
                         // _first_seen: set only once. Strict false check avoids
                         // treating stored "0" as unset.

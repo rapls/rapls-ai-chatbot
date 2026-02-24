@@ -35,6 +35,12 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **Uninstall, upgrade, and migration** functions may be interrupted and re-run. Keep them idempotent (DB deletes, option updates only).
 - **Do NOT** add external side effects (file I/O, remote API calls, email sends) to these paths — they are not transactional and cannot be safely retried.
 
+### Diagnostic Options Naming
+
+- All diagnostic/telemetry options **must** use the `wpaic_diag_` prefix (e.g. `wpaic_diag_hash_unexpected`).
+- This ensures `uninstall.php` cleanup (`DELETE WHERE option_name LIKE 'wpaic_diag_%'`) covers all diagnostic data.
+- Never use other prefixes for diagnostic counters, timestamps, or flags.
+
 ### Translation Style Guide (WordPress.org Japanese)
 
 Follow the [WordPress Japanese Translation Style Guide](https://ja.wordpress.org/team/handbook/translation/translation-style-guide/) and [Glossary](https://translate.wordpress.org/locale/ja/default/glossary/).

@@ -96,8 +96,9 @@ function wpaic_uninstall_site() {
 if (is_multisite()) {
     $site_count = (int) get_sites(['count' => true]);
     // Threshold filterable for memory-constrained hosts (default 10000).
-    // Falls back to batch if count returns 0 (query failure = safe side).
+    // Clamped to 100–100000; falls back to batch if count=0 (query failure).
     $threshold = (int) apply_filters('wpaic_uninstall_snapshot_threshold', 10000);
+    $threshold = max(100, min($threshold, 100000));
     if ($site_count > 0 && $site_count < $threshold) {
         // Snapshot: load all IDs at once (~4 bytes/site + zval overhead).
         $all_ids = get_sites([
