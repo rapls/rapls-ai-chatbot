@@ -47,7 +47,10 @@ class WPAIC_Main {
     }
 
     /**
-     * Handle version upgrade process
+     * Handle version upgrade process.
+     * Runs on every request via plugins_loaded (not just activation), so
+     * upgrades apply even when plugin files are replaced without triggering
+     * the activation hook (e.g. manual FTP upload, composer update).
      */
     private function maybe_upgrade() {
         $current_version = get_option('wpaic_version', '0');

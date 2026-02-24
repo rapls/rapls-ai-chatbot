@@ -584,8 +584,9 @@ class WPAIC_REST_Controller {
                 // Two-layer guard: static (per-process) + option-based timestamp
                 // (cross-worker, 60s cooldown). Prevents DB write storms when many
                 // FPM workers hit the fallback simultaneously.
-                // Count may under-report due to concurrent lost updates — acceptable
-                // since purpose is detection, not precise accounting.
+                // Concurrent requests may both pass the 60s check (no row-level
+                // lock); this is acceptable — purpose is detection/throttling,
+                // not precise accounting. Count may under-report.
                 static $hash_unexpected_logged = false;
                 if (!$hash_unexpected_logged) {
                     $hash_unexpected_logged = true;

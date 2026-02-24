@@ -34,7 +34,9 @@ function wpaic_uninstall_site() {
         )
     );
 
-    // Always clear diagnostic counters (wpaic_diag_*)
+    // Always clear diagnostic counters (wpaic_diag_*).
+    // These are lightweight, auto-regenerated runtime metrics — not user data.
+    // Cleared regardless of delete_data_on_uninstall setting.
     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $wpdb->query(
         $wpdb->prepare(
