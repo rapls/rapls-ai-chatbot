@@ -116,9 +116,11 @@ if (is_multisite()) {
             }
         }
     } else {
-        // Batched: for large networks, process in chunks of 100.
+        // Batched: for large networks or count=0 fallback.
+        // Batch size filterable (default 100, clamped 20–500).
         $offset = 0;
-        $batch  = 100;
+        $batch  = (int) apply_filters('wpaic_uninstall_batch_size', 100);
+        $batch  = max(20, min($batch, 500));
         do {
             $sites = get_sites([
                 'fields'  => 'ids',
