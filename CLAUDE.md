@@ -21,10 +21,12 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **PHP/JS/CSS**: Edit directly, no compilation step
 - **Translations**: Compile `.po` to `.mo` with `msgfmt languages/rapls-ai-chatbot-ja.po -o languages/rapls-ai-chatbot-ja.mo`
 - **Distribution**: `git archive` only (`.gitattributes` export-ignore excludes dev files like CLAUDE.md)
-- **ZIP verification** (run after every `git archive`):
+- **ZIP verification**: Automated via `.github/workflows/zip-verify.yml` (runs on tags + PRs). Manual check:
   ```bash
-  # Fail if CLAUDE.md, .DS_Store, node_modules, or .claude/ leak into the ZIP
-  git archive HEAD | tar -t | grep -E '(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/)' && echo "FAIL: forbidden files in archive" && exit 1 || echo "OK"
+  # Cross-platform: use unzip -l (not tar -t) so it works on Windows/BusyBox too
+  git archive --format=zip HEAD -o /tmp/check.zip
+  unzip -l /tmp/check.zip | grep -E '(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/)' && echo "FAIL" && exit 1 || echo "OK"
+  rm /tmp/check.zip
   ```
 - **Output location**: ZIP files, reports, and all generated artifacts must be placed in `/Users/min/Local Sites/hash/app/public/wp-content/plugins/` — **NEVER on Desktop or any other location**
 
@@ -41,9 +43,10 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
 - **Do NOT** add external side effects (file I/O, remote API calls, email sends) to these paths — they are not transactional and cannot be safely retried.
 - **Do NOT** add `catch` blocks that swallow exceptions in uninstall/upgrade paths — silent catch breaks `completed_at` accuracy. Always rethrow. Verify with:
   ```bash
-  # Detect catch blocks without throw in critical paths (manual review)
+  # Detect catch blocks without throw in critical paths (target files only to reduce false positives)
   grep -n 'catch' uninstall.php includes/class-activator.php | grep -v 'rethrow\|throw'
   ```
+  Scope is intentionally limited to `uninstall.php` and `includes/class-activator.php` — the only files where catch-swallow breaks `completed_at`. Broader grep risks false positives from normal error handling elsewhere.
 
 ### Diagnostic Options Naming
 

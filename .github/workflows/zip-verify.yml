@@ -1,0 +1,29 @@
+name: Verify distribution ZIP
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build ZIP via git archive
+        run: git archive --format=zip HEAD -o dist.zip
+
+      - name: Check for forbidden files
+        run: |
+          FORBIDDEN='(CLAUDE\.md|\.DS_Store|node_modules/|\.claude/|\.github/|\.gitignore|\.gitattributes|\.serena/|Thumbs\.db)'
+          FOUND=$(unzip -l dist.zip | grep -E "$FORBIDDEN" || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Forbidden files found in ZIP:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "OK: no forbidden files in ZIP"
