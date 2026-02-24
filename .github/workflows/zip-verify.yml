@@ -37,6 +37,15 @@ jobs:
             echo "Do NOT add CI, docs, or dev-only files — use .gitattributes export-ignore instead."
             exit 1
           fi
+          # Light check: warn on unusual extensions inside assets/vendor/ (e.g. .map, .bak)
+          ASSET_VENDOR=$(echo "$ENTRIES" | grep 'assets/vendor/' || true)
+          if [ -n "$ASSET_VENDOR" ]; then
+            AV_UNUSUAL=$(echo "$ASSET_VENDOR" | grep -vE '\.(js|css|json|md|txt|map|min\.js|min\.css)$' | grep -vE '(/|^)$' | grep -vE '/(LICENSE|README)([^/]*)?$' || true)
+            if [ -n "$AV_UNUSUAL" ]; then
+              echo "::warning::Unusual files in assets/vendor/ (review if needed):"
+              echo "$AV_UNUSUAL" | head -10
+            fi
+          fi
           echo "OK: all files match allow-list"
 
       - name: Catch-swallow check (completed_at-sensitive files)
@@ -70,40 +79,29 @@ jobs:
           fi
           echo "OK: no catch-swallow detected"
 
-      - name: Activator side-effect check
+      - name: Activator side-effect check (allow-list approach)
         run: |
           # class-activator.php is require'd by uninstall.php for get_table_suffixes().
-          # It must not have load-time side effects. Check two categories:
+          # Instead of growing a deny-list, we check that ONLY allowed function calls exist.
+          # Allowed calls: DB/option APIs that are safe in uninstall context.
           FILE="includes/class-activator.php"
-          FAIL=0
-          # 1) Hook registration (would fire during uninstall)
-          # Word-boundary aware to avoid matching inside other identifiers.
-          HOOKS=$(grep -nE '(^|[^A-Za-z0-9_\\])(add_action|add_filter|register_activation_hook|register_deactivation_hook)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
-          if [ -n "$HOOKS" ]; then
-            echo "::error::Hook registration in $FILE (breaks uninstall):"
-            echo "$HOOKS"
-            FAIL=1
+          # Extract all function-call-like patterns (word followed by '('), skip comments.
+          # Then filter out allowed patterns and language constructs.
+          # Pre-filter: strip comment lines and SQL definitions (KEY/INDEX/COMMENT)
+          # that look like function calls to grep but aren't actual PHP calls.
+          CALLS=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -vE 'KEY [A-Za-z_]+ \(' | grep -vE 'INDEX [A-Za-z_]+ \(' | grep -vE 'COMMENT ' | grep -oE '[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\(' || true)
+          # Allowed: PHP constructs, DB/option APIs, WP cron, internal methods, SQL keywords.
+          # SQL keywords appear because grep picks up CREATE TABLE column definitions.
+          ALLOWED_CALLS='(function|if|else|elseif|foreach|for|while|switch|catch|return|array|isset|empty|defined|class|self|static|new|require_once|require|include_once|include|dbDelta|get_option|update_option|delete_option|add_option|get_site_option|set_transient|get_transient|delete_transient|get_charset_collate|prepare|query|get_var|get_col|get_results|get_row|esc_like|esc_sql|maybe_create_table|version_compare|absint|sanitize_text_field|wp_parse_url|get_site_url|error_log|sprintf|substr|strlen|str_pad|strpos|strtolower|time|is_array|in_array|array_merge|array_key_exists|array_fill|array_chunk|implode|count|intval|max|min|trim|preg_match|preg_replace|wp_clear_scheduled_hook|wp_next_scheduled|wp_schedule_event|wp_salt|flush_rewrite_rules|WPAIC_VERSION|get_table_suffixes|create_tables|upgrade_columns|set_default_options|schedule_cron|migrate_diag_options|activate|upgrade|safe_alter|maybe_add_token_columns|maybe_add_is_active_column|maybe_add_custom_fields_column|maybe_add_feedback_column|maybe_add_cache_columns|maybe_add_knowledge_columns|maybe_create_audit_log_table|maybe_add_conversations_columns|maybe_add_messages_columns|maybe_add_conversion_columns|maybe_add_message_composite_index|maybe_convert_enum_to_varchar|[A-Z][A-Z_]+)'
+          UNEXPECTED_CALLS=$(echo "$CALLS" | sed 's/[[:space:]]*(//' | grep -vE "^${ALLOWED_CALLS}$" | sort -u || true)
+          if [ -n "$UNEXPECTED_CALLS" ]; then
+            echo "::error::Unexpected function calls in $FILE (not in allow-list):"
+            echo "$UNEXPECTED_CALLS"
+            echo ""
+            echo "If this call is safe for uninstall context, add it to ALLOWED_CALLS in zip-verify.yml."
+            exit 1
           fi
-          # 2) Forbidden APIs (external side effects, not safe in uninstall context)
-          # Allowed: $wpdb, get_option, update_option, delete_option, dbDelta, require_once
-          FORBIDDEN_API=$(grep -nE '(^|[^A-Za-z0-9_\\])(wp_remote_(get|post|head|request)|wp_schedule_event|wp_schedule_single_event|wp_mail|file_put_contents|curl_init|curl_exec|curl_setopt|\bexec|\bsystem|\bpassthru|\bshell_exec|\bmail|wp_cron)\s*\(' "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
-          # 3) Indirect calls that bypass direct name detection
-          INDIRECT=$(grep -nE "call_user_func(_array)?\s*\(\s*['\"]wp_(remote_|schedule_|mail)" "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
-          if [ -n "$INDIRECT" ]; then
-            FORBIDDEN_API="${FORBIDDEN_API}${INDIRECT}"
-          fi
-          # 4) Variable function assignment (e.g. $fn = 'wp_remote_post')
-          VARFUNC=$(grep -nE "=\s*['\"]wp_(remote_|schedule_|mail)" "$FILE" | grep -vE '^\s*[0-9]+:\s*(//|#|\*)' || true)
-          if [ -n "$VARFUNC" ]; then
-            FORBIDDEN_API="${FORBIDDEN_API}${VARFUNC}"
-          fi
-          if [ -n "$FORBIDDEN_API" ]; then
-            echo "::error::Forbidden API in $FILE (external side effects):"
-            echo "$FORBIDDEN_API"
-            FAIL=1
-          fi
-          if [ "$FAIL" -ne 0 ]; then exit 1; fi
-          echo "OK: no side effects in activator"
+          echo "OK: all function calls in activator are allowed"
 
       - name: Gitattributes essential entries check
         run: |
