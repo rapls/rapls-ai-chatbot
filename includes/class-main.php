@@ -63,6 +63,8 @@ class WPAIC_Main {
             // available via load_dependencies() which runs before this method.
             // Upgrade must only use early WP APIs ($wpdb, options, transients).
             // Sentinel: WPAIC_PLUGIN_DIR must be defined by plugin entry point.
+            // Note: MU-plugin or autoloader setups may trigger this benignly
+            // if class instantiation precedes constant definition — not fatal.
             // Static guard limits DB writes to 1/process.
             if (defined('WP_DEBUG') && WP_DEBUG && !defined('WPAIC_PLUGIN_DIR')) {
                 static $bootstrap_warned = false;
@@ -71,8 +73,9 @@ class WPAIC_Main {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log('WPAIC: maybe_upgrade() called before plugin bootstrap — constants missing');
                     $now = time();
-                    // _first_seen: set only once (initial occurrence for post-mortem).
-                    if (!get_option('wpaic_diag_boot_order_first_seen')) {
+                    // _first_seen: set only once. Strict false check avoids
+                    // treating stored "0" as unset (H-66 fix).
+                    if (false === get_option('wpaic_diag_boot_order_first_seen', false)) {
                         update_option('wpaic_diag_boot_order_first_seen', $now, false);
                     }
                     // _last_seen: overwritten each occurrence (latest timestamp).
