@@ -597,13 +597,20 @@ class WPAIC_REST_Controller {
                 // Other anomalies are operational noise, gated on should_log_dedup.
                 $should_log = $this->should_log_dedup();
                 if ($log_reason === 'malformed_data') {
-                    // Per-source rate key: blog_id + keyhash prefix for isolation.
+                    // Per-source rate key: blog_id + keyhash (12 chars) for isolation.
                     // Debug mode: 1s cooldown (verbose). Non-debug: 10s cooldown.
-                    $rate_key    = 'wpaic_mf_' . get_current_blog_id() . '_' . substr($dedup_key, 12, 6);
+                    $rate_key    = 'wpaic_mf_' . get_current_blog_id() . '_' . substr($dedup_key, 12, 12);
                     $cooldown    = $should_log ? 1 : 10;
                     $last_logged = (int) get_transient($rate_key);
-                    if ($now - $last_logged >= $cooldown) {
+                    // Static fallback: if object cache is unreliable during anomaly,
+                    // transient may fail. In-process static array guarantees at least
+                    // per-request rate limiting even without working cache backend.
+                    static $mf_rate_cache = [];
+                    $static_last = $mf_rate_cache[$rate_key] ?? 0;
+                    $effective_last = max($last_logged, $static_last);
+                    if ($now - $effective_last >= $cooldown) {
                         set_transient($rate_key, $now, $cooldown * 3);
+                        $mf_rate_cache[$rate_key] = $now;
                         $should_log = true;
                     } else {
                         $should_log = false; // suppress duplicate within cooldown

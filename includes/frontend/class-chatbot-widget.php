@@ -140,7 +140,9 @@ class WPAIC_Chatbot_Widget {
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
             // wpaic_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
-            'debug'                => is_user_logged_in() && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
+            // Minimum edit_posts cap required even when filter overrides, to prevent
+            // misuse granting debug to all logged-in subscribers.
+            'debug'                => is_user_logged_in() && current_user_can('edit_posts') && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
         ]);
     }
 
