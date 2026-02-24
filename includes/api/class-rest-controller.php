@@ -592,17 +592,21 @@ class WPAIC_REST_Controller {
                 } elseif (($now - $saved_at) >= 90) {
                     $log_reason = 'stale_age';
                 }
-                // malformed_data = corruption, always log (rate-limited to 1/10s to
-                // prevent log DoS if transients are persistently broken);
-                // other anomalies are operational noise, gated on should_log_dedup.
+                // malformed_data = corruption, rate-limited to 1/10s per source
+                // to prevent log DoS while preserving per-source diagnostics.
+                // Other anomalies are operational noise, gated on should_log_dedup.
                 $should_log = $this->should_log_dedup();
-                if ($log_reason === 'malformed_data' && !$should_log) {
-                    // Rate-limit: only log if the last malformed log was >10s ago.
-                    $rate_key    = 'wpaic_malformed_log_ts';
+                if ($log_reason === 'malformed_data') {
+                    // Per-source rate key: blog_id + keyhash prefix for isolation.
+                    // Debug mode: 1s cooldown (verbose). Non-debug: 10s cooldown.
+                    $rate_key    = 'wpaic_mf_' . get_current_blog_id() . '_' . substr($dedup_key, 12, 6);
+                    $cooldown    = $should_log ? 1 : 10;
                     $last_logged = (int) get_transient($rate_key);
-                    if ($now - $last_logged >= 10) {
-                        set_transient($rate_key, $now, 30);
+                    if ($now - $last_logged >= $cooldown) {
+                        set_transient($rate_key, $now, $cooldown * 3);
                         $should_log = true;
+                    } else {
+                        $should_log = false; // suppress duplicate within cooldown
                     }
                 }
                 if (!empty($log_reason) && $should_log) {

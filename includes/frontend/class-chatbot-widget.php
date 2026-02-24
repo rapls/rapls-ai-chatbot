@@ -138,7 +138,9 @@ class WPAIC_Chatbot_Widget {
             'conversion_goals'     => !empty($pro_features['conversion_tracking_enabled']) ? ($pro_features['conversion_goals'] ?? []) : [],
             'offline_message'      => $this->get_offline_config($pro_features),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
-            'debug'                => (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
+            // wpaic_frontend_debug filter: always include a capability check in callbacks.
+            // Logged-in guard prevents accidental exposure to anonymous visitors.
+            'debug'                => is_user_logged_in() && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
         ]);
     }
 
