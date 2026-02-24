@@ -25,20 +25,19 @@ class WPAIC_Activator {
     }
 
     /**
-     * Run on version upgrade (lighter than activate - no rewrite flush)
+     * Run on version upgrade (lighter than activate - no rewrite flush).
+     *
+     * MUST: Idempotent — DB + options only, no external side effects
+     * (no file I/O, no remote API calls, no email). May be re-run after
+     * partial failure. Called on every request where version mismatches
+     * (via maybe_upgrade), so keep operations lightweight.
      */
-    // Idempotent path: no external side effects (DB + options only).
     public static function upgrade() {
         self::create_tables();
         self::upgrade_columns();
         self::set_default_options();
         self::schedule_cron();
         self::migrate_diag_options();
-
-        // WHY: Do NOT delete wpaic_diag_upgrade_order_issue here.
-        // The stored timestamp shows when the issue last occurred (post-mortem).
-        // Successful upgrade proves the issue is resolved; the timestamp
-        // becomes historical. If it recurs, the sentinel overwrites it.
 
         // Save version
         update_option('wpaic_version', WPAIC_VERSION);
@@ -520,12 +519,19 @@ class WPAIC_Activator {
     /**
      * Migrate renamed diagnostic options (one-time on upgrade).
      * Merges old key value into new key and removes old key.
+     *
+     * MUST: Idempotent — safe to re-run.
      */
-    // Idempotent path: no external side effects (DB + options only).
     private static function migrate_diag_options() {
         $migrations = [
             'wpaic_hash_unexpected_count' => 'wpaic_diag_hash_unexpected',
         ];
+
+        // Remove renamed options (non-additive — just delete old keys).
+        $renames = ['wpaic_diag_upgrade_order_issue'];
+        foreach ($renames as $old_key) {
+            delete_option($old_key);
+        }
         foreach ($migrations as $old_key => $new_key) {
             $old_val = get_option($old_key);
             if ($old_val !== false) {

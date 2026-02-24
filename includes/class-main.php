@@ -48,9 +48,11 @@ class WPAIC_Main {
 
     /**
      * Handle version upgrade process.
-     * Runs on every request via plugins_loaded (not just activation), so
-     * upgrades apply even when plugin files are replaced without triggering
-     * the activation hook (e.g. manual FTP upload, composer update).
+     *
+     * Runs on every request via constructor (not just activation), so
+     * upgrades apply even when files are replaced without activation hook.
+     * MUST: upgrade() must stay lightweight — only version mismatch triggers it,
+     * but it blocks the current request until complete.
      */
     private function maybe_upgrade() {
         $current_version = get_option('wpaic_version', '0');
@@ -60,16 +62,21 @@ class WPAIC_Main {
             // Activator is require_once'd here; all model classes are already
             // available via load_dependencies() which runs before this method.
             // Upgrade must only use early WP APIs ($wpdb, options, transients).
-            // Sentinel check: WPAIC_PLUGIN_DIR is defined at plugin entry and never
-            // removed. If missing, something loaded upgrade before plugin bootstrap.
-            // Static guard prevents repeated DB writes if called multiple times.
+            // Sentinel: WPAIC_PLUGIN_DIR must be defined by plugin entry point.
+            // Static guard limits DB writes to 1/process.
             if (defined('WP_DEBUG') && WP_DEBUG && !defined('WPAIC_PLUGIN_DIR')) {
                 static $bootstrap_warned = false;
                 if (!$bootstrap_warned) {
                     $bootstrap_warned = true;
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log('WPAIC: maybe_upgrade() called before plugin bootstrap — constants missing');
-                    update_option('wpaic_diag_upgrade_order_issue', time(), false);
+                    $now = time();
+                    // _first_seen: set only once (initial occurrence for post-mortem).
+                    if (!get_option('wpaic_diag_boot_order_first_seen')) {
+                        update_option('wpaic_diag_boot_order_first_seen', $now, false);
+                    }
+                    // _last_seen: overwritten each occurrence (latest timestamp).
+                    update_option('wpaic_diag_boot_order_last_seen', $now, false);
                 }
             }
             require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
