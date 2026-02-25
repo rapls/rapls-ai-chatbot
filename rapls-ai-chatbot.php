@@ -383,8 +383,16 @@ if (!function_exists('wpaic_require_table_or_error')) {
 /**
  * Execute a callback with a validated table name, or return WP_Error.
  *
- * Preferred pattern for REST/AJAX handlers — eliminates the risk of
+ * Preferred pattern for REST handlers — eliminates the risk of
  * forgetting is_wp_error() on the return value of wpaic_require_table_or_error().
+ *
+ * The callback MAY itself return WP_Error (e.g. on $wpdb failure); the caller
+ * should pass the return value through to WordPress (REST returns it as HTTP error).
+ * For admin-ajax HTML endpoints, prefer wpaic_require_table() with early return
+ * instead of this helper, since wp_send_json_error() is the expected pattern there.
+ *
+ * Keep callbacks short — SQL execution only. Formatting, validation, and business
+ * logic belong outside the closure to avoid deeply nested callback chains.
  *
  * Usage:
  *   return wpaic_with_table('aichat_messages', __METHOD__, function ($table) {

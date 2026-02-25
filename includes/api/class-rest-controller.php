@@ -147,6 +147,42 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Add X-WPAIC-Debug-Reason header to 403/429 responses for admins.
+     * Helps support identify the rejection reason without exposing it to public users.
+     * Uses the error_code from the response body (already present in all error responses).
+     *
+     * @param mixed            $result  Response object.
+     * @param WP_REST_Server   $server  REST server.
+     * @param WP_REST_Request  $request Request.
+     * @return mixed
+     */
+    public function add_debug_reason_header($result, $server, $request) {
+        if (!($result instanceof WP_REST_Response)) {
+            return $result;
+        }
+        $route = $request->get_route();
+        if (strpos($route, '/' . $this->namespace . '/') !== 0) {
+            return $result;
+        }
+        $status = $result->get_status();
+        if ($status !== 403 && $status !== 429) {
+            return $result;
+        }
+        if (!current_user_can(WPAIC_Admin::get_manage_cap())) {
+            return $result;
+        }
+        $data = $result->get_data();
+        $reason = '';
+        if (is_array($data) && !empty($data['error_code'])) {
+            $reason = $data['error_code'];
+        }
+        if ($reason) {
+            $result->header('X-WPAIC-Debug-Reason', $reason);
+        }
+        return $result;
+    }
+
+    /**
      * Register routes
      */
     public function register_routes(): void {
@@ -154,6 +190,7 @@ class WPAIC_REST_Controller {
         // Using rest_post_dispatch guarantees headers are set regardless of which code path
         // generates the response (success, rate limit, exception, etc.).
         add_filter('rest_post_dispatch', [$this, 'ensure_no_cache_public_gets'], 10, 3);
+        add_filter('rest_post_dispatch', [$this, 'add_debug_reason_header'], 20, 3);
 
         // Get/Create session
         // Public: visitors need sessions before authentication is possible.

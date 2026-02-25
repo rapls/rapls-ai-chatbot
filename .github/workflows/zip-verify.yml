@@ -239,3 +239,25 @@ jobs:
           fi
           if [ "$FAIL" -ne 0 ]; then exit 1; fi
           echo "OK: JS string i18n check complete"
+
+      - name: Release artifact summary (tag pushes only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Output release metadata for tag pushes — serves as the CI-enforced
+          # equivalent of .ci/verify-release.sh so local hook is supplementary, not required.
+          SHA=$(sha256sum dist.zip | awk '{print $1}')
+          VERSION=$(unzip -p dist.zip "rapls-ai-chatbot/rapls-ai-chatbot.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
+          COMMIT=$(git rev-parse --short HEAD)
+          echo "=== Release Artifact Summary ==="
+          echo "Tag:     ${GITHUB_REF_NAME}"
+          echo "Commit:  ${COMMIT}"
+          echo "Version: ${VERSION}"
+          echo "SHA-256: ${SHA}"
+          echo ""
+          # Verify version in tag matches version in code
+          TAG_VER=$(echo "${GITHUB_REF_NAME}" | sed 's/^v//')
+          if [ "$TAG_VER" != "$VERSION" ]; then
+            echo "::error::Tag version ($TAG_VER) does not match WPAIC_VERSION ($VERSION)"
+            exit 1
+          fi
+          echo "OK: tag matches code version"
