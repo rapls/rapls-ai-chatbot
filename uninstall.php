@@ -77,6 +77,17 @@ function wpaic_uninstall_site() {
         delete_option('wpaic_pro_license_last_valid');
         delete_option('wpaic_pro_license_type');
         delete_option('wpaic_pro_license_revoked');
+        delete_option('wpaic_crawl_progress');
+        delete_option('wpaic_knowledge_schema_version');
+
+        // Monthly message counters (wpaic_nohist_msg_count_YYYY_MM)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                $wpdb->esc_like('wpaic_nohist_msg_count_') . '%'
+            )
+        );
 
         // Delete database tables.
         // Single source: WPAIC_Activator::get_table_suffixes().

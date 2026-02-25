@@ -33,14 +33,26 @@ class WPAIC_Admin {
     }
 
     /**
+     * Get the required capability for managing the plugin.
+     * Filterable to allow shop_manager or other roles access.
+     *
+     * @return string WordPress capability string.
+     */
+    public static function get_manage_cap(): string {
+        return (string) apply_filters('wpaic_manage_cap', 'manage_options');
+    }
+
+    /**
      * Add admin menu
      */
     public function add_admin_menu(): void {
+        $cap = self::get_manage_cap();
+
         // Main menu
         add_menu_page(
             __('AI Chatbot', 'rapls-ai-chatbot'),
             __('AI Chatbot', 'rapls-ai-chatbot'),
-            'manage_options',
+            $cap,
             'wpaic-dashboard',
             [$this, 'render_dashboard_page'],
             'dashicons-format-chat',
@@ -52,7 +64,7 @@ class WPAIC_Admin {
             'wpaic-dashboard',
             __('Dashboard', 'rapls-ai-chatbot'),
             __('Dashboard', 'rapls-ai-chatbot'),
-            'manage_options',
+            $cap,
             'wpaic-dashboard',
             [$this, 'render_dashboard_page']
         );
@@ -62,7 +74,7 @@ class WPAIC_Admin {
             'wpaic-dashboard',
             __('Settings', 'rapls-ai-chatbot'),
             __('Settings', 'rapls-ai-chatbot'),
-            'manage_options',
+            $cap,
             'wpaic-settings',
             [$this, 'render_settings_page']
         );
@@ -72,7 +84,7 @@ class WPAIC_Admin {
             'wpaic-dashboard',
             __('Knowledge', 'rapls-ai-chatbot'),
             __('Knowledge', 'rapls-ai-chatbot'),
-            'manage_options',
+            $cap,
             'wpaic-knowledge',
             [$this, 'render_knowledge_page']
         );
@@ -86,7 +98,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Pro Settings', 'rapls-ai-chatbot'),
                 __('Pro Settings', 'rapls-ai-chatbot') . ' <span class="wpaic-pro-menu-badge">PRO</span>',
-                'manage_options',
+                $cap,
                 'wpaic-pro-settings',
                 [$this, 'render_pro_upsell_page']
             );
@@ -98,7 +110,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Site Learning', 'rapls-ai-chatbot'),
                 __('Site Learning', 'rapls-ai-chatbot'),
-                'manage_options',
+                $cap,
                 'wpaic-crawler',
                 [$this, 'render_crawler_page']
             );
@@ -107,7 +119,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Site Learning', 'rapls-ai-chatbot'),
                 __('Site Learning', 'rapls-ai-chatbot') . ' <span class="wpaic-pro-menu-badge">PRO</span>',
-                'manage_options',
+                $cap,
                 'wpaic-crawler',
                 [$this, 'render_pro_upsell_page']
             );
@@ -119,7 +131,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Conversations', 'rapls-ai-chatbot'),
                 __('Conversations', 'rapls-ai-chatbot'),
-                'manage_options',
+                $cap,
                 'wpaic-conversations',
                 [$this, 'render_conversations_page']
             );
@@ -128,7 +140,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Conversations', 'rapls-ai-chatbot'),
                 __('Conversations', 'rapls-ai-chatbot') . ' <span class="wpaic-pro-menu-badge">PRO</span>',
-                'manage_options',
+                $cap,
                 'wpaic-conversations',
                 [$this, 'render_pro_upsell_page']
             );
@@ -139,7 +151,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Analytics', 'rapls-ai-chatbot'),
                 __('Analytics', 'rapls-ai-chatbot') . ' <span class="wpaic-pro-menu-badge">PRO</span>',
-                'manage_options',
+                $cap,
                 'wpaic-analytics',
                 [$this, 'render_pro_upsell_page']
             );
@@ -148,7 +160,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Leads', 'rapls-ai-chatbot'),
                 __('Leads', 'rapls-ai-chatbot') . ' <span class="wpaic-pro-menu-badge">PRO</span>',
-                'manage_options',
+                $cap,
                 'wpaic-leads',
                 [$this, 'render_pro_upsell_page']
             );
@@ -157,7 +169,7 @@ class WPAIC_Admin {
                 'wpaic-dashboard',
                 __('Audit Log', 'rapls-ai-chatbot'),
                 __('Audit Log', 'rapls-ai-chatbot') . ' <span class="wpaic-pro-menu-badge">PRO</span>',
-                'manage_options',
+                $cap,
                 'wpaic-audit-log',
                 [$this, 'render_pro_upsell_page']
             );
@@ -1039,7 +1051,7 @@ class WPAIC_Admin {
     public function ajax_manual_crawl(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1064,7 +1076,7 @@ class WPAIC_Admin {
     public function ajax_delete_index(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1091,7 +1103,7 @@ class WPAIC_Admin {
     public function ajax_delete_all_index(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1116,7 +1128,7 @@ class WPAIC_Admin {
     public function ajax_test_api(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1172,7 +1184,7 @@ class WPAIC_Admin {
     public function ajax_fetch_models(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1365,7 +1377,7 @@ class WPAIC_Admin {
         if (!get_transient('wpaic_api_key_decryption_failed')) {
             return;
         }
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             return;
         }
         $settings_url = admin_url('admin.php?page=wpaic-settings');
@@ -1407,7 +1419,7 @@ class WPAIC_Admin {
      * Show admin notice when public API defense settings are weak
      */
     public function security_settings_notice(): void {
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             return;
         }
 
@@ -1641,7 +1653,7 @@ class WPAIC_Admin {
     public function ajax_get_conversation_messages(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1675,7 +1687,7 @@ class WPAIC_Admin {
     public function ajax_delete_conversation(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1703,7 +1715,7 @@ class WPAIC_Admin {
     public function ajax_delete_conversations_bulk(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1726,7 +1738,7 @@ class WPAIC_Admin {
     public function ajax_delete_all_conversations(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1745,7 +1757,7 @@ class WPAIC_Admin {
     public function ajax_add_knowledge(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1797,7 +1809,7 @@ class WPAIC_Admin {
         try {
             check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-            if (!current_user_can('manage_options')) {
+            if (!current_user_can(self::get_manage_cap())) {
                 wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
             }
 
@@ -1880,7 +1892,7 @@ class WPAIC_Admin {
     public function ajax_get_knowledge(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1905,7 +1917,7 @@ class WPAIC_Admin {
     public function ajax_update_knowledge(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1942,7 +1954,7 @@ class WPAIC_Admin {
     public function ajax_delete_knowledge(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1970,7 +1982,7 @@ class WPAIC_Admin {
     public function ajax_toggle_knowledge(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -1998,7 +2010,7 @@ class WPAIC_Admin {
     public function ajax_update_priority(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -2027,7 +2039,7 @@ class WPAIC_Admin {
     public function ajax_export_settings(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -2062,7 +2074,7 @@ class WPAIC_Admin {
     public function ajax_import_settings(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -2218,7 +2230,7 @@ class WPAIC_Admin {
     public function ajax_reset_settings(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -2281,7 +2293,7 @@ class WPAIC_Admin {
     public function ajax_reset_usage(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -2304,7 +2316,7 @@ class WPAIC_Admin {
     public function ajax_dismiss_security_notice(): void {
         check_ajax_referer('wpaic_dismiss_security_notice', '_wpnonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
@@ -4321,7 +4333,7 @@ class WPAIC_Admin {
     public function ajax_reset_sessions(): void {
         check_ajax_referer('wpaic_admin_nonce', 'nonce');
 
-        if (!current_user_can('manage_options')) {
+        if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 

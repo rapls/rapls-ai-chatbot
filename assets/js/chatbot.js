@@ -655,7 +655,7 @@
                 .then(function(token) {
                     // reCAPTCHA enabled but token empty (script not loaded yet)
                     if (!token && self.config.recaptcha_enabled) {
-                        self.addMessage('bot', 'Security verification loading. Please try again in a moment.');
+                        self.addMessage('bot', (self.config.strings && self.config.strings.recaptcha_loading) || 'Security verification loading. Please try again in a moment.');
                         return Promise.reject('recaptcha_not_ready');
                     }
 
@@ -714,7 +714,7 @@
                             self.saveContext();
                         }
                     } else {
-                        self.addMessage('bot', response.error || 'エラーが発生しました。');
+                        self.addMessage('bot', response.error || (self.config.strings && self.config.strings.error_occurred) || 'An error occurred.');
                     }
                 });
         },
@@ -829,12 +829,13 @@
             if (role === 'bot' && sentiment && sentiment !== 'neutral') {
                 var sentimentEl = document.createElement('span');
                 sentimentEl.className = 'chatbot-sentiment chatbot-sentiment--' + sentiment;
+                var s = this.config.strings || {};
                 var sentimentTitles = {
-                    'frustrated': 'Frustrated',
-                    'confused': 'Confused',
-                    'urgent': 'Urgent',
-                    'positive': 'Positive',
-                    'negative': 'Negative'
+                    'frustrated': s.sentiment_frustrated || 'Frustrated',
+                    'confused': s.sentiment_confused || 'Confused',
+                    'urgent': s.sentiment_urgent || 'Urgent',
+                    'positive': s.sentiment_positive || 'Positive',
+                    'negative': s.sentiment_negative || 'Negative'
                 };
                 sentimentEl.title = sentimentTitles[sentiment] || sentiment;
                 contentEl.appendChild(sentimentEl);
@@ -861,7 +862,7 @@
 
                 var titleEl = document.createElement('div');
                 titleEl.className = 'chatbot-message__sources-title';
-                titleEl.textContent = '📄 参考ページ:';
+                titleEl.textContent = '📄 ' + ((self.config.strings && self.config.strings.sources_title) || 'Reference pages:');
                 sourcesEl.appendChild(titleEl);
 
                 sources.forEach(function(url) {
@@ -894,14 +895,14 @@
                     thumbsUp.type = 'button';
                     thumbsUp.className = 'chatbot-feedback-btn chatbot-feedback-btn--up';
                     thumbsUp.innerHTML = '👍';
-                    thumbsUp.title = 'Good response';
+                    thumbsUp.title = (self.config.strings && self.config.strings.good_response) || 'Good response';
                     thumbsUp.onclick = function() { self.sendFeedback(messageId, 1, this); };
 
                     var thumbsDown = document.createElement('button');
                     thumbsDown.type = 'button';
                     thumbsDown.className = 'chatbot-feedback-btn chatbot-feedback-btn--down';
                     thumbsDown.innerHTML = '👎';
-                    thumbsDown.title = 'Bad response';
+                    thumbsDown.title = (self.config.strings && self.config.strings.bad_response) || 'Bad response';
                     thumbsDown.onclick = function() { self.sendFeedback(messageId, -1, this); };
 
                     feedbackEl.appendChild(thumbsUp);
@@ -915,7 +916,7 @@
                     regenerateBtn.type = 'button';
                     regenerateBtn.className = 'chatbot-regenerate-btn';
                     regenerateBtn.innerHTML = '🔄';
-                    regenerateBtn.title = 'Regenerate response';
+                    regenerateBtn.title = (self.config.strings && self.config.strings.regenerate) || 'Regenerate response';
                     // Read current message_id from DOM each time (may change after regeneration)
                     regenerateBtn.onclick = function() {
                         var currentMessageId = parseInt(messageEl.getAttribute('data-message-id'), 10);
@@ -1021,7 +1022,7 @@
 
                         var titleEl = document.createElement('div');
                         titleEl.className = 'chatbot-message__sources-title';
-                        titleEl.textContent = '📄 参考ページ:';
+                        titleEl.textContent = '📄 ' + ((self.config.strings && self.config.strings.sources_title) || 'Reference pages:');
                         sourcesEl.appendChild(titleEl);
 
                         data.data.sources.forEach(function(url) {
@@ -1105,7 +1106,7 @@
 
             var titleEl = document.createElement('div');
             titleEl.className = 'chatbot-suggestions__title';
-            titleEl.textContent = 'こちらも聞いてみませんか？';
+            titleEl.textContent = (this.config.strings && this.config.strings.suggestions_title) || 'You might also ask:';
             suggestionsEl.appendChild(titleEl);
 
             var buttonsEl = document.createElement('div');
@@ -1267,7 +1268,8 @@
 
             // ファイルサイズチェック
             if (file.size > maxSize) {
-                alert('画像サイズが大きすぎます。' + (maxSize / 1024) + 'KB以下の画像を選択してください。');
+                var imgMsg = (this.config.strings && this.config.strings.image_too_large) || 'Image is too large. Please select an image under %sKB.';
+                alert(imgMsg.replace('%s', (maxSize / 1024)));
                 this.imageInput.value = '';
                 return;
             }
@@ -1275,7 +1277,7 @@
             // 画像タイプチェック
             var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (allowedTypes.indexOf(file.type) === -1) {
-                alert('対応していない画像形式です。JPEG、PNG、GIF、WebPのいずれかを選択してください。');
+                alert((this.config.strings && this.config.strings.image_invalid_format) || 'Unsupported image format. Please select JPEG, PNG, GIF, or WebP.');
                 this.imageInput.value = '';
                 return;
             }
@@ -1691,7 +1693,7 @@
 
             if (hasError) {
                 if (errorEl) {
-                    errorEl.textContent = '必須項目を入力してください。';
+                    errorEl.textContent = (self.config.strings && self.config.strings.required_fields) || 'Please fill in all required fields.';
                     errorEl.hidden = false;
                 }
                 return;
@@ -1700,7 +1702,7 @@
             // 送信中状態
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.textContent = '送信中...';
+                submitBtn.textContent = (self.config.strings && self.config.strings.sending) || 'Sending...';
             }
 
             var url = this.config.api_base + '/lead';
@@ -1712,12 +1714,12 @@
                 } else if (self.config.recaptcha_enabled) {
                     // reCAPTCHA is configured but token is empty (script not loaded yet)
                     if (errorEl) {
-                        errorEl.textContent = 'Security verification loading. Please try again in a moment.';
+                        errorEl.textContent = (self.config.strings && self.config.strings.recaptcha_loading) || 'Security verification loading. Please try again in a moment.';
                         errorEl.hidden = false;
                     }
                     if (submitBtn) {
                         submitBtn.disabled = false;
-                        submitBtn.textContent = 'チャットを開始';
+                        submitBtn.textContent = (self.config.strings && self.config.strings.start_chat) || 'Start chat';
                     }
                     return Promise.reject('recaptcha_not_ready');
                 }
@@ -1734,7 +1736,7 @@
             .then(function(response) {
                 var contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error('サーバーエラーが発生しました。');
+                    throw new Error((self.config.strings && self.config.strings.server_error) || 'A server error occurred.');
                 }
                 return response.json();
             })
@@ -1745,7 +1747,7 @@
                     self.hideLeadForm();
                     self.showChat();
                 } else {
-                    var errMsg = data.error || '送信に失敗しました。';
+                    var errMsg = data.error || (self.config.strings && self.config.strings.send_failed) || 'Failed to send.';
                     if (data.debug) {
                         console.error('Server error debug:', data.debug);
                     }
@@ -1757,14 +1759,14 @@
                 if (error === 'recaptcha_not_ready') return;
                 console.error('Lead submit error:', error);
                 if (errorEl) {
-                    errorEl.textContent = error.message || '送信に失敗しました。';
+                    errorEl.textContent = error.message || (self.config.strings && self.config.strings.send_failed) || 'Failed to send.';
                     errorEl.hidden = false;
                 }
             })
             .finally(function() {
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'チャットを開始';
+                    submitBtn.textContent = (self.config.strings && self.config.strings.start_chat) || 'Start chat';
                 }
             });
         },
@@ -1855,7 +1857,8 @@
             if (!email || !message) return;
 
             submitBtn.disabled = true;
-            statusEl.textContent = 'Sending...';
+            var _s = self.config.strings || {};
+            statusEl.textContent = _s.sending || 'Sending...';
             statusEl.className = 'wpaic-offline-status';
 
             // Honeypot (wpaic_hp) and timing (_ts) for bot detection
@@ -1883,7 +1886,7 @@
                     requestBody.recaptcha_token = token;
                 } else if (config.recaptchaEnabled) {
                     // reCAPTCHA is configured but token is empty (script not loaded yet)
-                    statusEl.textContent = 'Security verification loading. Please try again in a moment.';
+                    statusEl.textContent = _s.recaptcha_loading || 'Security verification loading. Please try again in a moment.';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                     submitBtn.disabled = false;
                     return Promise.reject('recaptcha_not_ready');
@@ -1904,26 +1907,26 @@
                     // Request was silently dropped by server-side validation.
                     // Show a generic processing message, then a retry hint after delay.
                     // No specific reason is revealed to avoid giving attackers clues.
-                    statusEl.textContent = 'Processing...';
+                    statusEl.textContent = _s.processing || 'Processing...';
                     statusEl.className = 'wpaic-offline-status';
                     self._droppedTimer = setTimeout(function() {
                         self._droppedTimer = null;
-                        statusEl.textContent = 'Could not complete the request. Please reload the page and try again.';
+                        statusEl.textContent = _s.offline_reload_request || 'Could not complete the request. Please reload the page and try again.';
                         statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                     }, 3000);
                 } else if (data.success) {
-                    statusEl.textContent = data.data.message || 'Message sent!';
+                    statusEl.textContent = data.data.message || _s.message_sent || 'Message sent!';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-success';
                     form.reset();
                 } else {
-                    statusEl.textContent = data.error || 'Failed to send.';
+                    statusEl.textContent = data.error || _s.send_failed || 'Failed to send.';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                 }
             })
             .catch(function(err) {
                 // Skip if already handled (e.g. recaptcha_not_ready)
                 if (err === 'recaptcha_not_ready') return;
-                statusEl.textContent = 'Failed to send. Please try again.';
+                statusEl.textContent = _s.send_failed_retry || 'Failed to send. Please try again.';
                 statusEl.className = 'wpaic-offline-status wpaic-offline-error';
             })
             .finally(function() {

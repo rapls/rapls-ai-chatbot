@@ -144,6 +144,35 @@ class WPAIC_Chatbot_Widget {
             // to prevent misuse granting debug to all logged-in subscribers.
             // Use wpaic_frontend_debug_min_cap filter to change the minimum capability.
             'debug'                => is_user_logged_in() && current_user_can($this->get_debug_min_cap()) && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
+            'strings'              => [
+                'error_occurred'         => __('An error occurred.', 'rapls-ai-chatbot'),
+                'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
+                'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
+                'suggestions_title'      => __('You might also ask:', 'rapls-ai-chatbot'),
+                'good_response'          => __('Good response', 'rapls-ai-chatbot'),
+                'bad_response'           => __('Bad response', 'rapls-ai-chatbot'),
+                'regenerate'             => __('Regenerate response', 'rapls-ai-chatbot'),
+                'server_error'           => __('A server error occurred.', 'rapls-ai-chatbot'),
+                'send_failed'            => __('Failed to send.', 'rapls-ai-chatbot'),
+                'send_failed_retry'      => __('Failed to send. Please try again.', 'rapls-ai-chatbot'),
+                'sending'                => __('Sending...', 'rapls-ai-chatbot'),
+                'processing'             => __('Processing...', 'rapls-ai-chatbot'),
+                'message_sent'           => __('Message sent!', 'rapls-ai-chatbot'),
+                'required_fields'        => __('Please fill in all required fields.', 'rapls-ai-chatbot'),
+                'start_chat'             => __('Start chat', 'rapls-ai-chatbot'),
+                'image_too_large'        => __('Image is too large. Please select an image under %sKB.', 'rapls-ai-chatbot'),
+                'image_invalid_format'   => __('Unsupported image format. Please select JPEG, PNG, GIF, or WebP.', 'rapls-ai-chatbot'),
+                'offline_name'           => __('Name', 'rapls-ai-chatbot'),
+                'offline_email'          => __('Email', 'rapls-ai-chatbot'),
+                'offline_message'        => __('Message', 'rapls-ai-chatbot'),
+                'offline_send'           => __('Send Message', 'rapls-ai-chatbot'),
+                'offline_reload_request' => __('Could not complete the request. Please reload the page and try again.', 'rapls-ai-chatbot'),
+                'sentiment_frustrated'   => __('Frustrated', 'rapls-ai-chatbot'),
+                'sentiment_confused'     => __('Confused', 'rapls-ai-chatbot'),
+                'sentiment_urgent'       => __('Urgent', 'rapls-ai-chatbot'),
+                'sentiment_positive'     => __('Positive', 'rapls-ai-chatbot'),
+                'sentiment_negative'     => __('Negative', 'rapls-ai-chatbot'),
+            ],
         ]);
     }
 

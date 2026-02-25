@@ -60,6 +60,13 @@ class WPAIC_Activator {
      * (via maybe_upgrade), so keep operations lightweight.
      */
     public static function upgrade() {
+        // Upgrade lock: prevent concurrent execution (multisite, object cache race, etc.)
+        $lock_key = 'wpaic_upgrade_lock';
+        if (get_transient($lock_key)) {
+            return; // Another process is already upgrading
+        }
+        set_transient($lock_key, 1, 3 * MINUTE_IN_SECONDS);
+
         self::create_tables();
         self::upgrade_columns();
         self::set_default_options();
@@ -68,6 +75,7 @@ class WPAIC_Activator {
 
         // Save version
         update_option('wpaic_version', WPAIC_VERSION);
+        delete_transient($lock_key);
     }
 
     /**

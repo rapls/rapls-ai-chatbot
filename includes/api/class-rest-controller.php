@@ -1225,43 +1225,56 @@ class WPAIC_REST_Controller {
 
         } catch (Exception $e) {
             $error_message = $e->getMessage();
+            $code = $e->getCode();
 
-            // Log detailed error for admin debugging
+            // Log detailed error for admin debugging (never log API keys)
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC Chat Error: ' . $error_message);
+                error_log(sprintf('WPAIC Chat Error [%d]: %s (request_id=%s)', $code, $error_message, $request_id));
             }
 
-            // Return generic message to user (don't expose API internals)
-            if (strpos($error_message, 'API key') !== false) {
-                return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => __('The AI service is not configured correctly. Please contact the site administrator.', 'rapls-ai-chatbot'),
-                ], 500);
+            // Build response body — include request_id for admin debugging
+            $body = ['success' => false];
+            if (current_user_can('manage_options')) {
+                $body['debug'] = ['request_id' => $request_id, 'error_code' => $code];
             }
 
-            // Model not found / deprecated — admin needs to update model selection
-            $code = $e->getCode();
+            // 401/403: Authentication / API key errors
+            if ($code === 401 || $code === 403 || strpos($error_message, 'API key') !== false) {
+                $body['error'] = __('The AI service is not configured correctly. Please contact the site administrator.', 'rapls-ai-chatbot');
+                return new WP_REST_Response($body, 500);
+            }
+
+            // 404: Model not found / deprecated
             if ($code === 404 || stripos($error_message, 'not found') !== false || stripos($error_message, 'deprecated') !== false) {
-                return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => __('The AI model is currently unavailable. Please contact the site administrator.', 'rapls-ai-chatbot'),
-                ], 500);
+                $body['error'] = __('The AI model is currently unavailable. Please contact the site administrator.', 'rapls-ai-chatbot');
+                return new WP_REST_Response($body, 500);
             }
 
             // 409 Conflict: return retryable status so client JS can retry with backoff
             if ($code === 409) {
-                return new WP_REST_Response([
-                    'success'   => false,
-                    'error'     => __('Temporary conflict. Please try again.', 'rapls-ai-chatbot'),
-                    'retryable' => true,
-                ], 409);
+                $body['error'] = __('Temporary conflict. Please try again.', 'rapls-ai-chatbot');
+                $body['retryable'] = true;
+                return new WP_REST_Response($body, 409);
             }
 
-            return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot'),
-            ], 500);
+            // Timeout / network errors (WPAIC_Communication_Exception)
+            if ($e instanceof WPAIC_Communication_Exception) {
+                $body['error'] = __('Could not reach the AI service. Please check your connection and try again.', 'rapls-ai-chatbot');
+                $body['retryable'] = true;
+                return new WP_REST_Response($body, 504);
+            }
+
+            // 5xx: Server-side errors from the AI provider
+            if ($code >= 500 && $code < 600) {
+                $body['error'] = __('The AI service is temporarily unavailable. Please try again later.', 'rapls-ai-chatbot');
+                $body['retryable'] = true;
+                return new WP_REST_Response($body, 503);
+            }
+
+            // Generic fallback
+            $body['error'] = __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot');
+            return new WP_REST_Response($body, 500);
         }
     }
 
