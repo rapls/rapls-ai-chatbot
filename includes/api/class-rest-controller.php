@@ -147,9 +147,17 @@ class WPAIC_REST_Controller {
     }
 
     /**
-     * Add X-WPAIC-Debug-Reason header to 403/429 responses for admins.
-     * Helps support identify the rejection reason without exposing it to public users.
-     * Uses the error_code from the response body (already present in all error responses).
+     * Enrich 403/429 responses with debug reason for admins.
+     *
+     * Adds both a header (X-WPAIC-Debug-Reason) and a body field (debug_reason)
+     * so the reason is visible even when CDN/WAF strips custom headers.
+     * Only exposed to users with the plugin's manage capability
+     * (WPAIC_Admin::get_manage_cap() — same getter used by all admin checks).
+     *
+     * Known error_code values (kept as a reference for support docs):
+     *   rate_limited, origin_mismatch, recaptcha_required, recaptcha_failed,
+     *   session_expired, session_missing, honeypot_triggered, timing_failed,
+     *   wpaic_table_error, unknown
      *
      * @param mixed            $result  Response object.
      * @param WP_REST_Server   $server  REST server.
@@ -168,16 +176,20 @@ class WPAIC_REST_Controller {
         if ($status !== 403 && $status !== 429) {
             return $result;
         }
+        // Same cap getter as all admin permission checks — must stay in sync.
         if (!current_user_can(WPAIC_Admin::get_manage_cap())) {
             return $result;
         }
         $data = $result->get_data();
-        $reason = '';
-        if (is_array($data) && !empty($data['error_code'])) {
-            $reason = $data['error_code'];
-        }
-        if ($reason) {
-            $result->header('X-WPAIC-Debug-Reason', $reason);
+        $reason = (is_array($data) && !empty($data['error_code']))
+            ? $data['error_code']
+            : 'unknown';
+        // Header (may be stripped by CDN/WAF)
+        $result->header('X-WPAIC-Debug-Reason', $reason);
+        // Body (always visible in DevTools Network tab response)
+        if (is_array($data)) {
+            $data['debug_reason'] = $reason;
+            $result->set_data($data);
         }
         return $result;
     }
@@ -2305,8 +2317,9 @@ class WPAIC_REST_Controller {
         // Without both timing and captcha, bot detection is too weak.
         if ($form_ts === 0 && $require_captcha && !$origin_ok) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('Form validation failed. Please reload the page and try again.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('Form validation failed. Please reload the page and try again.', 'rapls-ai-chatbot'),
+                'error_code' => 'timing_failed',
             ], 403);
         }
 
@@ -2336,8 +2349,9 @@ class WPAIC_REST_Controller {
 
             if (empty($recaptcha_site_key) || empty($recaptcha_secret_key)) {
                 return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => __('reCAPTCHA is enabled but not fully configured (missing site key or secret key). Please complete the reCAPTCHA setup in plugin settings.', 'rapls-ai-chatbot'),
+                    'success'    => false,
+                    'error'      => __('reCAPTCHA is enabled but not fully configured (missing site key or secret key). Please complete the reCAPTCHA setup in plugin settings.', 'rapls-ai-chatbot'),
+                    'error_code' => 'recaptcha_misconfigured',
                 ], 403);
             }
 
@@ -2466,8 +2480,9 @@ class WPAIC_REST_Controller {
             $pro_features = WPAIC_Pro_Features::get_instance();
             if (!$pro_features->is_feature_available(WPAIC_Pro_Features::FEATURE_LEAD_CAPTURE)) {
                 return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => __('Lead capture feature requires Pro license.', 'rapls-ai-chatbot'),
+                    'success'    => false,
+                    'error'      => __('Lead capture feature requires Pro license.', 'rapls-ai-chatbot'),
+                    'error_code' => 'pro_required',
                 ], 403);
             }
 
@@ -2833,8 +2848,9 @@ class WPAIC_REST_Controller {
         $conversation = WPAIC_Conversation::get_by_session($session_id);
         if (!$conversation || (int) $conversation['id'] !== (int) $message['conversation_id']) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('Invalid session.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('Invalid session.', 'rapls-ai-chatbot'),
+                'error_code' => 'session_expired',
             ], 403);
         }
 
@@ -2876,8 +2892,9 @@ class WPAIC_REST_Controller {
         $pro_features = WPAIC_Pro_Features::get_instance();
         if (!$pro_features->is_pro()) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
+                'error_code' => 'pro_required',
             ], 403);
         }
 
@@ -3106,8 +3123,9 @@ class WPAIC_REST_Controller {
         $pro_features = WPAIC_Pro_Features::get_instance();
         if (!$pro_features->is_pro()) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
+                'error_code' => 'pro_required',
             ], 403);
         }
 
