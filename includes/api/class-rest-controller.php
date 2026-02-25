@@ -2192,6 +2192,19 @@ class WPAIC_REST_Controller {
      *                                          offline-message relies on require_captcha instead.
      * @return true|WP_REST_Response True if all checks pass, or error response.
      */
+    /**
+     * Multi-layer guard for public POST endpoints.
+     *
+     * Defense chain (all layers run unconditionally unless noted):
+     *   1. Same-origin check (Origin/Referer header validation)
+     *   2. No-headers policy (reject, allow, or require-captcha based on context)
+     *   3. IP-based rate limiting (uses get_client_ip() — proxy-safe via trusted-proxy chain)
+     *   4. Honeypot field (always runs; bots auto-fill hidden field)
+     *   5. Timing check (always runs; <5s submit = bot)
+     *   6. reCAPTCHA (only when require_captcha=true; endpoint won't work if not configured)
+     *
+     * @see get_client_ip() for proxy/XFF trust chain validation
+     */
     private function guard_public_post(
         WP_REST_Request $request,
         string $rate_key = 'pub',
@@ -2631,7 +2644,10 @@ class WPAIC_REST_Controller {
         $pro_features = WPAIC_Pro_Features::get_instance();
         $remaining = $pro_features->get_remaining_messages();
 
-        // Return only UI-necessary fields; omit raw limit to avoid exposing plan details
+        // Return only UI-necessary fields.
+        // Design note: Free/Pro plan type is already publicly inferable from widget
+        // appearance (Pro themes, branding removal), so remaining=null for unlimited
+        // is not a meaningful information leak. Only return what the frontend needs.
         return $this->no_cache(new WP_REST_Response([
             'success' => true,
             'data'    => [

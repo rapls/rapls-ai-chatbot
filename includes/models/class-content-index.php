@@ -107,8 +107,10 @@ class WPAIC_Content_Index {
     public static function truncate() {
         global $wpdb;
         $table = self::get_table_name();
+        if ($table === '') {
+            return false;
+        }
 
-        // Table name is $wpdb->prefix + hardcoded suffix — never user input. Backtick-only for identifiers.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->query("TRUNCATE TABLE `{$table}`");
         if ($result === false) {

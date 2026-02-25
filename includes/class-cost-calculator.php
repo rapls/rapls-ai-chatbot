@@ -187,7 +187,10 @@ class WPAIC_Cost_Calculator {
      */
     public static function get_usage_stats(int $days = 30): array {
         global $wpdb;
-        $table = wpaic_validated_table('aichat_messages');
+        $table = wpaic_require_table('aichat_messages', 'get_usage_stats');
+        if (!$table) {
+            return ['daily_stats' => [], 'model_totals' => [], 'totals' => ['input_tokens' => 0, 'output_tokens' => 0, 'total_tokens' => 0, 'message_count' => 0, 'cost' => 0, 'cost_formatted' => '$0.00'], 'days' => $days];
+        }
 
         // 日別の使用量を取得
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -315,7 +318,10 @@ class WPAIC_Cost_Calculator {
      */
     public static function reset_usage_stats(): bool {
         global $wpdb;
-        $table = wpaic_validated_table('aichat_messages');
+        $table = wpaic_require_table('aichat_messages', 'reset_usage_stats');
+        if (!$table) {
+            return false;
+        }
         $batch_size = 5000;
 
         // トークン情報が残っている行の最大IDを取得（全件スキャン回避）
@@ -350,7 +356,10 @@ class WPAIC_Cost_Calculator {
      */
     public static function get_chart_data(int $days = 30): array {
         global $wpdb;
-        $table = wpaic_validated_table('aichat_messages');
+        $table = wpaic_require_table('aichat_messages', 'get_chart_data');
+        if (!$table) {
+            return [];
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $results = $wpdb->get_results($wpdb->prepare(

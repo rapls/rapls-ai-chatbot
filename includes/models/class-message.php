@@ -157,8 +157,10 @@ class WPAIC_Message {
     public static function delete_all() {
         global $wpdb;
         $table = self::get_table_name();
+        if ($table === '') {
+            return false;
+        }
 
-        // Table name is $wpdb->prefix + hardcoded suffix — never user input. Backtick-only for identifiers.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->query("TRUNCATE TABLE `{$table}`");
         if ($result === false) {
@@ -242,6 +244,9 @@ class WPAIC_Message {
         global $wpdb;
         $table = self::get_table_name();
         $conv_table = trim(wpaic_validated_table('aichat_conversations'), '`');
+        if (!$table || !$conv_table) {
+            return [];
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare(
@@ -489,6 +494,9 @@ class WPAIC_Message {
     public static function clear_cache(): int {
         global $wpdb;
         $table = self::get_table_name();
+        if ($table === '') {
+            return 0;
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $wpdb->query("UPDATE `{$table}` SET cache_hash = NULL WHERE cache_hash IS NOT NULL");

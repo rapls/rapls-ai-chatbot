@@ -236,12 +236,13 @@ class WPAIC_Conversation {
     public static function delete_all() {
         global $wpdb;
         $table = self::get_table_name();
+        if ($table === '') {
+            return false;
+        }
 
         // Delete all messages first
         WPAIC_Message::delete_all();
 
-        // Delete all conversations
-        // Table name is $wpdb->prefix + hardcoded suffix — never user input. Backtick-only for identifiers.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->query("TRUNCATE TABLE `{$table}`");
         if ($result === false) {
@@ -280,6 +281,9 @@ class WPAIC_Conversation {
     public static function mark_converted(string $session_id, string $goal = ''): bool {
         global $wpdb;
         $table = self::get_table_name();
+        if ($table === '') {
+            return false;
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query($wpdb->prepare(

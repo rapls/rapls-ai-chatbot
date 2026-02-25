@@ -85,7 +85,12 @@ class WPAIC_Pro_Features {
      */
     public function get_monthly_ai_response_count(): int {
         global $wpdb;
-        $table = wpaic_validated_table('aichat_messages');
+        $table = wpaic_require_table('aichat_messages', 'get_monthly_ai_response_count');
+        if (!$table) {
+            // Fall back to no-history count only
+            $nohist_counts = (array) get_option('wpaic_nohist_msg_counts', []);
+            return (int) ($nohist_counts[wp_date('Y_m')] ?? 0);
+        }
         // Use WordPress site timezone for consistent month boundary calculation
         $month_start = wp_date('Y-m-01 00:00:00');
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter

@@ -68,8 +68,18 @@ function wpaic_activate($network_wide = false)
         // Store partial failure log for admin notice (network-level)
         if (!empty($failed_sites)) {
             update_site_option('wpaic_ms_activate_errors', $failed_sites);
-            // Keep a 24h copy for post-incident investigation (survives notice dismissal)
-            set_site_transient('wpaic_ms_activate_errors_last', $failed_sites, DAY_IN_SECONDS);
+            // 24h compact copy: blog_id + short reason only (keeps transient small for large networks).
+            // Full details are in error_log (WP_DEBUG) and the site_option (until dismissed).
+            $compact = [];
+            foreach ($failed_sites as $blog_id => $msg) {
+                $compact[(int) $blog_id] = substr((string) $msg, 0, 120);
+            }
+            if (count($compact) > 50) {
+                $overflow = count($failed_sites) - 50;
+                $compact = array_slice($compact, 0, 50, true);
+                $compact['_truncated'] = $overflow;
+            }
+            set_site_transient('wpaic_ms_activate_errors_last', $compact, DAY_IN_SECONDS);
         } else {
             delete_site_option('wpaic_ms_activate_errors');
         }
@@ -270,6 +280,27 @@ if (!function_exists('wpaic_validated_table')) {
         }
         global $wpdb;
         return '`' . $wpdb->prefix . $suffix . '`';
+    }
+}
+
+/**
+ * Validate table suffix and return backtick-quoted name, or '' with error log on failure.
+ * Use at raw SQL entry points: if the return is '', abort the operation.
+ *
+ * @param string $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string $caller Calling context for error log (e.g. 'cleanup_old_conversations').
+ * @return string Backtick-quoted table name, or '' if invalid.
+ */
+if (!function_exists('wpaic_require_table')) {
+    function wpaic_require_table(string $suffix, string $caller = ''): string {
+        $table = wpaic_validated_table($suffix);
+        if ($table === '') {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log(sprintf('WPAIC: invalid table suffix "%s" in %s', $suffix, $caller ?: 'unknown'));
+            }
+        }
+        return $table;
     }
 }
 

@@ -248,8 +248,11 @@ class WPAIC_Main {
         }
 
         // Whitelist-validated table names for raw SQL.
-        $table_conversations = wpaic_validated_table('aichat_conversations');
-        $table_messages = wpaic_validated_table('aichat_messages');
+        $table_conversations = wpaic_require_table('aichat_conversations', 'cleanup_old_conversations');
+        $table_messages = wpaic_require_table('aichat_messages', 'cleanup_old_conversations');
+        if (!$table_conversations || !$table_messages) {
+            return;
+        }
 
         // Get old conversation IDs
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
