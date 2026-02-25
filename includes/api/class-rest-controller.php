@@ -3564,11 +3564,22 @@ class WPAIC_REST_Controller {
     /**
      * Increment monthly AI response counter (used when save_history is OFF).
      * When save_history is ON, the counter is derived from the messages table.
+     * Stored as a single array option to avoid per-month key proliferation.
      */
     private function increment_no_history_monthly_count(): void {
-        $option_key = 'wpaic_nohist_msg_count_' . wp_date('Y_m');
-        $count = (int) get_option($option_key, 0);
-        update_option($option_key, $count + 1, false);
+        $month_key = wp_date('Y_m');
+        $counts = (array) get_option('wpaic_nohist_msg_counts', []);
+        $counts[$month_key] = ((int) ($counts[$month_key] ?? 0)) + 1;
+
+        // Prune entries older than 3 months to prevent unbounded growth
+        $cutoff = wp_date('Y_m', strtotime('-3 months'));
+        foreach (array_keys($counts) as $k) {
+            if ($k < $cutoff) {
+                unset($counts[$k]);
+            }
+        }
+
+        update_option('wpaic_nohist_msg_counts', $counts, false);
     }
 
 }

@@ -94,7 +94,8 @@ class WPAIC_Pro_Features {
             $month_start
         ));
         // Include messages sent while save_history was OFF (same TZ key)
-        $nohist_count = (int) get_option('wpaic_nohist_msg_count_' . wp_date('Y_m'), 0);
+        $nohist_counts = (array) get_option('wpaic_nohist_msg_counts', []);
+        $nohist_count = (int) ($nohist_counts[wp_date('Y_m')] ?? 0);
         return $db_count + $nohist_count;
     }
 

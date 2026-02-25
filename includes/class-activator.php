@@ -199,15 +199,35 @@ class WPAIC_Activator {
     }
 
     /**
-     * Execute an ALTER TABLE query and log errors under WP_DEBUG.
+     * Execute an ALTER TABLE query on a known plugin table.
      *
-     * @param string $sql   The ALTER TABLE SQL statement
-     * @param string $desc  Human-readable description for the log (e.g. "add column input_tokens")
+     * Table name is validated against get_table_suffixes() whitelist before execution.
+     * The $alter_clause parameter MUST be a hardcoded string literal (no user input).
+     * $wpdb->prepare() cannot be used for identifiers (table/column names);
+     * safety is ensured by the whitelist check + backtick-quoted table identifier.
+     *
+     * @param string $table_suffix Plugin table suffix (e.g. 'aichat_messages')
+     * @param string $alter_clause ALTER TABLE clause (e.g. 'ADD COLUMN foo INT DEFAULT 0')
+     * @param string $desc         Human-readable description for the log
      */
-    private static function safe_alter(string $sql, string $desc = ''): void {
+    private static function safe_alter(string $table_suffix, string $alter_clause, string $desc = ''): void {
         global $wpdb;
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $result = $wpdb->query($sql);
+
+        // Whitelist: only known plugin tables are allowed
+        if (!in_array($table_suffix, self::get_table_suffixes(), true)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC DB Upgrade: rejected unknown table suffix "' . $table_suffix . '"');
+            }
+            return;
+        }
+
+        $table = $wpdb->prefix . $table_suffix;
+        // Table name is safe: $wpdb->prefix (WordPress-controlled) + whitelist-validated suffix.
+        // Backtick-quoted as SQL identifier; $wpdb->prepare() does not support identifier placeholders
+        // below WP 6.2, and this plugin supports WP 5.8+.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
+        $result = $wpdb->query("ALTER TABLE `{$table}` {$alter_clause}");
         if ($result === false && defined('WP_DEBUG') && WP_DEBUG) {
             $context = $desc ? " ({$desc})" : '';
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -250,7 +270,7 @@ class WPAIC_Activator {
         $input_tokens_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'input_tokens'");
 
         if (empty($input_tokens_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN input_tokens INT UNSIGNED DEFAULT 0 AFTER tokens_used", 'add column input_tokens');
+            self::safe_alter('aichat_messages', 'ADD COLUMN input_tokens INT UNSIGNED DEFAULT 0 AFTER tokens_used', 'add column input_tokens');
         }
 
         // Check if output_tokens column exists
@@ -258,7 +278,7 @@ class WPAIC_Activator {
         $output_tokens_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'output_tokens'");
 
         if (empty($output_tokens_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN output_tokens INT UNSIGNED DEFAULT 0 AFTER input_tokens", 'add column output_tokens');
+            self::safe_alter('aichat_messages', 'ADD COLUMN output_tokens INT UNSIGNED DEFAULT 0 AFTER input_tokens', 'add column output_tokens');
         }
 
         // Check if ai_model index exists
@@ -266,7 +286,7 @@ class WPAIC_Activator {
         $index_exists = $wpdb->get_results("SHOW INDEX FROM {$table_messages} WHERE Key_name = 'ai_model'");
 
         if (empty($index_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD KEY ai_model (ai_model)", 'add index ai_model');
+            self::safe_alter('aichat_messages', 'ADD KEY ai_model (ai_model)', 'add index ai_model');
         }
     }
 
@@ -289,32 +309,32 @@ class WPAIC_Activator {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $has_priority = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'priority'");
         if (empty($has_priority)) {
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN priority INT(11) DEFAULT 0 AFTER category", 'add column priority');
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY priority (priority)", 'add index priority');
+            self::safe_alter('aichat_knowledge', 'ADD COLUMN priority INT(11) DEFAULT 0 AFTER category', 'add column priority');
+            self::safe_alter('aichat_knowledge', 'ADD KEY priority (priority)', 'add index priority');
         }
 
         // is_active column
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $column_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'is_active'");
         if (empty($column_exists)) {
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER priority", 'add column is_active');
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY is_active (is_active)", 'add index is_active');
+            self::safe_alter('aichat_knowledge', 'ADD COLUMN is_active TINYINT(1) DEFAULT 1 AFTER priority', 'add column is_active');
+            self::safe_alter('aichat_knowledge', 'ADD KEY is_active (is_active)', 'add index is_active');
         }
 
         // status column
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $has_status = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'status'");
         if (empty($has_status)) {
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN status VARCHAR(20) DEFAULT 'published' AFTER is_active", 'add column status');
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY status (status)", 'add index status');
+            self::safe_alter('aichat_knowledge', "ADD COLUMN status VARCHAR(20) DEFAULT 'published' AFTER is_active", 'add column status');
+            self::safe_alter('aichat_knowledge', 'ADD KEY status (status)', 'add index status');
         }
 
         // type column
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $has_type = $wpdb->get_results("SHOW COLUMNS FROM {$table_knowledge} LIKE 'type'");
         if (empty($has_type)) {
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status", 'add column type');
-            self::safe_alter("ALTER TABLE {$table_knowledge} ADD KEY type (type)", 'add index type');
+            self::safe_alter('aichat_knowledge', "ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status", 'add column type');
+            self::safe_alter('aichat_knowledge', 'ADD KEY type (type)', 'add index type');
         }
 
         // Add feedback column to messages
@@ -342,7 +362,7 @@ class WPAIC_Activator {
 
         if (empty($column_exists)) {
             // Add feedback column: 1 = positive, -1 = negative, 0 or NULL = no feedback
-            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN feedback TINYINT DEFAULT NULL AFTER ai_model", 'add column feedback');
+            self::safe_alter('aichat_messages', 'ADD COLUMN feedback TINYINT DEFAULT NULL AFTER ai_model', 'add column feedback');
         }
     }
 
@@ -366,8 +386,8 @@ class WPAIC_Activator {
         $hash_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'cache_hash'");
 
         if (empty($hash_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN cache_hash VARCHAR(64) DEFAULT NULL AFTER feedback", 'add column cache_hash');
-            self::safe_alter("ALTER TABLE {$table_messages} ADD INDEX cache_hash (cache_hash)", 'add index cache_hash');
+            self::safe_alter('aichat_messages', 'ADD COLUMN cache_hash VARCHAR(64) DEFAULT NULL AFTER feedback', 'add column cache_hash');
+            self::safe_alter('aichat_messages', 'ADD INDEX cache_hash (cache_hash)', 'add index cache_hash');
         }
 
         // Check if cache_hit column exists
@@ -375,7 +395,7 @@ class WPAIC_Activator {
         $hit_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table_messages} LIKE 'cache_hit'");
 
         if (empty($hit_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD COLUMN cache_hit TINYINT(1) DEFAULT 0 AFTER cache_hash", 'add column cache_hit');
+            self::safe_alter('aichat_messages', 'ADD COLUMN cache_hit TINYINT(1) DEFAULT 0 AFTER cache_hash', 'add column cache_hit');
         }
     }
 
@@ -398,7 +418,7 @@ class WPAIC_Activator {
         $index_exists = $wpdb->get_results("SHOW INDEX FROM {$table_messages} WHERE Key_name = 'conv_created'");
 
         if (empty($index_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD INDEX conv_created (conversation_id, created_at)", 'add composite index conv_created');
+            self::safe_alter('aichat_messages', 'ADD INDEX conv_created (conversation_id, created_at)', 'add composite index conv_created');
         }
     }
 
@@ -420,7 +440,7 @@ class WPAIC_Activator {
         $index_exists = $wpdb->get_results("SHOW INDEX FROM {$table_messages} WHERE Key_name = 'feedback_created'");
 
         if (empty($index_exists)) {
-            self::safe_alter("ALTER TABLE {$table_messages} ADD INDEX feedback_created (feedback, created_at)", 'add composite index feedback_created');
+            self::safe_alter('aichat_messages', 'ADD INDEX feedback_created (feedback, created_at)', 'add composite index feedback_created');
         }
     }
 
@@ -482,8 +502,8 @@ class WPAIC_Activator {
         $col_exists = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'converted_at'");
 
         if (empty($col_exists)) {
-            self::safe_alter("ALTER TABLE {$table} ADD COLUMN converted_at DATETIME DEFAULT NULL AFTER status", 'add column converted_at');
-            self::safe_alter("ALTER TABLE {$table} ADD COLUMN conversion_goal VARCHAR(100) DEFAULT NULL AFTER converted_at", 'add column conversion_goal');
+            self::safe_alter('aichat_conversations', 'ADD COLUMN converted_at DATETIME DEFAULT NULL AFTER status', 'add column converted_at');
+            self::safe_alter('aichat_conversations', 'ADD COLUMN conversion_goal VARCHAR(100) DEFAULT NULL AFTER converted_at', 'add column conversion_goal');
         }
     }
 
@@ -501,7 +521,7 @@ class WPAIC_Activator {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $col_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_conv} LIKE 'status'");
             if ($col_info && strpos(strtolower($col_info->Type), 'enum') !== false) {
-                self::safe_alter("ALTER TABLE {$table_conv} MODIFY COLUMN status VARCHAR(20) DEFAULT 'active'", 'convert conversations.status ENUM to VARCHAR');
+                self::safe_alter('aichat_conversations', "MODIFY COLUMN status VARCHAR(20) DEFAULT 'active'", 'convert conversations.status ENUM to VARCHAR');
             }
         }
 
@@ -513,7 +533,7 @@ class WPAIC_Activator {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $col_info = $wpdb->get_row("SHOW COLUMNS FROM {$table_msg} LIKE 'role'");
             if ($col_info && strpos(strtolower($col_info->Type), 'enum') !== false) {
-                self::safe_alter("ALTER TABLE {$table_msg} MODIFY COLUMN role VARCHAR(20) NOT NULL", 'convert messages.role ENUM to VARCHAR');
+                self::safe_alter('aichat_messages', 'MODIFY COLUMN role VARCHAR(20) NOT NULL', 'convert messages.role ENUM to VARCHAR');
             }
         }
     }

@@ -119,7 +119,7 @@ jobs:
           CALLS=$(grep -vE '^\s*(\*|//|#|/\*)' "$FILE" | grep -vE 'KEY [a-z_]+ \(' | grep -vE 'INDEX [a-z_]+ \(' | grep -vE "COMMENT '" | grep -oE '[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\(' || true)
           # Allowed: PHP constructs, DB/option APIs, WP cron, internal methods.
           # SQL types: explicit list (not blanket uppercase) to keep scope tight.
-          ALLOWED_CALLS='(function|if|else|elseif|foreach|for|while|switch|catch|return|array|isset|empty|defined|class|self|static|new|require_once|require|include_once|include|dbDelta|get_option|update_option|delete_option|add_option|get_site_option|set_transient|get_transient|delete_transient|get_charset_collate|prepare|query|get_var|get_col|get_results|get_row|esc_like|esc_sql|maybe_create_table|version_compare|absint|sanitize_text_field|wp_parse_url|get_site_url|error_log|sprintf|substr|strlen|str_pad|strpos|strtolower|time|is_array|in_array|array_merge|array_key_exists|array_fill|array_chunk|implode|count|intval|max|min|trim|preg_match|preg_replace|wp_clear_scheduled_hook|wp_next_scheduled|wp_schedule_event|wp_salt|flush_rewrite_rules|WPAIC_VERSION|get_table_suffixes|create_tables|upgrade_columns|set_default_options|schedule_cron|migrate_diag_options|activate|upgrade|safe_alter|maybe_add_token_columns|maybe_add_is_active_column|maybe_add_custom_fields_column|maybe_add_feedback_column|maybe_add_cache_columns|maybe_add_knowledge_columns|maybe_create_audit_log_table|maybe_add_conversations_columns|maybe_add_messages_columns|maybe_add_conversion_columns|maybe_add_message_composite_index|maybe_convert_enum_to_varchar|BIGINT|VARCHAR|INT|TINYINT|SMALLINT|MEDIUMINT|CHAR|DECIMAL|FLOAT|DOUBLE|ENUM|SET|KEY|CURRENT_TIMESTAMP)'
+          ALLOWED_CALLS='(function|if|else|elseif|foreach|for|while|switch|catch|return|array|isset|empty|defined|class|self|static|new|require_once|require|include_once|include|dbDelta|get_option|update_option|delete_option|add_option|get_site_option|set_transient|get_transient|delete_transient|get_charset_collate|prepare|query|get_var|get_col|get_results|get_row|esc_like|esc_sql|maybe_create_table|version_compare|absint|sanitize_text_field|wp_parse_url|get_site_url|error_log|sprintf|substr|strlen|str_pad|strpos|strtolower|time|is_array|in_array|array_merge|array_key_exists|array_fill|array_chunk|implode|count|intval|max|min|trim|preg_match|preg_replace|wp_clear_scheduled_hook|wp_next_scheduled|wp_schedule_event|wp_salt|flush_rewrite_rules|WPAIC_VERSION|get_table_suffixes|create_tables|upgrade_columns|set_default_options|schedule_cron|migrate_diag_options|activate|upgrade|safe_alter|maybe_add_token_columns|maybe_add_is_active_column|maybe_add_custom_fields_column|maybe_add_feedback_column|maybe_add_cache_columns|maybe_add_knowledge_columns|maybe_create_audit_log_table|maybe_add_conversations_columns|maybe_add_messages_columns|maybe_add_conversion_columns|maybe_add_message_composite_index|maybe_add_feedback_index|maybe_convert_enum_to_varchar|BIGINT|VARCHAR|INT|TINYINT|SMALLINT|MEDIUMINT|CHAR|DECIMAL|FLOAT|DOUBLE|ENUM|SET|KEY|CURRENT_TIMESTAMP)'
           UNEXPECTED_CALLS=$(echo "$CALLS" | sed 's/[[:space:]]*(//' | grep -vE "^${ALLOWED_CALLS}$" | sort -u || true)
           if [ -n "$UNEXPECTED_CALLS" ]; then
             echo "::error::Unexpected function calls in $FILE (not in allow-list):"
@@ -207,3 +207,26 @@ jobs:
             fi
           fi
           echo "OK: debug keys are properly guarded"
+
+      - name: JS hardcoded user-facing string check
+        run: |
+          # User-facing strings in chatbot.js should use config.strings for i18n.
+          # This check flags common patterns of hardcoded strings that should be translatable.
+          JS="assets/js/chatbot.js"
+          if [ ! -f "$JS" ]; then exit 0; fi
+          FAIL=0
+          # Pattern: string assignments with common user-facing keywords (not in comments)
+          # Skip lines that reference config.strings (already i18n'd)
+          HARDCODED=$(grep -nE "(innerHTML|textContent|innerText|\.text)\s*=" "$JS" \
+            | grep -vE '^\s*[0-9]+:\s*(//|/\*)' \
+            | grep -E "'[A-Z][a-z].*'|\"[A-Z][a-z].*\"" \
+            | grep -v 'config\.strings' \
+            | grep -v 'escapeHtml' \
+            | grep -vE "'(div|span|button|img|input|form|a|p|ul|li|br|hr)'" \
+            || true)
+          if [ -n "$HARDCODED" ]; then
+            echo "::warning::Possible hardcoded user-facing strings in $JS (should use config.strings):"
+            echo "$HARDCODED" | head -10
+            # Warning only for now — enable FAIL=1 once all strings are migrated
+          fi
+          echo "OK: JS string i18n check complete"
