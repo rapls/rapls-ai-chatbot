@@ -135,6 +135,13 @@ function wpaic_ms_activate_error_notice() {
     }
     echo '</ul></details>';
     echo '</p></div>';
+    // Persist to error_log for post-incident investigation (WP_DEBUG only)
+    if (defined('WP_DEBUG') && WP_DEBUG) {
+        foreach ($errors as $blog_id => $msg) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log('WPAIC MS activate error — site #' . (int) $blog_id . ': ' . $msg);
+        }
+    }
     // Clear after showing once
     delete_site_option('wpaic_ms_activate_errors');
 }
