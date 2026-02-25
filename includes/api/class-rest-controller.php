@@ -485,12 +485,21 @@ class WPAIC_REST_Controller {
         // Set httpOnly cookie for session ownership verification
         $cookie_set = false;
         if (!headers_sent()) {
+            /**
+             * Filter the SameSite attribute for the session cookie.
+             * Default 'Lax' is safe for same-site use. Set to 'None' for cross-site
+             * iframe embedding (forces Secure=true). Use wpaic_allowed_origins filter
+             * to also allow the embedding domain's origin.
+             *
+             * @param string $samesite SameSite attribute ('Lax', 'Strict', or 'None').
+             */
+            $samesite = apply_filters('wpaic_cookie_samesite', 'Lax');
             setcookie('wpaic_session_id', $session_id, [
                 'expires'  => 0,
                 'path'     => '/',
                 'httponly'  => true,
-                'samesite' => 'Lax',
-                'secure'   => is_ssl(),
+                'samesite' => $samesite,
+                'secure'   => ($samesite === 'None') ? true : is_ssl(),
             ]);
             $cookie_set = true;
         } else {

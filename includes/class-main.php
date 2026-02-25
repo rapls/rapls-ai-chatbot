@@ -278,6 +278,13 @@ class WPAIC_Main {
                 ));
             }
         }
+
+        /**
+         * Allow Pro plugin to extend cleanup to additional tables (leads, audit_log, etc.).
+         *
+         * @param int $retention_days Number of days to retain data.
+         */
+        do_action('wpaic_after_cleanup', $retention_days);
     }
 
     /**

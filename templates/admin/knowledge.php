@@ -893,63 +893,31 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Knowledge export (Pro)
+    // Knowledge export (Pro) — streaming file download (avoids JSON memory issues)
     $('.wpaic-export-knowledge').on('click', function(e) {
         e.preventDefault();
         var format = $(this).data('format');
         var $btn = $(this);
         var $status = $('.wpaic-export-knowledge-status');
+        var category = $('#wpaic-category-filter').val() || '';
 
         $btn.prop('disabled', true);
         $status.text('<?php echo esc_js(__('Exporting...', 'rapls-ai-chatbot')); ?>');
 
-        $.post(wpaicAdmin.ajaxUrl, {
-            action: 'wpaic_export_knowledge',
-            nonce: wpaicAdmin.nonce,
-            format: format,
-            category: $('#wpaic-category-filter').val() || ''
-        }, function(response) {
-            if (response.success) {
-                var data = response.data;
-                var content, type;
+        // Direct download via GET — server streams the file (no JSON payload in memory)
+        var url = wpaicAdmin.ajaxUrl
+            + '?action=wpaic_download_knowledge'
+            + '&nonce=' + encodeURIComponent(wpaicAdmin.nonce)
+            + '&format=' + encodeURIComponent(format)
+            + '&category=' + encodeURIComponent(category);
+        window.location.href = url;
 
-                if (data.format === 'json') {
-                    content = JSON.stringify(data.data, null, 2);
-                    type = 'application/json';
-                } else {
-                    var bom = '\ufeff';
-                    var csv = data.data.map(function(row) {
-                        return row.map(function(cell) {
-                            cell = String(cell === null || cell === undefined ? '' : cell);
-                            if (cell.indexOf(',') !== -1 || cell.indexOf('"') !== -1 || cell.indexOf('\n') !== -1) {
-                                return '"' + cell.replace(/"/g, '""') + '"';
-                            }
-                            return cell;
-                        }).join(',');
-                    }).join('\n');
-                    content = bom + csv;
-                    type = 'text/csv;charset=utf-8';
-                }
-
-                var blob = new Blob([content], { type: type });
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = data.filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                $status.html('<span style="color:green;">✓</span>');
-            } else {
-                $status.html('<span style="color:red;">' + (response.data || 'Error') + '</span>');
-            }
-        }).fail(function() {
-            $status.html('<span style="color:red;">Error</span>');
-        }).always(function() {
+        // Re-enable after delay (browser handles the download)
+        setTimeout(function() {
             $btn.prop('disabled', false);
+            $status.html('<span style="color:green;">✓</span>');
             setTimeout(function() { $status.text(''); }, 3000);
-        });
+        }, 1500);
     });
 
 });
