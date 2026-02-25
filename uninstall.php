@@ -46,14 +46,8 @@ function wpaic_uninstall_site() {
         )
     );
 
-    // Always clear rate-limit fallback options (_wpaic_rl_*)
-    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $wpdb->query(
-        $wpdb->prepare(
-            "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
-            $wpdb->esc_like('_wpaic_rl_') . '%'
-        )
-    );
+    // Always clear rate-limit fallback option (single array, no LIKE needed)
+    delete_option('wpaic_rl_fallback');
 
     // Always clear diagnostic counters (wpaic_diag_*).
     // These are lightweight, auto-regenerated runtime metrics — not user data.

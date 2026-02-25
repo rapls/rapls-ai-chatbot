@@ -3594,7 +3594,7 @@ class WPAIC_REST_Controller {
      * Get a rate limit counter that works even when external object cache is broken.
      *
      * Tries transient first (fast path). If transient returns false and an external
-     * object cache is active, falls back to a DB-based option with manual TTL.
+     * object cache is active, falls back to a single DB array option.
      *
      * @param string $key    Transient/option key
      * @param int    $window TTL in seconds
@@ -3608,9 +3608,9 @@ class WPAIC_REST_Controller {
 
         // Transient miss — check if external object cache may have lost it
         if (wp_using_ext_object_cache()) {
-            $fallback = get_option('_wpaic_rl_' . $key);
-            if (is_array($fallback) && ($fallback['expires'] ?? 0) > time()) {
-                return (int) ($fallback['count'] ?? 0);
+            $store = (array) get_option('wpaic_rl_fallback', []);
+            if (isset($store[$key]) && ($store[$key]['exp'] ?? 0) > time()) {
+                return (int) ($store[$key]['c'] ?? 0);
             }
         }
 
@@ -3621,7 +3621,8 @@ class WPAIC_REST_Controller {
      * Increment a resilient rate limit counter.
      *
      * Writes to transient (primary). If transient write fails (external cache down),
-     * falls back to DB option with manual expiry.
+     * falls back to a single DB array option with per-key expiry.
+     * Max 200 entries; expired entries pruned on each write.
      *
      * @param string $key    Transient/option key
      * @param int    $count  Current counter value
@@ -3633,10 +3634,26 @@ class WPAIC_REST_Controller {
 
         // If transient write failed and we're using external cache, fall back to DB
         if (!$written && wp_using_ext_object_cache()) {
-            update_option('_wpaic_rl_' . $key, [
-                'count'   => $new_count,
-                'expires' => time() + $window,
-            ], false);
+            $store = (array) get_option('wpaic_rl_fallback', []);
+            $now = time();
+
+            // Prune expired entries
+            foreach ($store as $k => $v) {
+                if (($v['exp'] ?? 0) <= $now) {
+                    unset($store[$k]);
+                }
+            }
+
+            // Cap at 200 entries — evict oldest if full
+            if (count($store) >= 200) {
+                uasort($store, function ($a, $b) {
+                    return ($a['exp'] ?? 0) - ($b['exp'] ?? 0);
+                });
+                $store = array_slice($store, -199, null, true);
+            }
+
+            $store[$key] = ['c' => $new_count, 'exp' => $now + $window];
+            update_option('wpaic_rl_fallback', $store, false);
         }
     }
 

@@ -217,12 +217,14 @@ jobs:
           FAIL=0
           # Pattern: string assignments with common user-facing keywords (not in comments)
           # Skip lines that reference config.strings (already i18n'd)
+          # Lines with "wpaic-i18n-ok" comment are intentionally untranslated (e.g., aria, test)
           HARDCODED=$(grep -nE "(innerHTML|textContent|innerText|\.text)\s*=" "$JS" \
             | grep -vE '^\s*[0-9]+:\s*(//|/\*)' \
             | grep -E "'[A-Z][a-z].*'|\"[A-Z][a-z].*\"" \
             | grep -v 'config\.strings' \
             | grep -v 'escapeHtml' \
             | grep -v '_s\.' \
+            | grep -v 'wpaic-i18n-ok' \
             | grep -vE "'(div|span|button|img|input|form|a|p|ul|li|br|hr)'" \
             || true)
           if [ -n "$HARDCODED" ]; then

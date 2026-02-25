@@ -1407,10 +1407,10 @@ class WPAIC_Admin {
             return $text;
         }
         $build = defined('WPAIC_BUILD') ? WPAIC_BUILD : '';
-        if ($build) {
+        if ($build && strpos($build, 'Format') === false) {
             $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION) . ' build ' . esc_html($build);
         } else {
-            $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION);
+            $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION) . ' (dev)';
         }
         return $text;
     }

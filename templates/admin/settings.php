@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
         <?php esc_html_e('AI Chatbot - Settings', 'rapls-ai-chatbot'); ?>
         <?php if (defined('WPAIC_VERSION')) : ?>
         <span style="font-size:12px;font-weight:normal;color:#666;margin-left:8px;">
-            v<?php echo esc_html(WPAIC_VERSION); ?><?php if (defined('WPAIC_BUILD') && WPAIC_BUILD && strpos(WPAIC_BUILD, 'Format') === false) : ?> (<?php echo esc_html(WPAIC_BUILD); ?>)<?php endif; ?>
+            v<?php echo esc_html(WPAIC_VERSION); ?><?php if (defined('WPAIC_BUILD') && WPAIC_BUILD) : ?> (<?php echo esc_html(strpos(WPAIC_BUILD, 'Format') === false ? WPAIC_BUILD : 'dev'); ?>)<?php endif; ?>
         </span>
         <?php endif; ?>
     </h1>

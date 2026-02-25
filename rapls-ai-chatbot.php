@@ -55,10 +55,21 @@ function wpaic_activate($network_wide = false)
         // Network Activate: create tables/options on every existing subsite.
         // New subsites created later are handled by wpaic_on_new_blog().
         $site_ids = get_sites(['fields' => 'ids', 'number' => 0]);
+        $failed_sites = [];
         foreach ($site_ids as $site_id) {
             switch_to_blog((int) $site_id);
-            WPAIC_Activator::activate();
+            try {
+                WPAIC_Activator::activate();
+            } catch (\Throwable $e) {
+                $failed_sites[(int) $site_id] = $e->getMessage();
+            }
             restore_current_blog();
+        }
+        // Store partial failure log for admin notice (network-level)
+        if (!empty($failed_sites)) {
+            update_site_option('wpaic_ms_activate_errors', $failed_sites);
+        } else {
+            delete_site_option('wpaic_ms_activate_errors');
         }
     } else {
         WPAIC_Activator::activate();
@@ -78,13 +89,56 @@ function wpaic_on_new_blog($new_site) {
     if (!is_plugin_active_for_network(plugin_basename(__FILE__))) {
         return;
     }
+    // Ensure activator is loaded (wp_initialize_site fires early)
+    if (!class_exists('WPAIC_Activator', false)) {
+        if (!defined('WPAIC_PLUGIN_DIR')) {
+            return; // Plugin bootstrap incomplete — maybe_upgrade() will handle later
+        }
+        require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
+    }
     $blog_id = is_object($new_site) ? (int) $new_site->blog_id : (int) $new_site;
     switch_to_blog($blog_id);
-    require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
-    WPAIC_Activator::activate();
+    try {
+        WPAIC_Activator::activate();
+    } catch (\Throwable $e) {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log('WPAIC: new subsite activation failed for blog ' . $blog_id . ': ' . $e->getMessage());
+        }
+        // Fallback: maybe_upgrade() will retry on first request to this subsite
+    }
     restore_current_blog();
 }
 add_action('wp_initialize_site', 'wpaic_on_new_blog', 200);
+
+/**
+ * Show admin notice if Network Activate had partial failures.
+ */
+function wpaic_ms_activate_error_notice() {
+    if (!is_network_admin()) {
+        return;
+    }
+    $errors = get_site_option('wpaic_ms_activate_errors');
+    if (empty($errors) || !is_array($errors)) {
+        return;
+    }
+    echo '<div class="notice notice-warning is-dismissible"><p>';
+    echo '<strong>Rapls AI Chatbot:</strong> ';
+    echo esc_html(sprintf(
+        /* translators: %d: number of failed subsites */
+        __('Network activation partially failed on %d site(s). These sites will self-repair on first visit (via auto-upgrade).', 'rapls-ai-chatbot'),
+        count($errors)
+    ));
+    echo ' <details><summary>' . esc_html__('Details', 'rapls-ai-chatbot') . '</summary><ul>';
+    foreach ($errors as $blog_id => $msg) {
+        echo '<li>Site #' . (int) $blog_id . ': <code>' . esc_html($msg) . '</code></li>';
+    }
+    echo '</ul></details>';
+    echo '</p></div>';
+    // Clear after showing once
+    delete_site_option('wpaic_ms_activate_errors');
+}
+add_action('network_admin_notices', 'wpaic_ms_activate_error_notice');
 
 /**
  * Plugin deactivation handler
