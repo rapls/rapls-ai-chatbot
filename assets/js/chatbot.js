@@ -626,7 +626,19 @@
                     // Skip if already handled (e.g. recaptcha_not_ready)
                     if (error === 'recaptcha_not_ready') return;
                     console.error('Chat error:', error);
-                    var errorMessage = error.message || '申し訳ありません。エラーが発生しました。もう一度お試しください。';
+
+                    // Status-based user-friendly messages
+                    var _s = self.config.strings || {};
+                    var errorMessage;
+                    if (error.status === 429) {
+                        errorMessage = _s.error_rate_limit || 'Too many requests. Please try again in a moment.'; // wpaic-i18n-ok
+                    } else if (error.status === 403) {
+                        errorMessage = _s.error_unavailable || 'This feature is currently unavailable.'; // wpaic-i18n-ok
+                    } else if (error.status >= 500) {
+                        errorMessage = _s.error_server || 'A temporary error occurred. Please try again later.'; // wpaic-i18n-ok
+                    } else {
+                        errorMessage = error.message || (_s.error_occurred || 'An error occurred.'); // wpaic-i18n-ok
+                    }
                     self.addMessage('bot', errorMessage);
 
                     // 429/503 rate limit: disable input for retry_after seconds
@@ -1465,6 +1477,7 @@
                             var error = new Error(errorMsg);
                             error.response = json;
                             error.errorCode = errorCode;
+                            error.status = response.status;
                             throw error;
                         }
                         return json;

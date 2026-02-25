@@ -134,19 +134,15 @@ add_action('wp_initialize_site', 'wpaic_on_new_blog', 200);
  */
 function wpaic_ms_recovery_hint(string $msg): string {
     $lower = strtolower($msg);
-    if (strpos($lower, 'access denied') !== false || strpos($lower, 'privilege') !== false) {
+    // High-confidence patterns only — MySQL error strings are stable English.
+    if (strpos($lower, 'access denied') !== false) {
         return __('Action: check database user privileges.', 'rapls-ai-chatbot');
     }
-    if (strpos($lower, 'table') !== false && (strpos($lower, 'exist') !== false || strpos($lower, 'missing') !== false)) {
+    if (strpos($lower, "doesn't exist") !== false || strpos($lower, 'does not exist') !== false) {
         return __('Action: deactivate and reactivate the plugin on this site.', 'rapls-ai-chatbot');
     }
-    if (strpos($lower, 'prefix') !== false || strpos($lower, 'invalid table') !== false) {
-        return __('Action: verify wp-config.php $table_prefix value.', 'rapls-ai-chatbot');
-    }
-    if (strpos($lower, 'dbdelta') !== false || strpos($lower, 'schema') !== false) {
-        return __('Action: deactivate and reactivate the plugin on this site.', 'rapls-ai-chatbot');
-    }
-    return '';
+    // Fallback for any other error — safe generic guidance.
+    return __('Action: check server error logs and database permissions.', 'rapls-ai-chatbot');
 }
 
 /**
@@ -360,6 +356,7 @@ if (!function_exists('wpaic_require_table')) {
  *   - wpaic_validated_table()         → raw return (''/quoted), caller checks
  *   - wpaic_require_table()           → logs on empty, caller early-returns safely
  *   - wpaic_require_table_or_error()  → returns WP_Error, use in REST/AJAX handlers
+ *   - wpaic_with_table()              → callback pattern, is_wp_error() handled internally (preferred for REST)
  *
  * @param string $suffix Table suffix (e.g. 'aichat_messages').
  * @param string $caller Calling context for error message.
@@ -380,6 +377,33 @@ if (!function_exists('wpaic_require_table_or_error')) {
             );
         }
         return $table;
+    }
+}
+
+/**
+ * Execute a callback with a validated table name, or return WP_Error.
+ *
+ * Preferred pattern for REST/AJAX handlers — eliminates the risk of
+ * forgetting is_wp_error() on the return value of wpaic_require_table_or_error().
+ *
+ * Usage:
+ *   return wpaic_with_table('aichat_messages', __METHOD__, function ($table) {
+ *       global $wpdb;
+ *       return $wpdb->get_results("SELECT * FROM {$table} LIMIT 10");
+ *   });
+ *
+ * @param string   $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string   $caller Calling context for error message.
+ * @param callable $fn     Receives the backtick-quoted table name; its return value is passed through.
+ * @return mixed|WP_Error  Return value of $fn, or WP_Error if table validation fails.
+ */
+if (!function_exists('wpaic_with_table')) {
+    function wpaic_with_table(string $suffix, string $caller, callable $fn) {
+        $table = wpaic_require_table_or_error($suffix, $caller);
+        if (is_wp_error($table)) {
+            return $table;
+        }
+        return $fn($table);
     }
 }
 

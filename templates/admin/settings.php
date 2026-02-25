@@ -1230,6 +1230,7 @@ if (!defined('ABSPATH')) {
                             ?>
                                 <span style="color:#dba617;">&#x26A0;</span>
                                 <?php esc_html_e('Unable to verify tables (database permission issue). SHOW TABLES query failed — check that the database user has sufficient privileges.', 'rapls-ai-chatbot'); ?>
+                                <br><small><?php esc_html_e('Check DB user privileges for SHOW TABLES, or temporarily disable WAF rules for wp-admin requests.', 'rapls-ai-chatbot'); ?></small>
                             <?php elseif (empty($missing_tables)) : ?>
                                 <span style="color:green;">&#x2713;</span> <?php echo esc_html(sprintf(
                                     /* translators: %d: number of tables */

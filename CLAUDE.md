@@ -39,6 +39,10 @@ No build tools, bundlers, linters, or test frameworks. Pure PHP/JS/CSS WordPress
   bash .ci/verify-release.sh
   # Paste the Summary output (Commit/Version/SHA-256) into the review reply.
   ```
+- **Git hooks** (optional, one-time setup — prompts on tag push):
+  ```bash
+  bash .ci/install-hooks.sh
+  ```
 - **Output location**: ZIP files, reports, and all generated artifacts must be placed in `/Users/min/Local Sites/hash/app/public/wp-content/plugins/` — **NEVER on Desktop or any other location**
 
 ### WordPress Hook/Filter Type Safety Rules

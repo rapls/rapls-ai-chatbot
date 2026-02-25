@@ -146,6 +146,9 @@ class WPAIC_Chatbot_Widget {
             'debug'                => is_user_logged_in() && current_user_can($this->get_debug_min_cap()) && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
             'strings'              => [
                 'error_occurred'         => __('An error occurred.', 'rapls-ai-chatbot'),
+                'error_rate_limit'       => __('Too many requests. Please try again in a moment.', 'rapls-ai-chatbot'),
+                'error_unavailable'      => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                'error_server'           => __('A temporary error occurred. Please try again later, or contact the site administrator.', 'rapls-ai-chatbot'),
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
                 'suggestions_title'      => __('You might also ask:', 'rapls-ai-chatbot'),
