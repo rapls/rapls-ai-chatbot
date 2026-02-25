@@ -156,7 +156,8 @@ class WPAIC_REST_Controller {
      *
      * Known error_code values (kept as a reference for support docs):
      *   rate_limited, origin_mismatch, recaptcha_required, recaptcha_failed,
-     *   session_expired, session_missing, honeypot_triggered, timing_failed,
+     *   recaptcha_misconfigured, session_expired, session_missing,
+     *   honeypot_triggered, timing_failed, pro_required,
      *   wpaic_table_error, unknown
      *
      * @param mixed            $result  Response object.
@@ -176,8 +177,10 @@ class WPAIC_REST_Controller {
         if ($status !== 403 && $status !== 429) {
             return $result;
         }
+        // Defensive: require both logged-in AND capability check.
+        // Prevents cache/proxy edge cases from leaking debug info to anonymous users.
         // Same cap getter as all admin permission checks — must stay in sync.
-        if (!current_user_can(WPAIC_Admin::get_manage_cap())) {
+        if (!is_user_logged_in() || !current_user_can(WPAIC_Admin::get_manage_cap())) {
             return $result;
         }
         $data = $result->get_data();
@@ -189,6 +192,9 @@ class WPAIC_REST_Controller {
         // Body (always visible in DevTools Network tab response)
         if (is_array($data)) {
             $data['debug_reason'] = $reason;
+            if ($reason === 'unknown') {
+                $data['debug_hint'] = 'Check server error logs for details.';
+            }
             $result->set_data($data);
         }
         return $result;

@@ -1230,7 +1230,18 @@ if (!defined('ABSPATH')) {
                             ?>
                                 <span style="color:#dba617;">&#x26A0;</span>
                                 <?php esc_html_e('Unable to verify tables (database permission issue). SHOW TABLES query failed — check that the database user has sufficient privileges.', 'rapls-ai-chatbot'); ?>
-                                <br><small><?php esc_html_e('Check DB user privileges for SHOW TABLES, or ask your hosting provider about WAF rule exceptions for wp-admin requests. When contacting support, mention: "SHOW TABLES LIKE query is being blocked in wp-admin."', 'rapls-ai-chatbot'); ?></small>
+                                <br><small><?php esc_html_e('Check DB user privileges for SHOW TABLES, or ask your hosting provider about WAF rule exceptions for wp-admin requests.', 'rapls-ai-chatbot'); ?></small>
+                                <?php
+                                $support_info = sprintf(
+                                    "Issue: SHOW TABLES LIKE query is blocked in wp-admin.\nURL: %s\nDate: %s\nPlugin: Rapls AI Chatbot v%s\nPHP: %s / WP: %s",
+                                    esc_url(admin_url()),
+                                    gmdate('Y-m-d H:i:s') . ' UTC',
+                                    defined('WPAIC_VERSION') ? WPAIC_VERSION : '?',
+                                    PHP_VERSION,
+                                    get_bloginfo('version')
+                                );
+                                ?>
+                                <br><button type="button" class="button button-small" onclick="navigator.clipboard.writeText(this.dataset.info).then(function(){alert('<?php echo esc_js(__('Copied to clipboard.', 'rapls-ai-chatbot')); ?>')});" data-info="<?php echo esc_attr($support_info); ?>"><?php esc_html_e('Copy support info', 'rapls-ai-chatbot'); ?></button>
                             <?php elseif (empty($missing_tables)) : ?>
                                 <span style="color:green;">&#x2713;</span> <?php echo esc_html(sprintf(
                                     /* translators: %d: number of tables */

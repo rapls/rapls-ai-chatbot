@@ -627,10 +627,19 @@
                     if (error === 'recaptcha_not_ready') return;
                     console.error('Chat error:', error);
 
-                    // Status-based user-friendly messages
+                    // Error code + status based user-friendly messages
                     var _s = self.config.strings || {};
+                    var ec = error.errorCode || '';
                     var errorMessage;
-                    if (error.status === 429) {
+                    // Specific error_code messages (most actionable)
+                    if (ec === 'session_expired') {
+                        errorMessage = _s.error_session_expired || 'Your session has expired. Please reload the page.'; // wpaic-i18n-ok
+                    } else if (ec === 'pro_required') {
+                        errorMessage = _s.error_pro_required || 'This feature requires the Pro version.'; // wpaic-i18n-ok
+                    } else if (ec === 'timing_failed') {
+                        errorMessage = _s.error_timing || 'Please wait a moment and try again.'; // wpaic-i18n-ok
+                    // Fallback to HTTP status categories
+                    } else if (error.status === 429) {
                         errorMessage = _s.error_rate_limit || 'Too many requests. Please try again in a moment.'; // wpaic-i18n-ok
                     } else if (error.status === 403) {
                         errorMessage = _s.error_unavailable || 'This feature is currently unavailable.'; // wpaic-i18n-ok

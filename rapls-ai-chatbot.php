@@ -35,10 +35,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Plugin constants — WPAIC_VERSION is the single source of truth for the version number.
-// CI tag gate (.github/workflows/zip-verify.yml) reads this value to verify tag consistency.
-// Do NOT define WPAIC_VERSION anywhere else (including Pro plugin).
-define('WPAIC_VERSION', '1.3.1');
+// Version: single source of truth in includes/version.php
+require_once __DIR__ . '/includes/version.php';
 define('WPAIC_BUILD', '$Format:%h$'); // Auto-replaced by git archive (export-subst)
 define('WPAIC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WPAIC_PLUGIN_URL', plugin_dir_url(__FILE__));

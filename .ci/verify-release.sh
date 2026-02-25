@@ -39,7 +39,7 @@ echo "3. SHA-256: ${SHA}"
 
 # 4. Build label from ZIP
 BUILD=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/${PLUGIN_SLUG}.php" | grep -oP "WPAIC_BUILD.*?'\K[^']*" || echo "n/a")
-VERSION=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/${PLUGIN_SLUG}.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
+VERSION=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/includes/version.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
 echo "4. Version: ${VERSION} | Build: ${BUILD}"
 
 # 5. Dev file leak check

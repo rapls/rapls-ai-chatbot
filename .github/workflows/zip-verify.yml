@@ -245,10 +245,10 @@ jobs:
         run: |
           # Output release metadata for tag pushes — serves as the CI-enforced
           # equivalent of .ci/verify-release.sh so local hook is supplementary, not required.
-          # WPAIC_VERSION is defined ONLY in rapls-ai-chatbot.php (single source of truth).
+          # WPAIC_VERSION is defined ONLY in includes/version.php (single source of truth).
           # Pro reads Free's constant at runtime — never defines its own.
           SHA=$(sha256sum dist.zip | awk '{print $1}')
-          VERSION=$(unzip -p dist.zip "rapls-ai-chatbot/rapls-ai-chatbot.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
+          VERSION=$(unzip -p dist.zip "rapls-ai-chatbot/includes/version.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
           COMMIT=$(git rev-parse --short HEAD)
           echo "=== Release Artifact Summary ==="
           echo "Tag:     ${GITHUB_REF_NAME}"
