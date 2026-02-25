@@ -175,6 +175,8 @@ jobs:
           check_keyword "includes/api/class-rest-controller.php" "check_same_origin" "CSRF origin check"
           check_keyword "includes/class-main.php" "wpaic_after_cleanup" "M-2 cleanup hook"
           check_keyword "includes/models/class-knowledge.php" "csv_safe_cell" "CSV injection protection"
+          # M-1: SameSite=None + HTTP warning must exist in admin class
+          check_keyword "includes/admin/class-admin.php" "wpaic_cookie_samesite" "M-1 SameSite admin warning"
           if [ "$FAIL" -ne 0 ]; then exit 1; fi
           echo "OK: all implementation keywords verified in ZIP"
 

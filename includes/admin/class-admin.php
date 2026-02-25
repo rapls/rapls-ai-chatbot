@@ -1341,6 +1341,12 @@ class WPAIC_Admin {
             $warnings[] = __('WP-Cron is disabled (DISABLE_WP_CRON). Scheduled tasks (site crawl, conversation cleanup) will not run automatically. Chat functionality is not affected. If you use a server-side cron (crontab) to trigger wp-cron.php, you can safely ignore this notice.', 'rapls-ai-chatbot');
         }
 
+        // M-1: Check SameSite=None on non-SSL site (cookie will silently fail in browsers)
+        $samesite = apply_filters('wpaic_cookie_samesite', 'Lax');
+        if ($samesite === 'None' && !is_ssl()) {
+            $errors[] = __('SameSite=None is set via the wpaic_cookie_samesite filter, but this site does not use HTTPS. Browsers require Secure cookies for SameSite=None, so the session cookie will not be sent. Sessions will reset on every page load. Remove the filter or switch to HTTPS.', 'rapls-ai-chatbot');
+        }
+
         $settings_url = admin_url('admin.php?page=wpaic-settings');
 
         // Critical errors (red, not dismissible, shown on all admin pages)
