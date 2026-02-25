@@ -247,13 +247,14 @@ class WPAIC_Main {
             return;
         }
 
-        $table_conversations = $wpdb->prefix . 'aichat_conversations';
-        $table_messages = $wpdb->prefix . 'aichat_messages';
+        // Whitelist-validated table names for raw SQL.
+        $table_conversations = wpaic_validated_table('aichat_conversations');
+        $table_messages = wpaic_validated_table('aichat_messages');
 
         // Get old conversation IDs
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $old_conversations = $wpdb->get_col($wpdb->prepare(
-            "SELECT id FROM `{$table_conversations}` WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
+            "SELECT id FROM {$table_conversations} WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
             $retention_days
         ));
 
@@ -267,14 +268,14 @@ class WPAIC_Main {
                 // Delete messages
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $wpdb->query($wpdb->prepare(
-                    "DELETE FROM `{$table_messages}` WHERE conversation_id IN ({$ids_placeholder})",
+                    "DELETE FROM {$table_messages} WHERE conversation_id IN ({$ids_placeholder})",
                     ...$batch
                 ));
 
                 // Delete conversations
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $wpdb->query($wpdb->prepare(
-                    "DELETE FROM `{$table_conversations}` WHERE id IN ({$ids_placeholder})",
+                    "DELETE FROM {$table_conversations} WHERE id IN ({$ids_placeholder})",
                     ...$batch
                 ));
             }

@@ -10,13 +10,11 @@ if (!defined('ABSPATH')) {
 class WPAIC_Conversation {
 
     /**
-     * Table name
+     * Table name — whitelist-validated via wpaic_validated_table().
      */
-    private static function get_table_name() {
-        global $wpdb;
-        return $wpdb->prefix . 'aichat_conversations';
+    private static function get_table_name(): string {
+        return trim(wpaic_validated_table('aichat_conversations'), '`');
     }
-    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Get or create conversation by session ID

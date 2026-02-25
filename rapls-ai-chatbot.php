@@ -68,6 +68,8 @@ function wpaic_activate($network_wide = false)
         // Store partial failure log for admin notice (network-level)
         if (!empty($failed_sites)) {
             update_site_option('wpaic_ms_activate_errors', $failed_sites);
+            // Keep a 24h copy for post-incident investigation (survives notice dismissal)
+            set_site_transient('wpaic_ms_activate_errors_last', $failed_sites, DAY_IN_SECONDS);
         } else {
             delete_site_option('wpaic_ms_activate_errors');
         }
@@ -231,6 +233,43 @@ if (!function_exists('wpaic_get_int')) {
 if (!function_exists('wpaic_get_email')) {
     function wpaic_get_email(array $src, string $key, string $default = ''): string {
         return isset($src[$key]) ? sanitize_email(wp_unslash($src[$key])) : $default;
+    }
+}
+
+/**
+ * Plugin table suffix whitelist — single source of truth for runtime validation.
+ * WPAIC_Activator::get_table_suffixes() delegates to this for consistency.
+ *
+ * @return string[] Table suffixes (without $wpdb->prefix).
+ */
+if (!function_exists('wpaic_table_suffixes')) {
+    function wpaic_table_suffixes(): array {
+        return [
+            'aichat_conversations',
+            'aichat_messages',
+            'aichat_index',
+            'aichat_knowledge',
+            'aichat_leads',
+            'aichat_user_context',
+            'aichat_audit_log',
+        ];
+    }
+}
+
+/**
+ * Return a whitelist-validated plugin table name for safe SQL interpolation.
+ * Returns backtick-quoted name ready for raw SQL, or '' if suffix is not in whitelist.
+ *
+ * @param string $suffix Table suffix (e.g. 'aichat_messages').
+ * @return string Backtick-quoted table name, or '' if invalid.
+ */
+if (!function_exists('wpaic_validated_table')) {
+    function wpaic_validated_table(string $suffix): string {
+        if (!in_array($suffix, wpaic_table_suffixes(), true)) {
+            return '';
+        }
+        global $wpdb;
+        return '`' . $wpdb->prefix . $suffix . '`';
     }
 }
 

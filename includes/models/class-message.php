@@ -10,13 +10,11 @@ if (!defined('ABSPATH')) {
 class WPAIC_Message {
 
     /**
-     * Table name
+     * Table name — whitelist-validated via wpaic_validated_table().
      */
-    private static function get_table_name() {
-        global $wpdb;
-        return $wpdb->prefix . 'aichat_messages';
+    private static function get_table_name(): string {
+        return trim(wpaic_validated_table('aichat_messages'), '`');
     }
-    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Create message
@@ -243,7 +241,7 @@ class WPAIC_Message {
     public static function get_negative_feedback_messages(int $limit = 50): array {
         global $wpdb;
         $table = self::get_table_name();
-        $conv_table = $wpdb->prefix . 'aichat_conversations';
+        $conv_table = trim(wpaic_validated_table('aichat_conversations'), '`');
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare(

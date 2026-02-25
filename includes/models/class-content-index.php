@@ -10,13 +10,11 @@ if (!defined('ABSPATH')) {
 class WPAIC_Content_Index {
 
     /**
-     * Table name
+     * Table name — whitelist-validated via wpaic_validated_table().
      */
-    private static function get_table_name() {
-        global $wpdb;
-        return $wpdb->prefix . 'aichat_index';
+    private static function get_table_name(): string {
+        return trim(wpaic_validated_table('aichat_index'), '`');
     }
-    // Table name is always $wpdb->prefix + hardcoded suffix — never user input.
 
     /**
      * Create index

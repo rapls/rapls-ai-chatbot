@@ -23,16 +23,14 @@ class WPAIC_Search_Engine {
      * Table name
      */
     private function get_table_name(): string {
-        global $wpdb;
-        return $wpdb->prefix . 'aichat_index';
+        return trim(wpaic_validated_table('aichat_index'), '`');
     }
 
     /**
-     * Knowledge table name
+     * Knowledge table name — whitelist-validated.
      */
     private function get_knowledge_table(): string {
-        global $wpdb;
-        return $wpdb->prefix . 'aichat_knowledge';
+        return trim(wpaic_validated_table('aichat_knowledge'), '`');
     }
 
     /**

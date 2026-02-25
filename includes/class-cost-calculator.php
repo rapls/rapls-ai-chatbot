@@ -187,7 +187,7 @@ class WPAIC_Cost_Calculator {
      */
     public static function get_usage_stats(int $days = 30): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'aichat_messages';
+        $table = wpaic_validated_table('aichat_messages');
 
         // 日別の使用量を取得
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -199,7 +199,7 @@ class WPAIC_Cost_Calculator {
                 SUM(output_tokens) as output_tokens,
                 SUM(tokens_used) as total_tokens,
                 COUNT(*) as message_count
-             FROM `{$table}`
+             FROM {$table}
              WHERE role = 'assistant'
                AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
              GROUP BY DATE(created_at), ai_model
@@ -217,7 +217,7 @@ class WPAIC_Cost_Calculator {
                 SUM(output_tokens) as output_tokens,
                 SUM(tokens_used) as total_tokens,
                 COUNT(*) as message_count
-             FROM `{$table}`
+             FROM {$table}
              WHERE role = 'assistant'
                AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
              GROUP BY ai_model, ai_provider
@@ -233,7 +233,7 @@ class WPAIC_Cost_Calculator {
                 SUM(output_tokens) as output_tokens,
                 SUM(tokens_used) as total_tokens,
                 COUNT(*) as message_count
-             FROM `{$table}`
+             FROM {$table}
              WHERE role = 'assistant'
                AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)",
             $days
@@ -315,13 +315,13 @@ class WPAIC_Cost_Calculator {
      */
     public static function reset_usage_stats(): bool {
         global $wpdb;
-        $table = $wpdb->prefix . 'aichat_messages';
+        $table = wpaic_validated_table('aichat_messages');
         $batch_size = 5000;
 
         // トークン情報が残っている行の最大IDを取得（全件スキャン回避）
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $max_id = (int) $wpdb->get_var(
-            "SELECT MAX(id) FROM `{$table}` WHERE tokens_used > 0 OR input_tokens > 0 OR output_tokens > 0"
+            "SELECT MAX(id) FROM {$table} WHERE tokens_used > 0 OR input_tokens > 0 OR output_tokens > 0"
         );
 
         if ($max_id <= 0) {
@@ -333,7 +333,7 @@ class WPAIC_Cost_Calculator {
             $end = $start + $batch_size - 1;
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $result = $wpdb->query($wpdb->prepare(
-                "UPDATE `{$table}` SET tokens_used = 0, input_tokens = 0, output_tokens = 0 WHERE id BETWEEN %d AND %d",
+                "UPDATE {$table} SET tokens_used = 0, input_tokens = 0, output_tokens = 0 WHERE id BETWEEN %d AND %d",
                 $start,
                 $end
             ));
@@ -350,7 +350,7 @@ class WPAIC_Cost_Calculator {
      */
     public static function get_chart_data(int $days = 30): array {
         global $wpdb;
-        $table = $wpdb->prefix . 'aichat_messages';
+        $table = wpaic_validated_table('aichat_messages');
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $results = $wpdb->get_results($wpdb->prepare(
@@ -359,7 +359,7 @@ class WPAIC_Cost_Calculator {
                 SUM(input_tokens) as input_tokens,
                 SUM(output_tokens) as output_tokens,
                 SUM(tokens_used) as total_tokens
-             FROM `{$table}`
+             FROM {$table}
              WHERE role = 'assistant'
                AND created_at >= DATE_SUB(NOW(), INTERVAL %d DAY)
              GROUP BY DATE(created_at)

@@ -156,6 +156,8 @@ class WPAIC_REST_Controller {
         add_filter('rest_post_dispatch', [$this, 'ensure_no_cache_public_gets'], 10, 3);
 
         // Get/Create session
+        // Public: visitors need sessions before authentication is possible.
+        // Defenses: IP-based rate limit (30/min + 5 new/10min per IP), UUID4 validation.
         register_rest_route($this->namespace, '/session', [
             'methods'             => 'GET',
             'callback'            => [$this, 'get_session'],
@@ -255,6 +257,8 @@ class WPAIC_REST_Controller {
         ]);
 
         // Get lead form configuration
+        // Public: widget must query form config before session exists.
+        // Defenses: rate limit (30/min), returns only UI flags (no sensitive data).
         register_rest_route($this->namespace, '/lead-config', [
             'methods'             => 'GET',
             'callback'            => [$this, 'get_lead_config'],
@@ -262,6 +266,8 @@ class WPAIC_REST_Controller {
         ]);
 
         // Get message limit status
+        // Public: widget needs real-time quota check to disable input at Free limit.
+        // Defenses: rate limit (30/min), no-cache headers, obfuscates Pro/Free plan info.
         register_rest_route($this->namespace, '/message-limit', [
             'methods'             => 'GET',
             'callback'            => [$this, 'get_message_limit_status'],
@@ -366,6 +372,8 @@ class WPAIC_REST_Controller {
             ]);
 
             // Submit offline message (Pro feature)
+            // Public: allows unauthenticated visitors to leave messages outside business hours.
+            // Defenses: guard_public_post() (same-origin, rate limit 10/min, honeypot, timing, reCAPTCHA).
             register_rest_route($this->namespace, '/offline-message', [
                 'methods'             => 'POST',
                 'callback'            => [$this, 'submit_offline_message'],
@@ -907,8 +915,8 @@ class WPAIC_REST_Controller {
                             $cache_msg_id = $ai_message['id'];
                             WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
                             global $wpdb;
-                            $msg_table = $wpdb->prefix . 'aichat_messages';
-                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                            $msg_table = trim(wpaic_validated_table('aichat_messages'), '`');
+                            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                             $wpdb->update($msg_table, ['cache_hit' => 1], ['id' => $ai_message['id']], ['%d'], ['%d']);
                         }
                     } else {
@@ -2973,7 +2981,7 @@ class WPAIC_REST_Controller {
 
             // Delete old message and create new one
             global $wpdb;
-            $table = $wpdb->prefix . 'aichat_messages';
+            $table = trim(wpaic_validated_table('aichat_messages'), '`');
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->delete($table, ['id' => $message_id], ['%d']);
 
@@ -3243,11 +3251,11 @@ class WPAIC_REST_Controller {
             // Search knowledge base for matching titles (safe: KB is admin-curated content)
             try {
                 global $wpdb;
-                $kb_table = $wpdb->prefix . 'aichat_knowledge';
+                $kb_table = wpaic_validated_table('aichat_knowledge');
 
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $kb_titles = $wpdb->get_col($wpdb->prepare(
-                    "SELECT title FROM `{$kb_table}`
+                    "SELECT title FROM {$kb_table}
                      WHERE is_active = 1 AND status = 'published'
                      AND title LIKE %s
                      ORDER BY priority DESC
@@ -3269,11 +3277,11 @@ class WPAIC_REST_Controller {
 
                 if ($conversation) {
                     global $wpdb;
-                    $msg_table = $wpdb->prefix . 'aichat_messages';
+                    $msg_table = wpaic_validated_table('aichat_messages');
 
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                     $past_questions = $wpdb->get_col($wpdb->prepare(
-                        "SELECT DISTINCT content FROM `{$msg_table}`
+                        "SELECT DISTINCT content FROM {$msg_table}
                          WHERE role = 'user'
                          AND conversation_id = %d
                          AND content LIKE %s

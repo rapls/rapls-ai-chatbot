@@ -19,21 +19,12 @@ if (!defined('ABSPATH')) {
 class WPAIC_Activator {
 
     /**
-     * Single source of truth for all plugin table suffixes.
-     * Used by create_tables() and uninstall.php — never duplicate this list.
+     * Plugin table suffixes — delegates to wpaic_table_suffixes() (single source of truth).
      *
      * @return string[] Table suffixes (without $wpdb->prefix).
      */
     public static function get_table_suffixes(): array {
-        return [
-            'aichat_conversations',
-            'aichat_messages',
-            'aichat_index',
-            'aichat_knowledge',
-            'aichat_leads',
-            'aichat_user_context',
-            'aichat_audit_log',
-        ];
+        return wpaic_table_suffixes();
     }
 
     /**
@@ -224,24 +215,14 @@ class WPAIC_Activator {
      * @return string Backtick-quoted table name, or '' if invalid.
      */
     /**
-     * Return backtick-quoted full table name after whitelist validation.
-     *
-     * Use this for any direct SQL that references plugin tables. Returns the
-     * table name in `backtick-quoted` form, ready for SQL interpolation.
-     * Returns empty string if the suffix is not in the whitelist.
-     *
-     * Safety guarantee: table name = $wpdb->prefix (WordPress-controlled)
-     * + whitelist-validated suffix. No user input.
+     * Validate a table suffix and return backtick-quoted table name.
+     * Delegates to wpaic_validated_table() — see rapls-ai-chatbot.php.
      *
      * @param string $suffix Table suffix (e.g. 'aichat_messages').
      * @return string Backtick-quoted table name, or '' if invalid.
      */
     public static function validated_table(string $suffix): string {
-        if (!in_array($suffix, self::get_table_suffixes(), true)) {
-            return '';
-        }
-        global $wpdb;
-        return '`' . $wpdb->prefix . $suffix . '`';
+        return wpaic_validated_table($suffix);
     }
 
     /**
