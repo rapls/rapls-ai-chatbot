@@ -157,6 +157,27 @@ jobs:
           fi
           echo "OK: essential .gitattributes entries present"
 
+      - name: ZIP content keyword verification
+        run: |
+          # Verify critical implementation keywords exist in the built ZIP.
+          FAIL=0
+          check_keyword() {
+            local file="$1" keyword="$2" label="$3"
+            COUNT=$(unzip -p dist.zip "rapls-ai-chatbot/$file" | grep -c "$keyword" || true)
+            if [ "$COUNT" -eq 0 ]; then
+              echo "::error::ZIP missing: $label ($keyword not found in $file)"
+              FAIL=1
+            else
+              echo "  OK: $label ($COUNT match(es))"
+            fi
+          }
+          check_keyword "includes/api/class-rest-controller.php" "wpaic_cookie_samesite" "H-2 SameSite filter"
+          check_keyword "includes/api/class-rest-controller.php" "check_same_origin" "CSRF origin check"
+          check_keyword "includes/class-main.php" "wpaic_after_cleanup" "M-2 cleanup hook"
+          check_keyword "includes/models/class-knowledge.php" "csv_safe_cell" "CSV injection protection"
+          if [ "$FAIL" -ne 0 ]; then exit 1; fi
+          echo "OK: all implementation keywords verified in ZIP"
+
       - name: REST debug key exposure check
         run: |
           # Ensure debug/diagnostic data in REST responses is gated behind capability checks.
