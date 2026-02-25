@@ -77,7 +77,7 @@ class WPAIC_REST_Controller {
         // response could be cached and served to general users, leaking the header.
         $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
         $this->append_header_csv($response, 'Vary', 'Cookie');
-        if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can('manage_options')) {
+        if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can(WPAIC_Admin::get_manage_cap())) {
             $response->header('X-WPAIC-Dropped', $reason);
         }
         return $response;
@@ -495,7 +495,7 @@ class WPAIC_REST_Controller {
         $ip = $this->get_client_ip();
         if (!empty($ip)) {
             $ip_key = 'wpaic_rl_snew_' . substr(hash('sha256', $ip . wp_salt()), 0, 24);
-            $ip_count = (int) get_transient($ip_key);
+            $ip_count = $this->get_resilient_counter($ip_key, 600);
             if ($ip_count >= 5) {
                 return new WP_REST_Response([
                     'success'    => false,
@@ -503,7 +503,7 @@ class WPAIC_REST_Controller {
                     'error_code' => 'rate_limited',
                 ], 429);
             }
-            set_transient($ip_key, $ip_count + 1, 600); // 5 new sessions per 10 min per IP
+            $this->increment_resilient_counter($ip_key, $ip_count, 600);
         }
 
         // Generate new session
@@ -1235,7 +1235,7 @@ class WPAIC_REST_Controller {
 
             // Build response body — include request_id for admin debugging
             $body = ['success' => false];
-            if (current_user_can('manage_options')) {
+            if (current_user_can(WPAIC_Admin::get_manage_cap())) {
                 $body['debug'] = ['request_id' => $request_id, 'error_code' => $code];
             }
 
@@ -1272,8 +1272,15 @@ class WPAIC_REST_Controller {
                 return new WP_REST_Response($body, 503);
             }
 
-            // Generic fallback
+            // Generic fallback — unknown or unclassified error
             $body['error'] = __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot');
+            if (current_user_can(WPAIC_Admin::get_manage_cap())) {
+                $body['error'] .= ' ' . sprintf(
+                    /* translators: %s: request ID for support reference */
+                    __('(Admin: request_id=%s — check error log for details)', 'rapls-ai-chatbot'),
+                    $request_id
+                );
+            }
             return new WP_REST_Response($body, 500);
         }
     }
@@ -1730,7 +1737,7 @@ class WPAIC_REST_Controller {
         // Note: prefer using check_session_permission() as permission_callback for REST routes.
         // This method is kept for internal use where a bool return is needed.
         // Admins always pass
-        if (current_user_can('manage_options')) {
+        if (current_user_can(WPAIC_Admin::get_manage_cap())) {
             return true;
         }
 
@@ -3571,8 +3578,9 @@ class WPAIC_REST_Controller {
         $counts = (array) get_option('wpaic_nohist_msg_counts', []);
         $counts[$month_key] = ((int) ($counts[$month_key] ?? 0)) + 1;
 
-        // Prune entries older than 3 months to prevent unbounded growth
-        $cutoff = wp_date('Y_m', strtotime('-3 months'));
+        // Prune entries older than 3 months to prevent unbounded growth.
+        // Use wp_date() for both key and cutoff to ensure consistent timezone.
+        $cutoff = wp_date('Y_m', time() - (3 * MONTH_IN_SECONDS));
         foreach (array_keys($counts) as $k) {
             if ($k < $cutoff) {
                 unset($counts[$k]);
@@ -3580,6 +3588,56 @@ class WPAIC_REST_Controller {
         }
 
         update_option('wpaic_nohist_msg_counts', $counts, false);
+    }
+
+    /**
+     * Get a rate limit counter that works even when external object cache is broken.
+     *
+     * Tries transient first (fast path). If transient returns false and an external
+     * object cache is active, falls back to a DB-based option with manual TTL.
+     *
+     * @param string $key    Transient/option key
+     * @param int    $window TTL in seconds
+     * @return int Current counter value
+     */
+    private function get_resilient_counter(string $key, int $window): int {
+        $count = get_transient($key);
+        if ($count !== false) {
+            return (int) $count;
+        }
+
+        // Transient miss — check if external object cache may have lost it
+        if (wp_using_ext_object_cache()) {
+            $fallback = get_option('_wpaic_rl_' . $key);
+            if (is_array($fallback) && ($fallback['expires'] ?? 0) > time()) {
+                return (int) ($fallback['count'] ?? 0);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Increment a resilient rate limit counter.
+     *
+     * Writes to transient (primary). If transient write fails (external cache down),
+     * falls back to DB option with manual expiry.
+     *
+     * @param string $key    Transient/option key
+     * @param int    $count  Current counter value
+     * @param int    $window TTL in seconds
+     */
+    private function increment_resilient_counter(string $key, int $count, int $window): void {
+        $new_count = $count + 1;
+        $written = set_transient($key, $new_count, $window);
+
+        // If transient write failed and we're using external cache, fall back to DB
+        if (!$written && wp_using_ext_object_cache()) {
+            update_option('_wpaic_rl_' . $key, [
+                'count'   => $new_count,
+                'expires' => time() + $window,
+            ], false);
+        }
     }
 
 }

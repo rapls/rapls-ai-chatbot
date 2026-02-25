@@ -44,13 +44,47 @@ define('WPAIC_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
  * Plugin activation handler
+ *
+ * @param bool $network_wide True when Network Activated on multisite.
  */
-function wpaic_activate()
+function wpaic_activate($network_wide = false)
 {
     require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
-    WPAIC_Activator::activate();
+
+    if (is_multisite() && $network_wide) {
+        // Network Activate: create tables/options on every existing subsite.
+        // New subsites created later are handled by wpaic_on_new_blog().
+        $site_ids = get_sites(['fields' => 'ids', 'number' => 0]);
+        foreach ($site_ids as $site_id) {
+            switch_to_blog((int) $site_id);
+            WPAIC_Activator::activate();
+            restore_current_blog();
+        }
+    } else {
+        WPAIC_Activator::activate();
+    }
 }
 register_activation_hook(__FILE__, 'wpaic_activate');
+
+/**
+ * Provision new subsites created after Network Activate.
+ *
+ * @param WP_Site|int $new_site New site object (WP 5.1+) or blog_id.
+ */
+function wpaic_on_new_blog($new_site) {
+    if (!function_exists('is_plugin_active_for_network')) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+    if (!is_plugin_active_for_network(plugin_basename(__FILE__))) {
+        return;
+    }
+    $blog_id = is_object($new_site) ? (int) $new_site->blog_id : (int) $new_site;
+    switch_to_blog($blog_id);
+    require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
+    WPAIC_Activator::activate();
+    restore_current_blog();
+}
+add_action('wp_initialize_site', 'wpaic_on_new_blog', 200);
 
 /**
  * Plugin deactivation handler

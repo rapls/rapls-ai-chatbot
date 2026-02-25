@@ -8,7 +8,14 @@ if (!defined('ABSPATH')) {
 }
 ?>
 <div class="wrap wpaic-admin">
-    <h1><?php esc_html_e('AI Chatbot - Settings', 'rapls-ai-chatbot'); ?></h1>
+    <h1>
+        <?php esc_html_e('AI Chatbot - Settings', 'rapls-ai-chatbot'); ?>
+        <?php if (defined('WPAIC_VERSION')) : ?>
+        <span style="font-size:12px;font-weight:normal;color:#666;margin-left:8px;">
+            v<?php echo esc_html(WPAIC_VERSION); ?><?php if (defined('WPAIC_BUILD') && WPAIC_BUILD && strpos(WPAIC_BUILD, 'Format') === false) : ?> (<?php echo esc_html(WPAIC_BUILD); ?>)<?php endif; ?>
+        </span>
+        <?php endif; ?>
+    </h1>
 
     <?php $is_pro_active = get_option('wpaic_pro_active'); ?>
     <?php if (!$is_pro_active) : ?>

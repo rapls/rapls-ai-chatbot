@@ -222,11 +222,13 @@ jobs:
             | grep -E "'[A-Z][a-z].*'|\"[A-Z][a-z].*\"" \
             | grep -v 'config\.strings' \
             | grep -v 'escapeHtml' \
+            | grep -v '_s\.' \
             | grep -vE "'(div|span|button|img|input|form|a|p|ul|li|br|hr)'" \
             || true)
           if [ -n "$HARDCODED" ]; then
-            echo "::warning::Possible hardcoded user-facing strings in $JS (should use config.strings):"
+            echo "::error::Hardcoded user-facing strings in $JS (must use config.strings for i18n):"
             echo "$HARDCODED" | head -10
-            # Warning only for now — enable FAIL=1 once all strings are migrated
+            FAIL=1
           fi
+          if [ "$FAIL" -ne 0 ]; then exit 1; fi
           echo "OK: JS string i18n check complete"
