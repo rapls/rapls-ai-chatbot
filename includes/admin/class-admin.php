@@ -1347,6 +1347,14 @@ class WPAIC_Admin {
             $errors[] = __('SameSite=None is set via the wpaic_cookie_samesite filter, but this site does not use HTTPS. Browsers require Secure cookies for SameSite=None, so the session cookie will not be sent. Sessions will reset on every page load. Remove the filter or switch to HTTPS.', 'rapls-ai-chatbot');
         }
 
+        // Proxy trust without trusted proxies configured
+        if (!empty($settings['trust_proxy_ip'])) {
+            $raw_proxies = (array) apply_filters('wpaic_trusted_proxies', []);
+            if (empty($raw_proxies) && empty($settings['trust_cloudflare_ip'])) {
+                $warnings[] = __('Reverse proxy trust is enabled but no trusted proxy IPs are configured via the wpaic_trusted_proxies filter. X-Forwarded-For header will only be trusted from private/loopback IPs. Add your proxy IPs via the filter for correct IP detection.', 'rapls-ai-chatbot');
+            }
+        }
+
         $settings_url = admin_url('admin.php?page=wpaic-settings');
 
         // Critical errors (red, not dismissible, shown on all admin pages)

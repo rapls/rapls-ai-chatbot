@@ -1070,6 +1070,46 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('IP Detection', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $diag_settings = get_option('wpaic_settings', []);
+                            $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '—';
+                            $xff = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])) : '';
+                            $cf_ip = isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_CF_CONNECTING_IP'])) : '';
+                            $trust_cf = !empty($diag_settings['trust_cloudflare_ip']);
+                            $trust_proxy = !empty($diag_settings['trust_proxy_ip']);
+                            ?>
+                            <table class="widefat striped" style="max-width:600px;">
+                                <tr><td>REMOTE_ADDR</td><td><code><?php echo esc_html($remote_addr); ?></code></td></tr>
+                                <?php if ($trust_cf) : ?>
+                                <tr><td>CF-Connecting-IP</td><td><code><?php echo esc_html($cf_ip ?: '—'); ?></code>
+                                    <?php if ($cf_ip) : ?><span style="color:green;">&#x2713;</span><?php else : ?><span style="color:#d63638;">&#x2717; <?php esc_html_e('Not present', 'rapls-ai-chatbot'); ?></span><?php endif; ?>
+                                </td></tr>
+                                <?php endif; ?>
+                                <?php if ($trust_proxy) : ?>
+                                <tr><td>X-Forwarded-For</td><td><code><?php echo esc_html($xff ?: '—'); ?></code>
+                                    <?php if ($xff) : ?><span style="color:green;">&#x2713;</span><?php else : ?><span style="color:#999;"><?php esc_html_e('Not present (expected if accessing directly)', 'rapls-ai-chatbot'); ?></span><?php endif; ?>
+                                </td></tr>
+                                <tr><td><?php esc_html_e('Trusted Proxies', 'rapls-ai-chatbot'); ?></td><td>
+                                    <?php
+                                    $raw_proxies = (array) apply_filters('wpaic_trusted_proxies', []);
+                                    if (!empty($raw_proxies)) {
+                                        echo '<code>' . esc_html(implode(', ', array_slice($raw_proxies, 0, 10))) . '</code>';
+                                        if (count($raw_proxies) > 10) {
+                                            echo ' (+' . (int) (count($raw_proxies) - 10) . ')';
+                                        }
+                                    } else {
+                                        echo '<em>' . esc_html__('None configured (private/loopback IPs are always trusted)', 'rapls-ai-chatbot') . '</em>';
+                                    }
+                                    ?>
+                                </td></tr>
+                                <?php endif; ?>
+                            </table>
+                            <p class="description"><?php esc_html_e('Shows the IP headers visible in this admin request. Visitor requests may show different values depending on your proxy/CDN configuration.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Recent Admin Failures (past 24h)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php

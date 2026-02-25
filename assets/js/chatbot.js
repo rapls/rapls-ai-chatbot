@@ -1429,9 +1429,29 @@
                         }
 
                         if (!response.ok) {
-                            // サーバーからのエラーメッセージがあればそれを使う
-                            var error = new Error(json.error || 'API error: ' + response.status);
+                            // WP_Error format: {code, message, data} vs plugin format: {success, error, error_code}
+                            var errorCode = json.error_code || (json.data && json.data.error_code) || json.code || '';
+                            var errorMsg = json.error || json.message || 'API error: ' + response.status;
+
+                            // Auto-retry: session_expired → clear session, re-acquire, retry original request (once)
+                            if (errorCode === 'session_expired' && _retryCount < 1) {
+                                self.clearSession();
+                                return self.apiRequest('GET', '/session').then(function(sessResp) {
+                                    self.sessionId = sessResp.session_id;
+                                    wpaicSsSet('wpaic_session', self.sessionId);
+                                    if (sessResp.session_token) {
+                                        wpaicLsSet('wpaic_session_token', sessResp.session_token);
+                                    }
+                                    if (data && data.session_id) {
+                                        data.session_id = self.sessionId;
+                                    }
+                                    return self.apiRequest(method, endpoint, data, _retryCount + 1);
+                                });
+                            }
+
+                            var error = new Error(errorMsg);
                             error.response = json;
+                            error.errorCode = errorCode;
                             throw error;
                         }
                         return json;

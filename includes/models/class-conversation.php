@@ -395,7 +395,7 @@ class WPAIC_Conversation {
      * Prefixes values starting with =, +, -, @ with a single quote.
      */
     private static function csv_safe_cell($value): string {
-        $s = (string) $value;
+        $s = str_replace("\r\n", "\n", (string) $value);
         if ($s !== '' && preg_match('/^[=+\-@]/', $s)) {
             return "'" . $s;
         }

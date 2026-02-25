@@ -421,7 +421,7 @@ class WPAIC_REST_Controller {
     public function get_session(WP_REST_Request $request): WP_REST_Response {
         $rate_check = $this->check_public_rate_limit('ses', 30, 60);
         if ($rate_check !== true) {
-            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
         $session_version = get_option('wpaic_session_version', 1);
@@ -477,6 +477,33 @@ class WPAIC_REST_Controller {
 
             // Neither DB nor transient — discard the cookie session (session fixation防止)
             // Fall through to generate a new session below
+        }
+
+        // C-1: Stricter rate limit for new session creation (DoS protection).
+        // The general /session limit above allows 30/60s for page-view reuse.
+        // New session creation is heavier — limit to 10 per 5 minutes per IP.
+        $create_check = $this->check_public_rate_limit('snew', 10, 300);
+        if ($create_check !== true) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $create_check,
+                'error_code' => 'rate_limited',
+            ], 429);
+        }
+
+        // IP-only rate limit for new session creation (prevents UA rotation bypass)
+        $ip = $this->get_client_ip();
+        if (!empty($ip)) {
+            $ip_key = 'wpaic_rl_snew_' . substr(hash('sha256', $ip . wp_salt()), 0, 24);
+            $ip_count = (int) get_transient($ip_key);
+            if ($ip_count >= 5) {
+                return new WP_REST_Response([
+                    'success'    => false,
+                    'error'      => __('Too many requests. Please try again later.', 'rapls-ai-chatbot'),
+                    'error_code' => 'rate_limited',
+                ], 429);
+            }
+            set_transient($ip_key, $ip_count + 1, 600); // 5 new sessions per 10 min per IP
         }
 
         // Generate new session
@@ -702,8 +729,9 @@ class WPAIC_REST_Controller {
         if ($rate_limit_result !== true) {
             $rate_limit_msg = is_string($rate_limit_result) ? $rate_limit_result : __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => $rate_limit_msg,
+                'success'    => false,
+                'error'      => $rate_limit_msg,
+                'error_code' => 'rate_limited',
             ], 429);
         }
 
@@ -1659,7 +1687,7 @@ class WPAIC_REST_Controller {
             return new WP_Error(
                 'rest_missing_session',
                 __('Session ID is required.', 'rapls-ai-chatbot'),
-                ['status' => 400]
+                ['status' => 400, 'error_code' => 'session_missing']
             );
         }
 
@@ -1667,7 +1695,7 @@ class WPAIC_REST_Controller {
             return new WP_Error(
                 'rest_session_forbidden',
                 __('Invalid session.', 'rapls-ai-chatbot'),
-                ['status' => 403]
+                ['status' => 403, 'error_code' => 'session_expired']
             );
         }
 

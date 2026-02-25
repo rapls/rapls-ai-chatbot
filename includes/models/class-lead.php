@@ -401,7 +401,7 @@ class WPAIC_Lead {
      * Sanitize a cell value to prevent CSV injection.
      */
     private static function csv_safe_cell($value): string {
-        $s = (string) $value;
+        $s = str_replace("\r\n", "\n", (string) $value);
         if ($s !== '' && preg_match('/^[=+\-@]/', $s)) {
             return "'" . $s;
         }
