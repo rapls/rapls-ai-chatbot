@@ -65,11 +65,10 @@ function wpaic_activate($network_wide = false)
             }
             restore_current_blog();
         }
-        // Store partial failure log for admin notice (network-level)
+        // Store partial failure log for admin notice (network-level).
+        // Compact both site_option and transient to prevent oversized payloads
+        // on large networks. Full error details are in error_log (WP_DEBUG only).
         if (!empty($failed_sites)) {
-            update_site_option('wpaic_ms_activate_errors', $failed_sites);
-            // 24h compact copy: blog_id + short reason only (keeps transient small for large networks).
-            // Full details are in error_log (WP_DEBUG) and the site_option (until dismissed).
             $compact = [];
             foreach ($failed_sites as $blog_id => $msg) {
                 $compact[(int) $blog_id] = substr((string) $msg, 0, 120);
@@ -79,6 +78,8 @@ function wpaic_activate($network_wide = false)
                 $compact = array_slice($compact, 0, 50, true);
                 $compact['_truncated'] = $overflow;
             }
+            update_site_option('wpaic_ms_activate_errors', $compact);
+            // 24h copy for post-incident investigation (survives notice dismissal)
             set_site_transient('wpaic_ms_activate_errors_last', $compact, DAY_IN_SECONDS);
         } else {
             delete_site_option('wpaic_ms_activate_errors');
@@ -299,6 +300,37 @@ if (!function_exists('wpaic_require_table')) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 error_log(sprintf('WPAIC: invalid table suffix "%s" in %s', $suffix, $caller ?: 'unknown'));
             }
+        }
+        return $table;
+    }
+}
+
+/**
+ * Validate table suffix for REST/admin contexts where errors must be visible.
+ * Returns WP_Error on invalid suffix (for REST responses / wp_send_json_error).
+ *
+ * Calling convention for table validation helpers:
+ *   - wpaic_validated_table()         → raw return (''/quoted), caller checks
+ *   - wpaic_require_table()           → logs on empty, caller early-returns safely
+ *   - wpaic_require_table_or_error()  → returns WP_Error, use in REST/AJAX handlers
+ *
+ * @param string $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string $caller Calling context for error message.
+ * @return string|WP_Error Backtick-quoted table name, or WP_Error if invalid.
+ */
+if (!function_exists('wpaic_require_table_or_error')) {
+    function wpaic_require_table_or_error(string $suffix, string $caller = '') {
+        $table = wpaic_require_table($suffix, $caller);
+        if ($table === '') {
+            return new WP_Error(
+                'wpaic_table_error',
+                sprintf(
+                    /* translators: %s: calling context */
+                    __('Internal configuration error in %s. Please contact the site administrator.', 'rapls-ai-chatbot'),
+                    $caller ?: 'unknown'
+                ),
+                ['status' => 500]
+            );
         }
         return $table;
     }

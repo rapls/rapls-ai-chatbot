@@ -2281,13 +2281,19 @@ class WPAIC_REST_Controller {
             $recaptcha_secret_key = trim($settings['recaptcha_secret_key'] ?? '');
 
             if (!$recaptcha_enabled) {
-                return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => sprintf(
+                // User-friendly message (no internal details); admin sees setup hint
+                $user_msg = __('This form is currently unavailable. Please try again later or contact the site administrator.', 'rapls-ai-chatbot');
+                if (current_user_can(WPAIC_Admin::get_manage_cap())) {
+                    $user_msg = sprintf(
                         /* translators: %s: feature name */
-                        __('%s requires reCAPTCHA to be enabled. Please configure reCAPTCHA in the plugin settings.', 'rapls-ai-chatbot'),
+                        __('%s requires reCAPTCHA to be configured. Go to Rapls AI Chatbot → Settings → Security to set it up.', 'rapls-ai-chatbot'),
                         ucfirst(str_replace('_', ' ', $captcha_action))
-                    ),
+                    );
+                }
+                return new WP_REST_Response([
+                    'success'    => false,
+                    'error'      => $user_msg,
+                    'error_code' => 'recaptcha_required',
                 ], 403);
             }
 

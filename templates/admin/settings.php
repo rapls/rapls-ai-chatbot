@@ -1195,6 +1195,46 @@ if (!defined('ABSPATH')) {
                             <?php else : ?>
                                 <span style="color:#d63638;">&#x2717;</span> <?php esc_html_e('Enabled but both keys are missing. reCAPTCHA will not function.', 'rapls-ai-chatbot'); ?>
                             <?php endif; ?>
+                            <?php
+                            // Warn if offline-message (Pro) is enabled but reCAPTCHA is not configured
+                            $pro_settings = $diag_settings['pro_features'] ?? [];
+                            $offline_enabled = !empty($pro_settings['offline_message_enabled']);
+                            if ($offline_enabled && !$rc_enabled) :
+                            ?>
+                                <br><span style="color:#d63638;">&#x26A0;</span>
+                                <strong><?php esc_html_e('Offline Messages will not work', 'rapls-ai-chatbot'); ?></strong>
+                                — <?php esc_html_e('This feature requires reCAPTCHA. Visitors will see "form unavailable" until reCAPTCHA is enabled and configured above.', 'rapls-ai-chatbot'); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Plugin Tables', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            global $wpdb;
+                            $missing_tables = [];
+                            foreach (wpaic_table_suffixes() as $suffix) {
+                                $full = $wpdb->prefix . $suffix;
+                                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                                if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $full))) {
+                                    $missing_tables[] = $suffix;
+                                }
+                            }
+                            if (empty($missing_tables)) :
+                            ?>
+                                <span style="color:green;">&#x2713;</span> <?php echo esc_html(sprintf(
+                                    /* translators: %d: number of tables */
+                                    __('All %d tables exist.', 'rapls-ai-chatbot'),
+                                    count(wpaic_table_suffixes())
+                                )); ?>
+                            <?php else : ?>
+                                <span style="color:#d63638;">&#x2717;</span>
+                                <?php echo esc_html(sprintf(
+                                    /* translators: %s: comma-separated list of missing table names */
+                                    __('Missing tables: %s — analytics and features using these tables will return empty results. Try deactivating and reactivating the plugin.', 'rapls-ai-chatbot'),
+                                    implode(', ', $missing_tables)
+                                )); ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
