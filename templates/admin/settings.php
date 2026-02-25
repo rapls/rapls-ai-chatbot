@@ -1149,6 +1149,72 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Object Cache', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php if (wp_using_ext_object_cache()) : ?>
+                                <?php
+                                // Verify transients actually work (Redis/Memcached may be misconfigured)
+                                $test_key = 'wpaic_diag_oc_test';
+                                set_transient($test_key, 'ok', 60);
+                                $test_result = get_transient($test_key);
+                                delete_transient($test_key);
+                                if ($test_result === 'ok') :
+                                ?>
+                                    <span style="color:green;">&#x2713;</span> <?php esc_html_e('External object cache active, transient read/write verified.', 'rapls-ai-chatbot'); ?>
+                                <?php else : ?>
+                                    <span style="color:#d63638;">&#x2717;</span> <?php esc_html_e('External object cache detected but transient read/write test failed. Session rate limits and bot counters may not persist.', 'rapls-ai-chatbot'); ?>
+                                <?php endif; ?>
+                            <?php else : ?>
+                                <span style="color:#999;">—</span> <?php esc_html_e('Not active (using database). Rate limits and bot counters use DB-backed transients.', 'rapls-ai-chatbot'); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('reCAPTCHA Config', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $rc_enabled = !empty($diag_settings['recaptcha_enabled']);
+                            $rc_site = trim($diag_settings['recaptcha_site_key'] ?? '');
+                            $rc_secret = trim($diag_settings['recaptcha_secret_key'] ?? '');
+                            if (!$rc_enabled) :
+                            ?>
+                                <span style="color:#999;">—</span> <?php esc_html_e('Disabled', 'rapls-ai-chatbot'); ?>
+                            <?php elseif (!empty($rc_site) && !empty($rc_secret)) : ?>
+                                <span style="color:green;">&#x2713;</span> <?php esc_html_e('Enabled — site key and secret key configured.', 'rapls-ai-chatbot'); ?>
+                            <?php elseif (!empty($rc_site) && empty($rc_secret)) : ?>
+                                <span style="color:#d63638;">&#x2717;</span> <?php esc_html_e('Site key is set but secret key is missing. reCAPTCHA verification will fail.', 'rapls-ai-chatbot'); ?>
+                            <?php elseif (empty($rc_site) && !empty($rc_secret)) : ?>
+                                <span style="color:#d63638;">&#x2717;</span> <?php esc_html_e('Secret key is set but site key is missing. reCAPTCHA widget will not load.', 'rapls-ai-chatbot'); ?>
+                            <?php else : ?>
+                                <span style="color:#d63638;">&#x2717;</span> <?php esc_html_e('Enabled but both keys are missing. reCAPTCHA will not function.', 'rapls-ai-chatbot'); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('REST API', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $rest_url = get_rest_url(null, 'wp-ai-chatbot/v1/message-limit');
+                            $rest_response = wp_remote_get($rest_url, ['timeout' => 5, 'sslverify' => false]);
+                            if (is_wp_error($rest_response)) :
+                            ?>
+                                <span style="color:#d63638;">&#x2717;</span>
+                                <?php
+                                /* translators: %s: error message */
+                                echo esc_html(sprintf(__('REST API unreachable: %s. Chat functionality may not work.', 'rapls-ai-chatbot'), $rest_response->get_error_message()));
+                                ?>
+                            <?php else :
+                                $code = wp_remote_retrieve_response_code($rest_response);
+                                if ($code >= 200 && $code < 500) : ?>
+                                    <span style="color:green;">&#x2713;</span> <?php esc_html_e('Reachable', 'rapls-ai-chatbot'); ?> <code><?php echo esc_html($code); ?></code>
+                                <?php else : ?>
+                                    <span style="color:#d63638;">&#x2717;</span> <?php esc_html_e('Unexpected response code:', 'rapls-ai-chatbot'); ?> <code><?php echo esc_html($code); ?></code>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <p class="description"><?php esc_html_e('Tests if the plugin REST API endpoint is reachable from the server. Some security plugins or .htaccess rules may block REST API access.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Compatibility Note', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <p class="description"><?php esc_html_e('If users cannot submit forms (offline messages, lead capture), check that your JS optimization plugin (e.g. Autoptimize, WP Rocket, LiteSpeed Cache) does not defer or exclude the chatbot scripts. Excluding the chatbot page from optimization usually resolves this.', 'rapls-ai-chatbot'); ?></p>

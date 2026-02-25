@@ -218,6 +218,7 @@ class WPAIC_Activator {
         self::maybe_add_conversion_columns();
         self::maybe_convert_enum_to_varchar();
         self::maybe_add_message_composite_index();
+        self::maybe_add_feedback_index();
         WPAIC_Lead::maybe_create_table();
     }
 
@@ -390,6 +391,28 @@ class WPAIC_Activator {
 
         if (empty($index_exists)) {
             self::safe_alter("ALTER TABLE {$table_messages} ADD INDEX conv_created (conversation_id, created_at)", 'add composite index conv_created');
+        }
+    }
+
+    /**
+     * Add composite index on (feedback, created_at) for analytics satisfaction queries.
+     */
+    private static function maybe_add_feedback_index() {
+        global $wpdb;
+        $table_messages = $wpdb->prefix . 'aichat_messages';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_messages));
+
+        if (!$table_exists) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $index_exists = $wpdb->get_results("SHOW INDEX FROM {$table_messages} WHERE Key_name = 'feedback_created'");
+
+        if (empty($index_exists)) {
+            self::safe_alter("ALTER TABLE {$table_messages} ADD INDEX feedback_created (feedback, created_at)", 'add composite index feedback_created');
         }
     }
 

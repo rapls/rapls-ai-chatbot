@@ -301,6 +301,35 @@ class WPAIC_Admin {
             }
         }
 
+        // Non-blocking prefix/length validation warnings for API keys
+        $key_prefixes = [
+            'openai_api_key'  => ['prefixes' => ['sk-'], 'label' => 'OpenAI'],
+            'claude_api_key'  => ['prefixes' => ['sk-ant-'], 'label' => 'Claude'],
+            'gemini_api_key'  => ['prefixes' => ['AIza'], 'label' => 'Gemini'],
+        ];
+        foreach ($key_prefixes as $kf => $meta) {
+            $raw = $input[$kf] ?? '';
+            if ($raw === '' || !empty($input['delete_' . $kf])) {
+                continue;
+            }
+            $matches_prefix = false;
+            foreach ($meta['prefixes'] as $pfx) {
+                if (strpos($raw, $pfx) === 0) {
+                    $matches_prefix = true;
+                    break;
+                }
+            }
+            if (!$matches_prefix) {
+                add_settings_error(
+                    'wpaic_settings',
+                    'api_key_prefix_' . $kf,
+                    /* translators: 1: provider name, 2: expected prefix */
+                    sprintf(__('%1$s API key does not start with the expected prefix (%2$s). The key has been saved, but please verify it is correct.', 'rapls-ai-chatbot'), $meta['label'], implode(' / ', $meta['prefixes'])),
+                    'warning'
+                );
+            }
+        }
+
         $sanitized['openai_model'] = sanitize_text_field($input['openai_model'] ?? ($existing['openai_model'] ?? 'gpt-4o-mini'));
         $sanitized['claude_model'] = sanitize_text_field($input['claude_model'] ?? ($existing['claude_model'] ?? 'claude-haiku-4-5-20251001'));
         $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash-exp'));
@@ -389,8 +418,10 @@ class WPAIC_Admin {
         $sanitized['recaptcha_enabled'] = !empty($input['recaptcha_enabled']);
         $sanitized['recaptcha_site_key'] = trim(sanitize_text_field($input['recaptcha_site_key'] ?? ($existing['recaptcha_site_key'] ?? '')));
         // Encrypt reCAPTCHA secret key (preserve existing if field submitted empty)
+        // Use lighter sanitization — only trim + control char removal (sanitize_text_field
+        // can strip characters that may appear in reCAPTCHA secret keys).
         if (array_key_exists('recaptcha_secret_key', $input) && trim($input['recaptcha_secret_key']) !== '') {
-            $secret = trim(sanitize_text_field($input['recaptcha_secret_key']));
+            $secret = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $input['recaptcha_secret_key']));
             $sanitized['recaptcha_secret_key'] = $this->encrypt_secret($secret);
         } else {
             $sanitized['recaptcha_secret_key'] = $existing['recaptcha_secret_key'] ?? '';
@@ -846,10 +877,52 @@ class WPAIC_Admin {
      */
     public function render_settings_page(): void {
         $settings = get_option('wpaic_settings', []);
+
+        // Auto-migrate legacy enc: (CBC) keys to encg: (GCM) on settings page load
+        $this->maybe_migrate_legacy_keys($settings);
+
         $openai_provider = new WPAIC_OpenAI_Provider();
         $claude_provider = new WPAIC_Claude_Provider();
         $gemini_provider = new WPAIC_Gemini_Provider();
         include WPAIC_PLUGIN_DIR . 'templates/admin/settings.php';
+    }
+
+    /**
+     * Migrate legacy CBC-encrypted keys to GCM format.
+     * Called on settings page load so migration happens when an admin visits settings.
+     */
+    private function maybe_migrate_legacy_keys(array &$settings): void {
+        $key_fields = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'recaptcha_secret_key'];
+        $migrated = false;
+
+        foreach ($key_fields as $field) {
+            $value = $settings[$field] ?? '';
+            if (empty($value) || strpos($value, 'enc:') !== 0) {
+                continue; // Not legacy CBC format
+            }
+
+            $decrypted = ($field === 'recaptcha_secret_key')
+                ? self::decrypt_secret_static($value)
+                : $this->decrypt_api_key($value);
+
+            if (empty($decrypted)) {
+                continue; // Decryption failed, leave as-is
+            }
+
+            // Re-encrypt with GCM
+            $re_encrypted = ($field === 'recaptcha_secret_key')
+                ? $this->encrypt_secret($decrypted)
+                : $this->maybe_encrypt_api_key($decrypted);
+
+            if ($re_encrypted !== $value && strpos($re_encrypted, 'encg:') === 0) {
+                $settings[$field] = $re_encrypted;
+                $migrated = true;
+            }
+        }
+
+        if ($migrated) {
+            update_option('wpaic_settings', $settings);
+        }
     }
 
     /**
@@ -1048,7 +1121,9 @@ class WPAIC_Admin {
         }
 
         $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? 'openai'));
-        $api_key = sanitize_text_field(wp_unslash($_POST['api_key'] ?? ''));
+        // Use lighter sanitization for API keys — sanitize_text_field strips characters
+        // that some providers may use in key formats. Only remove control chars and trim.
+        $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
         $use_saved = !empty($_POST['use_saved']);
 
         // If no key entered but use_saved flag set, decrypt the saved key
@@ -1518,7 +1593,11 @@ class WPAIC_Admin {
         $iv = substr($data, 0, $iv_length);
         $encrypted_data = substr($data, $iv_length);
 
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        // Try hash-normalized key first, then legacy raw salt
+        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
+        if ($decrypted === false) {
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
+        }
 
         if ($decrypted === false) {
             if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: Secret decryption failed (salt may have changed).'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log

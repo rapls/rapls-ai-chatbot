@@ -2428,6 +2428,17 @@ class WPAIC_REST_Controller {
                 ], 400);
             }
 
+            // Email dedup: prevent same email from submitting leads more than 5 times per hour
+            $email_key = 'wpaic_lead_email_' . substr(hash('sha256', strtolower($email) . wp_salt()), 0, 24);
+            $email_count = (int) get_transient($email_key);
+            if ($email_count >= 5) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Too many submissions from this email. Please try again later.', 'rapls-ai-chatbot'),
+                ], 429);
+            }
+            set_transient($email_key, $email_count + 1, HOUR_IN_SECONDS);
+
             // Get or create conversation
             $conversation = WPAIC_Conversation::get_or_create($session_id, [
                 'page_url'   => $page_url,
@@ -3412,6 +3423,19 @@ class WPAIC_REST_Controller {
                 ], 429);
             }
             set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
+        }
+
+        // Email dedup: prevent same email from submitting more than 3 times per hour
+        if (!empty($email)) {
+            $email_key = 'wpaic_offl_email_' . substr(hash('sha256', strtolower($email) . wp_salt()), 0, 24);
+            $email_count = (int) get_transient($email_key);
+            if ($email_count >= 3) {
+                return new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Too many submissions from this email. Please try again later.', 'rapls-ai-chatbot'),
+                ], 429);
+            }
+            set_transient($email_key, $email_count + 1, HOUR_IN_SECONDS);
         }
 
         // Save via WPAIC_Lead::create() for consistent sanitization and format specifiers

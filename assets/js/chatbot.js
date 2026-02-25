@@ -838,9 +838,16 @@
                 };
                 sentimentEl.title = sentimentTitles[sentiment] || sentiment;
                 contentEl.appendChild(sentimentEl);
-                // Add text after sentiment indicator
-                var textNode = document.createTextNode(content);
-                contentEl.appendChild(textNode);
+            }
+
+            // Bot messages: safe HTML formatting (line breaks + auto-links)
+            // User messages: plain text only (no formatting needed)
+            if (role === 'bot') {
+                var formatted = this.formatBotMessage(content);
+                // Create a wrapper span for the formatted content
+                var textSpan = document.createElement('span');
+                textSpan.innerHTML = formatted;
+                contentEl.appendChild(textSpan);
             } else {
                 contentEl.textContent = content;
             }
@@ -1000,8 +1007,12 @@
                     var contentEl = messageEl.querySelector('.chatbot-message__content');
                     var actionsEl = contentEl.querySelector('.chatbot-message__actions');
 
-                    // Create new content
-                    contentEl.textContent = data.data.content;
+                    // Create new content with safe formatting
+                    var formatted = self.formatBotMessage(data.data.content);
+                    contentEl.innerHTML = '';
+                    var textSpan = document.createElement('span');
+                    textSpan.innerHTML = formatted;
+                    contentEl.appendChild(textSpan);
 
                     // Re-add sources if any
                     if (data.data.sources && data.data.sources.length > 0) {
@@ -1934,6 +1945,25 @@
             var div = document.createElement('div');
             div.appendChild(document.createTextNode(text));
             return div.innerHTML;
+        },
+
+        /**
+         * Format bot message content safely: escape HTML, then add line breaks and auto-links.
+         * Returns an HTML string safe for innerHTML.
+         */
+        formatBotMessage: function(text) {
+            // 1. Escape all HTML entities first (XSS prevention)
+            var safe = this.escapeHtml(text);
+            // 2. Auto-link URLs (http/https only, with safety attributes)
+            safe = safe.replace(
+                /https?:\/\/[^\s<>"')\]]+/g,
+                function(url) {
+                    return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+                }
+            );
+            // 3. Convert newlines to <br>
+            safe = safe.replace(/\n/g, '<br>');
+            return safe;
         },
 
         /**

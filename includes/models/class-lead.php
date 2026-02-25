@@ -402,7 +402,9 @@ class WPAIC_Lead {
      */
     private static function csv_safe_cell($value): string {
         $s = str_replace("\r\n", "\n", (string) $value);
-        if ($s !== '' && preg_match('/^[=+\-@]/', $s)) {
+        // Check for formula chars after stripping leading whitespace (Excel ignores leading spaces)
+        $trimmed = ltrim($s);
+        if ($trimmed !== '' && preg_match('/^[=+\-@\t]/', $trimmed)) {
             return "'" . $s;
         }
         return $s;
