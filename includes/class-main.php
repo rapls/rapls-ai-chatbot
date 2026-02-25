@@ -154,6 +154,7 @@ class WPAIC_Main {
         $this->loader->add_action('admin_init', $this, 'maybe_upgrade_database');
         $this->loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_styles');
         $this->loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_scripts');
+        $this->loader->add_filter('update_footer', $admin, 'admin_footer_build_info', 20);
 
         // AJAX
         $this->loader->add_action('wp_ajax_wpaic_manual_crawl', $admin, 'ajax_manual_crawl');

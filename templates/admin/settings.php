@@ -1195,7 +1195,16 @@ if (!defined('ABSPATH')) {
                         <td>
                             <?php
                             $rest_url = get_rest_url(null, 'wp-ai-chatbot/v1/message-limit');
-                            $rest_response = wp_remote_get($rest_url, ['timeout' => 5, 'sslverify' => false]);
+                            $rest_args = [
+                                'timeout'     => 5,
+                                'redirection' => 0,
+                                'user-agent'  => 'WPAIC-Diagnostics/' . WPAIC_VERSION,
+                            ];
+                            /** Allow insecure SSL for self-signed certs (default: false). */
+                            if (apply_filters('wpaic_diag_allow_insecure_ssl', false)) {
+                                $rest_args['sslverify'] = false;
+                            }
+                            $rest_response = wp_remote_get($rest_url, $rest_args);
                             if (is_wp_error($rest_response)) :
                             ?>
                                 <span style="color:#d63638;">&#x2717;</span>

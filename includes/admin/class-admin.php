@@ -1383,6 +1383,27 @@ class WPAIC_Admin {
     }
 
     /**
+     * Show build identifier in admin footer on plugin pages.
+     *
+     * @param string $text Existing footer text.
+     * @return string Modified footer text.
+     */
+    public function admin_footer_build_info($text) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
+        if (strpos($page, 'wpaic') !== 0) {
+            return $text;
+        }
+        $build = defined('WPAIC_BUILD') ? WPAIC_BUILD : '';
+        if ($build) {
+            $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION) . ' build ' . esc_html($build);
+        } else {
+            $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION);
+        }
+        return $text;
+    }
+
+    /**
      * Show admin notice when public API defense settings are weak
      */
     public function security_settings_notice(): void {

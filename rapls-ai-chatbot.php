@@ -37,7 +37,7 @@ if (!defined('ABSPATH')) {
 
 // Plugin constants
 define('WPAIC_VERSION', '1.3.1');
-define('WPAIC_BUILD', '@@BUILD_HASH@@'); // Replaced by build script with git commit hash
+define('WPAIC_BUILD', '$Format:%h$'); // Auto-replaced by git archive (export-subst)
 define('WPAIC_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WPAIC_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPAIC_PLUGIN_BASENAME', plugin_basename(__FILE__));

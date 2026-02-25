@@ -26,3 +26,6 @@ tests/ export-ignore
 **/.DS_Store export-ignore
 Thumbs.db export-ignore
 .env* export-ignore
+
+# Inject git commit hash into WPAIC_BUILD constant on git archive
+rapls-ai-chatbot.php export-subst
