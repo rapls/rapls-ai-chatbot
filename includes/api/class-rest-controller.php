@@ -2282,7 +2282,7 @@ class WPAIC_REST_Controller {
 
             if (!$recaptcha_enabled) {
                 // User-friendly message (no internal details); admin sees setup hint
-                $user_msg = __('This form is currently unavailable. Please try again later or contact the site administrator.', 'rapls-ai-chatbot');
+                $user_msg = __('This form is temporarily unavailable. Please try again later, or contact the site administrator for assistance.', 'rapls-ai-chatbot');
                 if (current_user_can(WPAIC_Admin::get_manage_cap())) {
                     $user_msg = sprintf(
                         /* translators: %s: feature name */

@@ -1213,15 +1213,24 @@ if (!defined('ABSPATH')) {
                             <?php
                             global $wpdb;
                             $missing_tables = [];
+                            $check_failed = false;
                             foreach (wpaic_table_suffixes() as $suffix) {
                                 $full = $wpdb->prefix . $suffix;
                                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                                if (!$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $full))) {
+                                $result = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $full));
+                                if (!empty($wpdb->last_error)) {
+                                    $check_failed = true;
+                                    break;
+                                }
+                                if (!$result) {
                                     $missing_tables[] = $suffix;
                                 }
                             }
-                            if (empty($missing_tables)) :
+                            if ($check_failed) :
                             ?>
+                                <span style="color:#dba617;">&#x26A0;</span>
+                                <?php esc_html_e('Unable to verify tables (database permission issue). SHOW TABLES query failed — check that the database user has sufficient privileges.', 'rapls-ai-chatbot'); ?>
+                            <?php elseif (empty($missing_tables)) : ?>
                                 <span style="color:green;">&#x2713;</span> <?php echo esc_html(sprintf(
                                     /* translators: %d: number of tables */
                                     __('All %d tables exist.', 'rapls-ai-chatbot'),

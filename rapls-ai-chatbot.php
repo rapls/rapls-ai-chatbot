@@ -125,6 +125,31 @@ function wpaic_on_new_blog($new_site) {
 add_action('wp_initialize_site', 'wpaic_on_new_blog', 200);
 
 /**
+ * Suggest a recovery action based on error message keywords.
+ * Used by the MS activation failure notice to guide admins
+ * without relying on WP_DEBUG/error_log.
+ *
+ * @param string $msg Truncated error message from activation.
+ * @return string Recovery hint, or '' if no match.
+ */
+function wpaic_ms_recovery_hint(string $msg): string {
+    $lower = strtolower($msg);
+    if (strpos($lower, 'access denied') !== false || strpos($lower, 'privilege') !== false) {
+        return __('Action: check database user privileges.', 'rapls-ai-chatbot');
+    }
+    if (strpos($lower, 'table') !== false && (strpos($lower, 'exist') !== false || strpos($lower, 'missing') !== false)) {
+        return __('Action: deactivate and reactivate the plugin on this site.', 'rapls-ai-chatbot');
+    }
+    if (strpos($lower, 'prefix') !== false || strpos($lower, 'invalid table') !== false) {
+        return __('Action: verify wp-config.php $table_prefix value.', 'rapls-ai-chatbot');
+    }
+    if (strpos($lower, 'dbdelta') !== false || strpos($lower, 'schema') !== false) {
+        return __('Action: deactivate and reactivate the plugin on this site.', 'rapls-ai-chatbot');
+    }
+    return '';
+}
+
+/**
  * Show admin notice if Network Activate had partial failures.
  */
 function wpaic_ms_activate_error_notice() {
@@ -144,7 +169,20 @@ function wpaic_ms_activate_error_notice() {
     ));
     echo ' <details><summary>' . esc_html__('Details', 'rapls-ai-chatbot') . '</summary><ul>';
     foreach ($errors as $blog_id => $msg) {
-        echo '<li>Site #' . (int) $blog_id . ': <code>' . esc_html($msg) . '</code></li>';
+        if ($blog_id === '_truncated') {
+            echo '<li><em>' . esc_html(sprintf(
+                /* translators: %d: number of omitted sites */
+                __('… and %d more site(s) omitted.', 'rapls-ai-chatbot'),
+                (int) $msg
+            )) . '</em></li>';
+            continue;
+        }
+        $action = wpaic_ms_recovery_hint((string) $msg);
+        echo '<li>Site #' . (int) $blog_id . ': <code>' . esc_html($msg) . '</code>';
+        if ($action) {
+            echo ' — <strong>' . esc_html($action) . '</strong>';
+        }
+        echo '</li>';
     }
     echo '</ul></details>';
     echo '</p></div>';
@@ -308,6 +346,15 @@ if (!function_exists('wpaic_require_table')) {
 /**
  * Validate table suffix for REST/admin contexts where errors must be visible.
  * Returns WP_Error on invalid suffix (for REST responses / wp_send_json_error).
+ *
+ * IMPORTANT: Return type is string|WP_Error — callers MUST check is_wp_error()
+ * before using the value in SQL. Passing the return directly to $wpdb methods
+ * without checking will silently corrupt the query.
+ *
+ * Usage pattern (REST handler):
+ *   $table = wpaic_require_table_or_error('aichat_messages', __METHOD__);
+ *   if (is_wp_error($table)) { return $table; }
+ *   // $table is now a safe backtick-quoted string
  *
  * Calling convention for table validation helpers:
  *   - wpaic_validated_table()         → raw return (''/quoted), caller checks
