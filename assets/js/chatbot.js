@@ -632,8 +632,9 @@
                     var ecMap = _s.error_code_messages || {};
                     var ec = error.errorCode || '';
                     var errorMessage = ecMap[ec]; // wpaic-i18n-ok
-                    // Dev aid: warn when server sends error_code not in the PHP map (admin debug only)
-                    if (ec && !errorMessage && self.config.debug) {
+                    // Dev aid: warn when server sends error_code not in the PHP map.
+                    // Uses is_plugin_admin (no WP_DEBUG requirement) so production admins also see it.
+                    if (ec && !errorMessage && self.config.is_plugin_admin) {
                         console.warn('[WPAIC] Unmapped error_code: "' + ec + '". Add to error_code_messages in class-chatbot-widget.php.'); // wpaic-i18n-ok
                     }
                     if (!errorMessage) {

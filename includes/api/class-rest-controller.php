@@ -187,10 +187,11 @@ class WPAIC_REST_Controller {
         $reason = (is_array($data) && !empty($data['error_code']))
             ? $data['error_code']
             : 'unknown';
-        // Header (may be stripped by CDN/WAF)
+        // Header: always set for admin (lightweight, not cached by APM/log tools as body)
         $result->header('X-WPAIC-Debug-Reason', $reason);
-        // Body (always visible in DevTools Network tab response)
-        if (is_array($data)) {
+        // Body: only when WP_DEBUG is on — prevents debug_reason from persisting
+        // in APM/monitoring/reverse-proxy logs that capture response bodies.
+        if (is_array($data) && defined('WP_DEBUG') && WP_DEBUG) {
             $data['debug_reason'] = $reason;
             if ($reason === 'unknown') {
                 $data['debug_hint'] = 'Check server error logs for details. If you cannot access error logs, contact hosting support and include the copied diagnostics from the plugin settings page.';

@@ -1243,7 +1243,7 @@ if (!defined('ABSPATH')) {
                                 ?>
                                 <br><button type="button" class="button button-small" id="wpaic-copy-support" data-info="<?php echo esc_attr($support_info); ?>"><?php esc_html_e('Copy support info', 'rapls-ai-chatbot'); ?></button>
                                 <span id="wpaic-copy-status" style="margin-left:6px;display:none;"></span>
-                                <textarea id="wpaic-copy-fallback" style="display:none;width:100%;margin-top:4px;" rows="5" readonly></textarea>
+                                <textarea id="wpaic-copy-fallback" class="wpaic-supportinfo-fallback" style="display:none;width:100%;max-width:100%;margin-top:4px;box-sizing:border-box;font-size:12px;font-family:monospace;" rows="5" readonly></textarea>
                                 <script>
                                 (function(){
                                     var btn = document.getElementById('wpaic-copy-support');
@@ -1253,7 +1253,8 @@ if (!defined('ABSPATH')) {
                                         var status = document.getElementById('wpaic-copy-status');
                                         var fallback = document.getElementById('wpaic-copy-fallback');
                                         // Guard: if fallback textarea is already visible, just re-select (no duplication)
-                                        if (fallback.style.display === 'block') {
+                                        // Uses data-visible flag instead of style.display for CSS-change resilience
+                                        if (fallback.getAttribute('data-visible') === '1') {
                                             fallback.focus();
                                             fallback.select();
                                             return;
@@ -1264,9 +1265,11 @@ if (!defined('ABSPATH')) {
                                                 status.style.color = 'green';
                                                 status.style.display = 'inline';
                                                 fallback.style.display = 'none';
+                                                fallback.removeAttribute('data-visible');
                                             }).catch(function(){
                                                 fallback.value = info;
                                                 fallback.style.display = 'block';
+                                                fallback.setAttribute('data-visible', '1');
                                                 fallback.focus();
                                                 fallback.select();
                                                 status.textContent = '<?php echo esc_js(__('Copy failed — please select and copy manually.', 'rapls-ai-chatbot')); ?>';
@@ -1276,6 +1279,7 @@ if (!defined('ABSPATH')) {
                                         } else {
                                             fallback.value = info;
                                             fallback.style.display = 'block';
+                                            fallback.setAttribute('data-visible', '1');
                                             fallback.focus();
                                             fallback.select();
                                             status.textContent = '<?php echo esc_js(__('Clipboard not available — please copy manually.', 'rapls-ai-chatbot')); ?>';

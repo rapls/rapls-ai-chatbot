@@ -144,6 +144,9 @@ class WPAIC_Chatbot_Widget {
             // to prevent misuse granting debug to all logged-in subscribers.
             // Use wpaic_frontend_debug_min_cap filter to change the minimum capability.
             'debug'                => is_user_logged_in() && current_user_can($this->get_debug_min_cap()) && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
+            // Lightweight admin flag (no WP_DEBUG requirement) for dev-aid warnings
+            // like unmapped error_code console.warn — works on production too.
+            'is_plugin_admin'      => is_user_logged_in() && current_user_can(WPAIC_Admin::get_manage_cap()),
             'strings'              => [
                 'error_occurred'         => __('An error occurred.', 'rapls-ai-chatbot'),
                 'error_rate_limit'       => __('Too many requests. Please try again in a moment.', 'rapls-ai-chatbot'),
