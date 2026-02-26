@@ -3606,10 +3606,13 @@ class WPAIC_REST_Controller {
             }
             set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
 
-            // Server-side content dedup: block identical email+message from same IP within 30s.
-            // Catches double-submits that bypass the client-side sessionStorage guard
-            // (page reload, private mode, disabled JS storage).
-            $dedup_hash = substr(hash('sha256', $email . '|' . $message . '|' . $ip_hash), 0, 24);
+            // Server-side content dedup: block identical submissions within 30s.
+            // Prefer session_id (unique per browser tab) over IP hash to avoid
+            // false positives on NAT / shared-IP networks. Falls back to IP hash
+            // when session header is absent (e.g. direct REST call).
+            $dedup_session = $this->get_session_id($request);
+            $dedup_id      = !empty($dedup_session) ? $dedup_session : $ip_hash;
+            $dedup_hash    = substr(hash('sha256', $email . '|' . $message . '|' . $dedup_id), 0, 24);
             $dedup_key  = 'wpaic_offl_dd_' . $dedup_hash;
             if (get_transient($dedup_key)) {
                 // Already submitted — return success to avoid leaking dedup signal
