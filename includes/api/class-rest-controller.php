@@ -1803,18 +1803,21 @@ class WPAIC_REST_Controller {
      * @return string Sanitized session_id (may be empty).
      */
     public function get_session_id(WP_REST_Request $request): string {
-        // 1. Header (always preferred — never appears in URL/logs/APM body captures)
+        // 1. Header (always preferred — never appears in URL/logs/APM body captures).
+        //    When header is present, body session_id is intentionally ignored to
+        //    prevent APM/WAF body logging from leaking the session identifier.
         $from_header = $request->get_header('X_WPAIC_Session');
         if (!empty($from_header)) {
             return sanitize_text_field($from_header);
         }
-        // 2. GET: only accept from URL path params (e.g. /history/{session_id}), not query string
+        // 2. GET: only accept from URL path params (e.g. /history/{session_id}), not query string.
         if ($request->get_method() === 'GET') {
             $url_params = $request->get_url_params();
             return sanitize_text_field($url_params['session_id'] ?? '');
         }
-        // 3. POST/PUT/etc: accept from body params only (not query string).
-        //    get_body_params() reads JSON-decoded body; get_param() would also read query string.
+        // 3. POST/PUT/etc (header absent): fallback to body params only (not query string).
+        //    The chatbot widget always sends the header, so this path is only
+        //    reached by external/direct REST callers that omit the header.
         $body = $request->get_json_params();
         if (isset($body['session_id'])) {
             return sanitize_text_field($body['session_id']);

@@ -386,7 +386,7 @@ add_filter( 'wpaic_chatbot_enabled', function( $enabled ) {
 
 The plugin registers REST API endpoints under the `wp-ai-chatbot/v1` namespace:
 
-**Session authentication:** Pass the session ID via the `X-WPAIC-Session` HTTP header (recommended). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs. For POST requests, the session ID may also be sent in the JSON body, but the header is preferred. When calling the REST API directly (outside the chatbot widget), always include the `X-WPAIC-Session` header to avoid NAT/shared-IP rate-limit false positives.
+**Session authentication:** Pass the session ID via the `X-WPAIC-Session` HTTP header (recommended). When the header is present, any session_id in the request body is ignored (prevents APM/WAF body-logging leakage). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs. For POST requests without the header, the session ID may be sent in the JSON body as a fallback. When calling the REST API directly (outside the chatbot widget), always include the `X-WPAIC-Session` header to avoid NAT/shared-IP rate-limit false positives.
 
 **Free:**
 
