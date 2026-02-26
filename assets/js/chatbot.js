@@ -1878,11 +1878,15 @@
 
             if (!email || !message) return;
 
-            // Prevent duplicate submission of identical content within 30s
+            // Prevent duplicate submission of identical content within 30s.
+            // Uses sessionStorage so the guard survives page reloads within the same tab.
             var dedupKey = email + '|' + message;
-            if (self._lastOfflineDedupKey === dedupKey && self._lastOfflineTime && (Date.now() - self._lastOfflineTime) < 30000) {
-                return;
-            }
+            try {
+                var lastDedup = JSON.parse(sessionStorage.getItem('wpaic_offline_dedup') || '{}');
+                if (lastDedup.k === dedupKey && lastDedup.t && (Date.now() - lastDedup.t) < 30000) {
+                    return;
+                }
+            } catch (e) { /* sessionStorage unavailable — skip dedup */ }
 
             submitBtn.disabled = true;
             var _s = self.config.strings || {};
@@ -1943,8 +1947,7 @@
                         statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                     }, 3000);
                 } else if (data.success) {
-                    self._lastOfflineDedupKey = dedupKey;
-                    self._lastOfflineTime = Date.now();
+                    try { sessionStorage.setItem('wpaic_offline_dedup', JSON.stringify({ k: dedupKey, t: Date.now() })); } catch (e) { /* ignore */ }
                     statusEl.textContent = data.data.message || _s.message_sent || 'Message sent!';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-success';
                     form.reset();

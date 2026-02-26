@@ -1791,9 +1791,13 @@ class WPAIC_REST_Controller {
      * Extract session_id from a REST request.
      *
      * Priority: X-WPAIC-Session header > URL path param / body param.
-     * For GET requests, query-string ?session_id= is NOT accepted — only the header
-     * or URL path params (like /history/{session_id}) are read. This prevents session_id
-     * from leaking into proxy/access logs via query strings.
+     *
+     * Security policy (since Round 99b):
+     * - GET: query-string ?session_id= is NOT accepted. Use the X-WPAIC-Session
+     *   header or URL path params (e.g. /history/{session_id}) only.
+     * - POST: body params only (query string ignored).
+     * - External tools (curl, monitoring) must send the header:
+     *     curl -H "X-WPAIC-Session: <uuid>" https://example.com/wp-json/wp-ai-chatbot/v1/pro-config
      *
      * @param WP_REST_Request $request REST request object.
      * @return string Sanitized session_id (may be empty).
