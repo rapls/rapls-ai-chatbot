@@ -491,17 +491,18 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $error_type = $data['error']['type'] ?? '';
         $error_code = $data['error']['code'] ?? '';
 
-        if ($this->should_log()) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf(
+        // Rate-limited: under API outages, every chat request triggers this.
+        wpaic_rate_limited_log(
+            'openai_api_error_' . $response_code,
+            sprintf(
                 'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
                 $response_code,
                 $error_type,
                 $error_code,
                 $this->model,
                 $error_message
-            ));
-        }
+            )
+        );
 
         // Authentication errors
         if ($response_code === 401 || $error_code === 'invalid_api_key') {

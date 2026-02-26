@@ -1786,51 +1786,72 @@
 
             this.isOfflineMode = true;
 
-            // Replace chat area with offline form
+            // Replace chat area with offline form (DOM API — no innerHTML)
             var messagesArea = this.container.querySelector('.wpaic-messages');
             if (!messagesArea) return;
 
-            var formHtml = '<div class="wpaic-offline-form">' +
-                '<div class="wpaic-offline-header">' +
-                '<h3>' + this.escapeHtml(offline.title) + '</h3>' +
-                '<p>' + this.escapeHtml(offline.description) + '</p>' +
-                '</div>' +
-                '<form id="wpaic-offline-form">' +
-                '<div class="wpaic-offline-field">' +
-                '<input type="text" name="name" placeholder="' + this.escapeHtml('Name') + '" class="wpaic-offline-input">' +
-                '</div>' +
-                '<div class="wpaic-offline-field">' +
-                '<input type="email" name="email" placeholder="' + this.escapeHtml('Email *') + '" required class="wpaic-offline-input">' +
-                '</div>' +
-                '<div class="wpaic-offline-field">' +
-                '<textarea name="message" placeholder="' + this.escapeHtml('Message *') + '" required rows="4" class="wpaic-offline-input"></textarea>' +
-                '</div>' +
-                // Honeypot field: hidden from real users, bots auto-fill it
-                '<div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true" tabindex="-1">' +
-                '<input type="text" name="wpaic_hp" autocomplete="off" tabindex="-1">' +
-                '</div>' +
-                // Timing field: records when form was rendered
-                '<input type="hidden" name="_ts" value="' + Math.floor(Date.now() / 1000) + '">' +
-                '<button type="submit" class="wpaic-offline-submit">' + this.escapeHtml('Send Message') + '</button>' +
-                '<div class="wpaic-offline-status"></div>' +
-                '</form>' +
-                '</div>';
+            var self = this;
 
-            messagesArea.innerHTML = formHtml;
+            // Helper: create element with attributes
+            var el = function(tag, attrs, children) {
+                var node = document.createElement(tag);
+                if (attrs) {
+                    for (var k in attrs) {
+                        if (attrs.hasOwnProperty(k)) { node.setAttribute(k, attrs[k]); }
+                    }
+                }
+                if (children) {
+                    for (var i = 0; i < children.length; i++) {
+                        if (typeof children[i] === 'string') {
+                            node.appendChild(document.createTextNode(children[i]));
+                        } else if (children[i]) {
+                            node.appendChild(children[i]);
+                        }
+                    }
+                }
+                return node;
+            };
+
+            var form = el('form', { id: 'wpaic-offline-form' }, [
+                el('div', { 'class': 'wpaic-offline-field' }, [
+                    el('input', { type: 'text', name: 'name', placeholder: 'Name', 'class': 'wpaic-offline-input' })
+                ]),
+                el('div', { 'class': 'wpaic-offline-field' }, [
+                    el('input', { type: 'email', name: 'email', placeholder: 'Email *', required: '', 'class': 'wpaic-offline-input' })
+                ]),
+                el('div', { 'class': 'wpaic-offline-field' }, [
+                    el('textarea', { name: 'message', placeholder: 'Message *', required: '', rows: '4', 'class': 'wpaic-offline-input' })
+                ]),
+                // Honeypot field: hidden from real users, bots auto-fill it
+                el('div', { style: 'position:absolute;left:-9999px;top:-9999px;', 'aria-hidden': 'true', tabindex: '-1' }, [
+                    el('input', { type: 'text', name: 'wpaic_hp', autocomplete: 'off', tabindex: '-1' })
+                ]),
+                // Timing field: records when form was rendered
+                el('input', { type: 'hidden', name: '_ts', value: String(Math.floor(Date.now() / 1000)) }),
+                el('button', { type: 'submit', 'class': 'wpaic-offline-submit' }, ['Send Message']),
+                el('div', { 'class': 'wpaic-offline-status' })
+            ]);
+
+            var wrapper = el('div', { 'class': 'wpaic-offline-form' }, [
+                el('div', { 'class': 'wpaic-offline-header' }, [
+                    el('h3', null, [offline.title || '']),
+                    el('p', null, [offline.description || ''])
+                ]),
+                form
+            ]);
+
+            messagesArea.innerHTML = '';
+            messagesArea.appendChild(wrapper);
 
             // Hide input area
             var inputArea = this.container.querySelector('.wpaic-input-area');
             if (inputArea) inputArea.style.display = 'none';
 
             // Bind form submit
-            var self = this;
-            var form = document.getElementById('wpaic-offline-form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    self.submitOfflineForm(form);
-                });
-            }
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                self.submitOfflineForm(form);
+            });
         },
 
         /**

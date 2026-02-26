@@ -1322,11 +1322,12 @@ class WPAIC_REST_Controller {
             $error_message = $e->getMessage();
             $code = $e->getCode();
 
-            // Log detailed error for admin debugging (never log API keys)
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log(sprintf('WPAIC Chat Error [%d]: %s (request_id=%s)', $code, $error_message, $request_id));
-            }
+            // Log detailed error for admin debugging (never log API keys).
+            // Rate-limited: under API outages, every chat request would trigger this.
+            wpaic_rate_limited_log(
+                'chat_error_' . $code,
+                sprintf('WPAIC Chat Error [%d]: %s (request_id=%s)', $code, $error_message, $request_id)
+            );
 
             // Build response body — include request_id for admin debugging
             $body = ['success' => false];
@@ -1789,17 +1790,26 @@ class WPAIC_REST_Controller {
     /**
      * Extract session_id from a REST request.
      *
-     * Priority: X-WPAIC-Session header > body/query param.
-     * Header-first avoids exposing session_id in GET query strings (proxy/access logs).
+     * Priority: X-WPAIC-Session header > URL path param / body param.
+     * For GET requests, query-string ?session_id= is NOT accepted — only the header
+     * or URL path params (like /history/{session_id}) are read. This prevents session_id
+     * from leaking into proxy/access logs via query strings.
      *
      * @param WP_REST_Request $request REST request object.
      * @return string Sanitized session_id (may be empty).
      */
     public function get_session_id(WP_REST_Request $request): string {
+        // 1. Header (always preferred — never appears in URL/logs)
         $from_header = $request->get_header('X_WPAIC_Session');
         if (!empty($from_header)) {
             return sanitize_text_field($from_header);
         }
+        // 2. GET: only accept from URL path params (e.g. /history/{session_id}), not query string
+        if ($request->get_method() === 'GET') {
+            $url_params = $request->get_url_params();
+            return sanitize_text_field($url_params['session_id'] ?? '');
+        }
+        // 3. POST/PUT/etc: accept from body params
         return sanitize_text_field($request->get_param('session_id') ?? '');
     }
 
@@ -2640,10 +2650,10 @@ class WPAIC_REST_Controller {
                     $webhook = WPAIC_Webhook::get_instance();
                     $webhook->trigger_lead_captured($lead);
                 } catch (\Throwable $webhook_error) {
-                    if (defined('WP_DEBUG') && WP_DEBUG) {
-                        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                        error_log('WPAIC Webhook Error: ' . $webhook_error->getMessage());
-                    }
+                    wpaic_rate_limited_log(
+                        'lead_webhook_error',
+                        'WPAIC Webhook Error: ' . $webhook_error->getMessage()
+                    );
                 }
             }
 
@@ -2651,10 +2661,10 @@ class WPAIC_REST_Controller {
             try {
                 $this->maybe_send_lead_notification($lead);
             } catch (\Throwable $notification_error) {
-                if (defined('WP_DEBUG') && WP_DEBUG) {
-                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC Notification Error: ' . $notification_error->getMessage());
-                }
+                wpaic_rate_limited_log(
+                    'lead_notification_error',
+                    'WPAIC Notification Error: ' . $notification_error->getMessage()
+                );
             }
 
             return new WP_REST_Response([
@@ -2666,10 +2676,10 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (\Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            }
+            wpaic_rate_limited_log(
+                'lead_submit_error',
+                'WPAIC Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine()
+            );
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Failed to submit lead information.', 'rapls-ai-chatbot'),
@@ -2731,10 +2741,10 @@ class WPAIC_REST_Controller {
             ], 200));
 
         } catch (\Throwable $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC Lead Config Error: ' . $e->getMessage());
-            }
+            wpaic_rate_limited_log(
+                'lead_config_error',
+                'WPAIC Lead Config Error: ' . $e->getMessage()
+            );
             return new WP_REST_Response([
                 'success' => true,
                 'data'    => [
@@ -3147,10 +3157,10 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC Regenerate Error: ' . $e->getMessage());
-            }
+            wpaic_rate_limited_log(
+                'regenerate_error',
+                'WPAIC Regenerate Error: ' . $e->getMessage()
+            );
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Failed to regenerate response.', 'rapls-ai-chatbot'),
@@ -3244,10 +3254,10 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (Exception $e) {
-            if (defined('WP_DEBUG') && WP_DEBUG) {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC Summary Error: ' . $e->getMessage());
-            }
+            wpaic_rate_limited_log(
+                'summary_error',
+                'WPAIC Summary Error: ' . $e->getMessage()
+            );
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Failed to generate summary.', 'rapls-ai-chatbot'),

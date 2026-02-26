@@ -436,6 +436,31 @@ if (!function_exists('wpaic_log_db_error')) {
 }
 
 /**
+ * Rate-limited error_log to prevent log flooding under attack or API outages.
+ *
+ * Allows at most 1 log per $key per $interval seconds. Uses transients (object cache
+ * when available, DB otherwise). WP_DEBUG-only by default.
+ *
+ * @param string $key      Unique throttle key (e.g. 'wpaic_log_chat_error').
+ * @param string $message  Message to log.
+ * @param int    $interval Minimum seconds between logs for this key (default: 60).
+ */
+if (!function_exists('wpaic_rate_limited_log')) {
+    function wpaic_rate_limited_log(string $key, string $message, int $interval = 60): void {
+        if (!(defined('WP_DEBUG') && WP_DEBUG)) {
+            return;
+        }
+        $transient_key = 'wpaic_rl_log_' . substr(md5($key), 0, 12);
+        if (get_transient($transient_key)) {
+            return; // Already logged recently
+        }
+        set_transient($transient_key, 1, $interval);
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        error_log($message);
+    }
+}
+
+/**
  * Load and run the main plugin class
  */
 function wpaic_run()
