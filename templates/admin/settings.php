@@ -328,8 +328,8 @@ if (!defined('ABSPATH')) {
                                 printf(
                                     /* translators: 1: multiplier value, 2: effective token limit */
                                     esc_html__('For GPT-5 and reasoning models, this value is automatically multiplied (current filter value: x%1$d, approximate effective limit: %2$s tokens, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the wpaic_gpt5_token_multiplier filter. The actual value may differ if the filter is context-dependent.', 'rapls-ai-chatbot'),
-                                    $gpt5_info['multiplier'],
-                                    number_format_i18n($gpt5_info['tokens'])
+                                    (int) $gpt5_info['multiplier'],
+                                    esc_html(number_format_i18n($gpt5_info['tokens']))
                                 );
                                 ?>
                             </p>
@@ -1060,7 +1060,7 @@ if (!defined('ABSPATH')) {
                                 if ($bcount > 0) {
                                     $has_detections = true;
                                     $suffix = $is_sampled ? ' ' . esc_html__('(approx)', 'rapls-ai-chatbot') : '';
-                                    echo '<span style="margin-right:16px;">' . esc_html($blabel) . ': <strong>' . esc_html($bcount) . '</strong>' . $suffix . '</span>';
+                                    echo '<span style="margin-right:16px;">' . esc_html($blabel) . ': <strong>' . esc_html($bcount) . '</strong>' . esc_html($suffix) . '</span>';
                                 }
                             }
                             if (!$has_detections) {

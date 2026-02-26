@@ -179,6 +179,7 @@ class WPAIC_Chatbot_Widget {
                 'message_sent'           => __('Message sent!', 'rapls-ai-chatbot'),
                 'required_fields'        => __('Please fill in all required fields.', 'rapls-ai-chatbot'),
                 'start_chat'             => __('Start chat', 'rapls-ai-chatbot'),
+                /* translators: %s: maximum image size in KB */
                 'image_too_large'        => __('Image is too large. Please select an image under %sKB.', 'rapls-ai-chatbot'),
                 'image_invalid_format'   => __('Unsupported image format. Please select JPEG, PNG, GIF, or WebP.', 'rapls-ai-chatbot'),
                 'offline_name'           => __('Name', 'rapls-ai-chatbot'),

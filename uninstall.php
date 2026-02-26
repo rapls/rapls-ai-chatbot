@@ -94,7 +94,7 @@ function wpaic_uninstall_site() {
             $table = $wpdb->prefix . $suffix;
             // Table name is safe: $wpdb->prefix (WordPress-controlled) + hardcoded suffix.
             // Backtick-quoted as identifier; esc_sql() is not appropriate for identifiers.
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $wpdb->query("DROP TABLE IF EXISTS `{$table}`");
         }
     }

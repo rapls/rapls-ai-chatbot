@@ -159,7 +159,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             if ($response_code >= 500) {
                 throw new Exception(
                     /* translators: %d: HTTP status code */
-                    sprintf(esc_html__('Claude server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code)
+                    sprintf(esc_html__('Claude server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), (int) $response_code)
                 );
             }
 

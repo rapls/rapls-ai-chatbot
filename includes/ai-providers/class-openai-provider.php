@@ -522,6 +522,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Model access denied
         if ($response_code === 403) {
             throw new Exception(
+                /* translators: %s: AI model name */
                 sprintf(esc_html__('Access denied for model "%s". Your API account may not have permission to use this model. Please check your OpenAI plan or select a different model.', 'rapls-ai-chatbot'), esc_html($this->model)),
                 403
             );
@@ -530,6 +531,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Model not found — structured code check first (H-5: prioritize error.code)
         if ($error_code === 'model_not_found' || $response_code === 404) {
             throw new Exception(
+                /* translators: %s: AI model name */
                 sprintf(esc_html__('OpenAI model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model)),
                 404
             );
@@ -538,6 +540,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Conflict (409) — pass code for fallback exclusion
         if ($response_code === 409) {
             throw new Exception(
+                /* translators: %s: error message from API */
                 sprintf(esc_html__('OpenAI API conflict error (HTTP 409): %s', 'rapls-ai-chatbot'), esc_html($error_message)),
                 409
             );
@@ -546,6 +549,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Validation error (422) — pass code for fallback exclusion
         if ($response_code === 422) {
             throw new Exception(
+                /* translators: %s: error message from API */
                 sprintf(esc_html__('OpenAI API validation error: %s', 'rapls-ai-chatbot'), esc_html($error_message)),
                 422
             );
@@ -570,6 +574,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             stripos($error_message, 'invalid') !== false
         )) {
             throw new Exception(
+                /* translators: 1: AI model name, 2: error message from API */
                 sprintf(esc_html__('OpenAI API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message)),
                 400
             );
@@ -578,15 +583,16 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Server errors — pass HTTP code so send_with_fallback() can detect 5xx
         if ($response_code >= 500) {
             throw new Exception(
-                sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), $response_code),
-                $response_code
+                /* translators: %d: HTTP status code */
+                sprintf(esc_html__('OpenAI server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), (int) $response_code),
+                (int) $response_code
             );
         }
 
         // Catch-all — preserve HTTP code for fallback classification
         throw new Exception(
             esc_html__('OpenAI API error: ', 'rapls-ai-chatbot') . esc_html($error_message),
-            $response_code
+            (int) $response_code
         );
     }
 

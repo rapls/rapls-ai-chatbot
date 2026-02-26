@@ -243,11 +243,11 @@ class WPAIC_Conversation {
         // Delete all messages first
         WPAIC_Message::delete_all();
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query("TRUNCATE TABLE `{$table}`");
         if ($result === false) {
             // Fallback: TRUNCATE may fail due to DB permissions or configuration
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $result = $wpdb->query("DELETE FROM `{$table}`");
         }
         return $result;

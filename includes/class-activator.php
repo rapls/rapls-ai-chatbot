@@ -239,7 +239,7 @@ class WPAIC_Activator {
         }
         global $wpdb;
         // Table name is whitelist-validated via validated_table(). Column name is a hardcoded literal.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE '{$column_name}'");
         return !empty($result);
     }
@@ -258,7 +258,7 @@ class WPAIC_Activator {
         }
         global $wpdb;
         // Table name is whitelist-validated via validated_table(). Index name is a hardcoded literal.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = '{$index_name}'");
         return !empty($result);
     }
@@ -293,7 +293,7 @@ class WPAIC_Activator {
         }
         global $wpdb;
         // Table name is whitelist-validated. Column name is a hardcoded literal.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_row("SHOW COLUMNS FROM {$table} LIKE '{$column_name}'");
     }
 
@@ -313,7 +313,7 @@ class WPAIC_Activator {
         // Table name is safe: $wpdb->prefix (WordPress-controlled) + whitelist-validated suffix.
         // Backtick-quoted as SQL identifier; $wpdb->prepare() does not support identifier placeholders
         // below WP 6.2, and this plugin supports WP 5.8+.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query("ALTER TABLE `{$table}` {$alter_clause}");
         if ($result === false && defined('WP_DEBUG') && WP_DEBUG) {
             $context = $desc ? " ({$desc})" : '';

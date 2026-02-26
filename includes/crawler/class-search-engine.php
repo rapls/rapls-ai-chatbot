@@ -58,10 +58,10 @@ class WPAIC_Search_Engine {
         // $table is whitelist-validated via get_knowledge_table() → wpaic_validated_table().
         // Column names ('priority', 'is_active') are hardcoded literals — no external input.
         if ($table_exists && $schema_version < 2) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $has_priority = !empty($wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'priority'"));
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $has_is_active = !empty($wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'is_active'"));
         }
 
@@ -258,7 +258,7 @@ class WPAIC_Search_Engine {
 
         // $table is whitelist-validated via get_table_name()/get_knowledge_table() → wpaic_validated_table().
         // 'FULLTEXT' is a hardcoded literal — no external input in this query.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $indexes = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Index_type = 'FULLTEXT'", ARRAY_A);
         self::$has_fulltext_index = !empty($indexes);
 
