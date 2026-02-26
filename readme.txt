@@ -406,6 +406,10 @@ The plugin registers REST API endpoints under the `wp-ai-chatbot/v1` namespace:
 * `POST /wp-ai-chatbot/v1/conversion` - Track conversion event
 * `GET /wp-ai-chatbot/v1/templates` - Get answer templates
 
+**Known limitations:**
+
+* `GET /history/{session_id}` and `GET /summary/{session_id}` include the session ID in the URL path, which may appear in server access logs. If your environment requires zero session exposure in logs, a header-only endpoint (`/history/me`) may be added in a future release.
+
 = Database Tables =
 
 The plugin creates the following database tables:
@@ -429,6 +433,23 @@ When uninstalled, the plugin removes all database tables, options, and transient
 Release ZIPs are CI-verified for packaging correctness. If you encounter unexpected files in a release, please report via the support forum.
 
 == Changelog ==
+
+= 1.3.2 =
+* Security: Session ID now transmitted via `X-WPAIC-Session` header instead of query strings (prevents access log leakage)
+* Security: GET requests no longer accept `?session_id=` query parameter
+* Security: POST requests ignore body `session_id` when header is present (prevents APM/WAF body-logging leakage)
+* Security: Removed client-side `wpaic_user_id` remnant from JavaScript
+* Security: Context key derivation simplified to session-only HMAC (removed IP binding for stability)
+* Security: DOM-based URL linking and offline form rendering (XSS hardening)
+* Security: Dompdf post-init safety assertion (`isPhpEnabled` / `isRemoteEnabled` check)
+* Added: Rate-limited error logging (`wpaic_rate_limited_log()`) with filterable interval via `wpaic_rate_limited_log_interval`
+* Added: Server-side offline message dedup (30-second window, session-preferred key)
+* Added: Client-side offline form dedup via sessionStorage
+* Improved: Offline message endpoint allows unauthenticated submissions (`allow_no_headers`)
+* Improved: Rate limit fallback keys hashed to prevent `wp_options` bloat
+* Improved: Standardized REST error responses with `error_code` field
+* Improved: Dompdf errors return JSON response instead of `wp_die()` for better admin UX
+* Improved: REST API session authentication documented in readme
 
 = 1.3.1 =
 * Added: Enhanced rate limiting (Pro) — configurable two-tier throttling with per-minute burst protection and per-hour sustained limits, proxy-aware IP detection, custom rate limit messages
@@ -528,6 +549,9 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 
 == Upgrade Notice ==
+
+= 1.3.2 =
+Security hardening: session ID header transport, XSS prevention via DOM API, rate-limited logging, and offline message dedup. **Breaking change:** GET requests no longer accept `?session_id=` — use the `X-WPAIC-Session` header instead. Recommended update for all users.
 
 = 1.3.1 =
 Enhanced rate limiting, server-side PDF export, and diagnostic option namespace migration (`wpaic_diag_*`). Recommended update for all users.
