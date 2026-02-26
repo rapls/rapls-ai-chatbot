@@ -164,9 +164,10 @@ jobs:
         run: |
           # WPAIC_VERSION must only be defined in includes/version.php.
           # Any other file defining it breaks the single-source-of-truth guarantee.
-          DEFS=$(grep -rnE "define\(\s*['\"]WPAIC_VERSION['\"]" --include='*.php' . \
+          # Grep is path-restricted: only includes/version.php may contain the define.
+          # This avoids false positives from code examples in comments or docs.
+          DEFS=$(grep -rnE "^\s*define\s*\(\s*['\"]WPAIC_VERSION['\"]" --include='*.php' . \
             | grep -v 'includes/version.php' \
-            | grep -vE '^\s*//' \
             || true)
           if [ -n "$DEFS" ]; then
             echo "::error::WPAIC_VERSION defined outside includes/version.php:"

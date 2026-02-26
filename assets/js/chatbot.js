@@ -632,6 +632,10 @@
                     var ecMap = _s.error_code_messages || {};
                     var ec = error.errorCode || '';
                     var errorMessage = ecMap[ec]; // wpaic-i18n-ok
+                    // Dev aid: warn when server sends error_code not in the PHP map (admin debug only)
+                    if (ec && !errorMessage && self.config.debug) {
+                        console.warn('[WPAIC] Unmapped error_code: "' + ec + '". Add to error_code_messages in class-chatbot-widget.php.'); // wpaic-i18n-ok
+                    }
                     if (!errorMessage) {
                         // Fallback to HTTP status categories
                         if (error.status === 429) {

@@ -199,6 +199,8 @@ class WPAIC_REST_Controller {
         }
         // Prevent CDN from caching admin-enriched response and serving to others
         $result->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+        $result->header('Pragma', 'no-cache');          // Legacy proxy compat (HTTP/1.0)
+        $result->header('X-Robots-Tag', 'noindex');     // Prevent accidental indexing of debug responses
         $this->append_header_csv($result, 'Vary', 'Cookie');
         return $result;
     }

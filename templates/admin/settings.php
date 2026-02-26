@@ -1252,6 +1252,12 @@ if (!defined('ABSPATH')) {
                                         var info = btn.dataset.info;
                                         var status = document.getElementById('wpaic-copy-status');
                                         var fallback = document.getElementById('wpaic-copy-fallback');
+                                        // Guard: if fallback textarea is already visible, just re-select (no duplication)
+                                        if (fallback.style.display === 'block') {
+                                            fallback.focus();
+                                            fallback.select();
+                                            return;
+                                        }
                                         if (navigator.clipboard && navigator.clipboard.writeText) {
                                             navigator.clipboard.writeText(info).then(function(){
                                                 status.textContent = '<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>';
@@ -1261,6 +1267,7 @@ if (!defined('ABSPATH')) {
                                             }).catch(function(){
                                                 fallback.value = info;
                                                 fallback.style.display = 'block';
+                                                fallback.focus();
                                                 fallback.select();
                                                 status.textContent = '<?php echo esc_js(__('Copy failed — please select and copy manually.', 'rapls-ai-chatbot')); ?>';
                                                 status.style.color = '#d63638';
@@ -1269,6 +1276,7 @@ if (!defined('ABSPATH')) {
                                         } else {
                                             fallback.value = info;
                                             fallback.style.display = 'block';
+                                            fallback.focus();
                                             fallback.select();
                                             status.textContent = '<?php echo esc_js(__('Clipboard not available — please copy manually.', 'rapls-ai-chatbot')); ?>';
                                             status.style.color = '#d63638';
