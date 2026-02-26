@@ -1749,8 +1749,14 @@ jQuery(document).ready(function($) {
     // Check when model changes
     $('#wpaic-openai-model, #wpaic-claude-model, #wpaic-gemini-model').on('change', checkMultimodalModels);
 
-    // Prevent form submission with non-vision model when multimodal is enabled
+    // Save active tab on form submit so it persists after the settings-updated redirect
     $('form').on('submit', function(e) {
+        var $activeTab = $('.wpaic-settings-tabs .nav-tab-active');
+        if ($activeTab.length) {
+            localStorage.setItem('wpaic_active_tab', $activeTab.attr('href'));
+        }
+
+        // Prevent form submission with non-vision model when multimodal is enabled
         if (!multimodalEnabled) return true;
 
         var provider = $('[name="wpaic_settings[ai_provider]"]').val();
