@@ -958,7 +958,8 @@ if (!defined('ABSPATH')) {
                             </label>
                             <p class="description"><?php esc_html_e('Enable only if your site is behind Cloudflare. Uses Cloudflare\'s header to detect the real visitor IP for rate limiting.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description" style="color: #d63638;"><strong><?php esc_html_e('Security warning: Only enable this if ALL traffic to your server passes through Cloudflare. If your server is directly accessible (bypassing Cloudflare), attackers can forge this header to bypass rate limiting and IP blocking.', 'rapls-ai-chatbot'); ?></strong></p>
-                            <br>
+
+                            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #dcdcde;">
                             <label>
                                 <input type="checkbox" name="wpaic_settings[trust_proxy_ip]" value="1"
                                     <?php checked($settings['trust_proxy_ip'] ?? false); ?>>
@@ -966,21 +967,34 @@ if (!defined('ABSPATH')) {
                             </label>
                             <p class="description"><?php esc_html_e('Enable if your site is behind a reverse proxy (Nginx, AWS ALB, etc.) that sets X-Forwarded-For. Uses the first public IP from the header for rate limiting.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description" style="color: #d63638;"><strong><?php esc_html_e('Security warning: Only enable this if ALL traffic passes through your trusted proxy. Otherwise attackers can forge this header.', 'rapls-ai-chatbot'); ?></strong></p>
-                            <p class="description"><?php
-                                echo wp_kses(
-                                    __('To add trusted proxy IPs or CIDR ranges, use the <code>wpaic_trusted_proxies</code> filter in your theme or a custom plugin.<br>'
-                                     . '<strong>Cloudflare example:</strong> 172.64.0.0/13, 104.16.0.0/13, 173.245.48.0/20, etc.<br>'
-                                     . '<strong>AWS ALB example:</strong> Your VPC CIDR (e.g. 10.0.0.0/8)<br>'
-                                     . '<strong>If misconfigured:</strong> Rate limiting applies to the proxy IP instead of real visitors, or attackers can bypass rate limits by forging the X-Forwarded-For header.<br>'
-                                     . '<span style="color:#d63638;"><strong>Important:</strong> Cloudflare IP ranges change periodically. If you hardcode CIDRs, they may become stale and cause XFF to be ignored (rate limiting / IP detection will fall back to the proxy IP). Check <code>https://www.cloudflare.com/ips/</code> regularly and update your filter accordingly.</span><br>'
-                                     . '<strong>Setup checklist:</strong><br>'
-                                     . '1. Confirm REMOTE_ADDR shows your proxy IP (not the visitor IP) before enabling<br>'
-                                     . '2. For Cloudflare: enable "Trust Cloudflare" above (uses CF-Connecting-IP, no CIDR needed)<br>'
-                                     . '3. For other proxies: add their IPs/CIDRs via the <code>wpaic_trusted_proxies</code> filter<br>'
-                                     . '4. Verify in Security Diagnostics that client IPs are detected correctly', 'rapls-ai-chatbot'),
-                                    ['code' => [], 'br' => [], 'strong' => [], 'span' => ['style' => []]]
-                                );
-                            ?></p>
+                            </div>
+
+                            <details style="margin-top: 12px;">
+                                <summary style="cursor: pointer; font-weight: 600; font-size: 13px; color: #2271b1;"><?php esc_html_e('Trusted proxy setup guide', 'rapls-ai-chatbot'); ?></summary>
+                                <div style="margin-top: 8px; padding: 12px; background: #f6f7f7; border-radius: 4px; font-size: 13px; line-height: 1.8;">
+                                    <?php echo wp_kses(
+                                        '<p style="margin: 0 0 10px;"><strong>' . __('Setup checklist', 'rapls-ai-chatbot') . '</strong></p>'
+                                        . '<ol style="margin: 0 0 12px 20px; padding: 0;">'
+                                        . '<li>' . __('Confirm <code>REMOTE_ADDR</code> shows your proxy IP (not the visitor IP) before enabling', 'rapls-ai-chatbot') . '</li>'
+                                        . '<li>' . __('For Cloudflare: enable "Trust Cloudflare" above (uses CF-Connecting-IP, no CIDR needed)', 'rapls-ai-chatbot') . '</li>'
+                                        . '<li>' . __('For other proxies: add their IPs/CIDRs via the <code>wpaic_trusted_proxies</code> filter', 'rapls-ai-chatbot') . '</li>'
+                                        . '<li>' . __('Verify in Security Diagnostics below that client IPs are detected correctly', 'rapls-ai-chatbot') . '</li>'
+                                        . '</ol>'
+                                        . '<p style="margin: 0 0 10px;"><strong>' . __('Filter usage', 'rapls-ai-chatbot') . '</strong></p>'
+                                        . '<p style="margin: 0 0 6px;">' . __('Add trusted proxy IPs or CIDR ranges via <code>wpaic_trusted_proxies</code> filter:', 'rapls-ai-chatbot') . '</p>'
+                                        . '<table style="font-size: 12px; border-collapse: collapse; margin: 0 0 12px;">'
+                                        . '<tr><td style="padding: 2px 12px 2px 0; font-weight: 600;">Cloudflare</td><td style="padding: 2px 0;"><code>172.64.0.0/13, 104.16.0.0/13, 173.245.48.0/20</code> …</td></tr>'
+                                        . '<tr><td style="padding: 2px 12px 2px 0; font-weight: 600;">AWS ALB</td><td style="padding: 2px 0;">' . __('Your VPC CIDR (e.g. <code>10.0.0.0/8</code>)', 'rapls-ai-chatbot') . '</td></tr>'
+                                        . '</table>'
+                                        . '<p style="margin: 0 0 6px; color: #d63638; font-weight: 600;">' . __('Note', 'rapls-ai-chatbot') . '</p>'
+                                        . '<ul style="margin: 0 0 0 16px; padding: 0; color: #50575e;">'
+                                        . '<li>' . __('Cloudflare IP ranges change periodically. Hardcoded CIDRs may become stale.', 'rapls-ai-chatbot') . '</li>'
+                                        . '<li>' . __('If misconfigured, rate limiting applies to the proxy IP instead of real visitors.', 'rapls-ai-chatbot') . '</li>'
+                                        . '</ul>',
+                                        ['p' => ['style' => []], 'ol' => ['style' => []], 'ul' => ['style' => []], 'li' => [], 'strong' => [], 'code' => [], 'table' => ['style' => []], 'tr' => [], 'td' => ['style' => []]]
+                                    ); ?>
+                                </div>
+                            </details>
                         </td>
                     </tr>
                     <tr>
