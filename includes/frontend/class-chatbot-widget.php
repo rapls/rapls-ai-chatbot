@@ -149,9 +149,19 @@ class WPAIC_Chatbot_Widget {
                 'error_rate_limit'       => __('Too many requests. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'error_unavailable'      => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                 'error_server'           => __('A temporary error occurred. Please try again later, or contact the site administrator.', 'rapls-ai-chatbot'),
-                'error_session_expired'  => __('Your session has expired. Please reload the page.', 'rapls-ai-chatbot'),
-                'error_pro_required'     => __('This feature requires the Pro version.', 'rapls-ai-chatbot'),
-                'error_timing'           => __('Please wait a moment and try again.', 'rapls-ai-chatbot'),
+                // error_code → user-facing message map (single source of truth for JS).
+                // When adding new error_codes to REST responses, add the mapping here.
+                // JS reads this map via config.strings.error_code_messages.
+                'error_code_messages'    => [
+                    'session_expired'        => __('Your session has expired. Please reload the page.', 'rapls-ai-chatbot'),
+                    'pro_required'           => __('This feature requires the Pro version.', 'rapls-ai-chatbot'),
+                    'timing_failed'          => __('Please wait a moment and try again.', 'rapls-ai-chatbot'),
+                    'rate_limited'           => __('Too many requests. Please try again in a moment.', 'rapls-ai-chatbot'),
+                    'recaptcha_required'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                    'recaptcha_misconfigured' => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                    'origin_mismatch'        => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                    'honeypot_triggered'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                ],
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
                 'suggestions_title'      => __('You might also ask:', 'rapls-ai-chatbot'),

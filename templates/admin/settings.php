@@ -1241,7 +1241,42 @@ if (!defined('ABSPATH')) {
                                     get_bloginfo('version')
                                 );
                                 ?>
-                                <br><button type="button" class="button button-small" onclick="navigator.clipboard.writeText(this.dataset.info).then(function(){alert('<?php echo esc_js(__('Copied to clipboard.', 'rapls-ai-chatbot')); ?>')});" data-info="<?php echo esc_attr($support_info); ?>"><?php esc_html_e('Copy support info', 'rapls-ai-chatbot'); ?></button>
+                                <br><button type="button" class="button button-small" id="wpaic-copy-support" data-info="<?php echo esc_attr($support_info); ?>"><?php esc_html_e('Copy support info', 'rapls-ai-chatbot'); ?></button>
+                                <span id="wpaic-copy-status" style="margin-left:6px;display:none;"></span>
+                                <textarea id="wpaic-copy-fallback" style="display:none;width:100%;margin-top:4px;" rows="5" readonly></textarea>
+                                <script>
+                                (function(){
+                                    var btn = document.getElementById('wpaic-copy-support');
+                                    if (!btn) return;
+                                    btn.addEventListener('click', function(){
+                                        var info = btn.dataset.info;
+                                        var status = document.getElementById('wpaic-copy-status');
+                                        var fallback = document.getElementById('wpaic-copy-fallback');
+                                        if (navigator.clipboard && navigator.clipboard.writeText) {
+                                            navigator.clipboard.writeText(info).then(function(){
+                                                status.textContent = '<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>';
+                                                status.style.color = 'green';
+                                                status.style.display = 'inline';
+                                                fallback.style.display = 'none';
+                                            }).catch(function(){
+                                                fallback.value = info;
+                                                fallback.style.display = 'block';
+                                                fallback.select();
+                                                status.textContent = '<?php echo esc_js(__('Copy failed — please select and copy manually.', 'rapls-ai-chatbot')); ?>';
+                                                status.style.color = '#d63638';
+                                                status.style.display = 'inline';
+                                            });
+                                        } else {
+                                            fallback.value = info;
+                                            fallback.style.display = 'block';
+                                            fallback.select();
+                                            status.textContent = '<?php echo esc_js(__('Clipboard not available — please copy manually.', 'rapls-ai-chatbot')); ?>';
+                                            status.style.color = '#d63638';
+                                            status.style.display = 'inline';
+                                        }
+                                    });
+                                })();
+                                </script>
                             <?php elseif (empty($missing_tables)) : ?>
                                 <span style="color:green;">&#x2713;</span> <?php echo esc_html(sprintf(
                                     /* translators: %d: number of tables */

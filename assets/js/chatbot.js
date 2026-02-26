@@ -627,26 +627,22 @@
                     if (error === 'recaptcha_not_ready') return;
                     console.error('Chat error:', error);
 
-                    // Error code + status based user-friendly messages
+                    // Error code → message map (populated from PHP i18n), then HTTP status fallback
                     var _s = self.config.strings || {};
+                    var ecMap = _s.error_code_messages || {};
                     var ec = error.errorCode || '';
-                    var errorMessage;
-                    // Specific error_code messages (most actionable)
-                    if (ec === 'session_expired') {
-                        errorMessage = _s.error_session_expired || 'Your session has expired. Please reload the page.'; // wpaic-i18n-ok
-                    } else if (ec === 'pro_required') {
-                        errorMessage = _s.error_pro_required || 'This feature requires the Pro version.'; // wpaic-i18n-ok
-                    } else if (ec === 'timing_failed') {
-                        errorMessage = _s.error_timing || 'Please wait a moment and try again.'; // wpaic-i18n-ok
-                    // Fallback to HTTP status categories
-                    } else if (error.status === 429) {
-                        errorMessage = _s.error_rate_limit || 'Too many requests. Please try again in a moment.'; // wpaic-i18n-ok
-                    } else if (error.status === 403) {
-                        errorMessage = _s.error_unavailable || 'This feature is currently unavailable.'; // wpaic-i18n-ok
-                    } else if (error.status >= 500) {
-                        errorMessage = _s.error_server || 'A temporary error occurred. Please try again later.'; // wpaic-i18n-ok
-                    } else {
-                        errorMessage = error.message || (_s.error_occurred || 'An error occurred.'); // wpaic-i18n-ok
+                    var errorMessage = ecMap[ec]; // wpaic-i18n-ok
+                    if (!errorMessage) {
+                        // Fallback to HTTP status categories
+                        if (error.status === 429) {
+                            errorMessage = _s.error_rate_limit || 'Too many requests. Please try again in a moment.'; // wpaic-i18n-ok
+                        } else if (error.status === 403) {
+                            errorMessage = _s.error_unavailable || 'This feature is currently unavailable.'; // wpaic-i18n-ok
+                        } else if (error.status >= 500) {
+                            errorMessage = _s.error_server || 'A temporary error occurred. Please try again later.'; // wpaic-i18n-ok
+                        } else {
+                            errorMessage = error.message || (_s.error_occurred || 'An error occurred.'); // wpaic-i18n-ok
+                        }
                     }
                     self.addMessage('bot', errorMessage);
 

@@ -193,10 +193,13 @@ class WPAIC_REST_Controller {
         if (is_array($data)) {
             $data['debug_reason'] = $reason;
             if ($reason === 'unknown') {
-                $data['debug_hint'] = 'Check server error logs for details.';
+                $data['debug_hint'] = 'Check server error logs for details. If you cannot access error logs, contact hosting support and include the copied diagnostics from the plugin settings page.';
             }
             $result->set_data($data);
         }
+        // Prevent CDN from caching admin-enriched response and serving to others
+        $result->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+        $this->append_header_csv($result, 'Vary', 'Cookie');
         return $result;
     }
 

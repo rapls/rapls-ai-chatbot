@@ -13,4 +13,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('WPAIC_VERSION', '1.3.1');
+if (!defined('WPAIC_VERSION')) {
+    define('WPAIC_VERSION', '1.3.1');
+}

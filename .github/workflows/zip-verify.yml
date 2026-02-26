@@ -160,6 +160,21 @@ jobs:
           fi
           echo "OK: essential .gitattributes entries present"
 
+      - name: WPAIC_VERSION single-definition check
+        run: |
+          # WPAIC_VERSION must only be defined in includes/version.php.
+          # Any other file defining it breaks the single-source-of-truth guarantee.
+          DEFS=$(grep -rnE "define\(\s*['\"]WPAIC_VERSION['\"]" --include='*.php' . \
+            | grep -v 'includes/version.php' \
+            | grep -vE '^\s*//' \
+            || true)
+          if [ -n "$DEFS" ]; then
+            echo "::error::WPAIC_VERSION defined outside includes/version.php:"
+            echo "$DEFS"
+            exit 1
+          fi
+          echo "OK: WPAIC_VERSION defined only in includes/version.php"
+
       - name: ZIP content keyword verification
         run: |
           # Verify critical implementation keywords exist in the built ZIP.
