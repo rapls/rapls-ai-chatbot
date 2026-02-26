@@ -443,10 +443,10 @@ if (!function_exists('wpaic_log_db_error')) {
  *
  * @param string $key      Unique throttle key (e.g. 'wpaic_log_chat_error').
  * @param string $message  Message to log.
- * @param int    $interval Minimum seconds between logs for this key (default: 60).
+ * @param int    $interval Minimum seconds between logs for this key (default: 180).
  */
 if (!function_exists('wpaic_rate_limited_log')) {
-    function wpaic_rate_limited_log(string $key, string $message, int $interval = 60): void {
+    function wpaic_rate_limited_log(string $key, string $message, int $interval = 180): void {
         if (!(defined('WP_DEBUG') && WP_DEBUG)) {
             return;
         }

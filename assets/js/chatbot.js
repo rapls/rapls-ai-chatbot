@@ -1878,6 +1878,12 @@
 
             if (!email || !message) return;
 
+            // Prevent duplicate submission of identical content within 30s
+            var dedupKey = email + '|' + message;
+            if (self._lastOfflineDedupKey === dedupKey && self._lastOfflineTime && (Date.now() - self._lastOfflineTime) < 30000) {
+                return;
+            }
+
             submitBtn.disabled = true;
             var _s = self.config.strings || {};
             statusEl.textContent = _s.sending || 'Sending...';
@@ -1937,6 +1943,8 @@
                         statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                     }, 3000);
                 } else if (data.success) {
+                    self._lastOfflineDedupKey = dedupKey;
+                    self._lastOfflineTime = Date.now();
                     statusEl.textContent = data.data.message || _s.message_sent || 'Message sent!';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-success';
                     form.reset();

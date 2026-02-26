@@ -1799,7 +1799,7 @@ class WPAIC_REST_Controller {
      * @return string Sanitized session_id (may be empty).
      */
     public function get_session_id(WP_REST_Request $request): string {
-        // 1. Header (always preferred — never appears in URL/logs)
+        // 1. Header (always preferred — never appears in URL/logs/APM body captures)
         $from_header = $request->get_header('X_WPAIC_Session');
         if (!empty($from_header)) {
             return sanitize_text_field($from_header);
@@ -1809,8 +1809,14 @@ class WPAIC_REST_Controller {
             $url_params = $request->get_url_params();
             return sanitize_text_field($url_params['session_id'] ?? '');
         }
-        // 3. POST/PUT/etc: accept from body params
-        return sanitize_text_field($request->get_param('session_id') ?? '');
+        // 3. POST/PUT/etc: accept from body params only (not query string).
+        //    get_body_params() reads JSON-decoded body; get_param() would also read query string.
+        $body = $request->get_json_params();
+        if (isset($body['session_id'])) {
+            return sanitize_text_field($body['session_id']);
+        }
+        $body_params = $request->get_body_params();
+        return sanitize_text_field($body_params['session_id'] ?? '');
     }
 
     /**
