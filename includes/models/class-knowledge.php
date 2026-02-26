@@ -74,6 +74,14 @@ class WPAIC_Knowledge {
 
 
     /**
+     * Ensure status/type columns exist at runtime.
+     * Delegates to maybe_migrate_schema() which is idempotent and version-gated.
+     */
+    private static function maybe_add_columns(string $table): void {
+        self::maybe_migrate_schema($table);
+    }
+
+    /**
      * Create knowledge
      */
     public static function create($data) {
