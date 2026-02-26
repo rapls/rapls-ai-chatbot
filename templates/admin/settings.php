@@ -1749,11 +1749,20 @@ jQuery(document).ready(function($) {
     // Check when model changes
     $('#wpaic-openai-model, #wpaic-claude-model, #wpaic-gemini-model').on('change', checkMultimodalModels);
 
-    // Save active tab on form submit so it persists after the settings-updated redirect
+    // Save active tab on form submit so it persists after the settings-updated redirect.
+    // Append the tab hash to _wp_http_referer so WordPress redirects back with the hash.
     $('form').on('submit', function(e) {
         var $activeTab = $('.wpaic-settings-tabs .nav-tab-active');
         if ($activeTab.length) {
-            localStorage.setItem('wpaic_active_tab', $activeTab.attr('href'));
+            var tabHash = $activeTab.attr('href');
+            localStorage.setItem('wpaic_active_tab', tabHash);
+
+            // Update _wp_http_referer to include the tab hash
+            var $referer = $(this).find('input[name="_wp_http_referer"]');
+            if ($referer.length) {
+                var refUrl = $referer.val().replace(/#.*$/, '') + tabHash;
+                $referer.val(refUrl);
+            }
         }
 
         // Prevent form submission with non-vision model when multimodal is enabled
