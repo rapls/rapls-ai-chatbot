@@ -401,16 +401,28 @@ class WPAIC_Pro_Features {
     }
 
     /**
+     * Derive a stable, server-side context key from session_id.
+     * Uses HMAC so the key cannot be guessed or manipulated by the client.
+     * Stub returns '' (Pro overrides with actual implementation).
+     *
+     * @param string $session_id Session ID (UUID v4).
+     * @return string Context key (hex, max 64 chars) or '' if unavailable.
+     */
+    public function derive_context_key(string $session_id): string {
+        return '';
+    }
+
+    /**
      * Stub: Get user context
      */
-    public function get_user_context(string $user_id): array {
+    public function get_user_context(string $context_key): array {
         return [];
     }
 
     /**
      * Stub: Save user context
      */
-    public function save_user_context(string $user_id, array $context): bool {
+    public function save_user_context(string $context_key, array $context): bool {
         return false;
     }
 

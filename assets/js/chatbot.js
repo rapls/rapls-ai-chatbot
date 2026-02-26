@@ -683,7 +683,6 @@
 
                     var requestData = {
                         session_id: self.sessionId,
-                        user_id: self.userId,
                         message: message,
                         page_url: window.location.href,
                         recaptcha_token: token,
@@ -747,8 +746,8 @@
         saveContext: function() {
             var self = this;
 
-            // user_idとsession_idが必要
-            if (!this.userId || !this.sessionId) {
+            // session_idが必要（context key はサーバ側で session_id から導出）
+            if (!this.sessionId) {
                 return;
             }
 
@@ -762,7 +761,6 @@
                     'X-WP-Nonce': this.config.nonce
                 },
                 body: JSON.stringify({
-                    user_id: this.userId,
                     session_id: this.sessionId
                 })
             })

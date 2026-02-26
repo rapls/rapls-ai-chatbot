@@ -240,6 +240,20 @@ class WPAIC_REST_Controller {
                     'required'          => true,
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_textarea_field',
+                    'validate_callback' => function ($value) {
+                        // 8000 chars ≈ 2000 tokens — prevents DoS via giant payloads
+                        // hitting AI provider and inflating API cost.
+                        $max = (int) apply_filters('wpaic_max_message_length', 8000);
+                        if (mb_strlen((string) $value) > $max) {
+                            return new WP_Error(
+                                'rest_invalid_param',
+                                /* translators: %d: maximum character count */
+                                sprintf(__('Message exceeds maximum length of %d characters.', 'rapls-ai-chatbot'), $max),
+                                ['status' => 400]
+                            );
+                        }
+                        return true;
+                    },
                 ],
                 'page_url' => [
                     'required'          => false,
@@ -247,11 +261,6 @@ class WPAIC_REST_Controller {
                     'sanitize_callback' => 'esc_url_raw',
                 ],
                 'recaptcha_token' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ],
-                'user_id' => [
                     'required'          => false,
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_text_field',
@@ -590,12 +599,22 @@ class WPAIC_REST_Controller {
              * @param string $samesite SameSite attribute ('Lax', 'Strict', or 'None').
              */
             $samesite = apply_filters('wpaic_cookie_samesite', 'Lax');
+            /**
+             * Filter the Secure flag for the session cookie.
+             * Default: true when SameSite=None (required by spec), otherwise is_ssl().
+             * Override for reverse proxy setups where is_ssl() returns false despite HTTPS termination.
+             * Also considers wp_is_using_https() as a secondary signal for misdetection.
+             *
+             * @param bool $secure Whether to set the Secure flag.
+             */
+            $secure_default = ($samesite === 'None') ? true : (is_ssl() || wp_is_using_https());
+            $secure = (bool) apply_filters('wpaic_cookie_secure', $secure_default);
             setcookie('wpaic_session_id', $session_id, [
                 'expires'  => 0,
                 'path'     => '/',
                 'httponly'  => true,
                 'samesite' => $samesite,
-                'secure'   => ($samesite === 'None') ? true : is_ssl(),
+                'secure'   => $secure,
             ]);
             $cookie_set = true;
         } else {
@@ -1061,12 +1080,17 @@ class WPAIC_REST_Controller {
             }
 
             // Add context memory (Pro feature)
-            $user_id = sanitize_text_field($request->get_param('user_id') ?? '');
-            if (!empty($user_id) && $pro_features->is_context_memory_enabled()) {
-                $user_context = $pro_features->get_user_context($user_id);
-                $context_prompt = $pro_features->build_context_memory_prompt($user_context);
-                if (!empty($context_prompt)) {
-                    $system_prompt .= $context_prompt;
+            // Context key is derived server-side from session_id via HMAC — never from client-supplied user_id.
+            // This prevents cross-user context leakage (an attacker cannot guess/manipulate the key).
+            $session_id_for_context = sanitize_text_field($request->get_param('session_id') ?? '');
+            if (!empty($session_id_for_context) && $pro_features->is_context_memory_enabled()) {
+                $context_key = $pro_features->derive_context_key($session_id_for_context);
+                if (!empty($context_key)) {
+                    $user_context = $pro_features->get_user_context($context_key);
+                    $context_prompt = $pro_features->build_context_memory_prompt($user_context);
+                    if (!empty($context_prompt)) {
+                        $system_prompt .= $context_prompt;
+                    }
                 }
             }
             /**
@@ -1802,9 +1826,9 @@ class WPAIC_REST_Controller {
      * @param string $session_id  Session ID to verify
      * @return bool True if ownership is verified
      */
-    private function verify_session_ownership(string $session_id): bool {
-        // Note: prefer using check_session_permission() as permission_callback for REST routes.
-        // This method is kept for internal use where a bool return is needed.
+    public function verify_session_ownership(string $session_id): bool {
+        // Prefer check_session_permission() as permission_callback for REST routes.
+        // This method is public so Pro can delegate instead of duplicating the logic.
         // Admins always pass
         if (current_user_can(WPAIC_Admin::get_manage_cap())) {
             return true;

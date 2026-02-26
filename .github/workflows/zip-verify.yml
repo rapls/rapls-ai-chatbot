@@ -191,6 +191,9 @@ jobs:
             fi
           }
           check_keyword "includes/api/class-rest-controller.php" "wpaic_cookie_samesite" "H-2 SameSite filter"
+          check_keyword "includes/api/class-rest-controller.php" "wpaic_cookie_secure" "98t cookie secure filter"
+          check_keyword "includes/api/class-rest-controller.php" "wpaic_max_message_length" "98t message length limit"
+          check_keyword "includes/api/class-rest-controller.php" "derive_context_key" "98t server-derived context key"
           check_keyword "includes/api/class-rest-controller.php" "check_same_origin" "CSRF origin check"
           check_keyword "includes/class-main.php" "wpaic_after_cleanup" "M-2 cleanup hook"
           check_keyword "includes/models/class-knowledge.php" "csv_safe_cell" "CSV injection protection"
