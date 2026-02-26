@@ -78,7 +78,6 @@
 
         // 状態
         sessionId: null,
-        userId: null,
         isOpen: false,
         isLoading: false,
         isInitialized: false,
@@ -103,7 +102,6 @@
 
             this.createResizeHandle();
             this.bindEvents();
-            this.initUserId();  // コンテキスト記憶用のユーザーID
             this.loadSession();  // loadLeadConfigはloadSession内で呼ばれる
             this.loadWindowSize();
             this.setupAutocomplete();
@@ -113,22 +111,6 @@
             this.initConversionTracking();
             this.listenForConsentChange();
             this.isInitialized = true;
-        },
-
-        /**
-         * ユーザーIDを初期化（コンテキスト記憶用）
-         * localStorageに保存してブラウザセッション間で永続化
-         * WP Consent API: functional/preferences 同意がない場合はセッション内のみのIDを使用
-         */
-        initUserId: function() {
-            var storedUserId = wpaicLsGet('wpaic_user_id');
-            if (storedUserId) {
-                this.userId = storedUserId;
-            } else {
-                // 新しいユーザーIDを生成
-                this.userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                wpaicLsSet('wpaic_user_id', this.userId);
-            }
         },
 
         /**
@@ -865,9 +847,8 @@
             // User messages: plain text only (no formatting needed)
             if (role === 'bot') {
                 var formatted = this.formatBotMessage(content);
-                // Create a wrapper span for the formatted content
                 var textSpan = document.createElement('span');
-                textSpan.innerHTML = formatted;
+                textSpan.appendChild(formatted);
                 contentEl.appendChild(textSpan);
             } else {
                 contentEl.textContent = content;
@@ -1028,11 +1009,10 @@
                     var contentEl = messageEl.querySelector('.chatbot-message__content');
                     var actionsEl = contentEl.querySelector('.chatbot-message__actions');
 
-                    // Create new content with safe formatting
                     var formatted = self.formatBotMessage(data.data.content);
                     contentEl.innerHTML = '';
                     var textSpan = document.createElement('span');
-                    textSpan.innerHTML = formatted;
+                    textSpan.appendChild(formatted);
                     contentEl.appendChild(textSpan);
 
                     // Re-add sources if any
@@ -1972,22 +1952,38 @@
         },
 
         /**
-         * Format bot message content safely: escape HTML, then add line breaks and auto-links.
-         * Returns an HTML string safe for innerHTML.
+         * Format bot message content safely using DOM API.
+         * Returns a DocumentFragment (not an HTML string) to avoid innerHTML-based XSS vectors.
          */
         formatBotMessage: function(text) {
-            // 1. Escape all HTML entities first (XSS prevention)
-            var safe = this.escapeHtml(text);
-            // 2. Auto-link URLs (http/https only, with safety attributes)
-            safe = safe.replace(
-                /https?:\/\/[^\s<>"')\]]+/g,
-                function(url) {
-                    return '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + url + '</a>';
+            var fragment = document.createDocumentFragment();
+            // Split on URL pattern, preserving the matched URLs as separate tokens
+            var urlPattern = /https?:\/\/[^\s<>"')\]]+/g;
+            var parts = text.split(urlPattern);
+            var urls = text.match(urlPattern) || [];
+
+            for (var i = 0; i < parts.length; i++) {
+                // Add text segment (with newline → <br> conversion)
+                var lines = parts[i].split('\n');
+                for (var j = 0; j < lines.length; j++) {
+                    if (j > 0) {
+                        fragment.appendChild(document.createElement('br'));
+                    }
+                    if (lines[j]) {
+                        fragment.appendChild(document.createTextNode(lines[j]));
+                    }
                 }
-            );
-            // 3. Convert newlines to <br>
-            safe = safe.replace(/\n/g, '<br>');
-            return safe;
+                // Add URL as <a> element (DOM API — href is set via property, not string concat)
+                if (i < urls.length) {
+                    var a = document.createElement('a');
+                    a.href = urls[i];
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.textContent = urls[i];
+                    fragment.appendChild(a);
+                }
+            }
+            return fragment;
         },
 
         /**
@@ -1997,12 +1993,7 @@
         listenForConsentChange: function() {
             var self = this;
             document.addEventListener('wp_listen_for_consent_change', function() {
-                if (wpaicStorageAllowed()) {
-                    // Consent granted — persist ephemeral userId if we have one
-                    if (self.userId && !wpaicLsGet('wpaic_user_id')) {
-                        wpaicLsSet('wpaic_user_id', self.userId);
-                    }
-                } else {
+                if (!wpaicStorageAllowed()) {
                     // Consent revoked — remove ALL wpaic_ keys from both storages.
                     // Walk all keys to catch conversion markers from old sessions, etc.
                     try {

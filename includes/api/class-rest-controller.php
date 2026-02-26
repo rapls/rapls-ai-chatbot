@@ -671,8 +671,9 @@ class WPAIC_REST_Controller {
             $pro_features_check = WPAIC_Pro_Features::get_instance();
             if (!$pro_features_check->is_pro() || !method_exists($pro_features_check, 'is_multimodal_enabled') || !$pro_features_check->is_multimodal_enabled()) {
                 return new WP_REST_Response([
-                    'success' => false,
-                    'error'   => __('Image upload is not available.', 'rapls-ai-chatbot'),
+                    'success'    => false,
+                    'error'      => __('Image upload is not available.', 'rapls-ai-chatbot'),
+                    'error_code' => 'multimodal_disabled',
                 ], 400);
             }
         }
@@ -683,8 +684,9 @@ class WPAIC_REST_Controller {
         $message_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
         if (empty($message) || $message_length > 2000) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('Message is empty or too long.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('Message is empty or too long.', 'rapls-ai-chatbot'),
+                'error_code' => 'invalid_message',
             ], 400);
         }
 
@@ -829,9 +831,9 @@ class WPAIC_REST_Controller {
         // Check IP block (Pro feature)
         if ($pro_features->is_ip_blocked()) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => $pro_features->get_ip_block_message(),
-                'code'    => 'ip_blocked',
+                'success'    => false,
+                'error'      => $pro_features->get_ip_block_message(),
+                'error_code' => 'ip_blocked',
             ], 403);
         }
 
@@ -851,18 +853,18 @@ class WPAIC_REST_Controller {
         // Check budget limit (Pro feature)
         if ($pro_features->check_budget_limit()) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => $pro_features->get_budget_block_message(),
-                'code'    => 'budget_exceeded',
+                'success'    => false,
+                'error'      => $pro_features->get_budget_block_message(),
+                'error_code' => 'budget_exceeded',
             ], 429);
         }
 
         // Check banned words (Pro feature)
         if ($pro_features->contains_banned_words($message)) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => $pro_features->get_banned_words_message(),
-                'code'    => 'banned_words',
+                'success'    => false,
+                'error'      => $pro_features->get_banned_words_message(),
+                'error_code' => 'banned_words',
             ], 400);
         }
 
@@ -1785,6 +1787,23 @@ class WPAIC_REST_Controller {
     }
 
     /**
+     * Extract session_id from a REST request.
+     *
+     * Priority: X-WPAIC-Session header > body/query param.
+     * Header-first avoids exposing session_id in GET query strings (proxy/access logs).
+     *
+     * @param WP_REST_Request $request REST request object.
+     * @return string Sanitized session_id (may be empty).
+     */
+    public function get_session_id(WP_REST_Request $request): string {
+        $from_header = $request->get_header('X_WPAIC_Session');
+        if (!empty($from_header)) {
+            return sanitize_text_field($from_header);
+        }
+        return sanitize_text_field($request->get_param('session_id') ?? '');
+    }
+
+    /**
      * Permission callback for session-based REST routes.
      *
      * Extracts session_id from the request and verifies ownership.
@@ -1794,7 +1813,7 @@ class WPAIC_REST_Controller {
      * @return true|WP_Error
      */
     public function check_session_permission(WP_REST_Request $request) {
-        $session_id = sanitize_text_field($request->get_param('session_id') ?? '');
+        $session_id = $this->get_session_id($request);
 
         if (empty($session_id)) {
             return new WP_Error(
@@ -2324,7 +2343,7 @@ class WPAIC_REST_Controller {
         // 2. Public rate limit
         $rate_check = $this->check_public_rate_limit($rate_key, $rate_limit, $rate_window);
         if ($rate_check !== true) {
-            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
         // 3. Honeypot: reject if hidden field is filled (bots auto-fill)
@@ -2664,7 +2683,7 @@ class WPAIC_REST_Controller {
     public function get_lead_config(WP_REST_Request $request): WP_REST_Response {
         $rate_check = $this->check_public_rate_limit('lcfg', 30, 60);
         if ($rate_check !== true) {
-            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
         try {
@@ -2732,7 +2751,7 @@ class WPAIC_REST_Controller {
     public function get_message_limit_status(WP_REST_Request $request): WP_REST_Response {
         $rate_check = $this->check_public_rate_limit('mlim', 30, 60);
         if ($rate_check !== true) {
-            return new WP_REST_Response(['success' => false, 'error' => $rate_check], 429);
+            return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
         $pro_features = WPAIC_Pro_Features::get_instance();
@@ -3507,8 +3526,10 @@ class WPAIC_REST_Controller {
      * Submit offline message (Pro feature)
      */
     public function submit_offline_message(WP_REST_Request $request): WP_REST_Response {
-        // Consolidated public POST guard: same-origin, rate limit, honeypot, timing, reCAPTCHA
-        $guard = $this->guard_public_post($request, 'offl', 10, 60, true, 'offline');
+        // Consolidated public POST guard: same-origin, rate limit, honeypot, timing, reCAPTCHA.
+        // allow_no_headers=true: caching/optimization plugins may strip Origin/Referer.
+        // Compensated by: require_captcha=true + per-IP hourly limit below + honeypot + timing.
+        $guard = $this->guard_public_post($request, 'offl', 10, 60, true, 'offline', true);
         if ($guard !== true) {
             return $guard;
         }
@@ -3727,11 +3748,13 @@ class WPAIC_REST_Controller {
             return (int) $count;
         }
 
-        // Transient miss — check if external object cache may have lost it
+        // Transient miss — check if external object cache may have lost it.
+        // Hash the key for DB storage to avoid bloating wp_options with long transient keys.
         if (wp_using_ext_object_cache()) {
             $store = (array) get_option('wpaic_rl_fallback', []);
-            if (isset($store[$key]) && ($store[$key]['exp'] ?? 0) > time()) {
-                return (int) ($store[$key]['c'] ?? 0);
+            $hashed = substr(hash('sha256', $key), 0, 16);
+            if (isset($store[$hashed]) && ($store[$hashed]['exp'] ?? 0) > time()) {
+                return (int) ($store[$hashed]['c'] ?? 0);
             }
         }
 
@@ -3753,10 +3776,12 @@ class WPAIC_REST_Controller {
         $new_count = $count + 1;
         $written = set_transient($key, $new_count, $window);
 
-        // If transient write failed and we're using external cache, fall back to DB
+        // If transient write failed and we're using external cache, fall back to DB.
+        // Hash the key for DB storage to avoid bloating wp_options with long transient keys.
         if (!$written && wp_using_ext_object_cache()) {
             $store = (array) get_option('wpaic_rl_fallback', []);
             $now = time();
+            $hashed = substr(hash('sha256', $key), 0, 16);
 
             // Prune expired entries
             foreach ($store as $k => $v) {
@@ -3773,7 +3798,7 @@ class WPAIC_REST_Controller {
                 $store = array_slice($store, -199, null, true);
             }
 
-            $store[$key] = ['c' => $new_count, 'exp' => $now + $window];
+            $store[$hashed] = ['c' => $new_count, 'exp' => $now + $window];
             update_option('wpaic_rl_fallback', $store, false);
         }
     }
