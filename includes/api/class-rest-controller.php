@@ -3605,6 +3605,20 @@ class WPAIC_REST_Controller {
                 ], 429);
             }
             set_transient($transient_key, $count + 1, HOUR_IN_SECONDS);
+
+            // Server-side content dedup: block identical email+message from same IP within 30s.
+            // Catches double-submits that bypass the client-side sessionStorage guard
+            // (page reload, private mode, disabled JS storage).
+            $dedup_hash = substr(hash('sha256', $email . '|' . $message . '|' . $ip_hash), 0, 24);
+            $dedup_key  = 'wpaic_offl_dd_' . $dedup_hash;
+            if (get_transient($dedup_key)) {
+                // Already submitted — return success to avoid leaking dedup signal
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['message' => __('Message sent!', 'rapls-ai-chatbot')],
+                ], 200);
+            }
+            set_transient($dedup_key, 1, 30);
         }
 
         // Email dedup: prevent same email from submitting more than 3 times per hour

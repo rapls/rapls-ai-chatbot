@@ -450,8 +450,8 @@ if (!function_exists('wpaic_rate_limited_log')) {
         if (!(defined('WP_DEBUG') && WP_DEBUG)) {
             return;
         }
-        /** @filter wpaic_log_interval Adjust rate-limit interval per key (seconds). */
-        $interval = max(10, (int) apply_filters('wpaic_log_interval', $interval, $key));
+        /** @filter wpaic_rate_limited_log_interval Adjust per-key throttle (seconds). Min 10, recommended 180–600. */
+        $interval = max(10, (int) apply_filters('wpaic_rate_limited_log_interval', $interval, $key));
         $transient_key = 'wpaic_rl_log_' . substr(md5($key), 0, 12);
         if (get_transient($transient_key)) {
             return; // Already logged recently
