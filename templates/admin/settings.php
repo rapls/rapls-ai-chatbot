@@ -328,6 +328,158 @@ if (!defined('ABSPATH')) {
                     </tr>
                     <?php endif; ?>
                 </table>
+
+                <!-- MCP Settings -->
+                <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
+                    MCP (Model Context Protocol)
+                </h3>
+                <p class="description" style="margin-bottom: 15px;">
+                    <?php esc_html_e('Allow external AI agents (Claude Desktop, Cursor, etc.) to access your knowledge base and conversations via MCP.', 'rapls-ai-chatbot'); ?>
+                </p>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('MCP Server', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[mcp_enabled]" value="1"
+                                    <?php checked($settings['mcp_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Enable MCP server', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When enabled, external AI agents can connect to this site using the MCP protocol.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('MCP API Key', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <div id="wpaic-mcp-key-section">
+                                <?php if (!empty($settings['mcp_api_key_hash'])) : ?>
+                                    <code id="wpaic-mcp-key-display">••••••••••••••••••••</code>
+                                <?php else : ?>
+                                    <span id="wpaic-mcp-key-display" style="color: #d63638;">
+                                        <?php esc_html_e('No API key generated yet.', 'rapls-ai-chatbot'); ?>
+                                    </span>
+                                <?php endif; ?>
+                                <br><br>
+                                <button type="button" class="button" id="wpaic-mcp-generate-key">
+                                    <?php echo !empty($settings['mcp_api_key_hash'])
+                                        ? esc_html__('Regenerate Key', 'rapls-ai-chatbot')
+                                        : esc_html__('Generate Key', 'rapls-ai-chatbot'); ?>
+                                </button>
+                                <button type="button" class="button" id="wpaic-mcp-copy-key" style="display: none;">
+                                    <?php esc_html_e('Copy Key', 'rapls-ai-chatbot'); ?>
+                                </button>
+                            </div>
+                            <p class="description">
+                                <?php esc_html_e('The API key is shown only once when generated. Store it securely for use in your MCP client configuration.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('MCP Endpoint', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <code id="wpaic-mcp-endpoint"><?php echo esc_url(rest_url('wp-ai-chatbot/v1/mcp')); ?></code>
+                            <button type="button" class="button button-small" id="wpaic-mcp-copy-endpoint">
+                                <?php esc_html_e('Copy', 'rapls-ai-chatbot'); ?>
+                            </button>
+                            <p class="description">
+                                <?php esc_html_e('Use this URL in your MCP client (Claude Desktop, Cursor, etc.) configuration.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- MCP Client Configuration Example -->
+                <div style="margin-top: 10px; padding: 12px 15px; background: #f0f0f1; border-left: 4px solid #2271b1; border-radius: 2px;">
+                    <strong><?php esc_html_e('Claude Desktop Configuration Example:', 'rapls-ai-chatbot'); ?></strong>
+                    <pre style="margin: 8px 0 0; padding: 10px; background: #fff; border: 1px solid #c3c4c7; border-radius: 2px; font-size: 12px; overflow-x: auto;">{
+  "mcpServers": {
+    "<?php echo esc_js(sanitize_title(get_bloginfo('name'))); ?>": {
+      "url": "<?php echo esc_url(rest_url('wp-ai-chatbot/v1/mcp')); ?>",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_API_KEY"
+      }
+    }
+  }
+}</pre>
+                </div>
+
+                <script>
+                (function() {
+                    var generateBtn = document.getElementById('wpaic-mcp-generate-key');
+                    var copyKeyBtn = document.getElementById('wpaic-mcp-copy-key');
+                    var copyEndpointBtn = document.getElementById('wpaic-mcp-copy-endpoint');
+                    var keyDisplay = document.getElementById('wpaic-mcp-key-display');
+
+                    if (generateBtn) {
+                        generateBtn.addEventListener('click', function() {
+                            if (!confirm(<?php echo wp_json_encode(
+                                __('Generate a new MCP API key? The previous key will be invalidated.', 'rapls-ai-chatbot')
+                            ); ?>)) {
+                                return;
+                            }
+
+                            generateBtn.disabled = true;
+                            generateBtn.textContent = <?php echo wp_json_encode(__('Generating...', 'rapls-ai-chatbot')); ?>;
+
+                            jQuery.post(ajaxurl, {
+                                action: 'wpaic_generate_mcp_key',
+                                _wpnonce: <?php echo wp_json_encode(wp_create_nonce('wpaic_generate_mcp_key')); ?>
+                            }, function(response) {
+                                generateBtn.disabled = false;
+                                generateBtn.textContent = <?php echo wp_json_encode(__('Regenerate Key', 'rapls-ai-chatbot')); ?>;
+
+                                if (response.success) {
+                                    var codeEl = document.createElement('code');
+                                    codeEl.style.cssText = 'user-select: all; cursor: pointer; word-break: break-all;';
+                                    codeEl.textContent = response.data.api_key;
+                                    keyDisplay.textContent = '';
+                                    keyDisplay.appendChild(codeEl);
+                                    keyDisplay.style.color = '';
+                                    copyKeyBtn.style.display = 'inline-block';
+                                    copyKeyBtn.dataset.key = response.data.api_key;
+                                } else {
+                                    alert(response.data || 'Error generating key.');
+                                }
+                            }).fail(function() {
+                                generateBtn.disabled = false;
+                                generateBtn.textContent = <?php echo wp_json_encode(__('Regenerate Key', 'rapls-ai-chatbot')); ?>;
+                                alert('Request failed.');
+                            });
+                        });
+                    }
+
+                    if (copyKeyBtn) {
+                        copyKeyBtn.addEventListener('click', function() {
+                            var key = this.dataset.key;
+                            if (key && navigator.clipboard) {
+                                navigator.clipboard.writeText(key).then(function() {
+                                    copyKeyBtn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
+                                    setTimeout(function() {
+                                        copyKeyBtn.textContent = <?php echo wp_json_encode(__('Copy Key', 'rapls-ai-chatbot')); ?>;
+                                    }, 2000);
+                                });
+                            }
+                        });
+                    }
+
+                    if (copyEndpointBtn) {
+                        copyEndpointBtn.addEventListener('click', function() {
+                            var endpoint = document.getElementById('wpaic-mcp-endpoint').textContent;
+                            if (navigator.clipboard) {
+                                navigator.clipboard.writeText(endpoint).then(function() {
+                                    copyEndpointBtn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
+                                    setTimeout(function() {
+                                        copyEndpointBtn.textContent = <?php echo wp_json_encode(__('Copy', 'rapls-ai-chatbot')); ?>;
+                                    }, 2000);
+                                });
+                            }
+                        });
+                    }
+                })();
+                </script>
+
             </div>
 
             <!-- Chat Settings -->
@@ -461,6 +613,18 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description"><?php esc_html_e('Closer to 0 is more deterministic, closer to 2 is more random.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Web Search', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[web_search_enabled]" value="1"
+                                    <?php checked(!empty($settings['web_search_enabled'])); ?>>
+                                <?php esc_html_e('Enable Web Search', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('When the knowledge base does not contain a sufficient answer, the AI will automatically search the web in real time.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><strong><?php esc_html_e('Note: Additional charges may apply depending on the provider.', 'rapls-ai-chatbot'); ?></strong></p>
                         </td>
                     </tr>
                 </table>
@@ -916,6 +1080,52 @@ if (!defined('ABSPATH')) {
                                 </div>
                             </div>
                             <p class="description"><?php esc_html_e('Select specific pages to hide the chatbot (dropdown-based). For posts, use Exclude IDs above.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                </table>
+
+                <hr style="margin: 20px 0;">
+                <h3><?php esc_html_e('Cross-Site Embed', 'rapls-ai-chatbot'); ?></h3>
+                <p class="description" style="margin-bottom: 15px;">
+                    <?php esc_html_e('Use the code below to display this chatbot on external sites. Paste it before the closing </body> tag.', 'rapls-ai-chatbot'); ?>
+                </p>
+                <?php
+                $embed_site_url = esc_url(home_url());
+                $embed_plugin_url = esc_url(WPAIC_PLUGIN_URL . 'assets/js/embed-loader.js');
+                $embed_primary_color = esc_attr($settings['primary_color'] ?? '#007bff');
+                $embed_script_code = '<script src="' . $embed_plugin_url . '"' . "\n"
+                    . '        data-site="' . $embed_site_url . '"' . "\n"
+                    . '        data-color="' . $embed_primary_color . '"' . "\n"
+                    . '        data-position="right"' . "\n"
+                    . '        async></script>';
+                $embed_iframe_code = '<iframe src="' . $embed_site_url . '/?wpaic_embed=1"' . "\n"
+                    . '        style="width:400px;height:600px;border:none;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)"' . "\n"
+                    . '        allow="clipboard-write"' . "\n"
+                    . '        title="Chat"></iframe>';
+                ?>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Script Embed (Recommended)', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <div style="position:relative;">
+                                <textarea id="wpaic-embed-script-code" class="large-text code" rows="5" readonly onclick="this.select()"><?php echo esc_textarea($embed_script_code); ?></textarea>
+                                <button type="button" class="button button-small wpaic-copy-embed" data-target="wpaic-embed-script-code" style="margin-top:5px;">
+                                    <?php esc_html_e('Copy', 'rapls-ai-chatbot'); ?>
+                                </button>
+                            </div>
+                            <p class="description"><?php esc_html_e('Displays a floating chat badge. Click to open the chat window.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Iframe Embed', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <div style="position:relative;">
+                                <textarea id="wpaic-embed-iframe-code" class="large-text code" rows="4" readonly onclick="this.select()"><?php echo esc_textarea($embed_iframe_code); ?></textarea>
+                                <button type="button" class="button button-small wpaic-copy-embed" data-target="wpaic-embed-iframe-code" style="margin-top:5px;">
+                                    <?php esc_html_e('Copy', 'rapls-ai-chatbot'); ?>
+                                </button>
+                            </div>
+                            <p class="description"><?php esc_html_e('Embeds the chat directly in the page at the specified size.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                 </table>
@@ -1928,6 +2138,27 @@ jQuery(document).ready(function($) {
             }
         }
         return true;
+    });
+
+    // Embed code copy buttons
+    $('.wpaic-copy-embed').on('click', function() {
+        var $btn = $(this);
+        var target = document.getElementById($btn.data('target'));
+        if (!target) return;
+        var text = target.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                var orig = $btn.text();
+                $btn.text('<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>');
+                setTimeout(function() { $btn.text(orig); }, 2000);
+            });
+        } else {
+            target.select();
+            document.execCommand('copy');
+            var orig = $btn.text();
+            $btn.text('<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>');
+            setTimeout(function() { $btn.text(orig); }, 2000);
+        }
     });
 });
 </script>

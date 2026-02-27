@@ -4,7 +4,7 @@ Contributors: raplsworks
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -34,21 +34,22 @@ The free version is fully functional — no Pro add-on required for core AI chat
 = Supported AI Models =
 
 **OpenAI:**
-* GPT-4o (High Performance, Multimodal)
-* GPT-4o-mini (Cost Efficient)
-* GPT-4 Turbo
-* o1, o1-mini, o3-mini (Reasoning Models)
+* GPT-5.2, GPT-5.1, GPT-5 series (Latest generation)
+* GPT-4.1 series (Long context, 1M tokens)
+* GPT-4o, GPT-4o-mini (Recommended, Multimodal)
+* o1, o3, o4-mini (Reasoning Models)
 
 **Anthropic Claude:**
-* Claude Opus 4 (Highest Performance)
-* Claude Sonnet 4 (High Performance, Balanced)
-* Claude 3.5 Sonnet
-* Claude 3.5 Haiku (Fast, Low Cost)
+* Claude Opus 4.6 (Most Powerful)
+* Claude Sonnet 4.5 (Recommended, Fast and Powerful)
+* Claude Haiku 4.5 (Recommended, Fastest)
+* Claude Opus 4.5, Opus 4.1, Sonnet 4, 3.7 Sonnet
 
 **Google Gemini:**
-* Gemini 2.0 Flash (Latest)
-* Gemini 1.5 Pro
-* Gemini 1.5 Flash
+* Gemini 3 Pro/Flash (Preview, Latest)
+* Gemini 2.5 Pro/Flash (Recommended)
+* Gemini 2.0 Flash (Stable)
+* Gemini 1.5 Pro/Flash (Legacy)
 
 = Site Learning =
 
@@ -434,6 +435,17 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 == Changelog ==
 
+= 1.4.0 =
+* Added: Web search integration — AI automatically searches the web when knowledge base lacks a sufficient answer (OpenAI web_search_preview, Claude web_search, Gemini google_search grounding)
+* Added: Web search toggle in AI Settings tab with per-provider cost notice
+* Added: Web source citations displayed with globe icon, separate from knowledge base sources
+* Added: Cross-site embed page — embed chatbot on external sites via iframe (?wpaic_embed=1 endpoint)
+* Added: Embed loader script (assets/js/embed-loader.js) for easy cross-site integration
+* Added: PDF and DOCX file upload support in knowledge base (server-side parsing)
+* Added: Vector embedding RAG with hybrid search (keyword 40% + vector 60%)
+* Updated: AI model lists — OpenAI GPT-5.2/5.1/5/4.1 series, Claude Opus 4.6/Sonnet 4.5/Haiku 4.5, Gemini 3/2.5 series
+* Updated: Japanese translation
+
 = 1.3.2 =
 * Security: Session ID now transmitted via `X-WPAIC-Session` header instead of query strings (prevents access log leakage)
 * Security: GET requests no longer accept `?session_id=` query parameter
@@ -549,6 +561,9 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+Feature release: Web search integration (AI auto-searches the web when knowledge base is insufficient), cross-site embed support, PDF/DOCX knowledge upload, vector embedding hybrid search, and updated AI model lists. Recommended update for all users.
 
 = 1.3.2 =
 Security hardening: session ID header transport, XSS prevention via DOM API, rate-limited logging, and offline message dedup. **Breaking change:** GET requests no longer accept `?session_id=` — use the `X-WPAIC-Session` header instead. Recommended update for all users.

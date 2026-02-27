@@ -101,6 +101,10 @@ class WPAIC_Main {
             require_once WPAIC_PLUGIN_DIR . 'includes/class-pro-features.php';
         }
 
+        // Parsers
+        require_once WPAIC_PLUGIN_DIR . 'includes/parsers/class-pdf-parser.php';
+        require_once WPAIC_PLUGIN_DIR . 'includes/parsers/class-docx-parser.php';
+
         // Models
         require_once WPAIC_PLUGIN_DIR . 'includes/models/class-conversation.php';
         require_once WPAIC_PLUGIN_DIR . 'includes/models/class-message.php';
@@ -199,6 +203,9 @@ class WPAIC_Main {
 
         // Dismiss security notice
         $this->loader->add_action('wp_ajax_wpaic_dismiss_security_notice', $admin, 'ajax_dismiss_security_notice');
+
+        // MCP API key generation
+        $this->loader->add_action('wp_ajax_wpaic_generate_mcp_key', $admin, 'ajax_generate_mcp_key');
     }
 
     /**
@@ -213,6 +220,13 @@ class WPAIC_Main {
 
         // Shortcode [rapls_chatbot] for inline embedding
         add_shortcode('rapls_chatbot', [$widget, 'render_shortcode']);
+
+        // Cross-site embed endpoint: ?wpaic_embed=1
+        add_filter('query_vars', function ($vars) {
+            $vars[] = 'wpaic_embed';
+            return $vars;
+        });
+        $this->loader->add_action('template_redirect', $widget, 'maybe_render_embed_page');
     }
 
     /**
@@ -222,6 +236,15 @@ class WPAIC_Main {
         $api = new WPAIC_REST_Controller();
 
         $this->loader->add_action('rest_api_init', $api, 'register_routes');
+
+        // MCP Server (conditional on setting)
+        $settings = get_option('wpaic_settings', []);
+        if (!empty($settings['mcp_enabled'])) {
+            require_once WPAIC_PLUGIN_DIR . 'includes/mcp/class-mcp-tool-registry.php';
+            require_once WPAIC_PLUGIN_DIR . 'includes/mcp/class-mcp-server.php';
+            $mcp = new WPAIC_MCP_Server();
+            $this->loader->add_action('rest_api_init', $mcp, 'register_routes');
+        }
     }
 
     /**

@@ -82,6 +82,11 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             ];
         }
 
+        // Web search grounding tool
+        if (!empty($options['web_search'])) {
+            $body['tools'] = [['google_search' => new \stdClass()]];
+        }
+
         $url = $this->api_url . $this->model . ':generateContent?key=' . $this->api_key;
 
         /** @see WPAIC_OpenAI_Provider::send_http_request() for filter docs */
@@ -174,6 +179,23 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             }
         }
 
+        // Extract web search grounding sources
+        $web_sources = [];
+        $grounding = $data['candidates'][0]['groundingMetadata'] ?? null;
+        if ($grounding && isset($grounding['groundingChunks']) && is_array($grounding['groundingChunks'])) {
+            $seen = [];
+            foreach ($grounding['groundingChunks'] as $chunk) {
+                $url = $chunk['web']['uri'] ?? '';
+                if (!empty($url) && !isset($seen[$url])) {
+                    $seen[$url] = true;
+                    $web_sources[] = [
+                        'url'   => $url,
+                        'title' => $chunk['web']['title'] ?? '',
+                    ];
+                }
+            }
+        }
+
         // Get token usage
         $input_tokens = 0;
         $output_tokens = 0;
@@ -183,7 +205,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         }
         $tokens_used = $input_tokens + $output_tokens;
 
-        return [
+        $result = [
             'content'       => $content,
             'tokens_used'   => $tokens_used,
             'input_tokens'  => $input_tokens,
@@ -191,6 +213,12 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             'model'         => $this->model,
             'provider'      => $this->get_name(),
         ];
+
+        if (!empty($web_sources)) {
+            $result['web_sources'] = $web_sources;
+        }
+
+        return $result;
     }
 
     /**

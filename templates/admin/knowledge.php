@@ -128,8 +128,9 @@ $is_pro = $pro_features->is_pro();
                     <tr>
                         <th><label for="knowledge-file"><?php esc_html_e('File', 'rapls-ai-chatbot'); ?></label></th>
                         <td>
-                            <input type="file" id="knowledge-file" name="file" accept=".txt,.csv,.md">
-                            <p class="description"><?php esc_html_e('Supported formats: TXT, CSV, MD (max 5MB)', 'rapls-ai-chatbot'); ?></p>
+                            <input type="file" id="knowledge-file" name="file" accept=".txt,.csv,.md,.pdf,.docx">
+                            <p class="description"><?php esc_html_e('Supported formats: TXT, CSV, MD, PDF, DOCX (max 5MB)', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><?php esc_html_e('PDF: Only text-based files are supported. Scanned image PDFs cannot be processed.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description"><?php esc_html_e('CSV files must be UTF-8 encoded. If exporting from Excel, save as "CSV UTF-8 (Comma delimited) (*.csv)". Shift_JIS and CP932 (Japanese Windows) are also supported when available.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>

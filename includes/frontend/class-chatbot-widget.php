@@ -29,6 +29,7 @@ class WPAIC_Chatbot_Widget {
         $atts = shortcode_atts([
             'height' => '500px',
             'theme'  => '',
+            'bot'    => '',
         ], $atts, 'rapls_chatbot');
 
         $this->is_inline = true;
@@ -78,6 +79,42 @@ class WPAIC_Chatbot_Widget {
         $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
         $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
         $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
+
+        // Multi-bot: shortcode bot attribute overrides widget settings (Pro)
+        $shortcode_bot_id = '';
+        if (!empty($atts['bot'])) {
+            $shortcode_bot_id = sanitize_key($atts['bot']);
+            $sc_bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($shortcode_bot_id);
+            if ($sc_bot_config) {
+                if (!empty($sc_bot_config['name'])) {
+                    $bot_name = esc_attr($sc_bot_config['name']);
+                }
+                if (!empty($sc_bot_config['avatar'])) {
+                    $avatar_raw = $sc_bot_config['avatar'];
+                    $bot_avatar_is_image = filter_var($avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $avatar_raw);
+                    $bot_avatar = $bot_avatar_is_image ? esc_url($avatar_raw) : esc_html($avatar_raw);
+                }
+                if (!empty($sc_bot_config['theme'])) {
+                    $override_theme = sanitize_key($sc_bot_config['theme']);
+                    if ($is_pro_active || in_array($override_theme, $free_themes)) {
+                        $widget_theme = $override_theme;
+                        $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
+                        if ($is_pro_active && !empty($settings['dark_mode'])) {
+                            $theme_class .= ' dark-mode';
+                        }
+                        $theme_class = trim($theme_class);
+                    }
+                }
+                // Set bot_id in JS config via inline script
+                wp_add_inline_script('wpaic-chatbot',
+                    'if(window.wpAiChatbotConfig){wpAiChatbotConfig.bot_id=' . wp_json_encode($shortcode_bot_id) . ';' .
+                    (!empty($sc_bot_config['welcome_message']) ? 'wpAiChatbotConfig.welcome_message=' . wp_json_encode($sc_bot_config['welcome_message']) . ';' : '') .
+                    (!empty($sc_bot_config['name']) ? 'wpAiChatbotConfig.bot_name=' . wp_json_encode($sc_bot_config['name']) . ';' : '') .
+                    '}',
+                    'before'
+                );
+            }
+        }
 
         // Sanitize height attribute
         $height = esc_attr($atts['height']);
@@ -203,6 +240,7 @@ class WPAIC_Chatbot_Widget {
             'restUrl'             => rest_url('wp-ai-chatbot/v1/'),
             'api_base'            => rest_url('wp-ai-chatbot/v1'),
             'nonce'               => wp_create_nonce('wp_rest'),
+            'bot_id'              => 'default',
             'bot_name'            => $settings['bot_name'] ?? 'Assistant',
             'bot_avatar'          => $bot_avatar,
             'bot_avatar_is_image' => $bot_avatar_is_image,
@@ -331,7 +369,142 @@ class WPAIC_Chatbot_Widget {
         $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
         $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
 
+        // Multi-bot: check page rules for bot assignment (Pro)
+        $page_id = get_queried_object_id();
+        if ($page_id) {
+            $page_bot_id = WPAIC_Pro_Features::get_instance()->get_bot_for_page($page_id);
+            if ($page_bot_id !== 'default') {
+                $page_bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($page_bot_id);
+                if ($page_bot_config) {
+                    if (!empty($page_bot_config['name'])) {
+                        $bot_name = esc_attr($page_bot_config['name']);
+                    }
+                    if (!empty($page_bot_config['avatar'])) {
+                        $avatar_raw = $page_bot_config['avatar'];
+                        $bot_avatar_is_image = filter_var($avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $avatar_raw);
+                        $bot_avatar = $bot_avatar_is_image ? esc_url($avatar_raw) : esc_html($avatar_raw);
+                    }
+                    if (!empty($page_bot_config['theme'])) {
+                        $override_theme = sanitize_key($page_bot_config['theme']);
+                        if ($is_pro_active || in_array($override_theme, $free_themes)) {
+                            $widget_theme = $override_theme;
+                            $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
+                            if ($is_pro_active && !empty($settings['dark_mode'])) {
+                                $theme_class .= ' dark-mode';
+                            }
+                            $theme_class = trim($theme_class);
+                        }
+                    }
+                    // Override JS config for page-rule bot
+                    wp_add_inline_script('wpaic-chatbot',
+                        'if(window.wpAiChatbotConfig){wpAiChatbotConfig.bot_id=' . wp_json_encode($page_bot_id) . ';' .
+                        (!empty($page_bot_config['welcome_message']) ? 'wpAiChatbotConfig.welcome_message=' . wp_json_encode($page_bot_config['welcome_message']) . ';' : '') .
+                        (!empty($page_bot_config['name']) ? 'wpAiChatbotConfig.bot_name=' . wp_json_encode($page_bot_config['name']) . ';' : '') .
+                        '}',
+                        'before'
+                    );
+                }
+            }
+        }
+
         include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
+    }
+
+    /**
+     * Render embed page for cross-site iframe embedding.
+     * Outputs minimal HTML (no theme) with chatbot only, then exits.
+     */
+    public function maybe_render_embed_page(): void {
+        if (!get_query_var('wpaic_embed')) {
+            return;
+        }
+
+        // Remove X-Frame-Options to allow iframe embedding
+        header_remove('X-Frame-Options');
+        // Prevent clickjacking on non-embed pages — this page is explicitly for embedding
+        header('X-Frame-Options: ALLOWALL');
+
+        $settings = get_option('wpaic_settings', []);
+        $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');
+        $bot_avatar_raw = $settings['bot_avatar'] ?? "\xF0\x9F\xA4\x96";
+        $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
+        $bot_avatar = $bot_avatar_is_image ? esc_url($bot_avatar_raw) : esc_html($bot_avatar_raw);
+
+        $widget_theme = $settings['widget_theme'] ?? 'default';
+        $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
+        $is_pro_active = get_option('wpaic_pro_active');
+
+        if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
+            $widget_theme = 'default';
+        }
+
+        $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
+        if ($is_pro_active && !empty($settings['dark_mode'])) {
+            $theme_class .= ' dark-mode';
+        }
+        $theme_class = trim($theme_class);
+
+        $pro_features = $settings['pro_features'] ?? [];
+        $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
+        $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
+        $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
+        $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
+
+        // Enqueue styles/scripts (needed for wp_head output)
+        $this->is_inline = true;
+        $this->enqueue_styles();
+        $this->enqueue_scripts();
+
+        // Add embed-specific inline config
+        wp_add_inline_script('wpaic-chatbot',
+            'if(window.wpAiChatbotConfig){wpAiChatbotConfig.inlineMode=true;wpAiChatbotConfig.embedMode=true;}',
+            'before'
+        );
+
+        // Add embed-specific CSS
+        wp_add_inline_style('wpaic-chatbot', '
+            html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; }
+            .wpaic-inline { height: 100vh; width: 100%; }
+            .wpaic-inline .wp-ai-chatbot { position: relative; width: 100%; height: 100%; }
+            .wpaic-inline .chatbot-badge { display: none !important; }
+            .wpaic-inline .chatbot-window { display: flex !important; position: relative; width: 100%; height: 100%;
+                border-radius: 0; box-shadow: none; max-height: none; }
+        ');
+
+        // Output minimal HTML
+        ?><!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+<meta charset="<?php bloginfo('charset'); ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<?php wp_head(); ?>
+</head>
+<body class="wpaic-embed-body">
+<div class="wpaic-inline" style="height:100vh">
+<?php include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php'; ?>
+</div>
+<?php wp_footer(); ?>
+<script>
+(function(){
+    // Notify parent frame that embed is ready
+    if(window.parent!==window){
+        window.parent.postMessage({type:'wpaic:ready'},'*');
+    }
+    // Listen for close button and notify parent
+    document.addEventListener('click',function(e){
+        if(e.target.closest('.chatbot-close')){
+            e.preventDefault();
+            if(window.parent!==window){
+                window.parent.postMessage({type:'wpaic:close'},'*');
+            }
+        }
+    });
+})();
+</script>
+</body>
+</html><?php
+        exit;
     }
 
     /**

@@ -91,6 +91,17 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             $body['system'] = trim($system_message);
         }
 
+        // Web search tool
+        if (!empty($options['web_search'])) {
+            $body['tools'] = [
+                [
+                    'type'     => 'web_search_20250305',
+                    'name'     => 'web_search',
+                    'max_uses' => 3,
+                ],
+            ];
+        }
+
         /** @see WPAIC_OpenAI_Provider::send_http_request() for filter docs */
         $requested = (int) apply_filters('wpaic_api_timeout', 120, $this->api_url, $this->model);
         $max_exec  = (int) ini_get('max_execution_time');
@@ -174,12 +185,38 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         }
 
         $content = '';
+        $web_sources = [];
         if (isset($data['content']) && is_array($data['content'])) {
             foreach ($data['content'] as $block) {
-                if ($block['type'] === 'text') {
+                if (($block['type'] ?? '') === 'text') {
                     $content .= $block['text'];
+                    // Extract web search citations
+                    if (isset($block['citations']) && is_array($block['citations'])) {
+                        foreach ($block['citations'] as $citation) {
+                            if (($citation['type'] ?? '') === 'web_search_result_location'
+                                && !empty($citation['url'])) {
+                                $web_sources[] = [
+                                    'url'   => $citation['url'],
+                                    'title' => $citation['title'] ?? '',
+                                ];
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        // Deduplicate web sources by URL
+        if (!empty($web_sources)) {
+            $seen = [];
+            $unique = [];
+            foreach ($web_sources as $src) {
+                if (!isset($seen[$src['url']])) {
+                    $seen[$src['url']] = true;
+                    $unique[] = $src;
+                }
+            }
+            $web_sources = $unique;
         }
 
         // Calculate token usage
@@ -187,7 +224,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         $output_tokens = $data['usage']['output_tokens'] ?? 0;
         $tokens_used = $input_tokens + $output_tokens;
 
-        return [
+        $result = [
             'content'       => $content,
             'tokens_used'   => $tokens_used,
             'input_tokens'  => $input_tokens,
@@ -195,6 +232,12 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             'model'         => $this->model,
             'provider'      => $this->get_name(),
         ];
+
+        if (!empty($web_sources)) {
+            $result['web_sources'] = $web_sources;
+        }
+
+        return $result;
     }
 
     /**

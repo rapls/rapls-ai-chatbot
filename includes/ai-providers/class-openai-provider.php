@@ -370,6 +370,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             'input' => $input,
         ];
 
+        // Web search tool (Responses API only)
+        if (!empty($options['web_search'])) {
+            $body['tools'] = [['type' => 'web_search_preview']];
+        }
+
         $configured_max = $options['max_tokens'] ?? 4000;
         if ($this->is_gpt5_model()) {
             $gpt5 = self::get_gpt5_effective_tokens((int) $configured_max);
@@ -601,12 +606,13 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      */
     private function parse_response(array $data): array {
         $content = '';
+        $web_sources = [];
 
         // Standard Chat Completions format: choices[0].message.content
         if (isset($data['choices'][0]['message']['content'])) {
             $content = $data['choices'][0]['message']['content'];
         }
-        // Responses API format: output[].content[].text
+        // Responses API format: output[].content[].text + annotations
         elseif (isset($data['output'])) {
             if (is_array($data['output'])) {
                 foreach ($data['output'] as $output) {
@@ -615,6 +621,18 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                             foreach ($output['content'] as $part) {
                                 if (isset($part['text'])) {
                                     $content .= $part['text'];
+                                }
+                                // Extract web search citations from annotations
+                                if (isset($part['annotations']) && is_array($part['annotations'])) {
+                                    foreach ($part['annotations'] as $annotation) {
+                                        if (($annotation['type'] ?? '') === 'url_citation'
+                                            && !empty($annotation['url'])) {
+                                            $web_sources[] = [
+                                                'url'   => $annotation['url'],
+                                                'title' => $annotation['title'] ?? '',
+                                            ];
+                                        }
+                                    }
                                 }
                             }
                         } else {
@@ -629,6 +647,19 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Legacy format: choices[0].text
         elseif (isset($data['choices'][0]['text'])) {
             $content = $data['choices'][0]['text'];
+        }
+
+        // Deduplicate web sources by URL
+        if (!empty($web_sources)) {
+            $seen = [];
+            $unique = [];
+            foreach ($web_sources as $src) {
+                if (!isset($seen[$src['url']])) {
+                    $seen[$src['url']] = true;
+                    $unique[] = $src;
+                }
+            }
+            $web_sources = $unique;
         }
 
         // Token usage (supports both API response formats)
@@ -656,7 +687,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             throw new Exception(esc_html__('Failed to get response from AI.', 'rapls-ai-chatbot'));
         }
 
-        return [
+        $result = [
             'content'       => $content,
             'tokens_used'   => $tokens_used,
             'input_tokens'  => $input_tokens,
@@ -664,6 +695,12 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             'model'         => $this->model,
             'provider'      => $this->get_name(),
         ];
+
+        if (!empty($web_sources)) {
+            $result['web_sources'] = $web_sources;
+        }
+
+        return $result;
     }
 
     /**

@@ -434,6 +434,40 @@
     margin-top: 2px;
 }
 
+/* アクションボタン (Intent Recognition Actions) */
+.chatbot-action-buttons {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chatbot-action-btn {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 16px;
+    background: var(--wpaic-primary, #4a90d9);
+    color: #fff;
+    text-decoration: none;
+    font-size: 13px;
+    transition: opacity 0.2s;
+    cursor: pointer;
+    border: none;
+    line-height: 1.4;
+}
+
+.chatbot-action-btn:hover {
+    opacity: 0.85;
+    color: #fff;
+}
+
+.chatbot-action-notice {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    margin-top: 4px;
+}
+
 /* ============================================
    メッセージアクション（フィードバック・再生成）
 ============================================ */
@@ -1480,6 +1514,43 @@ textarea.wpaic-offline-input {
 
 .wpaic-markdown blockquote p {
     margin: 0;
+}
+
+.wpaic-markdown table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.6em 0;
+    font-size: 0.9em;
+    overflow-x: auto;
+    display: block;
+}
+
+.wpaic-markdown thead {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.wpaic-markdown tbody {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.wpaic-markdown th,
+.wpaic-markdown td {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 0.4em 0.6em;
+    text-align: left;
+}
+
+.wpaic-markdown th {
+    background: rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+}
+
+.wpaic-markdown tbody tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
 }
 
 /* ============================================

@@ -55,6 +55,12 @@ class WPAIC_Conversation {
             $formats[] = '%d';
         }
 
+        // Multi-bot support: store bot_id when not default
+        if (!empty($data['bot_id']) && $data['bot_id'] !== 'default') {
+            $insert_data['bot_id'] = sanitize_key($data['bot_id']);
+            $formats[] = '%s';
+        }
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert($table, $insert_data, $formats);
         wpaic_log_db_error('Conversation::create');

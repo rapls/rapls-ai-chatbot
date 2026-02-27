@@ -1,0 +1,275 @@
+<?php
+/**
+ * MCP Tool: send_message
+ *
+ * Sends a message to the AI provider and returns the response.
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class WPAIC_MCP_Tool_Send_Message {
+
+    /**
+     * Register this tool with the registry.
+     *
+     * @param WPAIC_MCP_Tool_Registry $registry Tool registry.
+     */
+    public function register(WPAIC_MCP_Tool_Registry $registry): void {
+        $registry->register('send_message', $this->get_schema(), [$this, 'execute']);
+    }
+
+    /**
+     * Tool schema for tools/list.
+     *
+     * @return array
+     */
+    private function get_schema(): array {
+        return [
+            'name'        => 'send_message',
+            'description' => 'Send a message to the AI chatbot and get a response. Uses the configured AI provider and includes knowledge base context.',
+            'inputSchema' => [
+                'type'       => 'object',
+                'properties' => [
+                    'message' => [
+                        'type'        => 'string',
+                        'description' => 'The message to send to the AI.',
+                    ],
+                    'session_id' => [
+                        'type'        => 'string',
+                        'description' => 'Optional session ID for conversation continuity. A new session is created if not provided.',
+                    ],
+                ],
+                'required' => ['message'],
+            ],
+        ];
+    }
+
+    /**
+     * Execute the tool.
+     *
+     * @param array $args Tool arguments.
+     * @return array AI response.
+     */
+    public function execute(array $args): array {
+        $message    = sanitize_textarea_field($args['message'] ?? '');
+        $session_id = sanitize_text_field($args['session_id'] ?? '');
+
+        if (empty($message)) {
+            return ['error' => 'Message is required.'];
+        }
+
+        $max_length = (int) apply_filters('wpaic_max_message_length', 8000);
+        $msg_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
+        if ($msg_length > $max_length) {
+            return ['error' => 'Message exceeds maximum length.'];
+        }
+
+        $settings = get_option('wpaic_settings', []);
+
+        // Create or get session
+        if (empty($session_id)) {
+            $session_id = WPAIC_Conversation::generate_session_id();
+        }
+
+        $conversation = WPAIC_Conversation::get_or_create($session_id, [
+            'page_url' => 'mcp',
+        ]);
+
+        if (!$conversation) {
+            return ['error' => 'Failed to create conversation.'];
+        }
+
+        $conversation_id = (int) $conversation['id'];
+
+        // Get conversation history for context
+        $context_messages = WPAIC_Message::get_context_messages($conversation_id, 10);
+
+        // Build AI messages array
+        $ai_messages = [];
+
+        // System prompt
+        $system_prompt = $settings['system_prompt'] ?? '';
+        if (!empty($system_prompt)) {
+            $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt);
+            $ai_messages[] = ['role' => 'system', 'content' => $system_prompt];
+        }
+
+        // Search for related content (RAG)
+        $sources = [];
+        $search_engine = new WPAIC_Search_Engine();
+        $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
+
+        if (!empty($related_content)) {
+            $context = '';
+            foreach ($related_content as $item) {
+                $title   = $item['title'] ?? '';
+                $content = $item['content'] ?? '';
+                $url     = $item['url'] ?? '';
+
+                if (!empty($title) || !empty($content)) {
+                    $context .= "---\n";
+                    if (!empty($title)) {
+                        $context .= $title . "\n";
+                    }
+                    $context .= $content . "\n";
+                    if (!empty($url)) {
+                        $sources[] = $url;
+                    }
+                }
+            }
+
+            $context = apply_filters('wpaic_context', $context, $message);
+
+            if (!empty($context)) {
+                $ai_messages[] = [
+                    'role'    => 'system',
+                    'content' => __('Use the following reference information to answer the question:', 'rapls-ai-chatbot') . "\n\n" . $context,
+                ];
+            }
+        }
+
+        // Add conversation history
+        foreach ($context_messages as $ctx_msg) {
+            $ai_messages[] = $ctx_msg;
+        }
+
+        // Add current message
+        $ai_messages[] = ['role' => 'user', 'content' => $message];
+
+        // Get AI provider
+        $provider = $this->get_ai_provider($settings);
+
+        if (is_wp_error($provider)) {
+            return ['error' => $provider->get_error_message()];
+        }
+
+        // Send to AI
+        $options = [];
+        if (!empty($settings['max_tokens'])) {
+            $options['max_tokens'] = (int) $settings['max_tokens'];
+        }
+        if (isset($settings['temperature'])) {
+            $options['temperature'] = (float) $settings['temperature'];
+        }
+
+        try {
+            $ai_response = $provider->send_message($ai_messages, $options);
+        } catch (\Exception $e) {
+            return ['error' => 'AI provider error: ' . $e->getMessage()];
+        }
+
+        $response_content = $ai_response['content'] ?? '';
+        $response_content = apply_filters('wpaic_ai_response', $response_content, $message);
+
+        // Save messages to conversation
+        $save_history = !empty($settings['save_history']);
+        if ($save_history) {
+            WPAIC_Message::create([
+                'conversation_id' => $conversation_id,
+                'role'            => 'user',
+                'content'         => $message,
+            ]);
+
+            WPAIC_Message::create([
+                'conversation_id' => $conversation_id,
+                'role'            => 'assistant',
+                'content'         => $response_content,
+                'tokens_used'     => $ai_response['tokens_used'] ?? 0,
+                'input_tokens'    => $ai_response['input_tokens'] ?? 0,
+                'output_tokens'   => $ai_response['output_tokens'] ?? 0,
+                'ai_provider'     => $provider->get_name(),
+                'ai_model'        => $ai_response['model'] ?? '',
+            ]);
+        }
+
+        return [
+            'content'     => $response_content,
+            'session_id'  => $session_id,
+            'tokens_used' => $ai_response['tokens_used'] ?? 0,
+            'model'       => $ai_response['model'] ?? '',
+            'provider'    => $provider->get_name(),
+            'sources'     => array_unique($sources),
+        ];
+    }
+
+    /**
+     * Get AI provider instance.
+     *
+     * @param array $settings Plugin settings.
+     * @return WPAIC_AI_Provider_Interface|WP_Error
+     */
+    private function get_ai_provider(array $settings) {
+        $provider_name = $settings['ai_provider'] ?? 'openai';
+
+        switch ($provider_name) {
+            case 'claude':
+                $provider = new WPAIC_Claude_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['claude_api_key'] ?? ''));
+                $provider->set_model($settings['claude_model'] ?? 'claude-sonnet-4-20250514');
+                break;
+
+            case 'gemini':
+                $provider = new WPAIC_Gemini_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['gemini_api_key'] ?? ''));
+                $provider->set_model($settings['gemini_model'] ?? 'gemini-2.0-flash-exp');
+                break;
+
+            case 'openrouter':
+                $provider = new WPAIC_OpenRouter_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['openrouter_api_key'] ?? ''));
+                $provider->set_model($settings['openrouter_model'] ?? 'openrouter/auto');
+                break;
+
+            default: // openai
+                $provider = new WPAIC_OpenAI_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['openai_api_key'] ?? ''));
+                $provider->set_model($settings['openai_model'] ?? 'gpt-4o');
+                break;
+        }
+
+        return $provider;
+    }
+
+    /**
+     * Decrypt an API key (delegates to REST controller's pattern).
+     *
+     * @param string $encrypted Encrypted key.
+     * @return string Decrypted key.
+     */
+    private function decrypt_api_key(string $encrypted): string {
+        if (empty($encrypted)) {
+            return '';
+        }
+
+        // Same decryption as WPAIC_REST_Controller
+        $key = defined('WPAIC_ENCRYPTION_KEY')
+            ? WPAIC_ENCRYPTION_KEY
+            : wp_salt('auth');
+
+        $decoded = base64_decode($encrypted, true);
+        if ($decoded === false || strlen($decoded) < 13) {
+            return $encrypted; // Not encrypted, return as-is
+        }
+
+        $iv_length = 12;
+        $tag_length = 16;
+
+        if (strlen($decoded) < $iv_length + $tag_length + 1) {
+            return $encrypted;
+        }
+
+        $iv         = substr($decoded, 0, $iv_length);
+        $tag        = substr($decoded, $iv_length, $tag_length);
+        $ciphertext = substr($decoded, $iv_length + $tag_length);
+
+        if (!function_exists('openssl_decrypt')) {
+            return $encrypted;
+        }
+
+        $decrypted = openssl_decrypt($ciphertext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+
+        return $decrypted !== false ? $decrypted : $encrypted;
+    }
+}

@@ -216,6 +216,9 @@ class WPAIC_REST_Controller {
         add_filter('rest_post_dispatch', [$this, 'ensure_no_cache_public_gets'], 10, 3);
         add_filter('rest_post_dispatch', [$this, 'add_debug_reason_header'], 20, 3);
 
+        // CORS headers for cross-site embed (iframe uses same-origin, but future script mode needs CORS)
+        add_filter('rest_pre_serve_request', [$this, 'add_cors_headers'], 10, 4);
+
         // Get/Create session
         // Public: visitors need sessions before authentication is possible.
         // Defenses: IP-based rate limit (30/min + 5 new/10min per IP), UUID4 validation.
@@ -269,6 +272,12 @@ class WPAIC_REST_Controller {
                     'required'          => false,
                     'type'              => 'string',
                     'validate_callback' => [$this, 'validate_image_param'],
+                ],
+                'bot_id' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'default'           => 'default',
+                    'sanitize_callback' => 'sanitize_key',
                 ],
             ],
         ]);
@@ -698,6 +707,10 @@ class WPAIC_REST_Controller {
             }
         }
 
+        // Multi-bot: resolve bot configuration (Pro feature)
+        $bot_id = sanitize_key($request->get_param('bot_id') ?? 'default');
+        $bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($bot_id);
+
         // Session ownership already verified by check_session_permission()
 
         // Validate input
@@ -891,7 +904,10 @@ class WPAIC_REST_Controller {
 
         // Pre-check API key
         $settings = get_option('wpaic_settings', []);
-        $provider_name = $settings['ai_provider'] ?? 'openai';
+        // Bot config may override the provider
+        $provider_name = (is_array($bot_config) && !empty($bot_config['ai_provider']))
+            ? $bot_config['ai_provider']
+            : ($settings['ai_provider'] ?? 'openai');
 
         switch ($provider_name) {
             case 'claude':
@@ -922,6 +938,7 @@ class WPAIC_REST_Controller {
                 $conversation = WPAIC_Conversation::get_or_create($session_id, [
                     'page_url'   => $page_url,
                     'visitor_ip' => $this->get_client_ip(),
+                    'bot_id'     => $bot_id,
                 ]);
 
                 if (!$conversation) {
@@ -979,8 +996,8 @@ class WPAIC_REST_Controller {
                 ], 200);
             }
 
-            // Get AI provider
-            $ai_provider = $this->get_ai_provider();
+            // Get AI provider (bot config may override provider/model)
+            $ai_provider = $this->get_ai_provider($bot_config);
 
             // Search related content
             $search_engine = new WPAIC_Search_Engine();
@@ -1060,8 +1077,10 @@ class WPAIC_REST_Controller {
                 }
             }
 
-            // Build system prompt
-            $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant. Please answer user questions politely.';
+            // Build system prompt (bot config may override)
+            $system_prompt = (is_array($bot_config) && !empty($bot_config['system_prompt']))
+                ? $bot_config['system_prompt']
+                : ($settings['system_prompt'] ?? 'You are a helpful assistant. Please answer user questions politely.');
 
             /**
              * Filter the system prompt sent to the AI provider.
@@ -1122,6 +1141,12 @@ class WPAIC_REST_Controller {
                     }
                 }
             }
+            // Web search instruction (appended before RAG context so AI knows it can search)
+            $web_search_enabled = !empty($settings['web_search_enabled']);
+            if ($web_search_enabled) {
+                $system_prompt .= "\n\n[WEB SEARCH]\nYou have access to web search. Use it ONLY when the provided reference information does not contain a sufficient answer. Prefer the reference information over web results. When citing web sources, mention the source naturally in your response.";
+            }
+
             /**
              * Filter the RAG context before injection into the system prompt.
              *
@@ -1172,18 +1197,25 @@ class WPAIC_REST_Controller {
                 ];
             }
 
-            // Send to AI (clamp settings to safe ranges)
-            $max_tokens = max(1, min(16384, (int) ($settings['max_tokens'] ?? 1000)));
-            $temperature = max(0.0, min(2.0, (float) ($settings['temperature'] ?? 0.7)));
+            // Send to AI (clamp settings to safe ranges; bot config may override)
+            $bot_max_tokens = is_array($bot_config) ? ($bot_config['max_tokens'] ?? null) : null;
+            $bot_temperature = is_array($bot_config) ? ($bot_config['temperature'] ?? null) : null;
+            $max_tokens = max(1, min(16384, (int) ($bot_max_tokens ?? $settings['max_tokens'] ?? 1000)));
+            $temperature = max(0.0, min(2.0, (float) ($bot_temperature ?? $settings['temperature'] ?? 0.7)));
 
             // Generate request ID at the REST layer for response header correlation
             $request_id = wp_generate_uuid4();
 
-            $response = $ai_provider->send_message($messages, [
+            $send_options = [
                 'max_tokens'   => $max_tokens,
                 'temperature'  => $temperature,
                 '_request_id'  => $request_id,
-            ]);
+            ];
+            if ($web_search_enabled) {
+                $send_options['web_search'] = true;
+            }
+
+            $response = $ai_provider->send_message($messages, $send_options);
 
             // Save AI response
             $resp_msg_id = 0;
@@ -1258,6 +1290,11 @@ class WPAIC_REST_Controller {
                 'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
                 'session_id'  => $session_id,
             ];
+
+            // Add web search sources if present
+            if (!empty($response['web_sources'])) {
+                $response_data['web_sources'] = $response['web_sources'];
+            }
 
             // Add sentiment to response if sentiment analysis is enabled
             $sentiment_enabled = $pro_features->is_sentiment_analysis_enabled();
@@ -1471,33 +1508,37 @@ class WPAIC_REST_Controller {
     /**
      * Get AI provider
      */
-    private function get_ai_provider(): WPAIC_AI_Provider_Interface {
+    private function get_ai_provider(?array $bot_config = null): WPAIC_AI_Provider_Interface {
         $settings = get_option('wpaic_settings', []);
-        $provider_name = $settings['ai_provider'] ?? 'openai';
+        // Bot config may override the provider; API keys always come from global settings
+        $provider_name = (is_array($bot_config) && !empty($bot_config['ai_provider']))
+            ? $bot_config['ai_provider']
+            : ($settings['ai_provider'] ?? 'openai');
+        $bot_model = is_array($bot_config) ? ($bot_config['model'] ?? '') : '';
 
         switch ($provider_name) {
             case 'claude':
                 $provider = new WPAIC_Claude_Provider();
                 $provider->set_api_key($this->decrypt_api_key($settings['claude_api_key'] ?? ''));
-                $provider->set_model($settings['claude_model'] ?? 'claude-sonnet-4-20250514');
+                $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['claude_model'] ?? 'claude-sonnet-4-20250514'));
                 break;
 
             case 'gemini':
                 $provider = new WPAIC_Gemini_Provider();
                 $provider->set_api_key($this->decrypt_api_key($settings['gemini_api_key'] ?? ''));
-                $provider->set_model($settings['gemini_model'] ?? 'gemini-2.0-flash-exp');
+                $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'));
                 break;
 
             case 'openrouter':
                 $provider = new WPAIC_OpenRouter_Provider();
                 $provider->set_api_key($this->decrypt_api_key($settings['openrouter_api_key'] ?? ''));
-                $provider->set_model($settings['openrouter_model'] ?? 'openrouter/auto');
+                $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openrouter_model'] ?? 'openrouter/auto'));
                 break;
 
             default: // openai
                 $provider = new WPAIC_OpenAI_Provider();
                 $provider->set_api_key($this->decrypt_api_key($settings['openai_api_key'] ?? ''));
-                $provider->set_model($settings['openai_model'] ?? 'gpt-4o');
+                $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openai_model'] ?? 'gpt-4o'));
                 break;
         }
 
@@ -2277,6 +2318,41 @@ class WPAIC_REST_Controller {
             }
         }
         return array_values(array_unique($sanitized));
+    }
+
+    /**
+     * Add CORS headers for cross-site embed requests.
+     * Only applies to wp-ai-chatbot/v1 namespace.
+     * Uses the same allowed origins list as the origin check.
+     *
+     * @param bool             $served  Whether the request has already been served.
+     * @param WP_HTTP_Response $result  Result to send.
+     * @param WP_REST_Request  $request REST request.
+     * @param WP_REST_Server   $server  REST server.
+     * @return bool
+     */
+    public function add_cors_headers($served, $result, $request, $server) {
+        if (strpos($request->get_route(), '/' . $this->namespace) !== 0) {
+            return $served;
+        }
+
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $origin = isset($_SERVER['HTTP_ORIGIN']) ? wp_unslash($_SERVER['HTTP_ORIGIN']) : '';
+        if (empty($origin)) {
+            return $served;
+        }
+
+        $allowed = $this->get_allowed_origin_hosts();
+        $origin_host = wp_parse_url($origin, PHP_URL_HOST);
+        if ($origin_host && in_array(strtolower($origin_host), $allowed, true)) {
+            header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
+            header('Access-Control-Allow-Credentials: true');
+            header('Access-Control-Allow-Headers: Content-Type, X-WP-Nonce, X-WPAIC-Session');
+            header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+            header('Vary: Origin');
+        }
+
+        return $served;
     }
 
     /**

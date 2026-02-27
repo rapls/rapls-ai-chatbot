@@ -336,6 +336,7 @@ class WPAIC_Activator {
         self::maybe_add_feedback_index();
         self::maybe_add_handoff_columns();
         self::maybe_add_embedding_columns();
+        self::maybe_add_bot_id_column();
         WPAIC_Lead::maybe_create_table();
     }
 
@@ -559,6 +560,23 @@ class WPAIC_Activator {
                     'ADD COLUMN embedding_model VARCHAR(50) DEFAULT NULL AFTER embedding',
                     'add column embedding_model');
             }
+        }
+    }
+
+    /**
+     * Add bot_id column to conversations table (multi-bot support)
+     */
+    private static function maybe_add_bot_id_column(): void {
+        if (!self::table_exists('aichat_conversations')) {
+            return;
+        }
+        if (!self::has_column('aichat_conversations', 'bot_id')) {
+            self::safe_alter('aichat_conversations',
+                "ADD COLUMN bot_id VARCHAR(64) DEFAULT 'default' AFTER session_id",
+                'add column bot_id');
+            self::safe_alter('aichat_conversations',
+                'ADD KEY bot_id (bot_id)',
+                'add index bot_id');
         }
     }
 

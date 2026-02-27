@@ -327,6 +327,10 @@ class WPAIC_Pro_Features {
             'embedding_enabled'  => false,
             'embedding_provider' => 'auto',  // 'auto' | 'openai' | 'gemini'
 
+            // Actions / Intent Recognition
+            'actions_enabled' => false,
+            'actions' => [],
+
             // Offline Messages
             'offline_message_enabled' => false,
             'offline_form_title' => __('We are currently offline', 'rapls-ai-chatbot'),
@@ -507,6 +511,20 @@ class WPAIC_Pro_Features {
     }
 
     /**
+     * Stub: Check if actions/intent recognition is enabled
+     */
+    public function is_actions_enabled(): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Get defined actions
+     */
+    public function get_actions(): array {
+        return [];
+    }
+
+    /**
      * Stub: Check if message triggers handoff to human operator
      */
     public function check_handoff_trigger(string $message, int $conversation_id): bool {
@@ -532,5 +550,27 @@ class WPAIC_Pro_Features {
      */
     public function is_operator_active(int $conversation_id): bool {
         return false;
+    }
+
+    /**
+     * Stub: Resolve bot configuration by slug.
+     * Returns null in Free (single bot only). Pro overrides with actual lookup.
+     *
+     * @param string|null $bot_id Bot slug (e.g. 'sales').
+     * @return array|null Bot config array or null if not found/disabled.
+     */
+    public function resolve_bot_config(?string $bot_id = null): ?array {
+        return null;
+    }
+
+    /**
+     * Stub: Get the bot assigned to a specific page via page rules.
+     * Returns 'default' in Free (no page-based bot routing).
+     *
+     * @param int $page_id WordPress page/post ID.
+     * @return string Bot slug or 'default'.
+     */
+    public function get_bot_for_page(int $page_id): string {
+        return 'default';
     }
 }

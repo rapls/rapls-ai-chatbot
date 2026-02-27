@@ -715,7 +715,8 @@
                         message: message,
                         page_url: window.location.href,
                         recaptcha_token: token,
-                        client_request_id: self.generateRequestId()
+                        client_request_id: self.generateRequestId(),
+                        bot_id: self.config.bot_id || 'default'
                     };
 
                     // 画像がある場合は追加
@@ -757,7 +758,7 @@
                                 : '';
                             self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                         } else {
-                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards);
+                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action);
                             // Fetch related question suggestions (Pro)
                             self.fetchSuggestions();
                             // Save context for memory (Pro) - async, don't wait
@@ -986,7 +987,7 @@
         /**
          * Add message to UI
          */
-        addMessage: function(role, content, sources, messageId, sentiment, productCards) {
+        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData) {
             var self = this;
             var messageEl = document.createElement('div');
             messageEl.className = 'chatbot-message chatbot-message--' + role;
@@ -1076,6 +1077,34 @@
                 contentEl.appendChild(sourcesEl);
             }
 
+            // Web search sources
+            if (webSources && webSources.length > 0) {
+                var webSourcesEl = document.createElement('div');
+                webSourcesEl.className = 'chatbot-message__sources chatbot-message__web-sources';
+
+                var webTitleEl = document.createElement('div');
+                webTitleEl.className = 'chatbot-message__sources-title';
+                webTitleEl.textContent = '\uD83C\uDF10 ' + ((self.config.strings && self.config.strings.web_sources_title) || 'Web sources:');
+                webSourcesEl.appendChild(webTitleEl);
+
+                webSources.forEach(function(src) {
+                    var url = src.url || '';
+                    var title = src.title || '';
+                    try {
+                        var parsed = new URL(url);
+                        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+                    } catch (e) { return; }
+                    var linkEl = document.createElement('a');
+                    linkEl.href = url;
+                    linkEl.target = '_blank';
+                    linkEl.rel = 'noopener noreferrer';
+                    linkEl.textContent = title || url;
+                    webSourcesEl.appendChild(linkEl);
+                });
+
+                contentEl.appendChild(webSourcesEl);
+            }
+
             // Product cards (Pro WooCommerce feature)
             if (productCards && productCards.length > 0) {
                 var cardsContainer = document.createElement('div');
@@ -1124,6 +1153,39 @@
                 });
 
                 contentEl.appendChild(cardsContainer);
+            }
+
+            // Action buttons (Pro intent recognition)
+            if (actionData) {
+                var actionEl = document.createElement('div');
+                actionEl.className = 'chatbot-action-buttons';
+
+                if (actionData.type === 'redirect' && actionData.url) {
+                    var actionBtn = document.createElement('a');
+                    actionBtn.href = actionData.url;
+                    actionBtn.target = '_blank';
+                    actionBtn.rel = 'noopener noreferrer';
+                    actionBtn.className = 'chatbot-action-btn';
+                    actionBtn.textContent = actionData.label || 'Open';
+                    actionEl.appendChild(actionBtn);
+                } else if (actionData.type === 'link_buttons' && actionData.links) {
+                    actionData.links.forEach(function(link) {
+                        var linkBtn = document.createElement('a');
+                        linkBtn.href = link.url;
+                        linkBtn.target = '_blank';
+                        linkBtn.rel = 'noopener noreferrer';
+                        linkBtn.className = 'chatbot-action-btn';
+                        linkBtn.textContent = link.label;
+                        actionEl.appendChild(linkBtn);
+                    });
+                } else if (actionData.type === 'notify_email' && actionData.message) {
+                    var noticeEl = document.createElement('div');
+                    noticeEl.className = 'chatbot-action-notice';
+                    noticeEl.textContent = actionData.message;
+                    actionEl.appendChild(noticeEl);
+                }
+
+                contentEl.appendChild(actionEl);
             }
 
             // Add feedback buttons for bot messages
@@ -1288,6 +1350,31 @@
                         contentEl.appendChild(sourcesEl);
                     }
 
+                    // Re-add web sources if any
+                    if (data.data.web_sources && data.data.web_sources.length > 0) {
+                        var webSourcesEl = document.createElement('div');
+                        webSourcesEl.className = 'chatbot-message__sources chatbot-message__web-sources';
+                        var webTitleEl = document.createElement('div');
+                        webTitleEl.className = 'chatbot-message__sources-title';
+                        webTitleEl.textContent = '\uD83C\uDF10 ' + ((self.config.strings && self.config.strings.web_sources_title) || 'Web sources:');
+                        webSourcesEl.appendChild(webTitleEl);
+                        data.data.web_sources.forEach(function(src) {
+                            var wUrl = src.url || '';
+                            var wTitle = src.title || '';
+                            try {
+                                var parsed = new URL(wUrl);
+                                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+                            } catch (e) { return; }
+                            var linkEl = document.createElement('a');
+                            linkEl.href = wUrl;
+                            linkEl.target = '_blank';
+                            linkEl.rel = 'noopener noreferrer';
+                            linkEl.textContent = wTitle || wUrl;
+                            webSourcesEl.appendChild(linkEl);
+                        });
+                        contentEl.appendChild(webSourcesEl);
+                    }
+
                     // Re-add product cards if any (Pro WooCommerce)
                     if (data.data.product_cards && data.data.product_cards.length > 0) {
                         var cardsContainer = document.createElement('div');
@@ -1328,6 +1415,38 @@
                             cardsContainer.appendChild(cardLink);
                         });
                         contentEl.appendChild(cardsContainer);
+                    }
+
+                    // Re-add action buttons if any (Pro intent recognition)
+                    if (data.data.action) {
+                        var regenAction = data.data.action;
+                        var regenActionEl = document.createElement('div');
+                        regenActionEl.className = 'chatbot-action-buttons';
+                        if (regenAction.type === 'redirect' && regenAction.url) {
+                            var rBtn = document.createElement('a');
+                            rBtn.href = regenAction.url;
+                            rBtn.target = '_blank';
+                            rBtn.rel = 'noopener noreferrer';
+                            rBtn.className = 'chatbot-action-btn';
+                            rBtn.textContent = regenAction.label || 'Open';
+                            regenActionEl.appendChild(rBtn);
+                        } else if (regenAction.type === 'link_buttons' && regenAction.links) {
+                            regenAction.links.forEach(function(link) {
+                                var lBtn = document.createElement('a');
+                                lBtn.href = link.url;
+                                lBtn.target = '_blank';
+                                lBtn.rel = 'noopener noreferrer';
+                                lBtn.className = 'chatbot-action-btn';
+                                lBtn.textContent = link.label;
+                                regenActionEl.appendChild(lBtn);
+                            });
+                        } else if (regenAction.type === 'notify_email' && regenAction.message) {
+                            var rNotice = document.createElement('div');
+                            rNotice.className = 'chatbot-action-notice';
+                            rNotice.textContent = regenAction.message;
+                            regenActionEl.appendChild(rNotice);
+                        }
+                        contentEl.appendChild(regenActionEl);
                     }
 
                     // Re-add actions
@@ -2411,6 +2530,54 @@
                     continue;
                 }
 
+                // Table (| col | col | with separator |---|---|)
+                if (/^\|(.+\|)+\s*$/.test(line) && i + 1 < lines.length && /^\|[\s\-:]+(\|[\s\-:]+)+\s*$/.test(lines[i + 1])) {
+                    var table = document.createElement('table');
+                    var thead = document.createElement('thead');
+                    var tbody = document.createElement('tbody');
+
+                    // Parse alignment from separator row
+                    var sepCells = lines[i + 1].split('|').filter(function(c) { return c.trim() !== ''; });
+                    var aligns = sepCells.map(function(c) {
+                        var t = c.trim();
+                        if (t.charAt(0) === ':' && t.charAt(t.length - 1) === ':') return 'center';
+                        if (t.charAt(t.length - 1) === ':') return 'right';
+                        return '';
+                    });
+
+                    // Header row
+                    var headerCells = line.split('|').filter(function(c) { return c.trim() !== ''; });
+                    var tr = document.createElement('tr');
+                    headerCells.forEach(function(cell, ci) {
+                        var th = document.createElement('th');
+                        self._appendInlineMarkdown(th, cell.trim());
+                        if (aligns[ci]) th.style.textAlign = aligns[ci];
+                        tr.appendChild(th);
+                    });
+                    thead.appendChild(tr);
+                    table.appendChild(thead);
+
+                    // Skip header and separator
+                    i += 2;
+
+                    // Body rows
+                    while (i < lines.length && /^\|(.+\|)+\s*$/.test(lines[i])) {
+                        var bodyCells = lines[i].split('|').filter(function(c) { return c.trim() !== ''; });
+                        var bodyTr = document.createElement('tr');
+                        bodyCells.forEach(function(cell, ci) {
+                            var td = document.createElement('td');
+                            self._appendInlineMarkdown(td, cell.trim());
+                            if (aligns[ci]) td.style.textAlign = aligns[ci];
+                            bodyTr.appendChild(td);
+                        });
+                        tbody.appendChild(bodyTr);
+                        i++;
+                    }
+                    table.appendChild(tbody);
+                    fragment.appendChild(table);
+                    continue;
+                }
+
                 // Empty line → skip (paragraph break)
                 if (line.trim() === '') {
                     i++;
@@ -2424,6 +2591,7 @@
                     !/^>\s?/.test(lines[i]) &&
                     !/^[\-\*]\s+/.test(lines[i]) &&
                     !/^\d+\.\s+/.test(lines[i]) &&
+                    !/^\|(.+\|)+\s*$/.test(lines[i]) &&
                     !/^\x00CODEBLOCK/.test(lines[i])) {
                     paraLines.push(lines[i]);
                     i++;

@@ -514,13 +514,15 @@ class WPAIC_Knowledge {
 
         // MIME type validation — prevents extension spoofing
         $allowed_mimes = [
-            'txt' => 'text/plain',
-            'csv' => 'text/csv',
-            'md'  => 'text/plain',
+            'txt'  => 'text/plain',
+            'csv'  => 'text/csv',
+            'md'   => 'text/plain',
+            'pdf'  => 'application/pdf',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ];
         $filetype = wp_check_filetype($file['name'], $allowed_mimes);
         if (empty($filetype['ext'])) {
-            return new WP_Error('invalid_file_type', __('Unsupported file type. (txt, csv, md only)', 'rapls-ai-chatbot'));
+            return new WP_Error('invalid_file_type', __('Unsupported file type. Supported: TXT, CSV, MD, PDF, DOCX', 'rapls-ai-chatbot'));
         }
 
         // Generate title from filename
@@ -539,8 +541,34 @@ class WPAIC_Knowledge {
                 $content = self::parse_csv_file($file['tmp_name']);
                 break;
 
+            case 'pdf':
+                $content = WPAIC_PDF_Parser::extract_text($file['tmp_name']);
+                if (empty($content)) {
+                    return new WP_Error(
+                        'pdf_no_text',
+                        __('Could not extract text from this PDF. Only text-based PDFs are supported. Scanned image PDFs and encrypted PDFs cannot be processed.', 'rapls-ai-chatbot')
+                    );
+                }
+                break;
+
+            case 'docx':
+                if (!class_exists('ZipArchive')) {
+                    return new WP_Error(
+                        'docx_not_supported',
+                        __('DOCX import requires the PHP ZipArchive extension, which is not available on this server.', 'rapls-ai-chatbot')
+                    );
+                }
+                $content = WPAIC_DOCX_Parser::extract_text($file['tmp_name']);
+                if (empty($content)) {
+                    return new WP_Error(
+                        'docx_parse_error',
+                        __('Could not extract text from this DOCX file. The file may be corrupted or empty.', 'rapls-ai-chatbot')
+                    );
+                }
+                break;
+
             default:
-                return new WP_Error('invalid_file_type', __('Unsupported file type. (txt, csv, md only)', 'rapls-ai-chatbot'));
+                return new WP_Error('invalid_file_type', __('Unsupported file type. Supported: TXT, CSV, MD, PDF, DOCX', 'rapls-ai-chatbot'));
         }
 
         if (empty($content)) {
