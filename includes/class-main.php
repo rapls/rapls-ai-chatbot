@@ -120,10 +120,13 @@ class WPAIC_Main {
         require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-openai-provider.php';
         require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-claude-provider.php';
         require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-gemini-provider.php';
+        require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-openrouter-provider.php';
 
         // Crawler
         require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-content-extractor.php';
         require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-content-chunker.php';
+        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-embedding-generator.php';
+        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-vector-search.php';
         require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-search-engine.php';
         require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-site-crawler.php';
 
@@ -177,6 +180,11 @@ class WPAIC_Main {
         $this->loader->add_action('wp_ajax_wpaic_toggle_knowledge', $admin, 'ajax_toggle_knowledge');
         $this->loader->add_action('wp_ajax_wpaic_update_priority', $admin, 'ajax_update_priority');
 
+        // Embedding AJAX
+        $this->loader->add_action('wp_ajax_wpaic_generate_embeddings', $admin, 'ajax_generate_embeddings');
+        $this->loader->add_action('wp_ajax_wpaic_clear_embeddings', $admin, 'ajax_clear_embeddings');
+        $this->loader->add_action('wp_ajax_wpaic_embedding_status', $admin, 'ajax_embedding_status');
+
         // Settings import/export/reset AJAX
         $this->loader->add_action('wp_ajax_wpaic_export_settings', $admin, 'ajax_export_settings');
         $this->loader->add_action('wp_ajax_wpaic_import_settings', $admin, 'ajax_import_settings');
@@ -202,6 +210,9 @@ class WPAIC_Main {
         $this->loader->add_action('wp_enqueue_scripts', $widget, 'enqueue_styles');
         $this->loader->add_action('wp_enqueue_scripts', $widget, 'enqueue_scripts');
         $this->loader->add_action('wp_footer', $widget, 'render_widget');
+
+        // Shortcode [rapls_chatbot] for inline embedding
+        add_shortcode('rapls_chatbot', [$widget, 'render_shortcode']);
     }
 
     /**
@@ -317,6 +328,7 @@ class WPAIC_Main {
                 <li>%s</li>
                 <li>%s</li>
                 <li>%s</li>
+                <li>%s</li>
             </ul>
             <h3>%s</h3>
             <p>%s</p>
@@ -333,6 +345,7 @@ class WPAIC_Main {
             esc_html__( 'OpenAI API (api.openai.com) - for GPT model responses', 'rapls-ai-chatbot' ),
             esc_html__( 'Anthropic API (api.anthropic.com) - for Claude model responses', 'rapls-ai-chatbot' ),
             esc_html__( 'Google AI API (generativelanguage.googleapis.com) - for Gemini model responses', 'rapls-ai-chatbot' ),
+            esc_html__( 'OpenRouter API (openrouter.ai) - for multi-provider model access', 'rapls-ai-chatbot' ),
             esc_html__( 'Data Retention', 'rapls-ai-chatbot' ),
             esc_html__( 'Conversation data is automatically deleted after the configured retention period. Administrators can also manually delete conversations at any time.', 'rapls-ai-chatbot' ),
             esc_html__( 'User Controls', 'rapls-ai-chatbot' ),

@@ -180,6 +180,7 @@ wpaic_ai_response            // Filter AI response before display
 wpaic_chatbot_enabled        // Control chatbot visibility
 wpaic_allowed_origins        // Add allowed origin hosts for same-origin check
 wpaic_gpt5_token_multiplier  // GPT-5 reasoning token multiplier (default: 4, range: 1-8)
+wpaic_chat_response_data     // Filter chat response data before returning to client (Pro uses for product cards)
 ```
 
 ### Database Tables (prefix: `wp_aichat_`)
@@ -252,6 +253,7 @@ All Phase 0-5 features are implemented. See the full backlog of unimplemented fe
 - Conversion tracking (goal URL patterns, analytics integration)
 - Offline messages (business hours form, email notification, webhook)
 - Answer templates (knowledge type field, operator mode insertion, dynamic variables)
+- WooCommerce integration (product data auto-crawl, product card display in chat)
 
 ### Unimplemented Pro Features (Backlog)
 **AI**: Text-to-speech, response edit suggestions

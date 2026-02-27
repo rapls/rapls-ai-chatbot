@@ -10,10 +10,93 @@ if (!defined('ABSPATH')) {
 class WPAIC_Chatbot_Widget {
 
     /**
+     * Whether currently rendering an inline shortcode
+     */
+    private bool $is_inline = false;
+
+    /**
+     * Render shortcode [rapls_chatbot]
+     *
+     * @param array|string $atts Shortcode attributes.
+     * @return string HTML output.
+     */
+    public function render_shortcode($atts): string {
+        // Don't render in admin
+        if (is_admin()) {
+            return '';
+        }
+
+        $atts = shortcode_atts([
+            'height' => '500px',
+            'theme'  => '',
+        ], $atts, 'rapls_chatbot');
+
+        $this->is_inline = true;
+
+        // Ensure scripts/styles are enqueued (shortcode may appear before wp_enqueue_scripts)
+        if (!wp_script_is('wpaic-chatbot', 'enqueued')) {
+            $this->enqueue_styles();
+            $this->enqueue_scripts();
+        }
+
+        // Tell JS to use inline mode
+        wp_add_inline_script('wpaic-chatbot',
+            'if(window.wpAiChatbotConfig) wpAiChatbotConfig.inlineMode = true;',
+            'before'
+        );
+
+        $settings = get_option('wpaic_settings', []);
+        $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');
+        $bot_avatar_raw = $settings['bot_avatar'] ?? '🤖';
+        $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
+        $bot_avatar = $bot_avatar_is_image ? esc_url($bot_avatar_raw) : esc_html($bot_avatar_raw);
+
+        $widget_theme = $settings['widget_theme'] ?? 'default';
+        $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
+        $is_pro_active = get_option('wpaic_pro_active');
+
+        if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
+            $widget_theme = 'default';
+        }
+
+        // Allow shortcode theme override
+        if (!empty($atts['theme'])) {
+            $override = sanitize_key($atts['theme']);
+            if ($is_pro_active || in_array($override, $free_themes)) {
+                $widget_theme = $override;
+            }
+        }
+
+        $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
+        if ($is_pro_active && !empty($settings['dark_mode'])) {
+            $theme_class .= ' dark-mode';
+        }
+        $theme_class = trim($theme_class);
+
+        $pro_features = $settings['pro_features'] ?? [];
+        $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
+        $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
+        $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
+        $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
+
+        // Sanitize height attribute
+        $height = esc_attr($atts['height']);
+        if (preg_match('/^\d+$/', $height)) {
+            $height .= 'px';
+        }
+
+        ob_start();
+        echo '<div class="wpaic-inline" style="height:' . esc_attr($height) . '">';
+        include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
+        echo '</div>';
+        return ob_get_clean();
+    }
+
+    /**
      * Enqueue frontend styles
      */
     public function enqueue_styles(): void {
-        if (!$this->should_display()) {
+        if (!$this->is_inline && !$this->should_display()) {
             return;
         }
 
@@ -72,7 +155,7 @@ class WPAIC_Chatbot_Widget {
      * Enqueue frontend scripts
      */
     public function enqueue_scripts(): void {
-        if (!$this->should_display()) {
+        if (!$this->is_inline && !$this->should_display()) {
             return;
         }
 
@@ -193,6 +276,12 @@ class WPAIC_Chatbot_Widget {
                 'sentiment_urgent'       => __('Urgent', 'rapls-ai-chatbot'),
                 'sentiment_positive'     => __('Positive', 'rapls-ai-chatbot'),
                 'sentiment_negative'     => __('Negative', 'rapls-ai-chatbot'),
+                'out_of_stock'           => __('Out of stock', 'rapls-ai-chatbot'),
+                'handoff_waiting'        => __('Waiting for support representative...', 'rapls-ai-chatbot'),
+                'handoff_pending'        => __('A support representative has been notified. Please wait...', 'rapls-ai-chatbot'),
+                'handoff_active'         => __('Connected with support', 'rapls-ai-chatbot'),
+                'handoff_resolved'       => __('Support session ended. You are now chatting with AI again.', 'rapls-ai-chatbot'),
+                'operator_label'         => __('Support', 'rapls-ai-chatbot'),
             ],
         ]);
     }
@@ -201,6 +290,11 @@ class WPAIC_Chatbot_Widget {
      * Render widget
      */
     public function render_widget(): void {
+        // Don't render floating widget when inline shortcode was used
+        if ($this->is_inline) {
+            return;
+        }
+
         if (!$this->should_display()) {
             return;
         }

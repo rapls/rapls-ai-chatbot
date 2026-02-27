@@ -179,6 +179,7 @@ class WPAIC_Pro_Features {
                 'new_conversation' => true,
                 'new_message' => true,
                 'lead_captured' => true,
+                'handoff_requested' => true,
             ],
 
             // Quick replies
@@ -251,8 +252,13 @@ class WPAIC_Pro_Features {
 
             'human_handoff_enabled' => false,
             'handoff_keywords' => '',
+            'handoff_auto_keywords_ja' => '人間と話したい,オペレーター,サポートに繋いで,担当者',
             'handoff_email' => '',
             'handoff_message' => __('I understand this may need human assistance. A support representative will contact you soon.', 'rapls-ai-chatbot'),
+            'handoff_notification_method' => 'email',
+            'handoff_slack_webhook_url' => '',
+            'handoff_auto_detect' => true,
+            'operator_auto_close_minutes' => 30,
 
             'survey_enabled' => false,
             'survey_trigger' => 'end',
@@ -313,6 +319,13 @@ class WPAIC_Pro_Features {
             // Conversion Tracking
             'conversion_tracking_enabled' => false,
             'conversion_goals' => [],
+
+            // WooCommerce Product Cards
+            'woocommerce_cards_enabled' => true,
+
+            // Embedding / Vector RAG
+            'embedding_enabled'  => false,
+            'embedding_provider' => 'auto',  // 'auto' | 'openai' | 'gemini'
 
             // Offline Messages
             'offline_message_enabled' => false,
@@ -484,5 +497,40 @@ class WPAIC_Pro_Features {
      */
     public function maybe_send_budget_alert(float $cost): void {
         // no-op in Free
+    }
+
+    /**
+     * Stub: Check if WooCommerce product cards are enabled
+     */
+    public function is_woocommerce_cards_enabled(): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Check if message triggers handoff to human operator
+     */
+    public function check_handoff_trigger(string $message, int $conversation_id): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Get handoff status for a conversation
+     */
+    public function get_handoff_status(int $conversation_id): ?string {
+        return null;
+    }
+
+    /**
+     * Stub: Process handoff escalation
+     */
+    public function process_handoff(int $conversation_id, string $session_id): array {
+        return ['escalated' => false];
+    }
+
+    /**
+     * Stub: Check if operator is actively handling a conversation
+     */
+    public function is_operator_active(int $conversation_id): bool {
+        return false;
     }
 }

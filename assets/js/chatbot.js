@@ -90,6 +90,11 @@
         selectedImage: null,
         selectedImageData: null,
 
+        // ハンドオフ状態
+        handoffStatus: null,
+        handoffPollTimer: null,
+        lastOperatorMessageId: 0,
+
         // 設定
         config: window.wpAiChatbotConfig || {},
 
@@ -99,6 +104,11 @@
         init: function() {
             this.cacheElements();
             if (!this.container) return;
+
+            // Inline mode: shortcode-embedded chatbot
+            if (this.config.inlineMode) {
+                this.initInlineMode();
+            }
 
             this.createResizeHandle();
             this.bindEvents();
@@ -111,6 +121,29 @@
             this.initConversionTracking();
             this.listenForConsentChange();
             this.isInitialized = true;
+        },
+
+        /**
+         * インラインモード初期化
+         * ショートコード埋め込み時: バッジ非表示、ウィンドウ即表示、閉じるボタン非表示
+         */
+        initInlineMode: function() {
+            // Open immediately
+            this.isOpen = true;
+            this.container.dataset.state = 'open';
+
+            if (this.badge) {
+                this.badge.style.display = 'none';
+            }
+            if (this.window) {
+                this.window.style.display = 'flex';
+                this.window.setAttribute('aria-hidden', 'false');
+            }
+
+            var closeBtn = this.container.querySelector('.chatbot-close');
+            if (closeBtn) {
+                closeBtn.style.display = 'none';
+            }
         },
 
         /**
@@ -142,6 +175,11 @@
          * リサイズハンドルを作成
          */
         createResizeHandle: function() {
+            // No resize handle in inline mode (container sized by CSS)
+            if (this.config.inlineMode) {
+                this.resizeHandle = document.createElement('div');
+                return;
+            }
             this.resizeHandle = document.createElement('div');
             this.resizeHandle.className = 'chatbot-resize-handle';
             this.resizeHandle.setAttribute('aria-label', 'ウィンドウをリサイズ');
@@ -152,6 +190,8 @@
          * 保存されたウィンドウサイズを読み込み
          */
         loadWindowSize: function() {
+            // Inline mode: size controlled by container CSS
+            if (this.config.inlineMode) return;
             var savedSize = wpaicLsGet('wpaic_window_size');
             if (savedSize) {
                 try {
@@ -209,15 +249,20 @@
         bindEvents: function() {
             var self = this;
 
-            // バッジクリック → 開く
-            this.badge.addEventListener('click', function() {
-                self.open();
-            });
+            // バッジクリック → 開く（インラインモードではバッジ非表示のためスキップ）
+            if (this.badge && !this.config.inlineMode) {
+                this.badge.addEventListener('click', function() {
+                    self.open();
+                });
+            }
 
-            // 閉じるボタン
-            this.container.querySelector('.chatbot-close').addEventListener('click', function() {
-                self.close();
-            });
+            // 閉じるボタン（インラインモードでは非表示のためスキップ）
+            var closeBtn = this.container.querySelector('.chatbot-close');
+            if (closeBtn && !this.config.inlineMode) {
+                closeBtn.addEventListener('click', function() {
+                    self.close();
+                });
+            }
 
             // フォーム送信
             this.inputForm.addEventListener('submit', function(e) {
@@ -243,12 +288,14 @@
                 this.style.height = Math.min(this.scrollHeight, 100) + 'px';
             });
 
-            // ESCキーで閉じる
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && self.isOpen) {
-                    self.close();
-                }
-            });
+            // ESCキーで閉じる（インラインモードでは無効）
+            if (!this.config.inlineMode) {
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && self.isOpen) {
+                        self.close();
+                    }
+                });
+            }
 
             // ページ表示時（bfcache対策）
             window.addEventListener('pageshow', function(e) {
@@ -710,11 +757,18 @@
                                 : '';
                             self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                         } else {
-                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment);
+                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards);
                             // Fetch related question suggestions (Pro)
                             self.fetchSuggestions();
                             // Save context for memory (Pro) - async, don't wait
                             self.saveContext();
+                        }
+
+                        // Handoff detection (Pro: live agent escalation)
+                        if (response.data && response.data.handoff_triggered) {
+                            self.handleHandoffTriggered(response.data);
+                        } else if (response.data && response.data.handoff_status) {
+                            self.showHandoffIndicator(response.data.handoff_status);
                         }
                     } else {
                         self.addMessage('bot', response.error || (self.config.strings && self.config.strings.error_occurred) || 'An error occurred.');
@@ -760,6 +814,139 @@
         },
 
         /**
+         * Handle handoff triggered by server response
+         */
+        handleHandoffTriggered: function(data) {
+            var s = this.config.strings || {};
+            this.handoffStatus = 'pending';
+            this.addSystemMessage(data.handoff_message || s.handoff_pending || 'A support representative has been notified. Please wait...');
+            this.showHandoffIndicator('pending');
+            this.startHandoffPolling();
+        },
+
+        /**
+         * Start polling for handoff status and operator messages
+         */
+        startHandoffPolling: function() {
+            var self = this;
+            this.stopHandoffPolling();
+            this.handoffPollTimer = setInterval(function() {
+                self.pollHandoffStatus();
+            }, 5000);
+        },
+
+        /**
+         * Stop handoff polling
+         */
+        stopHandoffPolling: function() {
+            if (this.handoffPollTimer) {
+                clearInterval(this.handoffPollTimer);
+                this.handoffPollTimer = null;
+            }
+        },
+
+        /**
+         * Poll handoff status endpoint
+         */
+        pollHandoffStatus: function() {
+            var self = this;
+            if (!this.sessionId) return;
+
+            var url = this.config.api_base + '/handoff-status/' + encodeURIComponent(this.sessionId);
+            if (this.lastOperatorMessageId) {
+                url += '?last_message_id=' + this.lastOperatorMessageId;
+            }
+
+            fetch(url, {
+                method: 'GET',
+                headers: { 'X-WP-Nonce': this.config.nonce }
+            })
+            .then(function(response) {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(function(result) {
+                if (!result || !result.success) return;
+                var data = result.data || {};
+
+                // Status change detection
+                if (data.handoff_status !== self.handoffStatus) {
+                    var prevStatus = self.handoffStatus;
+                    self.handoffStatus = data.handoff_status;
+                    var s = self.config.strings || {};
+
+                    if (data.handoff_status === 'active' && prevStatus === 'pending') {
+                        self.addSystemMessage(s.handoff_active || 'Connected with support');
+                    } else if (data.handoff_status === 'resolved' || data.handoff_status === null) {
+                        self.addSystemMessage(s.handoff_resolved || 'Support session ended. You are now chatting with AI again.');
+                        self.stopHandoffPolling();
+                        self.handoffStatus = null;
+                    }
+                    self.showHandoffIndicator(data.handoff_status);
+                }
+
+                // Render new operator messages
+                if (data.messages && data.messages.length > 0) {
+                    data.messages.forEach(function(msg) {
+                        if (msg.role === 'operator') {
+                            self.addMessage('operator', msg.content, null, msg.id);
+                            if (msg.id > self.lastOperatorMessageId) {
+                                self.lastOperatorMessageId = msg.id;
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(function() {
+                // Polling errors are non-critical
+            });
+        },
+
+        /**
+         * Add system message (centered notification)
+         */
+        addSystemMessage: function(text) {
+            var messageEl = document.createElement('div');
+            messageEl.className = 'chatbot-message chatbot-message--system';
+            var contentEl = document.createElement('div');
+            contentEl.className = 'chatbot-message__content';
+            contentEl.textContent = text;
+            messageEl.appendChild(contentEl);
+            this.messagesEl.appendChild(messageEl);
+            this.scrollToBottom();
+        },
+
+        /**
+         * Show/update/remove handoff status indicator bar
+         */
+        showHandoffIndicator: function(status) {
+            var indicator = this.window ? this.window.querySelector('.chatbot-handoff-indicator') : null;
+
+            if (!status || status === 'resolved') {
+                if (indicator) indicator.remove();
+                return;
+            }
+
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.className = 'chatbot-handoff-indicator';
+                // Insert after header
+                var header = this.window ? this.window.querySelector('.chatbot-header') : null;
+                if (header && header.nextSibling) {
+                    header.parentNode.insertBefore(indicator, header.nextSibling);
+                }
+            }
+
+            var s = this.config.strings || {};
+            indicator.className = 'chatbot-handoff-indicator chatbot-handoff-indicator--' + status;
+            if (status === 'pending') {
+                indicator.textContent = s.handoff_waiting || 'Waiting for support representative...';
+            } else if (status === 'active') {
+                indicator.textContent = s.handoff_active || 'Connected with support';
+            }
+        },
+
+        /**
          * reCAPTCHAトークンを取得
          * @param {string} action - reCAPTCHA action name (must match PHP expected_action)
          */
@@ -799,7 +986,7 @@
         /**
          * Add message to UI
          */
-        addMessage: function(role, content, sources, messageId, sentiment) {
+        addMessage: function(role, content, sources, messageId, sentiment, productCards) {
             var self = this;
             var messageEl = document.createElement('div');
             messageEl.className = 'chatbot-message chatbot-message--' + role;
@@ -807,7 +994,7 @@
                 messageEl.setAttribute('data-message-id', messageId);
             }
 
-            // Add avatar for bot messages
+            // Add avatar for bot/operator messages
             if (role === 'bot') {
                 var avatarEl = document.createElement('span');
                 avatarEl.className = 'chatbot-message__avatar';
@@ -821,7 +1008,11 @@
                     avatarEl.textContent = this.config.bot_avatar;
                 }
                 messageEl.appendChild(avatarEl);
-
+            } else if (role === 'operator') {
+                var opAvatarEl = document.createElement('span');
+                opAvatarEl.className = 'chatbot-message__avatar chatbot-message__avatar--operator';
+                opAvatarEl.textContent = '\uD83D\uDC64';
+                messageEl.appendChild(opAvatarEl);
             }
 
             var contentEl = document.createElement('div');
@@ -843,12 +1034,12 @@
                 contentEl.appendChild(sentimentEl);
             }
 
-            // Bot messages: safe HTML formatting (line breaks + auto-links, or markdown)
+            // Bot/operator messages: safe HTML formatting (line breaks + auto-links, or markdown)
             // User messages: plain text only (no formatting needed)
-            if (role === 'bot') {
+            if (role === 'bot' || role === 'operator') {
                 var formatted = this.formatBotMessage(content);
                 var textSpan = document.createElement('span');
-                if (this.config.markdown_enabled) {
+                if (this.config.markdown_enabled && role === 'bot') {
                     textSpan.className = 'wpaic-markdown';
                 }
                 textSpan.appendChild(formatted);
@@ -883,6 +1074,56 @@
                 });
 
                 contentEl.appendChild(sourcesEl);
+            }
+
+            // Product cards (Pro WooCommerce feature)
+            if (productCards && productCards.length > 0) {
+                var cardsContainer = document.createElement('div');
+                cardsContainer.className = 'chatbot-product-cards';
+
+                productCards.forEach(function(card) {
+                    var cardLink = document.createElement('a');
+                    cardLink.className = 'chatbot-product-card';
+                    cardLink.href = card.url;
+                    cardLink.target = '_blank';
+                    cardLink.rel = 'noopener noreferrer';
+
+                    if (card.image) {
+                        var imgEl = document.createElement('img');
+                        imgEl.className = 'chatbot-product-card__image';
+                        imgEl.src = card.image;
+                        imgEl.alt = card.name;
+                        imgEl.loading = 'lazy';
+                        cardLink.appendChild(imgEl);
+                    }
+
+                    var infoEl = document.createElement('div');
+                    infoEl.className = 'chatbot-product-card__info';
+
+                    var nameEl = document.createElement('div');
+                    nameEl.className = 'chatbot-product-card__name';
+                    nameEl.textContent = card.name;
+                    infoEl.appendChild(nameEl);
+
+                    if (card.price_html) {
+                        var priceEl = document.createElement('div');
+                        priceEl.className = 'chatbot-product-card__price';
+                        priceEl.textContent = card.price_html;
+                        infoEl.appendChild(priceEl);
+                    }
+
+                    if (!card.in_stock) {
+                        var stockEl = document.createElement('span');
+                        stockEl.className = 'chatbot-product-card__out-of-stock';
+                        stockEl.textContent = (self.config.strings && self.config.strings.out_of_stock) || 'Out of stock';
+                        infoEl.appendChild(stockEl);
+                    }
+
+                    cardLink.appendChild(infoEl);
+                    cardsContainer.appendChild(cardLink);
+                });
+
+                contentEl.appendChild(cardsContainer);
             }
 
             // Add feedback buttons for bot messages
@@ -1045,6 +1286,48 @@
                         });
 
                         contentEl.appendChild(sourcesEl);
+                    }
+
+                    // Re-add product cards if any (Pro WooCommerce)
+                    if (data.data.product_cards && data.data.product_cards.length > 0) {
+                        var cardsContainer = document.createElement('div');
+                        cardsContainer.className = 'chatbot-product-cards';
+                        data.data.product_cards.forEach(function(card) {
+                            var cardLink = document.createElement('a');
+                            cardLink.className = 'chatbot-product-card';
+                            cardLink.href = card.url;
+                            cardLink.target = '_blank';
+                            cardLink.rel = 'noopener noreferrer';
+                            if (card.image) {
+                                var imgEl = document.createElement('img');
+                                imgEl.className = 'chatbot-product-card__image';
+                                imgEl.src = card.image;
+                                imgEl.alt = card.name;
+                                imgEl.loading = 'lazy';
+                                cardLink.appendChild(imgEl);
+                            }
+                            var infoEl = document.createElement('div');
+                            infoEl.className = 'chatbot-product-card__info';
+                            var nameEl = document.createElement('div');
+                            nameEl.className = 'chatbot-product-card__name';
+                            nameEl.textContent = card.name;
+                            infoEl.appendChild(nameEl);
+                            if (card.price_html) {
+                                var priceEl = document.createElement('div');
+                                priceEl.className = 'chatbot-product-card__price';
+                                priceEl.textContent = card.price_html;
+                                infoEl.appendChild(priceEl);
+                            }
+                            if (!card.in_stock) {
+                                var stockEl = document.createElement('span');
+                                stockEl.className = 'chatbot-product-card__out-of-stock';
+                                stockEl.textContent = (self.config.strings && self.config.strings.out_of_stock) || 'Out of stock';
+                                infoEl.appendChild(stockEl);
+                            }
+                            cardLink.appendChild(infoEl);
+                            cardsContainer.appendChild(cardLink);
+                        });
+                        contentEl.appendChild(cardsContainer);
                     }
 
                     // Re-add actions

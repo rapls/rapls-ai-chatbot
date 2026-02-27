@@ -4989,6 +4989,99 @@ msgstr "学習から除外しました。"
 msgid "Exclusion removed."
 msgstr "除外を解除しました。"
 
+# OpenRouter provider
+#: includes/ai-providers/class-openrouter-provider.php
+msgid "OpenRouter API key is not configured."
+msgstr "OpenRouter API キーが設定されていません。"
+
+#: includes/ai-providers/class-openrouter-provider.php
+msgid "OpenRouter API key is invalid or has been revoked."
+msgstr "OpenRouter API キーが無効または失効しています。"
+
+#: includes/ai-providers/class-openrouter-provider.php
+#, php-format
+msgid "Access denied for model \"%s\". Your OpenRouter account may not have permission to use this model."
+msgstr "モデル「%s」へのアクセスが拒否されました。お使いの OpenRouter アカウントにこのモデルの使用権限がない可能性があります。"
+
+#: includes/ai-providers/class-openrouter-provider.php
+#, php-format
+msgid "OpenRouter model \"%s\" not found. Please select a different model in Settings."
+msgstr "OpenRouter モデル「%s」が見つかりません。設定画面で別のモデルを選択してください。"
+
+#: includes/ai-providers/class-openrouter-provider.php
+#, php-format
+msgid "OpenRouter server error (HTTP %d). Please try again later."
+msgstr "OpenRouter サーバーエラー（HTTP %d）。しばらくしてからもう一度お試しください。"
+
+#: includes/ai-providers/class-openrouter-provider.php
+msgid "OpenRouter API error: "
+msgstr "OpenRouter API エラー: "
+
+#: includes/ai-providers/class-openrouter-provider.php
+msgid "Best model auto-selected"
+msgstr "最適モデル自動選択"
+
+#: includes/ai-providers/class-openrouter-provider.php
+msgid "Free"
+msgstr "無料"
+
+# OpenRouter admin settings
+#: templates/admin/settings.php
+msgid "OpenRouter Settings"
+msgstr "OpenRouter 設定"
+
+#: templates/admin/settings.php
+msgid "Access 100+ AI models with a single API key. Get your key from openrouter.ai."
+msgstr "単一の API キーで100以上の AI モデルにアクセスできます。openrouter.ai でキーを取得してください。"
+
+#: templates/admin/settings.php
+msgid "Get your API key from openrouter.ai."
+msgstr "openrouter.ai で API キーを取得してください。"
+
+#: templates/admin/settings.php
+msgid "Click the refresh button to fetch all available models from OpenRouter."
+msgstr "更新ボタンをクリックすると、OpenRouter で利用可能な全モデルを取得します。"
+
+# Privacy policy
+#: includes/class-main.php
+msgid "OpenRouter API (openrouter.ai) - for multi-provider model access"
+msgstr "OpenRouter API（openrouter.ai）— マルチプロバイダーモデルアクセス用"
+
+# WooCommerce integration
+#: includes/frontend/class-chatbot-widget.php
+msgid "Out of stock"
+msgstr "在庫切れ"
+
+# Live agent handoff
+#: includes/frontend/class-chatbot-widget.php
+msgid "Waiting for support representative..."
+msgstr "サポート担当者を待っています..."
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "A support representative has been notified. Please wait..."
+msgstr "サポート担当者に通知しました。しばらくお待ちください..."
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Connected with support"
+msgstr "サポートに接続しました"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Support session ended. You are now chatting with AI again."
+msgstr "サポートセッションが終了しました。AI チャットに戻ります。"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Support"
+msgstr "サポート"
+
+#: templates/admin/crawler.php
+msgid "Detected"
+msgstr "検出済み"
+
+#. translators: %s: number of products
+#: templates/admin/crawler.php
+msgid "%s products"
+msgstr "%s 商品"
+
 #~ msgid ""
 #~ "To add trusted proxy IPs or CIDR ranges, use the "
 #~ "<code>wpaic_trusted_proxies</code> filter in your theme or a custom "
@@ -6094,9 +6187,6 @@ msgstr "除外を解除しました。"
 #~ msgid "All Tags"
 #~ msgstr "すべてのタグ"
 
-#~ msgid "Support"
-#~ msgstr "サポート"
-
 #~ msgid "Sales"
 #~ msgstr "セールス"
 
@@ -6177,3 +6267,87 @@ msgstr "除外を解除しました。"
 #~ msgstr ""
 #~ "CSV ファイルは UTF-8 エンコーディングである必要があります。Excel からエク"
 #~ "スポートする場合は「CSV UTF-8（コンマ区切り）(*.csv)」で保存してください。"
+
+# Vector Embedding (RAG)
+#: templates/admin/settings.php templates/admin/crawler.php
+msgid "Vector Embedding (RAG)"
+msgstr "ベクトル埋め込み (RAG)"
+
+#: templates/admin/settings.php
+msgid "Vector Search"
+msgstr "ベクトル検索"
+
+#: templates/admin/settings.php
+msgid "Enable vector embedding search"
+msgstr "ベクトル埋め込み検索を有効にする"
+
+#: templates/admin/settings.php
+msgid "Uses AI embeddings for semantic search in addition to keyword matching. Improves search accuracy, especially for Japanese and other non-English languages."
+msgstr "キーワードマッチングに加えて AI 埋め込みによるセマンティック検索を使用します。特に日本語などの非英語言語での検索精度が向上します。"
+
+#: templates/admin/settings.php
+msgid "Embedding Provider"
+msgstr "埋め込みプロバイダー"
+
+#: includes/crawler/class-embedding-generator.php
+msgid "Auto (use chat provider API key)"
+msgstr "自動（チャットプロバイダーの API キーを使用）"
+
+#: templates/admin/settings.php
+msgid "Note: Claude and OpenRouter do not provide embedding APIs. An OpenAI or Gemini API key is required for embeddings."
+msgstr "注意: Claude と OpenRouter は埋め込み API を提供していません。埋め込みには OpenAI または Gemini の API キーが必要です。"
+
+#: templates/admin/settings.php
+#, php-format
+msgid "Active: %1$s / %2$s"
+msgstr "有効: %1$s / %2$s"
+
+#: templates/admin/settings.php
+#, php-format
+msgid "%1$s / %2$s chunks embedded"
+msgstr "%1$s / %2$s チャンク埋め込み済み"
+
+#: templates/admin/crawler.php
+msgid "Vector Embedding"
+msgstr "ベクトル埋め込み"
+
+#: templates/admin/crawler.php
+msgid "API Key Missing"
+msgstr "API キー未設定"
+
+#: templates/admin/crawler.php
+msgid "Embedded Chunks"
+msgstr "埋め込み済みチャンク"
+
+#: templates/admin/crawler.php
+msgid "Generate Embeddings"
+msgstr "埋め込みを生成"
+
+#: templates/admin/crawler.php
+msgid "Clear All Embeddings"
+msgstr "すべての埋め込みをクリア"
+
+#: templates/admin/crawler.php
+msgid "Enable vector embedding in Settings > AI Settings to improve search accuracy."
+msgstr "検索精度を向上させるには、設定 > AI 設定でベクトル埋め込みを有効にしてください。"
+
+#: templates/admin/crawler.php
+msgid "Clear all embeddings? You will need to regenerate them."
+msgstr "すべての埋め込みをクリアしますか？再生成が必要になります。"
+
+#: includes/admin/class-admin.php
+msgid "Embedding provider is not configured. Please check your API key settings."
+msgstr "埋め込みプロバイダーが設定されていません。API キーの設定を確認してください。"
+
+#: includes/admin/class-admin.php
+msgid "All embeddings are up to date."
+msgstr "すべての埋め込みは最新です。"
+
+#: includes/admin/class-admin.php
+#, php-format
+msgid "Processed %1$d embeddings. %2$d remaining."
+msgstr "%1$d 件の埋め込みを処理しました。残り %2$d 件。"
+
+#: includes/admin/class-admin.php
+msgid "All embeddings have been cleared."
+msgstr "すべての埋め込みがクリアされました。"

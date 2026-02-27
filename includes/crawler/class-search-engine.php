@@ -75,25 +75,22 @@ class WPAIC_Search_Engine {
     }
 
     /**
-     * Search related content
+     * Search related content (hybrid: keyword + vector)
      */
     public function search(string $query, int $limit = 3): array {
         $results = [];
 
         // Always get knowledge (regardless of keywords)
-        // Get more and narrow down by limit at the end
         $knowledge_limit = max($limit * 2, 5);
         $priority_knowledge = $this->get_high_priority_knowledge($knowledge_limit);
         $results = array_merge($results, $priority_knowledge);
 
         // Search knowledge base by keywords (additional match)
         $knowledge_results = $this->search_knowledge($query, $limit);
-        // Merge excluding duplicates (keyword match gets higher score)
         foreach ($knowledge_results as $kr) {
             $exists = false;
             foreach ($results as &$r) {
                 if ($r['type'] === 'knowledge' && $r['title'] === $kr['title']) {
-                    // Update score if already exists (keyword match bonus)
                     $r['score'] = max($r['score'], $kr['score']);
                     $exists = true;
                     break;
@@ -105,14 +102,21 @@ class WPAIC_Search_Engine {
             }
         }
 
-        // Search from index
+        // Search from index (keyword)
         $index_results = $this->search_index($query, $limit);
         $results = array_merge($results, $index_results);
+
+        // Vector search (if embedding is configured)
+        $vector_results = $this->vector_search($query, $limit);
+
+        // Merge keyword + vector results
+        if (!empty($vector_results)) {
+            $results = $this->merge_hybrid_results($results, $vector_results, $limit);
+        }
 
         // Sort by score and return top results
         usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
 
-        // Include at least 1 knowledge item
         $final_results = array_slice($results, 0, max($limit, 5));
 
         // Force add knowledge if not included in results
@@ -125,11 +129,116 @@ class WPAIC_Search_Engine {
         }
 
         if (!$has_knowledge && !empty($priority_knowledge)) {
-            // Add first knowledge
             array_unshift($final_results, $priority_knowledge[0]);
         }
 
         return $final_results;
+    }
+
+    /**
+     * Perform vector similarity search if embeddings are enabled
+     *
+     * @param string $query User query
+     * @param int    $limit Max results
+     * @return array Vector search results (empty if not configured)
+     */
+    private function vector_search(string $query, int $limit): array {
+        $settings = get_option('wpaic_settings', []);
+        if (empty($settings['embedding_enabled'])) {
+            return [];
+        }
+
+        $embedding_generator = new WPAIC_Embedding_Generator($settings);
+        if (!$embedding_generator->is_configured()) {
+            return [];
+        }
+
+        $query_embedding = $embedding_generator->generate($query);
+        if (!$query_embedding) {
+            return [];
+        }
+
+        $vector_search = new WPAIC_Vector_Search();
+        $vector_index = $vector_search->search_index($query_embedding, $limit * 3);
+        $vector_knowledge = $vector_search->search_knowledge($query_embedding, $limit);
+
+        return array_merge($vector_index, $vector_knowledge);
+    }
+
+    /**
+     * Merge keyword search results with vector search results using hybrid scoring
+     *
+     * Score formula:
+     *   - Both keyword + vector: 0.4 * norm_keyword + 0.6 * vector_score
+     *   - Keyword only: 0.4 * norm_keyword
+     *   - Vector only: 0.6 * vector_score
+     *   - Knowledge priority bonus preserved from existing logic
+     *
+     * @param array $keyword_results Keyword search results (with 'score')
+     * @param array $vector_results  Vector search results (with 'vector_score')
+     * @param int   $limit           Max results
+     * @return array Merged results with hybrid scores
+     */
+    private function merge_hybrid_results(array $keyword_results, array $vector_results, int $limit): array {
+        // Normalize keyword scores to 0-1 range
+        $max_keyword = 0;
+        foreach ($keyword_results as $r) {
+            if ($r['score'] > $max_keyword) {
+                $max_keyword = $r['score'];
+            }
+        }
+
+        // Build lookup: key = "type:title" for matching
+        $merged = [];
+
+        foreach ($keyword_results as $r) {
+            $key = $r['type'] . ':' . $r['title'];
+            $norm_score = $max_keyword > 0 ? $r['score'] / $max_keyword : 0;
+            $merged[$key] = $r;
+            $merged[$key]['_keyword_norm'] = $norm_score;
+            $merged[$key]['_vector_score'] = 0.0;
+        }
+
+        foreach ($vector_results as $vr) {
+            $key = $vr['type'] . ':' . $vr['title'];
+            $vs = $vr['vector_score'] ?? 0.0;
+
+            if (isset($merged[$key])) {
+                // Both keyword + vector: hybrid score
+                $merged[$key]['_vector_score'] = $vs;
+            } else {
+                // Vector only
+                $merged[$key] = $vr;
+                $merged[$key]['_keyword_norm'] = 0.0;
+                $merged[$key]['_vector_score'] = $vs;
+            }
+        }
+
+        // Calculate final hybrid scores
+        foreach ($merged as &$item) {
+            $kw = $item['_keyword_norm'] ?? 0.0;
+            $vs = $item['_vector_score'] ?? 0.0;
+
+            // Preserve existing priority bonus for knowledge items
+            $priority_bonus = 0;
+            if ($item['type'] === 'knowledge') {
+                $priority = (int) ($item['priority'] ?? 0);
+                $priority_bonus = $priority * 20;
+                // Keep high base score for priority knowledge
+                if ($priority > 0 && $kw > 0) {
+                    $priority_bonus += 100;
+                }
+            }
+
+            $hybrid = (0.4 * $kw) + (0.6 * $vs);
+            // Scale hybrid back to a comparable range + priority bonus
+            $item['score'] = ($hybrid * $max_keyword) + $priority_bonus;
+
+            unset($item['_keyword_norm'], $item['_vector_score']);
+        }
+        unset($item);
+
+        return array_values($merged);
     }
 
     /**
@@ -280,7 +389,7 @@ class WPAIC_Search_Engine {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe internal value
         $sql = $wpdb->prepare(
-            "SELECT post_id, title, content, url,
+            "SELECT post_id, post_type, title, content, url,
                     MATCH(title, content) AGAINST(%s IN NATURAL LANGUAGE MODE) as score
              FROM {$table}
              WHERE MATCH(title, content) AGAINST(%s IN NATURAL LANGUAGE MODE)
@@ -305,11 +414,13 @@ class WPAIC_Search_Engine {
 
         return array_map(function($item) {
             return [
-                'type'    => 'index',
-                'title'   => $item['title'],
-                'content' => $item['content'],
-                'url'     => $item['url'],
-                'score'   => (float) $item['score'],
+                'type'      => 'index',
+                'post_id'   => (int) ($item['post_id'] ?? 0),
+                'post_type' => $item['post_type'] ?? '',
+                'title'     => $item['title'],
+                'content'   => $item['content'],
+                'url'       => $item['url'],
+                'score'     => (float) $item['score'],
             ];
         }, array_slice($grouped, 0, $limit));
     }
@@ -339,7 +450,7 @@ class WPAIC_Search_Engine {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE clauses are safe internal values
         $sql = $wpdb->prepare(
-            "SELECT post_id, title, content, url, 1 as score
+            "SELECT post_id, post_type, title, content, url, 1 as score
              FROM {$table}
              WHERE {$where}
              LIMIT %d",
@@ -359,11 +470,13 @@ class WPAIC_Search_Engine {
 
         return array_map(function($item) {
             return [
-                'type'    => 'index',
-                'title'   => $item['title'],
-                'content' => $item['content'],
-                'url'     => $item['url'],
-                'score'   => $item['score'],
+                'type'      => 'index',
+                'post_id'   => (int) ($item['post_id'] ?? 0),
+                'post_type' => $item['post_type'] ?? '',
+                'title'     => $item['title'],
+                'content'   => $item['content'],
+                'url'       => $item['url'],
+                'score'     => $item['score'],
             ];
         }, array_slice($grouped, 0, $limit));
     }

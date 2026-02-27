@@ -258,7 +258,7 @@ class WPAIC_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -275,9 +275,17 @@ class WPAIC_Admin {
 
         // AI provider allowlist
         if (isset($settings['ai_provider'])) {
-            $valid_providers = ['openai', 'claude', 'gemini'];
+            $valid_providers = ['openai', 'claude', 'gemini', 'openrouter'];
             if (!in_array($settings['ai_provider'], $valid_providers, true)) {
                 $settings['ai_provider'] = $existing['ai_provider'] ?? 'openai';
+            }
+        }
+
+        // Embedding provider allowlist
+        if (isset($settings['embedding_provider'])) {
+            $valid_emb_providers = ['auto', 'openai', 'gemini'];
+            if (!in_array($settings['embedding_provider'], $valid_emb_providers, true)) {
+                $settings['embedding_provider'] = $existing['embedding_provider'] ?? 'auto';
             }
         }
 
@@ -299,7 +307,7 @@ class WPAIC_Admin {
         //  - New value submitted → encrypt and save
         //  - Empty value → keep existing (value is never output to HTML)
         //  - Explicit delete flag → clear the key
-        foreach (['openai_api_key', 'claude_api_key', 'gemini_api_key'] as $key_field) {
+        foreach (['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key'] as $key_field) {
             $delete_flag = 'delete_' . $key_field;
             if (!empty($input[$delete_flag])) {
                 // Explicit deletion requested via hidden field
@@ -318,6 +326,7 @@ class WPAIC_Admin {
             'openai_api_key'  => ['prefixes' => ['sk-'], 'label' => 'OpenAI'],
             'claude_api_key'  => ['prefixes' => ['sk-ant-'], 'label' => 'Claude'],
             'gemini_api_key'  => ['prefixes' => ['AIza'], 'label' => 'Gemini'],
+            'openrouter_api_key' => ['prefixes' => ['sk-or-'], 'label' => 'OpenRouter'],
         ];
         foreach ($key_prefixes as $kf => $meta) {
             $raw = $input[$kf] ?? '';
@@ -345,6 +354,7 @@ class WPAIC_Admin {
         $sanitized['openai_model'] = sanitize_text_field($input['openai_model'] ?? ($existing['openai_model'] ?? 'gpt-4o-mini'));
         $sanitized['claude_model'] = sanitize_text_field($input['claude_model'] ?? ($existing['claude_model'] ?? 'claude-haiku-4-5-20251001'));
         $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash-exp'));
+        $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model'] ?? ($existing['openrouter_model'] ?? 'openrouter/auto'));
 
         // Chatbot settings
         $sanitized['bot_name'] = sanitize_text_field($input['bot_name'] ?? ($existing['bot_name'] ?? 'Assistant'));
@@ -485,6 +495,17 @@ class WPAIC_Admin {
             'absint',
             array_filter($input['crawler_exclude_ids'] ?? ($existing['crawler_exclude_ids'] ?? []))
         )));
+
+        // Embedding settings (on Crawler form or Settings form)
+        if ($crawler_form_submitted || array_key_exists('embedding_enabled', $input)) {
+            $sanitized['embedding_enabled'] = !empty($input['embedding_enabled']);
+        } else {
+            $sanitized['embedding_enabled'] = $existing['embedding_enabled'] ?? false;
+        }
+        $valid_emb_providers = ['auto', 'openai', 'gemini'];
+        $sanitized['embedding_provider'] = in_array($input['embedding_provider'] ?? '', $valid_emb_providers, true)
+            ? $input['embedding_provider']
+            : ($existing['embedding_provider'] ?? 'auto');
 
         // Markdown rendering setting (Display Settings form)
         if ($display_form_submitted) {
@@ -914,6 +935,7 @@ class WPAIC_Admin {
         $openai_provider = new WPAIC_OpenAI_Provider();
         $claude_provider = new WPAIC_Claude_Provider();
         $gemini_provider = new WPAIC_Gemini_Provider();
+        $openrouter_provider = new WPAIC_OpenRouter_Provider();
         include WPAIC_PLUGIN_DIR . 'templates/admin/settings.php';
     }
 
@@ -1235,6 +1257,8 @@ class WPAIC_Admin {
                 $ai = new WPAIC_Claude_Provider();
             } elseif ($provider === 'gemini') {
                 $ai = new WPAIC_Gemini_Provider();
+            } elseif ($provider === 'openrouter') {
+                $ai = new WPAIC_OpenRouter_Provider();
             } else {
                 $ai = new WPAIC_OpenAI_Provider();
             }
@@ -1292,6 +1316,9 @@ class WPAIC_Admin {
                 break;
             case 'gemini':
                 $ai = new WPAIC_Gemini_Provider();
+                break;
+            case 'openrouter':
+                $ai = new WPAIC_OpenRouter_Provider();
                 break;
             default:
                 $ai = new WPAIC_OpenAI_Provider();
@@ -1361,7 +1388,7 @@ class WPAIC_Admin {
         }
 
         // Return as-is if not encrypted (check known API key prefixes)
-        if (strpos($encrypted, 'sk-') === 0 || strpos($encrypted, 'sk-ant-') === 0 || strpos($encrypted, 'AIza') === 0) {
+        if (strpos($encrypted, 'sk-') === 0 || strpos($encrypted, 'sk-ant-') === 0 || strpos($encrypted, 'AIza') === 0 || strpos($encrypted, 'sk-or-') === 0) {
             return $encrypted;
         }
 
@@ -2242,6 +2269,8 @@ class WPAIC_Admin {
             'claude_model'          => 'claude-sonnet-4-20250514',
             'gemini_api_key'        => '',
             'gemini_model'          => 'gemini-2.0-flash-exp',
+            'openrouter_api_key'    => '',
+            'openrouter_model'      => 'openrouter/auto',
 
             // Chatbot Settings
             'bot_name'              => 'Assistant',
@@ -2388,6 +2417,117 @@ class WPAIC_Admin {
         } else {
             wp_send_json_error(__('Failed to reset.', 'rapls-ai-chatbot'));
         }
+    }
+
+    /**
+     * AJAX: Generate embeddings for unembedded chunks (batch processing)
+     */
+    public function ajax_generate_embeddings(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $generator = new WPAIC_Embedding_Generator();
+        if (!$generator->is_configured()) {
+            wp_send_json_error(__('Embedding provider is not configured. Please check your API key settings.', 'rapls-ai-chatbot'));
+        }
+
+        $source = sanitize_text_field(wp_unslash($_POST['source'] ?? 'index'));
+
+        if ($source === 'knowledge') {
+            $pending = WPAIC_Knowledge::get_unembedded_entries(50);
+        } else {
+            $pending = WPAIC_Content_Index::get_unembedded_chunks(50);
+        }
+
+        if (empty($pending)) {
+            wp_send_json_success([
+                'processed' => 0,
+                'remaining' => 0,
+                /* translators: embedding generation complete */
+                'message'   => __('All embeddings are up to date.', 'rapls-ai-chatbot'),
+            ]);
+        }
+
+        $texts = [];
+        $ids = [];
+        foreach ($pending as $row) {
+            $texts[] = ($row['title'] ?? '') . "\n" . ($row['content'] ?? '');
+            $ids[]   = (int) $row['id'];
+        }
+
+        $embeddings = $generator->generate_batch($texts);
+
+        $processed = 0;
+        foreach ($embeddings as $i => $emb) {
+            if ($emb && isset($ids[$i])) {
+                $packed = WPAIC_Vector_Search::pack_embedding($emb);
+                if ($source === 'knowledge') {
+                    WPAIC_Knowledge::update_embedding($ids[$i], $packed, $generator->get_model());
+                } else {
+                    WPAIC_Content_Index::update_embedding($ids[$i], $packed, $generator->get_model());
+                }
+                $processed++;
+            }
+        }
+
+        // Count remaining
+        if ($source === 'knowledge') {
+            $remaining = count(WPAIC_Knowledge::get_unembedded_entries(1));
+        } else {
+            $remaining = count(WPAIC_Content_Index::get_unembedded_chunks(1));
+        }
+
+        wp_send_json_success([
+            'processed' => $processed,
+            'remaining' => $remaining,
+            /* translators: 1: number processed, 2: number remaining */
+            'message'   => sprintf(__('Processed %1$d embeddings. %2$d remaining.', 'rapls-ai-chatbot'), $processed, $remaining),
+        ]);
+    }
+
+    /**
+     * AJAX: Clear all embeddings
+     */
+    public function ajax_clear_embeddings(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        WPAIC_Content_Index::clear_all_embeddings();
+        WPAIC_Knowledge::clear_all_embeddings();
+
+        wp_send_json_success(['message' => __('All embeddings have been cleared.', 'rapls-ai-chatbot')]);
+    }
+
+    /**
+     * AJAX: Get embedding status
+     */
+    public function ajax_embedding_status(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $index_stats = WPAIC_Content_Index::get_embedding_stats();
+        $knowledge_stats = WPAIC_Knowledge::get_embedding_stats();
+
+        $generator = new WPAIC_Embedding_Generator();
+
+        wp_send_json_success([
+            'configured'       => $generator->is_configured(),
+            'provider'         => $generator->get_provider(),
+            'model'            => $generator->get_model(),
+            'index_total'      => $index_stats['total_chunks'],
+            'index_embedded'   => $index_stats['embedded_chunks'],
+            'knowledge_total'  => $knowledge_stats['total'],
+            'knowledge_embedded' => $knowledge_stats['embedded'],
+        ]);
     }
 
     /**

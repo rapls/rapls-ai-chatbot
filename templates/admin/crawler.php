@@ -42,6 +42,22 @@ $post_types = get_post_types(['public' => true], 'objects');
                         ?>
                     </td>
                 </tr>
+                <?php if (class_exists('WooCommerce')): ?>
+                <tr>
+                    <td>WooCommerce</td>
+                    <td>
+                        <span class="status-badge status-ok"><?php esc_html_e('Detected', 'rapls-ai-chatbot'); ?></span>
+                        <?php
+                        $wc_product_count = wp_count_posts('product');
+                        $wc_published = isset($wc_product_count->publish) ? (int) $wc_product_count->publish : 0;
+                        if ($wc_published > 0) {
+                            /* translators: %s: number of products */
+                            printf(' (' . esc_html__('%s products', 'rapls-ai-chatbot') . ')', esc_html(number_format($wc_published)));
+                        }
+                        ?>
+                    </td>
+                </tr>
+                <?php endif; ?>
                 <?php if (!empty($status['last_results'])): ?>
                 <tr>
                     <td><?php esc_html_e('Last Result', 'rapls-ai-chatbot'); ?></td>
@@ -60,6 +76,75 @@ $post_types = get_post_types(['public' => true], 'objects');
                 </button>
                 <span id="crawl-status"></span>
             </div>
+        </div>
+
+        <!-- Embedding Status -->
+        <?php
+        $embedding_enabled = !empty($settings['embedding_enabled']);
+        $emb_generator = new WPAIC_Embedding_Generator($settings);
+        $emb_configured = $emb_generator->is_configured();
+        $index_stats = WPAIC_Content_Index::get_embedding_stats();
+        $knowledge_stats = WPAIC_Knowledge::get_embedding_stats();
+        $emb_total = $index_stats['total_chunks'] + $knowledge_stats['total'];
+        $emb_done = $index_stats['embedded_chunks'] + $knowledge_stats['embedded'];
+        $emb_pct = $emb_total > 0 ? round(($emb_done / $emb_total) * 100) : 0;
+        ?>
+        <div class="wpaic-card">
+            <h2><?php esc_html_e('Vector Embedding', 'rapls-ai-chatbot'); ?></h2>
+            <table class="wpaic-status-table">
+                <tr>
+                    <td><?php esc_html_e('Embedding', 'rapls-ai-chatbot'); ?></td>
+                    <td>
+                        <?php if ($embedding_enabled && $emb_configured) : ?>
+                            <span class="status-badge status-ok"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                        <?php elseif ($embedding_enabled) : ?>
+                            <span class="status-badge status-off"><?php esc_html_e('API Key Missing', 'rapls-ai-chatbot'); ?></span>
+                        <?php else : ?>
+                            <span class="status-badge status-off"><?php esc_html_e('Disabled', 'rapls-ai-chatbot'); ?></span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php if ($embedding_enabled && $emb_configured) : ?>
+                <tr>
+                    <td><?php esc_html_e('Provider', 'rapls-ai-chatbot'); ?></td>
+                    <td><?php echo esc_html(ucfirst($emb_generator->get_provider()) . ' / ' . $emb_generator->get_model()); ?></td>
+                </tr>
+                <tr>
+                    <td><?php esc_html_e('Embedded Chunks', 'rapls-ai-chatbot'); ?></td>
+                    <td>
+                        <strong><?php echo esc_html(number_format($emb_done)); ?></strong> / <?php echo esc_html(number_format($emb_total)); ?>
+                        (<?php echo esc_html($emb_pct); ?>%)
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-top: 8px;">
+                        <div style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div style="background: #667eea; height: 100%; width: <?php echo esc_attr($emb_pct); ?>%; transition: width 0.3s;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <?php endif; ?>
+            </table>
+
+            <?php if ($embedding_enabled && $emb_configured) : ?>
+            <div class="wpaic-actions" style="margin-top: 12px;">
+                <?php if ($emb_done < $emb_total) : ?>
+                <button type="button" id="wpaic-generate-embeddings" class="button button-primary">
+                    🧠 <?php esc_html_e('Generate Embeddings', 'rapls-ai-chatbot'); ?>
+                </button>
+                <?php endif; ?>
+                <?php if ($emb_done > 0) : ?>
+                <button type="button" id="wpaic-clear-embeddings" class="button button-secondary">
+                    🗑️ <?php esc_html_e('Clear All Embeddings', 'rapls-ai-chatbot'); ?>
+                </button>
+                <?php endif; ?>
+                <span id="embedding-status"></span>
+            </div>
+            <?php elseif (!$embedding_enabled) : ?>
+            <p class="description" style="margin-top: 8px;">
+                <?php esc_html_e('Enable vector embedding in Settings > AI Settings to improve search accuracy.', 'rapls-ai-chatbot'); ?>
+            </p>
+            <?php endif; ?>
         </div>
 
         <!-- Settings -->
@@ -250,6 +335,8 @@ $post_types = get_post_types(['public' => true], 'objects');
                 <input type="hidden" name="wpaic_settings[show_on_mobile]" value="<?php echo esc_attr($settings['show_on_mobile'] ?? 1); ?>">
                 <input type="hidden" name="wpaic_settings[save_history]" value="<?php echo esc_attr($settings['save_history'] ?? 1); ?>">
                 <input type="hidden" name="wpaic_settings[retention_days]" value="<?php echo esc_attr($settings['retention_days'] ?? 90); ?>">
+                <input type="hidden" name="wpaic_settings[embedding_enabled]" value="<?php echo esc_attr($settings['embedding_enabled'] ?? 0); ?>">
+                <input type="hidden" name="wpaic_settings[embedding_provider]" value="<?php echo esc_attr($settings['embedding_provider'] ?? 'auto'); ?>">
                 <input type="hidden" name="wpaic_settings[rate_limit]" value="<?php echo esc_attr($settings['rate_limit'] ?? 20); ?>">
                 <input type="hidden" name="wpaic_settings[crawler_chunk_size]" value="<?php echo esc_attr($settings['crawler_chunk_size'] ?? 1000); ?>">
 
@@ -469,6 +556,66 @@ jQuery(document).ready(function($) {
                 alert(response.data || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
             }
             $btn.prop('disabled', false);
+        }).fail(function() {
+            alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+            $btn.prop('disabled', false);
+        });
+    });
+
+    // Generate Embeddings (batch processing with loop)
+    $('#wpaic-generate-embeddings').on('click', function() {
+        var $btn = $(this);
+        var $status = $('#embedding-status');
+        $btn.prop('disabled', true);
+        $status.text('<?php echo esc_js(__('Processing...', 'rapls-ai-chatbot')); ?>');
+
+        function processBatch(source) {
+            $.post(ajaxurl, {
+                action: 'wpaic_generate_embeddings',
+                nonce: wpaicAdmin.nonce,
+                source: source
+            }, function(response) {
+                if (response.success) {
+                    $status.text(response.data.message);
+                    if (response.data.remaining > 0) {
+                        processBatch(source);
+                    } else if (source === 'index') {
+                        // After index, process knowledge
+                        processBatch('knowledge');
+                    } else {
+                        $btn.prop('disabled', false);
+                        setTimeout(function() { location.reload(); }, 1500);
+                    }
+                } else {
+                    $status.text('<?php echo esc_js(__('Error:', 'rapls-ai-chatbot')); ?> ' + (response.data || ''));
+                    $btn.prop('disabled', false);
+                }
+            }).fail(function() {
+                $status.text('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false);
+            });
+        }
+
+        processBatch('index');
+    });
+
+    // Clear All Embeddings
+    $('#wpaic-clear-embeddings').on('click', function() {
+        if (!confirm('<?php echo esc_js(__('Clear all embeddings? You will need to regenerate them.', 'rapls-ai-chatbot')); ?>')) {
+            return;
+        }
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $.post(ajaxurl, {
+            action: 'wpaic_clear_embeddings',
+            nonce: wpaicAdmin.nonce
+        }, function(response) {
+            if (response.success) {
+                location.reload();
+            } else {
+                alert(response.data || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false);
+            }
         }).fail(function() {
             alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
             $btn.prop('disabled', false);

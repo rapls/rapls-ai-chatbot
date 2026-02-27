@@ -296,7 +296,9 @@ class WPAIC_Site_Crawler {
         $this->chunker->set_chunk_size($chunk_size);
         $chunks = $this->chunker->split($content);
 
-        // Index each chunk
+        // Index each chunk and collect IDs
+        global $wpdb;
+        $chunk_ids = [];
         foreach ($chunks as $index => $chunk) {
             WPAIC_Content_Index::create([
                 'post_id'      => $post->ID,
@@ -307,9 +309,49 @@ class WPAIC_Site_Crawler {
                 'chunk_index'  => $index,
                 'url'          => get_permalink($post->ID),
             ]);
+            $chunk_ids[] = $wpdb->insert_id;
         }
 
+        // Generate embeddings if configured
+        $this->maybe_generate_embeddings($chunks, $chunk_ids);
+
         return $is_update ? 'updated' : 'indexed';
+    }
+
+    /**
+     * Generate embeddings for newly indexed chunks (non-fatal on failure)
+     *
+     * @param string[] $chunks    Chunk texts
+     * @param int[]    $chunk_ids Corresponding DB row IDs
+     */
+    private function maybe_generate_embeddings(array $chunks, array $chunk_ids): void {
+        $settings = get_option('wpaic_settings', []);
+        if (empty($settings['embedding_enabled'])) {
+            return;
+        }
+
+        $generator = new WPAIC_Embedding_Generator($settings);
+        if (!$generator->is_configured()) {
+            return;
+        }
+
+        try {
+            $embeddings = $generator->generate_batch($chunks);
+            foreach ($embeddings as $i => $emb) {
+                if ($emb && isset($chunk_ids[$i]) && $chunk_ids[$i] > 0) {
+                    WPAIC_Content_Index::update_embedding(
+                        $chunk_ids[$i],
+                        WPAIC_Vector_Search::pack_embedding($emb),
+                        $generator->get_model()
+                    );
+                }
+            }
+        } catch (Exception $e) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('WPAIC embedding generation error: ' . $e->getMessage());
+            }
+        }
     }
 
     /**

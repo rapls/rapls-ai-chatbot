@@ -423,6 +423,116 @@ class WPAIC_Content_Extractor {
     }
 
     /**
+     * Extract WooCommerce product data as structured text for AI context.
+     * Returns empty string if WooCommerce is not active or post is not a product.
+     */
+    private function extract_woocommerce_data(WP_Post $post): string {
+        if (!class_exists('WooCommerce') || $post->post_type !== 'product') {
+            return '';
+        }
+
+        $product = wc_get_product($post->ID);
+        if (!$product) {
+            return '';
+        }
+
+        $parts = ['## Product Details'];
+
+        // Price
+        $price = $product->get_price();
+        if ($price !== '') {
+            $parts[] = 'Price: ' . wp_strip_all_tags(wc_price($price));
+            if ($product->is_on_sale()) {
+                $regular = $product->get_regular_price();
+                if ($regular !== '') {
+                    $parts[] = 'Regular Price: ' . wp_strip_all_tags(wc_price($regular));
+                }
+            }
+        }
+
+        // SKU
+        $sku = $product->get_sku();
+        if (!empty($sku)) {
+            $parts[] = 'SKU: ' . $sku;
+        }
+
+        // Stock status
+        if ($product->is_in_stock()) {
+            $qty = $product->get_stock_quantity();
+            $parts[] = 'Stock: In stock' . ($qty !== null ? " ({$qty})" : '');
+        } else {
+            $parts[] = 'Stock: Out of stock';
+        }
+
+        // Weight
+        $weight = $product->get_weight();
+        if (!empty($weight)) {
+            $parts[] = 'Weight: ' . $weight . get_option('woocommerce_weight_unit', 'kg');
+        }
+
+        // Dimensions
+        if ($product->has_dimensions()) {
+            $parts[] = 'Dimensions: ' . wc_format_dimensions($product->get_dimensions(false));
+        }
+
+        // Categories
+        $categories = wc_get_product_category_list($product->get_id());
+        if (!empty($categories)) {
+            $parts[] = 'Category: ' . wp_strip_all_tags($categories);
+        }
+
+        // Tags
+        $tags = wc_get_product_tag_list($product->get_id());
+        if (!empty($tags)) {
+            $parts[] = 'Tags: ' . wp_strip_all_tags($tags);
+        }
+
+        // Attributes
+        $attributes = $product->get_attributes();
+        foreach ($attributes as $attr) {
+            if ($attr instanceof WC_Product_Attribute && $attr->get_visible()) {
+                $name = wc_attribute_label($attr->get_name(), $product);
+                $values = [];
+                if ($attr->is_taxonomy()) {
+                    $terms = wc_get_product_terms($product->get_id(), $attr->get_name(), ['fields' => 'names']);
+                    if (!is_wp_error($terms)) {
+                        $values = $terms;
+                    }
+                } else {
+                    $values = $attr->get_options();
+                }
+                if (!empty($values)) {
+                    $parts[] = $name . ': ' . implode(', ', $values);
+                }
+            }
+        }
+
+        // Variable product: variation info
+        if ($product->is_type('variable')) {
+            $variations = $product->get_children();
+            $count = count($variations);
+            if ($count > 0) {
+                $parts[] = "Variations: {$count} options";
+                $min = $product->get_variation_price('min');
+                $max = $product->get_variation_price('max');
+                if ($min !== '' && $max !== '' && $min !== $max) {
+                    $parts[] = 'Price Range: ' . wp_strip_all_tags(wc_price($min)) . ' - ' . wp_strip_all_tags(wc_price($max));
+                }
+            }
+        }
+
+        // External/affiliate product
+        if ($product->is_type('external')) {
+            $url = $product->get_product_url();
+            if (!empty($url)) {
+                $parts[] = 'External URL: ' . $url;
+            }
+        }
+
+        return count($parts) > 1 ? implode("\n", $parts) : '';
+    }
+
+    /**
      * Build final content
      */
     private function build_content(WP_Post $post, string $body): string {
@@ -493,6 +603,13 @@ class WPAIC_Content_Extractor {
                 $parts[] = '## Additional Info';
                 $parts = array_merge($parts, $cf_parts);
             }
+        }
+
+        // WooCommerce product data (if applicable)
+        $wc_data = $this->extract_woocommerce_data($post);
+        if (!empty($wc_data)) {
+            $parts[] = '';
+            $parts[] = $wc_data;
         }
 
         // Body

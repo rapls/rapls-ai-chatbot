@@ -334,6 +334,8 @@ class WPAIC_Activator {
         self::maybe_convert_enum_to_varchar();
         self::maybe_add_message_composite_index();
         self::maybe_add_feedback_index();
+        self::maybe_add_handoff_columns();
+        self::maybe_add_embedding_columns();
         WPAIC_Lead::maybe_create_table();
     }
 
@@ -509,6 +511,58 @@ class WPAIC_Activator {
     }
 
     /**
+     * Add handoff columns to conversations table (Pro: live agent handoff)
+     */
+    private static function maybe_add_handoff_columns() {
+        if (!self::table_exists('aichat_conversations')) {
+            return;
+        }
+        if (!self::has_column('aichat_conversations', 'handoff_status')) {
+            self::safe_alter('aichat_conversations',
+                "ADD COLUMN handoff_status VARCHAR(20) DEFAULT NULL AFTER conversion_goal",
+                'add column handoff_status');
+            self::safe_alter('aichat_conversations',
+                'ADD INDEX idx_handoff_status (handoff_status)',
+                'add index handoff_status');
+        }
+        if (!self::has_column('aichat_conversations', 'handoff_at')) {
+            self::safe_alter('aichat_conversations',
+                'ADD COLUMN handoff_at DATETIME DEFAULT NULL AFTER handoff_status',
+                'add column handoff_at');
+        }
+    }
+
+    /**
+     * Add embedding columns to index and knowledge tables (vector RAG)
+     */
+    private static function maybe_add_embedding_columns() {
+        if (self::table_exists('aichat_index')) {
+            if (!self::has_column('aichat_index', 'embedding')) {
+                self::safe_alter('aichat_index',
+                    'ADD COLUMN embedding LONGBLOB DEFAULT NULL AFTER content_hash',
+                    'add column embedding');
+            }
+            if (!self::has_column('aichat_index', 'embedding_model')) {
+                self::safe_alter('aichat_index',
+                    'ADD COLUMN embedding_model VARCHAR(50) DEFAULT NULL AFTER embedding',
+                    'add column embedding_model');
+            }
+        }
+        if (self::table_exists('aichat_knowledge')) {
+            if (!self::has_column('aichat_knowledge', 'embedding')) {
+                self::safe_alter('aichat_knowledge',
+                    'ADD COLUMN embedding LONGBLOB DEFAULT NULL',
+                    'add column embedding');
+            }
+            if (!self::has_column('aichat_knowledge', 'embedding_model')) {
+                self::safe_alter('aichat_knowledge',
+                    'ADD COLUMN embedding_model VARCHAR(50) DEFAULT NULL AFTER embedding',
+                    'add column embedding_model');
+            }
+        }
+    }
+
+    /**
      * Set default options
      */
     private static function set_default_options() {
@@ -557,6 +611,10 @@ class WPAIC_Activator {
             'crawler_interval' => 'daily',
             'crawler_chunk_size' => 1000,
             'crawler_max_results' => 3,
+
+            // Embedding settings
+            'embedding_enabled'  => false,
+            'embedding_provider' => 'auto',
 
             // Uninstall settings
             'delete_data_on_uninstall' => false,

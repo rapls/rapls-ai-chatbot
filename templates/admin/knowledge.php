@@ -62,14 +62,16 @@ $is_pro = $pro_features->is_pro();
                             <?php if ($is_pro): ?>
                             <p class="description" style="margin-top: 4px;">
                                 <span class="wpaic-pro-menu-badge wpaic-pro-badge-active" style="font-size: 10px; padding: 1px 5px; vertical-align: middle;">PRO</span>
-                                <?php esc_html_e('Dynamic variables (auto-replaced at runtime):', 'rapls-ai-chatbot'); ?><br>
-                                <code>{site_name}</code> <?php esc_html_e('Site name', 'rapls-ai-chatbot'); ?>&ensp;
-                                <code>{site_url}</code> <?php esc_html_e('Site URL', 'rapls-ai-chatbot'); ?>&ensp;
-                                <code>{current_date}</code> <?php esc_html_e("Today's date", 'rapls-ai-chatbot'); ?>&ensp;
-                                <code>{current_year}</code> <?php esc_html_e('Current year', 'rapls-ai-chatbot'); ?>&ensp;
-                                <code>{admin_email}</code> <?php esc_html_e('Admin email', 'rapls-ai-chatbot'); ?>&ensp;
-                                <code>{business_hours}</code> <?php esc_html_e('Business hours', 'rapls-ai-chatbot'); ?>
+                                <?php esc_html_e('Dynamic variables (auto-replaced at runtime):', 'rapls-ai-chatbot'); ?>
                             </p>
+                            <div class="wpaic-dynamic-vars" style="display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin-top: 4px; font-size: 12px;">
+                                <code>{site_name}</code>       <span class="description"><?php esc_html_e('Site name', 'rapls-ai-chatbot'); ?></span>
+                                <code>{site_url}</code>        <span class="description"><?php esc_html_e('Site URL', 'rapls-ai-chatbot'); ?></span>
+                                <code>{current_date}</code>    <span class="description"><?php esc_html_e("Today's date", 'rapls-ai-chatbot'); ?></span>
+                                <code>{current_year}</code>    <span class="description"><?php esc_html_e('Current year', 'rapls-ai-chatbot'); ?></span>
+                                <code>{admin_email}</code>     <span class="description"><?php esc_html_e('Admin email', 'rapls-ai-chatbot'); ?></span>
+                                <code>{business_hours}</code>  <span class="description"><?php esc_html_e('Business hours', 'rapls-ai-chatbot'); ?></span>
+                            </div>
                             <?php endif; ?>
                         </td>
                     </tr>

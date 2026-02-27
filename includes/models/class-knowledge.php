@@ -382,6 +382,102 @@ class WPAIC_Knowledge {
     }
 
     /**
+     * Update embedding for a knowledge entry
+     *
+     * @param int    $id               Knowledge row ID
+     * @param string $packed_embedding  Binary packed float32 embedding
+     * @param string $model             Embedding model name
+     * @return bool True on success
+     */
+    public static function update_embedding(int $id, string $packed_embedding, string $model): bool {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $result = $wpdb->update(
+            $table,
+            [
+                'embedding'       => $packed_embedding,
+                'embedding_model' => $model,
+            ],
+            ['id' => $id],
+            ['%s', '%s'],
+            ['%d']
+        );
+
+        return $result !== false;
+    }
+
+    /**
+     * Get embedding stats for knowledge entries
+     *
+     * @return array{total: int, embedded: int, embedding_model: string|null}
+     */
+    public static function get_embedding_stats(): array {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE is_active = 1");
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'embedding'"));
+        if (!$has_col) {
+            return ['total' => $total, 'embedded' => 0, 'embedding_model' => null];
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $embedded = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE embedding IS NOT NULL AND is_active = 1");
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $model = $wpdb->get_var("SELECT embedding_model FROM `{$table}` WHERE embedding IS NOT NULL LIMIT 1");
+
+        return ['total' => $total, 'embedded' => $embedded, 'embedding_model' => $model];
+    }
+
+    /**
+     * Get knowledge entries without embeddings
+     *
+     * @param int $limit Max entries to return
+     * @return array Array of rows with id, title, content
+     */
+    public static function get_unembedded_entries(int $limit = 100): array {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'embedding'"));
+        if (!$has_col) {
+            return [];
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT id, title, content FROM `{$table}` WHERE embedding IS NULL AND is_active = 1 ORDER BY id ASC LIMIT %d",
+            $limit
+        ), ARRAY_A);
+    }
+
+    /**
+     * Clear all embeddings
+     */
+    public static function clear_all_embeddings(): bool {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'embedding'"));
+        if (!$has_col) {
+            return true;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $result = $wpdb->query("UPDATE `{$table}` SET embedding = NULL, embedding_model = NULL");
+
+        return $result !== false;
+    }
+
+    /**
      * Import knowledge from file
      */
     /**

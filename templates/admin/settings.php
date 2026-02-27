@@ -58,6 +58,7 @@ if (!defined('ABSPATH')) {
                                 <option value="openai" <?php selected($settings['ai_provider'] ?? '', 'openai'); ?>>OpenAI (ChatGPT)</option>
                                 <option value="claude" <?php selected($settings['ai_provider'] ?? '', 'claude'); ?>>Anthropic (Claude)</option>
                                 <option value="gemini" <?php selected($settings['ai_provider'] ?? '', 'gemini'); ?>>Google (Gemini)</option>
+                                <option value="openrouter" <?php selected($settings['ai_provider'] ?? '', 'openrouter'); ?>>OpenRouter</option>
                             </select>
                         </td>
                     </tr>
@@ -212,6 +213,121 @@ if (!defined('ABSPATH')) {
                         </tr>
                     </table>
                 </div>
+
+                <!-- OpenRouter Settings -->
+                <div id="openrouter-settings" class="provider-settings">
+                    <h3><?php esc_html_e('OpenRouter Settings', 'rapls-ai-chatbot'); ?></h3>
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Access 100+ AI models with a single API key. Get your key from openrouter.ai.', 'rapls-ai-chatbot'); ?>
+                    </p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php esc_html_e('API Key', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <div class="wpaic-api-key-wrapper">
+                                    <input type="password" name="wpaic_settings[openrouter_api_key]"
+                                           id="openrouter_api_key"
+                                           value=""
+                                           class="regular-text" autocomplete="off"
+                                           placeholder="<?php echo !empty($settings['openrouter_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
+                                    <input type="hidden" name="wpaic_settings[delete_openrouter_api_key]" id="delete_openrouter_api_key" value="0">
+                                    <button type="button" class="button wpaic-test-api" data-provider="openrouter"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
+                                    <?php if (!empty($settings['openrouter_api_key'])): ?>
+                                        <button type="button" class="button wpaic-clear-api-key" data-target="openrouter_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="wpaic-key-status wpaic-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php else: ?>
+                                        <span class="wpaic-key-status wpaic-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="description"><?php esc_html_e('Get your API key from openrouter.ai.', 'rapls-ai-chatbot'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <select name="wpaic_settings[openrouter_model]" id="wpaic-openrouter-model"
+                                    data-initial-value="<?php echo esc_attr($settings['openrouter_model'] ?? 'openrouter/auto'); ?>">
+                                    <?php foreach ($openrouter_provider->get_available_models() as $value => $label): ?>
+                                        <option value="<?php echo esc_attr($value); ?>"
+                                            <?php selected($settings['openrouter_model'] ?? 'openrouter/auto', $value); ?>>
+                                            <?php echo esc_html($label); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="button wpaic-refresh-models" data-provider="openrouter" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
+                                    <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
+                                </button>
+                                <p class="description">
+                                    <?php esc_html_e('Click the refresh button to fetch all available models from OpenRouter.', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Embedding Settings -->
+                <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
+                    🧠 <?php esc_html_e('Vector Embedding (RAG)', 'rapls-ai-chatbot'); ?>
+                </h3>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Vector Search', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[embedding_enabled]" value="1"
+                                    <?php checked($settings['embedding_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Enable vector embedding search', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Uses AI embeddings for semantic search in addition to keyword matching. Improves search accuracy, especially for Japanese and other non-English languages.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Embedding Provider', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <select name="wpaic_settings[embedding_provider]" id="embedding_provider">
+                                <?php foreach (WPAIC_Embedding_Generator::get_available_providers() as $value => $label) : ?>
+                                    <option value="<?php echo esc_attr($value); ?>" <?php selected($settings['embedding_provider'] ?? 'auto', $value); ?>>
+                                        <?php echo esc_html($label); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php
+                            $current_provider = $settings['ai_provider'] ?? 'openai';
+                            if (in_array($current_provider, ['claude', 'openrouter'], true)) :
+                            ?>
+                            <p class="description" style="color: #d63638;">
+                                <?php esc_html_e('Note: Claude and OpenRouter do not provide embedding APIs. An OpenAI or Gemini API key is required for embeddings.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php
+                    $emb_gen = new WPAIC_Embedding_Generator($settings);
+                    if ($emb_gen->is_configured()) :
+                        $idx_stats = WPAIC_Content_Index::get_embedding_stats();
+                    ?>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <span style="color: #00a32a;">&#10003;</span>
+                            <?php
+                            /* translators: 1: embedding provider, 2: model name */
+                            printf(esc_html__('Active: %1$s / %2$s', 'rapls-ai-chatbot'), esc_html(ucfirst($emb_gen->get_provider())), esc_html($emb_gen->get_model()));
+                            ?>
+                            <br>
+                            <?php
+                            /* translators: 1: embedded count, 2: total count */
+                            printf(esc_html__('%1$s / %2$s chunks embedded', 'rapls-ai-chatbot'),
+                                esc_html(number_format($idx_stats['embedded_chunks'])),
+                                esc_html(number_format($idx_stats['total_chunks']))
+                            );
+                            ?>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                </table>
             </div>
 
             <!-- Chat Settings -->

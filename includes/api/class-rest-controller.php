@@ -490,6 +490,26 @@ class WPAIC_REST_Controller {
                     ],
                 ],
             ]);
+
+            // Handoff status polling (Pro: live agent handoff)
+            register_rest_route($this->namespace, '/handoff-status/(?P<session_id>[a-zA-Z0-9-]+)', [
+                'methods'             => 'GET',
+                'callback'            => [$this, 'get_handoff_status'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'last_message_id' => [
+                        'required'          => false,
+                        'type'              => 'integer',
+                        'sanitize_callback' => 'absint',
+                        'default'           => 0,
+                    ],
+                ],
+            ]);
         }
     }
 
@@ -1019,17 +1039,23 @@ class WPAIC_REST_Controller {
 
                     $cached_content = apply_filters('wpaic_ai_response', $cached['content'], $message, $settings);
 
+                    $cache_response_data = [
+                        'message_id'         => $cache_msg_id,
+                        'content'            => $cached_content,
+                        'tokens_used'        => (int) ($cached['tokens_used'] ?? 0),
+                        'tokens_billed'      => 0,
+                        'sources'            => array_values($sources),
+                        'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
+                        'cached'             => true,
+                        'session_id'         => $session_id,
+                    ];
+
+                    /** This filter is documented above in the main response path. */
+                    $cache_response_data = apply_filters('wpaic_chat_response_data', $cache_response_data, $related_content, $message);
+
                     return new WP_REST_Response([
                         'success' => true,
-                        'data'    => [
-                            'message_id'         => $cache_msg_id,
-                            'content'            => $cached_content,
-                            'tokens_used'        => (int) ($cached['tokens_used'] ?? 0),
-                            'tokens_billed'      => 0,
-                            'sources'            => array_values($sources),
-                            'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
-                            'cached'             => true,
-                        ],
+                        'data'    => $cache_response_data,
                     ], 200);
                 }
             }
@@ -1230,6 +1256,7 @@ class WPAIC_REST_Controller {
                 'tokens_used' => $response['tokens_used'],
                 'sources'     => array_values($sources),
                 'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
+                'session_id'  => $session_id,
             ];
 
             // Add sentiment to response if sentiment analysis is enabled
@@ -1237,6 +1264,16 @@ class WPAIC_REST_Controller {
             if ($sentiment_enabled && !empty($sentiment) && $sentiment !== 'neutral') {
                 $response_data['sentiment'] = $sentiment;
             }
+
+            /**
+             * Filter the chat response data before returning to the client.
+             * Pro plugins can use this to enrich the response (e.g. product cards).
+             *
+             * @param array  $response_data   The response data array.
+             * @param array  $related_content  The search results used for context.
+             * @param string $message          The user's original message.
+             */
+            $response_data = apply_filters('wpaic_chat_response_data', $response_data, $related_content, $message);
 
             $result_body = [
                 'success'     => true,
@@ -1254,14 +1291,19 @@ class WPAIC_REST_Controller {
                 if (count($dedup_sources) > 5) {
                     $dedup_sources = array_slice($dedup_sources, 0, 5);
                 }
+                $dedup_data_inner = [
+                    'message_id'  => $response_data['message_id'] ?? 0,
+                    'content'     => $response_data['content'] ?? '',
+                    'tokens_used' => $response_data['tokens_used'] ?? 0,
+                    'sources'     => $dedup_sources,
+                ];
+                // Include product cards in dedup cache if present
+                if (!empty($response_data['product_cards'])) {
+                    $dedup_data_inner['product_cards'] = $response_data['product_cards'];
+                }
                 $dedup_data = [
                     'success' => true,
-                    'data'    => [
-                        'message_id'  => $response_data['message_id'] ?? 0,
-                        'content'     => $response_data['content'] ?? '',
-                        'tokens_used' => $response_data['tokens_used'] ?? 0,
-                        'sources'     => $dedup_sources,
-                    ],
+                    'data'    => $dedup_data_inner,
                 ];
                 $encoded = wp_json_encode($dedup_data);
                 $dedup_size = ($encoded !== false) ? strlen($encoded) : 0;
@@ -1446,6 +1488,12 @@ class WPAIC_REST_Controller {
                 $provider->set_model($settings['gemini_model'] ?? 'gemini-2.0-flash-exp');
                 break;
 
+            case 'openrouter':
+                $provider = new WPAIC_OpenRouter_Provider();
+                $provider->set_api_key($this->decrypt_api_key($settings['openrouter_api_key'] ?? ''));
+                $provider->set_model($settings['openrouter_model'] ?? 'openrouter/auto');
+                break;
+
             default: // openai
                 $provider = new WPAIC_OpenAI_Provider();
                 $provider->set_api_key($this->decrypt_api_key($settings['openai_api_key'] ?? ''));
@@ -1502,6 +1550,10 @@ class WPAIC_REST_Controller {
                 // Gemini Pro/Flash: 1M+ context
                 return 40000;
 
+            case 'openrouter':
+                // Conservative default; actual context varies by model
+                return 30000;
+
             default:
                 return 20000;
         }
@@ -1516,7 +1568,7 @@ class WPAIC_REST_Controller {
         }
 
         // Return as-is if not encrypted (check known API key prefixes)
-        if (strpos($encrypted, 'sk-') === 0 || strpos($encrypted, 'sk-ant-') === 0 || strpos($encrypted, 'AIza') === 0) {
+        if (strpos($encrypted, 'sk-') === 0 || strpos($encrypted, 'sk-ant-') === 0 || strpos($encrypted, 'AIza') === 0 || strpos($encrypted, 'sk-or-') === 0) {
             return $encrypted;
         }
 
@@ -3160,14 +3212,20 @@ class WPAIC_REST_Controller {
                 $urls
             ));
 
+            $regen_response_data = [
+                'message_id'  => $new_message['id'],
+                'content'     => $response['content'],
+                'tokens_used' => $response['tokens_used'],
+                'sources'     => array_values($sources),
+                'session_id'  => $session_id,
+            ];
+
+            /** This filter is documented in the main chat response path. */
+            $regen_response_data = apply_filters('wpaic_chat_response_data', $regen_response_data, $related_content, $user_message_content);
+
             return new WP_REST_Response([
                 'success' => true,
-                'data'    => [
-                    'message_id'  => $new_message['id'],
-                    'content'     => $response['content'],
-                    'tokens_used' => $response['tokens_used'],
-                    'sources'     => array_values($sources),
-                ],
+                'data'    => $regen_response_data,
             ], 200);
 
         } catch (Exception $e) {
@@ -3544,6 +3602,59 @@ class WPAIC_REST_Controller {
         return new WP_REST_Response([
             'success' => $result,
         ], $result ? 200 : 400);
+    }
+
+    /**
+     * Get handoff status and new operator messages (Pro: live agent handoff)
+     */
+    public function get_handoff_status(WP_REST_Request $request): WP_REST_Response {
+        // Session ownership already verified by check_session_permission()
+        $session_id      = sanitize_text_field($request->get_param('session_id'));
+        $last_message_id = absint($request->get_param('last_message_id'));
+
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        if (!$conversation) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Conversation not found.', 'rapls-ai-chatbot'),
+            ], 404);
+        }
+
+        $pro = WPAIC_Pro_Features::get_instance();
+        $status = $pro->get_handoff_status((int) $conversation['id']);
+
+        // Get new operator messages since last_message_id
+        $messages = [];
+        if ($status && $last_message_id >= 0) {
+            $table = wpaic_require_table('aichat_messages', 'get_handoff_status');
+            if ($table) {
+                global $wpdb;
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $rows = $wpdb->get_results($wpdb->prepare(
+                    "SELECT id, content, role, created_at FROM {$table} WHERE conversation_id = %d AND role = 'operator' AND id > %d ORDER BY id ASC LIMIT 50",
+                    (int) $conversation['id'],
+                    $last_message_id
+                ), ARRAY_A);
+                if ($rows) {
+                    foreach ($rows as $row) {
+                        $messages[] = [
+                            'id'         => (int) $row['id'],
+                            'content'    => $row['content'],
+                            'role'       => $row['role'],
+                            'created_at' => $row['created_at'],
+                        ];
+                    }
+                }
+            }
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data'    => [
+                'handoff_status' => $status,
+                'messages'       => $messages,
+            ],
+        ]);
     }
 
     /**
