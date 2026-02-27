@@ -36,7 +36,7 @@ class WPAIC_Conversation {
         // Create new
         // Use visitor_ip from $data if provided (caller should pass get_client_ip() result),
         // otherwise fall back to REMOTE_ADDR
-        $raw_ip = $data['visitor_ip'] ?? ($_SERVER['REMOTE_ADDR'] ?? '');
+        $raw_ip = $data['visitor_ip'] ?? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'] ?? ''));
         $user_agent = sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'] ?? ''));
         $user_id = get_current_user_id();
 

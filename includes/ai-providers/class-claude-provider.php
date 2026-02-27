@@ -91,6 +91,12 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             $body['system'] = trim($system_message);
         }
 
+        /** @see WPAIC_OpenAI_Provider::send_http_request() for filter docs */
+        $requested = (int) apply_filters('wpaic_api_timeout', 120, $this->api_url, $this->model);
+        $max_exec  = (int) ini_get('max_execution_time');
+        $upper     = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
+        $timeout   = max(10, min($upper, $requested));
+
         $response = wp_remote_post($this->api_url, [
             'headers' => [
                 'x-api-key'         => $this->api_key,
@@ -98,7 +104,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                 'Content-Type'      => 'application/json',
             ],
             'body'    => wp_json_encode($body),
-            'timeout' => 60,
+            'timeout' => $timeout,
         ]);
 
         if (is_wp_error($response)) {
