@@ -105,6 +105,7 @@ class WPAIC_Conversation {
             'date_to'   => '',
             'orderby'   => 'created_at',
             'order'     => 'DESC',
+            'search'    => '',
         ];
 
         $args = wp_parse_args($args, $defaults);
@@ -114,30 +115,40 @@ class WPAIC_Conversation {
         $params = [];
 
         if (!empty($args['status'])) {
-            $where .= ' AND status = %s';
+            $where .= ' AND c.status = %s';
             $params[] = $args['status'];
         }
 
         if (!empty($args['date_from'])) {
-            $where .= ' AND created_at >= %s';
+            $where .= ' AND c.created_at >= %s';
             $params[] = $args['date_from'] . ' 00:00:00';
         }
 
         if (!empty($args['date_to'])) {
-            $where .= ' AND created_at <= %s';
+            $where .= ' AND c.created_at <= %s';
             $params[] = $args['date_to'] . ' 23:59:59';
         }
 
-        $orderby = sanitize_sql_orderby($args['orderby'] . ' ' . $args['order']);
+        $msg_table = wpaic_validated_table('aichat_messages');
+
+        if (!empty($args['search'])) {
+            $where .= " AND c.id IN (SELECT conversation_id FROM {$msg_table} WHERE content LIKE %s)";
+            $params[] = '%' . $wpdb->esc_like($args['search']) . '%';
+        }
+
+        $orderby_col = $args['orderby'];
+        $orderby = sanitize_sql_orderby($orderby_col . ' ' . $args['order']);
         if (!$orderby) {
             $orderby = 'created_at DESC';
         }
+        // Prefix with table alias for unambiguous column references
+        $orderby = 'c.' . $orderby;
 
         $params[] = $args['per_page'];
         $params[] = $offset;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, WHERE and ORDER BY are safe internal values
-        $sql = "SELECT * FROM `{$table}` WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
+        $sql = "SELECT c.*, (SELECT COUNT(*) FROM {$msg_table} m WHERE m.conversation_id = c.id) AS message_count FROM `{$table}` c WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);
@@ -160,6 +171,49 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}`");
+    }
+
+    /**
+     * Get filtered count (matching get_list filter args)
+     */
+    public static function get_filtered_count(array $args = []): int {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        $where = '1=1';
+        $params = [];
+
+        if (!empty($args['status'])) {
+            $where .= ' AND c.status = %s';
+            $params[] = $args['status'];
+        }
+
+        if (!empty($args['date_from'])) {
+            $where .= ' AND c.created_at >= %s';
+            $params[] = $args['date_from'] . ' 00:00:00';
+        }
+
+        if (!empty($args['date_to'])) {
+            $where .= ' AND c.created_at <= %s';
+            $params[] = $args['date_to'] . ' 23:59:59';
+        }
+
+        if (!empty($args['search'])) {
+            $msg_table = wpaic_validated_table('aichat_messages');
+            $where .= " AND c.id IN (SELECT conversation_id FROM {$msg_table} WHERE content LIKE %s)";
+            $params[] = '%' . $wpdb->esc_like($args['search']) . '%';
+        }
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE are safe internal values
+        $sql = "SELECT COUNT(*) FROM `{$table}` c WHERE {$where}";
+
+        if (!empty($params)) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            return (int) $wpdb->get_var($wpdb->prepare($sql, ...$params));
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var($sql);
     }
 
     /**

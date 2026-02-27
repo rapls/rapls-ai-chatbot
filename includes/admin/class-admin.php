@@ -258,7 +258,7 @@ class WPAIC_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -455,6 +455,9 @@ class WPAIC_Admin {
         $sanitized['save_history'] = !empty($input['save_history']);
         $sanitized['retention_days'] = absint($input['retention_days'] ?? ($existing['retention_days'] ?? 90));
 
+        // Web search setting (AI Settings tab)
+        $sanitized['web_search_enabled'] = !empty($input['web_search_enabled']);
+
         // Uninstall settings
         $sanitized['delete_data_on_uninstall'] = !empty($input['delete_data_on_uninstall']);
 
@@ -520,6 +523,16 @@ class WPAIC_Admin {
         } else {
             $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? false;
         }
+
+        // MCP settings (AI Settings form)
+        $ai_form_submitted = array_key_exists('ai_provider', $input);
+        if ($ai_form_submitted) {
+            $sanitized['mcp_enabled'] = !empty($input['mcp_enabled']);
+        } else {
+            $sanitized['mcp_enabled'] = $existing['mcp_enabled'] ?? false;
+        }
+        // Preserve MCP API key hash (managed via AJAX, not form submission)
+        $sanitized['mcp_api_key_hash'] = $existing['mcp_api_key_hash'] ?? '';
 
         // Pro features settings
         $sanitized['pro_features'] = $this->sanitize_pro_features_settings(
@@ -1013,17 +1026,30 @@ class WPAIC_Admin {
         $orderby = isset($_GET['orderby']) && in_array(sanitize_text_field(wp_unslash($_GET['orderby'])), $allowed_orderby, true) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'created_at';
         $order = isset($_GET['order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['order']))) === 'ASC' ? 'ASC' : 'DESC';
 
-        $conversations = WPAIC_Conversation::get_list([
-            'page'     => $page,
-            'per_page' => 20,
-            'orderby'  => $orderby,
-            'order'    => $order,
-        ]);
-        $total = WPAIC_Conversation::get_count();
+        // Filter parameters
+        $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+        $status_filter = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
+        $date_from = isset($_GET['date_from']) ? sanitize_text_field(wp_unslash($_GET['date_from'])) : '';
+        $date_to = isset($_GET['date_to']) ? sanitize_text_field(wp_unslash($_GET['date_to'])) : '';
+
+        $list_args = [
+            'page'      => $page,
+            'per_page'  => 20,
+            'orderby'   => $orderby,
+            'order'     => $order,
+            'search'    => $search,
+            'status'    => $status_filter,
+            'date_from' => $date_from,
+            'date_to'   => $date_to,
+        ];
+
+        $conversations = WPAIC_Conversation::get_list($list_args);
+        $has_filters = $search !== '' || $status_filter !== '' || $date_from !== '' || $date_to !== '';
+        $total = $has_filters ? WPAIC_Conversation::get_filtered_count($list_args) : WPAIC_Conversation::get_count();
 
         // Statistics
         $conv_stats = [
-            'total'  => $total,
+            'total'  => WPAIC_Conversation::get_count(),
             'active' => WPAIC_Conversation::get_count('active'),
             'closed' => WPAIC_Conversation::get_count('closed'),
             'today'  => WPAIC_Conversation::get_today_count(),
@@ -1776,9 +1802,20 @@ class WPAIC_Admin {
                 'content'    => $msg['content'],
                 'created_at' => mysql2date('Y/m/d H:i:s', $msg['created_at']),
             ];
-            // Add feedback for assistant messages
-            if ($msg['role'] === 'assistant' && isset($msg['feedback'])) {
-                $data['feedback'] = (int) $msg['feedback'];
+            // Add metadata for assistant messages
+            if ($msg['role'] === 'assistant') {
+                if (isset($msg['feedback'])) {
+                    $data['feedback'] = (int) $msg['feedback'];
+                }
+                if (!empty($msg['ai_model'])) {
+                    $data['ai_model'] = $msg['ai_model'];
+                }
+                if (!empty($msg['tokens_used'])) {
+                    $data['tokens'] = (int) $msg['tokens_used'];
+                }
+                if (!empty($msg['cache_hit'])) {
+                    $data['cache_hit'] = true;
+                }
             }
             return $data;
         }, $messages);
@@ -2542,6 +2579,31 @@ class WPAIC_Admin {
 
         set_transient('wpaic_security_notice_dismissed', true, 30 * DAY_IN_SECONDS);
         wp_send_json_success();
+    }
+
+    /**
+     * AJAX: Generate a new MCP API key.
+     * Stores hashed key, returns raw key (shown once only).
+     */
+    public function ajax_generate_mcp_key(): void {
+        check_ajax_referer('wpaic_generate_mcp_key', '_wpnonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        // Generate a 40-character alphanumeric key
+        $raw_key = wp_generate_password(40, false);
+
+        // Store hashed version
+        $settings = get_option('wpaic_settings', []);
+        $settings['mcp_api_key_hash'] = wp_hash_password($raw_key);
+        update_option('wpaic_settings', $settings);
+
+        wp_send_json_success([
+            'api_key'  => $raw_key,
+            'endpoint' => rest_url('wp-ai-chatbot/v1/mcp'),
+        ]);
     }
 
     /**

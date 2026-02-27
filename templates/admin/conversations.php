@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 
 $total_pages = ceil($total / 20);
 $is_pro_active = get_option('wpaic_pro_active');
+$has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date_from ?? '') !== '' || ($date_to ?? '') !== '';
 ?>
 <div class="wrap wpaic-admin">
     <h1><?php esc_html_e('AI Chatbot - Conversations', 'rapls-ai-chatbot'); ?></h1>
@@ -32,6 +33,35 @@ $is_pro_active = get_option('wpaic_pro_active');
             <div class="stat-label"><?php esc_html_e('Today', 'rapls-ai-chatbot'); ?></div>
         </div>
     </div>
+
+    <!-- Search & Filter -->
+    <form method="get" class="wpaic-conversation-filters" style="display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap;">
+        <input type="hidden" name="page" value="<?php echo esc_attr(sanitize_text_field(wp_unslash($_GET['page'] ?? ''))); ?>">
+        <input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>">
+        <input type="hidden" name="order" value="<?php echo esc_attr($order); ?>">
+
+        <input type="search" name="s" value="<?php echo esc_attr($search ?? ''); ?>"
+               placeholder="<?php esc_attr_e('Search messages...', 'rapls-ai-chatbot'); ?>"
+               style="min-width: 220px;">
+
+        <select name="status">
+            <option value=""><?php esc_html_e('All Statuses', 'rapls-ai-chatbot'); ?></option>
+            <option value="active" <?php selected($status_filter ?? '', 'active'); ?>><?php esc_html_e('Active', 'rapls-ai-chatbot'); ?></option>
+            <option value="closed" <?php selected($status_filter ?? '', 'closed'); ?>><?php esc_html_e('Closed', 'rapls-ai-chatbot'); ?></option>
+            <option value="archived" <?php selected($status_filter ?? '', 'archived'); ?>><?php esc_html_e('Archived', 'rapls-ai-chatbot'); ?></option>
+        </select>
+
+        <input type="date" name="date_from" value="<?php echo esc_attr($date_from ?? ''); ?>"
+               placeholder="<?php esc_attr_e('From', 'rapls-ai-chatbot'); ?>">
+        <input type="date" name="date_to" value="<?php echo esc_attr($date_to ?? ''); ?>"
+               placeholder="<?php esc_attr_e('To', 'rapls-ai-chatbot'); ?>">
+
+        <?php submit_button(__('Filter', 'rapls-ai-chatbot'), 'secondary', 'filter_action', false); ?>
+
+        <?php if ($has_filters): ?>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=' . sanitize_text_field(wp_unslash($_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-chatbot'); ?></a>
+        <?php endif; ?>
+    </form>
 
     <?php if (!empty($conversations)): ?>
         <!-- Bulk Actions -->
@@ -69,6 +99,7 @@ $is_pro_active = get_option('wpaic_pro_active');
                     <th style="width: 40px;"><input type="checkbox" id="wpaic-select-all"></th>
                     <th style="width: 60px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('id', 'ID', $orderby, $order, 'DESC')); ?></th>
                     <th><?php esc_html_e('Session', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 60px;"><?php esc_html_e('Msgs', 'rapls-ai-chatbot'); ?></th>
                     <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
                     <th><?php esc_html_e('Start Page', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 100px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
@@ -89,6 +120,7 @@ $is_pro_active = get_option('wpaic_pro_active');
                         <td>
                             <code><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
                         </td>
+                        <td style="text-align: center;"><?php echo esc_html(isset($conv['message_count']) ? number_format((int) $conv['message_count']) : '-'); ?></td>
                         <td>
                             <?php if ($lead): ?>
                                 <div class="wpaic-lead-info">
@@ -151,11 +183,24 @@ $is_pro_active = get_option('wpaic_pro_active');
                     <span class="displaying-num"><?php echo esc_html(number_format($total)); ?> <?php esc_html_e('items', 'rapls-ai-chatbot'); ?></span>
                     <span class="pagination-links">
                         <?php
-                        $pagination_base = add_query_arg([
+                        $pagination_args = [
                             'orderby' => $orderby,
                             'order'   => $order,
                             'paged'   => '%#%',
-                        ]);
+                        ];
+                        if (!empty($search)) {
+                            $pagination_args['s'] = $search;
+                        }
+                        if (!empty($status_filter)) {
+                            $pagination_args['status'] = $status_filter;
+                        }
+                        if (!empty($date_from)) {
+                            $pagination_args['date_from'] = $date_from;
+                        }
+                        if (!empty($date_to)) {
+                            $pagination_args['date_to'] = $date_to;
+                        }
+                        $pagination_base = add_query_arg($pagination_args);
                         echo wp_kses_post(paginate_links([
                             'base'      => $pagination_base,
                             'format'    => '',
@@ -170,6 +215,8 @@ $is_pro_active = get_option('wpaic_pro_active');
             </div>
         <?php endif; ?>
 
+    <?php elseif ($has_filters): ?>
+        <p><?php esc_html_e('No conversations match the current filters.', 'rapls-ai-chatbot'); ?></p>
     <?php else: ?>
         <p><?php esc_html_e('No conversation history.', 'rapls-ai-chatbot'); ?></p>
     <?php endif; ?>
@@ -187,6 +234,27 @@ $is_pro_active = get_option('wpaic_pro_active');
         </div>
     </div>
 </div>
+
+<style>
+.wpaic-msg-meta {
+    display: inline-flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+.wpaic-msg-meta-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 1.4;
+    background: #f0f0f1;
+    color: #50575e;
+}
+.wpaic-msg-meta-badge.cached {
+    background: #dff0d8;
+    color: #3c763d;
+}
+</style>
 
 <script>
 jQuery(document).ready(function($) {
@@ -251,6 +319,34 @@ jQuery(document).ready(function($) {
 
                         wrap.appendChild(header);
                         wrap.appendChild(p);
+
+                        // Show AI metadata badges
+                        if (msg.role === 'assistant' && (msg.ai_model || msg.tokens || msg.cache_hit)) {
+                            var metaDiv = document.createElement('div');
+                            metaDiv.className = 'wpaic-msg-meta';
+
+                            if (msg.ai_model) {
+                                var modelBadge = document.createElement('span');
+                                modelBadge.className = 'wpaic-msg-meta-badge';
+                                modelBadge.textContent = msg.ai_model;
+                                metaDiv.appendChild(modelBadge);
+                            }
+                            if (msg.tokens) {
+                                var tokenBadge = document.createElement('span');
+                                tokenBadge.className = 'wpaic-msg-meta-badge';
+                                tokenBadge.textContent = msg.tokens.toLocaleString() + ' <?php echo esc_js(__('tokens', 'rapls-ai-chatbot')); ?>';
+                                metaDiv.appendChild(tokenBadge);
+                            }
+                            if (msg.cache_hit) {
+                                var cacheBadge = document.createElement('span');
+                                cacheBadge.className = 'wpaic-msg-meta-badge cached';
+                                cacheBadge.textContent = '\u26A1 <?php echo esc_js(__('cached', 'rapls-ai-chatbot')); ?>';
+                                metaDiv.appendChild(cacheBadge);
+                            }
+
+                            wrap.appendChild(metaDiv);
+                        }
+
                         container.appendChild(wrap);
                     });
                     messagesContainer.empty().append(container);

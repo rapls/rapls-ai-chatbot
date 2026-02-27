@@ -3052,16 +3052,40 @@ msgstr "アップロードされたファイルを読み取れません。"
 
 #: includes/models/class-knowledge.php:427
 #: includes/models/class-knowledge.php:447
-msgid "Unsupported file type. (txt, csv, md only)"
-msgstr "サポートされていないファイル形式です。(txt, csv, md のみ)"
+msgid "Unsupported file type. Supported: TXT, CSV, MD, PDF, DOCX"
+msgstr "サポートされていないファイル形式です。対応形式: TXT, CSV, MD, PDF, DOCX"
 
 #: includes/models/class-knowledge.php:438
 msgid "Failed to read file."
 msgstr "ファイルの読み取りに失敗しました。"
 
-#: includes/models/class-knowledge.php:451
+#: includes/models/class-knowledge.php
 msgid "File content is empty."
 msgstr "ファイルの内容が空です。"
+
+#: includes/models/class-knowledge.php
+msgid ""
+"Could not extract text from this PDF. Only text-based PDFs are supported. "
+"Scanned image PDFs and encrypted PDFs cannot be processed."
+msgstr ""
+"この PDF からテキストを抽出できませんでした。テキストベースの PDF のみ対応して"
+"います。スキャン画像の PDF や暗号化された PDF は処理できません。"
+
+#: includes/models/class-knowledge.php
+msgid ""
+"DOCX import requires the PHP ZipArchive extension, which is not available on "
+"this server."
+msgstr ""
+"DOCX インポートには PHP ZipArchive 拡張が必要ですが、このサーバーでは利用でき"
+"ません。"
+
+#: includes/models/class-knowledge.php
+msgid ""
+"Could not extract text from this DOCX file. The file may be corrupted or "
+"empty."
+msgstr ""
+"この DOCX ファイルからテキストを抽出できませんでした。ファイルが破損しているか"
+"空の可能性があります。"
 
 #: includes/models/class-knowledge.php:469
 msgid ""
@@ -3553,9 +3577,17 @@ msgstr "ファイルからインポート"
 msgid "File"
 msgstr "ファイル"
 
-#: templates/admin/knowledge.php:130
-msgid "Supported formats: TXT, CSV, MD (max 5MB)"
-msgstr "対応形式: TXT, CSV, MD（最大5MB）"
+#: templates/admin/knowledge.php
+msgid "Supported formats: TXT, CSV, MD, PDF, DOCX (max 5MB)"
+msgstr "対応形式: TXT, CSV, MD, PDF, DOCX（最大5MB）"
+
+#: templates/admin/knowledge.php
+msgid ""
+"PDF: Only text-based files are supported. Scanned image PDFs cannot be "
+"processed."
+msgstr ""
+"PDF: テキストベースのファイルのみ対応しています。スキャン画像の PDF はテキスト"
+"抽出できません。"
 
 #: templates/admin/knowledge.php:131
 msgid ""
@@ -6351,3 +6383,155 @@ msgstr "%1$d 件の埋め込みを処理しました。残り %2$d 件。"
 #: includes/admin/class-admin.php
 msgid "All embeddings have been cleared."
 msgstr "すべての埋め込みがクリアされました。"
+
+# Cross-Site Embed feature
+#: templates/admin/settings.php
+msgid "Cross-Site Embed"
+msgstr "外部サイト埋め込み"
+
+#: templates/admin/settings.php
+msgid "Use the code below to display this chatbot on external sites. Paste it before the closing </body> tag."
+msgstr "以下のコードを使用して、外部サイトにこのチャットボットを表示できます。閉じ </body> タグの前に貼り付けてください。"
+
+#: templates/admin/settings.php
+msgid "Script Embed (Recommended)"
+msgstr "Script 埋め込み（推奨）"
+
+#: templates/admin/settings.php
+msgid "Iframe Embed"
+msgstr "iframe 埋め込み"
+
+#: templates/admin/settings.php
+msgid "Copy"
+msgstr "コピー"
+
+#: templates/admin/settings.php
+msgid "Displays a floating chat badge. Click to open the chat window."
+msgstr "フローティングチャットバッジを表示します。クリックでチャットウィンドウが開きます。"
+
+#: templates/admin/settings.php
+msgid "Embeds the chat directly in the page at the specified size."
+msgstr "指定したサイズでチャットをページに直接埋め込みます。"
+
+#: templates/admin/settings.php
+msgid "Web Search"
+msgstr "Web 検索"
+
+#: templates/admin/settings.php
+msgid "Enable Web Search"
+msgstr "Web 検索を有効にする"
+
+#: templates/admin/settings.php
+msgid "When the knowledge base does not contain a sufficient answer, the AI will automatically search the web in real time."
+msgstr "ナレッジベースに十分な回答がない場合、AI がリアルタイムで Web を検索します。"
+
+#: templates/admin/settings.php
+msgid "Note: Additional charges may apply depending on the provider."
+msgstr "※ プロバイダーによって追加料金が発生する場合があります。"
+
+# MCP (Model Context Protocol)
+#: templates/admin/settings.php
+msgid "Allow external AI agents (Claude Desktop, Cursor, etc.) to access your knowledge base and conversations via MCP."
+msgstr "外部 AI エージェント（Claude Desktop、Cursor 等）から MCP 経由でナレッジベースや会話にアクセスできるようにします。"
+
+#: templates/admin/settings.php
+msgid "MCP Server"
+msgstr "MCP サーバー"
+
+#: templates/admin/settings.php
+msgid "Enable MCP server"
+msgstr "MCP サーバーを有効にする"
+
+#: templates/admin/settings.php
+msgid "When enabled, external AI agents can connect to this site using the MCP protocol."
+msgstr "有効にすると、外部 AI エージェントが MCP プロトコルでこのサイトに接続できます。"
+
+#: templates/admin/settings.php
+msgid "MCP API Key"
+msgstr "MCP API キー"
+
+#: templates/admin/settings.php
+msgid "No API key generated yet."
+msgstr "API キーが未生成です。"
+
+#: templates/admin/settings.php
+msgid "Regenerate Key"
+msgstr "キーを再生成"
+
+#: templates/admin/settings.php
+msgid "Generate Key"
+msgstr "キーを生成"
+
+#: templates/admin/settings.php
+msgid "Copy Key"
+msgstr "キーをコピー"
+
+#: templates/admin/settings.php
+msgid "The API key is shown only once when generated. Store it securely for use in your MCP client configuration."
+msgstr "API キーは生成時に1回のみ表示されます。MCP クライアント設定に使用するため、安全に保管してください。"
+
+#: templates/admin/settings.php
+msgid "MCP Endpoint"
+msgstr "MCP エンドポイント"
+
+#: templates/admin/settings.php
+msgid "Use this URL in your MCP client (Claude Desktop, Cursor, etc.) configuration."
+msgstr "MCP クライアント（Claude Desktop、Cursor 等）の設定にこの URL を使用してください。"
+
+#: templates/admin/settings.php
+msgid "Claude Desktop Configuration Example:"
+msgstr "Claude Desktop 設定例:"
+
+#: templates/admin/settings.php
+msgid "Generate a new MCP API key? The previous key will be invalidated."
+msgstr "新しい MCP API キーを生成しますか？ 既存のキーは無効になります。"
+
+#: includes/mcp/class-mcp-server.php
+msgid "MCP API key is required."
+msgstr "MCP API キーが必要です。"
+
+#: includes/mcp/class-mcp-server.php
+msgid "Invalid authorization format. Use: Bearer <api_key>"
+msgstr "認証形式が不正です。Bearer <api_key> を使用してください。"
+
+#: includes/mcp/class-mcp-server.php
+msgid "MCP API key has not been configured."
+msgstr "MCP API キーが設定されていません。"
+
+#: includes/mcp/class-mcp-server.php
+msgid "Invalid MCP API key."
+msgstr "MCP API キーが無効です。"
+
+#: includes/mcp/class-mcp-tool-registry.php
+#, php-format
+msgid "Tool not found: %s"
+msgstr "ツールが見つかりません: %s"
+
+#: includes/mcp/tools/class-tool-send-message.php
+msgid "Use the following reference information to answer the question:"
+msgstr "以下の参考情報を使って質問に回答してください:"
+
+# Conversation dashboard enhancements
+#: templates/admin/conversations.php
+msgid "Search messages..."
+msgstr "メッセージを検索..."
+
+#: templates/admin/conversations.php
+msgid "All Statuses"
+msgstr "すべてのステータス"
+
+#: templates/admin/conversations.php
+msgid "Msgs"
+msgstr "件数"
+
+#: templates/admin/conversations.php
+msgid "tokens"
+msgstr "トークン"
+
+#: templates/admin/conversations.php
+msgid "cached"
+msgstr "キャッシュ"
+
+#: templates/admin/conversations.php
+msgid "No conversations match the current filters."
+msgstr "現在のフィルター条件に一致する会話はありません。"
