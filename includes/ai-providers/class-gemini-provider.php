@@ -93,7 +93,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
         }
 
         $response_code = wp_remote_retrieve_response_code($response);

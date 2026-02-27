@@ -81,9 +81,10 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         }
 
         $body = [
-            'model'      => $this->model,
-            'max_tokens' => $options['max_tokens'] ?? 1000,
-            'messages'   => $chat_messages,
+            'model'       => $this->model,
+            'max_tokens'  => $options['max_tokens'] ?? 1000,
+            'messages'    => $chat_messages,
+            'temperature' => (float) ($options['temperature'] ?? 0.7),
         ];
 
         if (!empty($system_message)) {
@@ -101,7 +102,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
@@ -229,7 +230,8 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         // All Claude 3+ models support vision
         return strpos($this->model, 'claude-3') !== false ||
                strpos($this->model, 'claude-opus-4') !== false ||
-               strpos($this->model, 'claude-sonnet-4') !== false;
+               strpos($this->model, 'claude-sonnet-4') !== false ||
+               strpos($this->model, 'claude-haiku-4') !== false;
     }
 
     /**
@@ -249,7 +251,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                     'Content-Type'      => 'application/json',
                 ],
                 'body'    => wp_json_encode([
-                    'model'      => 'claude-3-haiku-20240307',
+                    'model'      => 'claude-haiku-4-5-20251001',
                     'max_tokens' => 10,
                     'messages'   => [
                         ['role' => 'user', 'content' => 'Hi']

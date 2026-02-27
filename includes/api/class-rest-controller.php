@@ -681,8 +681,9 @@ class WPAIC_REST_Controller {
         // Session ownership already verified by check_session_permission()
 
         // Validate input
+        $max_length = (int) apply_filters('wpaic_max_message_length', 8000);
         $message_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
-        if (empty($message) || $message_length > 2000) {
+        if (empty($message) || $message_length > $max_length) {
             return new WP_REST_Response([
                 'success'    => false,
                 'error'      => __('Message is empty or too long.', 'rapls-ai-chatbot'),
@@ -3251,7 +3252,7 @@ class WPAIC_REST_Controller {
             $sum_settings = get_option('wpaic_settings', []);
             $summary_prompt = $sum_settings['summary_prompt'] ?? __('Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:', 'rapls-ai-chatbot');
 
-            $response = $provider->generate_response([
+            $response = $provider->send_message([
                 ['role' => 'user', 'content' => $summary_prompt . "\n\n" . $conversation_text]
             ], [
                 'max_tokens' => 200,
