@@ -6535,3 +6535,7 @@ msgstr "キャッシュ"
 #: templates/admin/conversations.php
 msgid "No conversations match the current filters."
 msgstr "現在のフィルター条件に一致する会話はありません。"
+
+#: includes/api/class-rest-controller.php
+msgid "Chat is not available for your account."
+msgstr "お客様のアカウントではチャットをご利用いただけません。"

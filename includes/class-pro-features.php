@@ -300,6 +300,11 @@ class WPAIC_Pro_Features {
             'monthly_report_enabled' => false,
             'monthly_report_email' => '',
 
+            // Summary Report (daily/weekly)
+            'summary_report_enabled' => false,
+            'summary_report_frequency' => 'weekly',
+            'summary_report_email' => '',
+
             // AI Prompts (customizable)
             'sentiment_prompt' => "Analyze the emotional sentiment of the following message and respond with ONLY ONE of these words: frustrated, confused, urgent, positive, negative, neutral\n\nRules:\n- frustrated: anger, irritation, complaint\n- confused: uncertainty, asking for help understanding\n- urgent: time pressure, emergency\n- positive: gratitude, satisfaction, happiness\n- negative: sadness, disappointment, hardship\n- neutral: no clear emotion\n\nMessage: {message}\n\nSentiment:",
             'sentiment_tone_frustrated' => '[TONE ADJUSTMENT: The user appears frustrated. Respond with extra patience and empathy. Acknowledge their frustration, apologize for any inconvenience, and focus on providing clear, step-by-step solutions. Avoid defensive language.]',
@@ -337,6 +342,11 @@ class WPAIC_Pro_Features {
             'offline_form_description' => __('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
             'offline_notification_email' => '',
             'offline_notification_enabled' => false,
+
+            // Role-based Access Control
+            'role_access_enabled' => false,
+            'role_access_default' => 'allow',
+            'role_limits' => [],
         ];
     }
 
@@ -572,5 +582,21 @@ class WPAIC_Pro_Features {
      */
     public function get_bot_for_page(int $page_id): string {
         return 'default';
+    }
+
+    /**
+     * Stub: Get role-based message limit for current user.
+     * Free version ignores roles and returns site-wide limit.
+     */
+    public function get_role_message_limit(): int {
+        return $this->get_message_limit();
+    }
+
+    /**
+     * Stub: Check if chat is allowed for current user based on role.
+     * Free version always allows.
+     */
+    public function is_chat_allowed_for_user(): bool {
+        return true;
     }
 }

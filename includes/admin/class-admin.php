@@ -753,6 +753,27 @@ class WPAIC_Admin {
             $sanitized[$key] = sanitize_textarea_field($input[$key] ?? ($existing[$key] ?? ($defaults[$key] ?? '')));
         }
 
+        // Role-based access control
+        $sanitized['role_access_enabled'] = !empty($input['role_access_enabled']);
+        $role_access_default = $input['role_access_default'] ?? ($existing['role_access_default'] ?? 'allow');
+        $sanitized['role_access_default'] = in_array($role_access_default, ['allow', 'deny'], true) ? $role_access_default : 'allow';
+
+        $sanitized['role_limits'] = [];
+        if (!empty($input['role_limits']) && is_array($input['role_limits'])) {
+            foreach ($input['role_limits'] as $role_slug => $values) {
+                $safe_slug = sanitize_key($role_slug);
+                if (empty($safe_slug) || !is_array($values)) {
+                    continue;
+                }
+                $sanitized['role_limits'][$safe_slug] = [
+                    'chat_allowed'  => !empty($values['chat_allowed']),
+                    'message_limit' => absint($values['message_limit'] ?? 0),
+                ];
+            }
+        } else {
+            $sanitized['role_limits'] = $existing['role_limits'] ?? [];
+        }
+
         return $sanitized;
     }
 

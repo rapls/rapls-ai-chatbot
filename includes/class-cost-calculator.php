@@ -352,6 +352,51 @@ class WPAIC_Cost_Calculator {
     }
 
     /**
+     * 日別のコスト合計を取得（モデル別に正確なコストを算出）
+     */
+    public static function get_daily_cost_totals(int $days = 30): array {
+        $stats = self::get_usage_stats($days);
+        $daily_costs = [];
+
+        foreach ($stats['daily_stats'] as $row) {
+            $date = $row['date'] ?? '';
+            if (empty($date)) {
+                continue;
+            }
+            $model = $row['ai_model'] ?? 'unknown';
+            $input = (int) ($row['input_tokens'] ?? 0);
+            $output = (int) ($row['output_tokens'] ?? 0);
+
+            // 入力/出力トークンがない場合（古いデータ）は推定
+            if ($input === 0 && $output === 0 && !empty($row['total_tokens'])) {
+                $total = (int) $row['total_tokens'];
+                $input = (int) ($total * 0.7);
+                $output = (int) ($total * 0.3);
+            }
+
+            $cost = self::calculate_cost($model, $input, $output);
+            if (!isset($daily_costs[$date])) {
+                $daily_costs[$date] = 0.0;
+            }
+            $daily_costs[$date] += $cost;
+        }
+
+        // 日付範囲を埋める（データがない日は 0）
+        $start = new \DateTime("-{$days} days");
+        $end = new \DateTime();
+        $interval = new \DateInterval('P1D');
+        $period = new \DatePeriod($start, $interval, $end);
+
+        $filled = [];
+        foreach ($period as $date) {
+            $key = $date->format('Y-m-d');
+            $filled[$key] = round($daily_costs[$key] ?? 0.0, 6);
+        }
+
+        return $filled;
+    }
+
+    /**
      * 日別のグラフ用データを取得
      */
     public static function get_chart_data(int $days = 30): array {

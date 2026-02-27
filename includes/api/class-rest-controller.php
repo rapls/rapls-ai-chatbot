@@ -871,6 +871,15 @@ class WPAIC_REST_Controller {
             ], 403);
         }
 
+        // Check role-based access (Pro feature)
+        if (!$pro_features->is_chat_allowed_for_user()) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => __('Chat is not available for your account.', 'rapls-ai-chatbot'),
+                'error_code' => 'role_denied',
+            ], 403);
+        }
+
         // Check business hours and holidays (Pro feature)
         $unavailable_message = $pro_features->get_unavailable_message();
         if ($unavailable_message !== null) {
