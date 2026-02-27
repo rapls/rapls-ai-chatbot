@@ -843,11 +843,14 @@
                 contentEl.appendChild(sentimentEl);
             }
 
-            // Bot messages: safe HTML formatting (line breaks + auto-links)
+            // Bot messages: safe HTML formatting (line breaks + auto-links, or markdown)
             // User messages: plain text only (no formatting needed)
             if (role === 'bot') {
                 var formatted = this.formatBotMessage(content);
                 var textSpan = document.createElement('span');
+                if (this.config.markdown_enabled) {
+                    textSpan.className = 'wpaic-markdown';
+                }
                 textSpan.appendChild(formatted);
                 contentEl.appendChild(textSpan);
             } else {
@@ -1012,6 +1015,9 @@
                     var formatted = self.formatBotMessage(data.data.content);
                     contentEl.innerHTML = '';
                     var textSpan = document.createElement('span');
+                    if (self.config.markdown_enabled) {
+                        textSpan.className = 'wpaic-markdown';
+                    }
                     textSpan.appendChild(formatted);
                     contentEl.appendChild(textSpan);
 
@@ -1986,8 +1992,19 @@
         /**
          * Format bot message content safely using DOM API.
          * Returns a DocumentFragment (not an HTML string) to avoid innerHTML-based XSS vectors.
+         * When markdown is enabled, delegates to formatBotMessageMarkdown().
          */
         formatBotMessage: function(text) {
+            if (this.config.markdown_enabled) {
+                return this.formatBotMessageMarkdown(text);
+            }
+            return this.formatBotMessagePlain(text);
+        },
+
+        /**
+         * Plain text formatter: newline→<br> and URL auto-linking only.
+         */
+        formatBotMessagePlain: function(text) {
             var fragment = document.createDocumentFragment();
             // Split on URL pattern, preserving the matched URLs as separate tokens
             var urlPattern = /https?:\/\/[^\s<>"')\]]+/g;
@@ -2016,6 +2033,177 @@
                 }
             }
             return fragment;
+        },
+
+        /**
+         * Markdown formatter: renders headings, lists, blockquotes, code blocks,
+         * bold, italic, inline code, and URL auto-links via DOM API.
+         * Returns a DocumentFragment.
+         */
+        formatBotMessageMarkdown: function(text) {
+            var self = this;
+            var fragment = document.createDocumentFragment();
+
+            // Step 1: Extract fenced code blocks (``` ... ```) and protect them
+            var codeBlocks = [];
+            var codeBlockPattern = /```(\w*)\n?([\s\S]*?)```/g;
+            var processed = text.replace(codeBlockPattern, function(match, lang, code) {
+                var index = codeBlocks.length;
+                codeBlocks.push({ lang: lang, code: code.replace(/\n$/, '') });
+                return '\x00CODEBLOCK' + index + '\x00';
+            });
+
+            // Step 2: Split into lines and process block-level elements
+            var lines = processed.split('\n');
+            var i = 0;
+
+            while (i < lines.length) {
+                var line = lines[i];
+
+                // Code block placeholder
+                var cbMatch = line.match(/^\x00CODEBLOCK(\d+)\x00$/);
+                if (cbMatch) {
+                    var cb = codeBlocks[parseInt(cbMatch[1], 10)];
+                    var pre = document.createElement('pre');
+                    var code = document.createElement('code');
+                    if (cb.lang) {
+                        code.className = 'language-' + cb.lang;
+                    }
+                    code.textContent = cb.code;
+                    pre.appendChild(code);
+                    fragment.appendChild(pre);
+                    i++;
+                    continue;
+                }
+
+                // Headings (# to ###)
+                var headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+                if (headingMatch) {
+                    var level = headingMatch[1].length;
+                    var h = document.createElement('h' + (level + 1)); // h2-h4
+                    self._appendInlineMarkdown(h, headingMatch[2]);
+                    fragment.appendChild(h);
+                    i++;
+                    continue;
+                }
+
+                // Blockquote (> ...)
+                if (/^>\s?/.test(line)) {
+                    var bq = document.createElement('blockquote');
+                    var bqLines = [];
+                    while (i < lines.length && /^>\s?/.test(lines[i])) {
+                        bqLines.push(lines[i].replace(/^>\s?/, ''));
+                        i++;
+                    }
+                    var bqP = document.createElement('p');
+                    self._appendInlineMarkdown(bqP, bqLines.join('\n'));
+                    bq.appendChild(bqP);
+                    fragment.appendChild(bq);
+                    continue;
+                }
+
+                // Unordered list (- or * )
+                if (/^[\-\*]\s+/.test(line)) {
+                    var ul = document.createElement('ul');
+                    while (i < lines.length && /^[\-\*]\s+/.test(lines[i])) {
+                        var li = document.createElement('li');
+                        self._appendInlineMarkdown(li, lines[i].replace(/^[\-\*]\s+/, ''));
+                        ul.appendChild(li);
+                        i++;
+                    }
+                    fragment.appendChild(ul);
+                    continue;
+                }
+
+                // Ordered list (1. 2. etc.)
+                if (/^\d+\.\s+/.test(line)) {
+                    var ol = document.createElement('ol');
+                    while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+                        var oli = document.createElement('li');
+                        self._appendInlineMarkdown(oli, lines[i].replace(/^\d+\.\s+/, ''));
+                        ol.appendChild(oli);
+                        i++;
+                    }
+                    fragment.appendChild(ol);
+                    continue;
+                }
+
+                // Empty line → skip (paragraph break)
+                if (line.trim() === '') {
+                    i++;
+                    continue;
+                }
+
+                // Regular paragraph: collect consecutive non-empty, non-block lines
+                var paraLines = [];
+                while (i < lines.length && lines[i].trim() !== '' &&
+                    !/^#{1,3}\s/.test(lines[i]) &&
+                    !/^>\s?/.test(lines[i]) &&
+                    !/^[\-\*]\s+/.test(lines[i]) &&
+                    !/^\d+\.\s+/.test(lines[i]) &&
+                    !/^\x00CODEBLOCK/.test(lines[i])) {
+                    paraLines.push(lines[i]);
+                    i++;
+                }
+                var p = document.createElement('p');
+                self._appendInlineMarkdown(p, paraLines.join('\n'));
+                fragment.appendChild(p);
+            }
+
+            return fragment;
+        },
+
+        /**
+         * Append inline markdown (bold, italic, inline code, URLs) to a DOM element.
+         * All content is created via DOM API — no innerHTML.
+         */
+        _appendInlineMarkdown: function(el, text) {
+            // Tokenize: inline code, bold, italic, URLs, line breaks, plain text
+            // Order matters: code first (prevents bold/italic inside code), then bold, italic, URLs
+            var pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|https?:\/\/[^\s<>"'\)\]]+|\n)/g;
+            var lastIndex = 0;
+            var match;
+
+            while ((match = pattern.exec(text)) !== null) {
+                // Plain text before match
+                if (match.index > lastIndex) {
+                    el.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+                }
+                var token = match[0];
+
+                if (token === '\n') {
+                    el.appendChild(document.createElement('br'));
+                } else if (token.charAt(0) === '`') {
+                    // Inline code
+                    var codeEl = document.createElement('code');
+                    codeEl.textContent = token.substring(1, token.length - 1);
+                    el.appendChild(codeEl);
+                } else if (token.substring(0, 2) === '**') {
+                    // Bold
+                    var strong = document.createElement('strong');
+                    strong.textContent = token.substring(2, token.length - 2);
+                    el.appendChild(strong);
+                } else if (token.charAt(0) === '*' || token.charAt(0) === '_') {
+                    // Italic
+                    var em = document.createElement('em');
+                    em.textContent = token.substring(1, token.length - 1);
+                    el.appendChild(em);
+                } else if (/^https?:\/\//.test(token)) {
+                    // URL
+                    var a = document.createElement('a');
+                    a.href = token;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.textContent = token;
+                    el.appendChild(a);
+                }
+                lastIndex = pattern.lastIndex;
+            }
+
+            // Remaining plain text
+            if (lastIndex < text.length) {
+                el.appendChild(document.createTextNode(text.substring(lastIndex)));
+            }
         },
 
         /**

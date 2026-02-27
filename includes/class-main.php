@@ -160,6 +160,8 @@ class WPAIC_Main {
         $this->loader->add_action('wp_ajax_wpaic_manual_crawl', $admin, 'ajax_manual_crawl');
         $this->loader->add_action('wp_ajax_wpaic_delete_index', $admin, 'ajax_delete_index');
         $this->loader->add_action('wp_ajax_wpaic_delete_all_index', $admin, 'ajax_delete_all_index');
+        $this->loader->add_action('wp_ajax_wpaic_crawler_exclude_post', $admin, 'ajax_crawler_exclude_post');
+        $this->loader->add_action('wp_ajax_wpaic_crawler_include_post', $admin, 'ajax_crawler_include_post');
         $this->loader->add_action('wp_ajax_wpaic_test_api', $admin, 'ajax_test_api');
         $this->loader->add_action('wp_ajax_wpaic_get_conversation_messages', $admin, 'ajax_get_conversation_messages');
         $this->loader->add_action('wp_ajax_wpaic_delete_conversation', $admin, 'ajax_delete_conversation');

@@ -143,6 +143,33 @@ $post_types = get_post_types(['public' => true], 'objects');
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Excluded Pages', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php
+                            $exclude_ids = $settings['crawler_exclude_ids'] ?? [];
+                            ?>
+                            <div id="wpaic-exclude-tags" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                                <?php foreach ($exclude_ids as $eid):
+                                    $eid = absint($eid);
+                                    if (!$eid) continue;
+                                    $etitle = get_the_title($eid);
+                                    if (!$etitle) $etitle = '#' . $eid;
+                                ?>
+                                <span class="wpaic-exclude-tag" data-post-id="<?php echo esc_attr($eid); ?>" style="display: inline-flex; align-items: center; gap: 4px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 3px; padding: 2px 8px; font-size: 13px;">
+                                    <?php echo esc_html($etitle); ?> <small>(ID:<?php echo esc_html($eid); ?>)</small>
+                                    <button type="button" class="wpaic-include-post" data-post-id="<?php echo esc_attr($eid); ?>" style="background: none; border: none; cursor: pointer; color: #b32d2e; font-size: 14px; padding: 0 2px;" title="<?php esc_attr_e('Remove exclusion', 'rapls-ai-chatbot'); ?>">&times;</button>
+                                    <input type="hidden" name="wpaic_settings[crawler_exclude_ids][]" value="<?php echo esc_attr($eid); ?>">
+                                </span>
+                                <?php endforeach; ?>
+                            </div>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <input type="number" id="wpaic-exclude-id-input" min="1" class="small-text" placeholder="ID">
+                                <button type="button" id="wpaic-add-exclude" class="button button-small"><?php esc_html_e('Add by ID', 'rapls-ai-chatbot'); ?></button>
+                            </div>
+                            <p class="description"><?php esc_html_e('Pages listed here will be skipped during learning and removed from the index.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row">
                             <?php esc_html_e('Enhanced Content Extraction', 'rapls-ai-chatbot'); ?>
                             <?php if (!$is_pro_active): ?><span class="wpaic-pro-badge-small">PRO</span><?php endif; ?>
@@ -154,6 +181,8 @@ $post_types = get_post_types(['public' => true], 'objects');
                             ?>
                             <label class="<?php echo !$is_pro_active ? 'wpaic-pro-locked' : ''; ?>">
                                 <input type="checkbox" id="wpaic_enhanced_extraction"
+                                    name="wpaic_settings[enhanced_content_extraction]"
+                                    value="1"
                                     <?php checked($enhanced_enabled); ?>
                                     <?php echo !$is_pro_active ? 'disabled' : ''; ?>
                                     data-pro-setting="enhanced_content_extraction">
@@ -164,15 +193,35 @@ $post_types = get_post_types(['public' => true], 'objects');
                             </label>
                             <p class="description"><?php esc_html_e('Uses DOMDocument to parse HTML and extract structured content from headings, tables, lists, code blocks, and meta tags.', 'rapls-ai-chatbot'); ?></p>
                             <?php if ($is_pro_active): ?>
-                            <div style="margin-top: 10px; padding: 10px 15px; background: #f0f6fc; border-left: 3px solid #667eea; border-radius: 4px; font-size: 12px; color: #50575e;">
-                                <strong><?php esc_html_e('Extracted elements:', 'rapls-ai-chatbot'); ?></strong><br>
-                                <code>&lt;h1&gt;</code>-<code>&lt;h6&gt;</code> → <?php esc_html_e('Markdown headings', 'rapls-ai-chatbot'); ?>,
-                                <code>&lt;table&gt;</code> <code>&lt;tr&gt;</code> <code>&lt;td&gt;</code> <code>&lt;th&gt;</code> → <?php esc_html_e('Structured table data', 'rapls-ai-chatbot'); ?>,
-                                <code>&lt;ul&gt;</code> <code>&lt;ol&gt;</code> <code>&lt;li&gt;</code> → <?php esc_html_e('Formatted lists', 'rapls-ai-chatbot'); ?>,
-                                <code>&lt;pre&gt;</code> <code>&lt;code&gt;</code> → <?php esc_html_e('Code blocks', 'rapls-ai-chatbot'); ?>,
-                                <code>&lt;blockquote&gt;</code> → <?php esc_html_e('Quoted text', 'rapls-ai-chatbot'); ?>,
-                                <code>&lt;meta&gt;</code> → <?php esc_html_e('SEO description & keywords', 'rapls-ai-chatbot'); ?>
-                            </div>
+                            <table class="widefat striped" style="margin-top: 10px; font-size: 12px; border-left: 3px solid #667eea;">
+                                <caption style="text-align: left; padding: 6px 10px; font-weight: 700; font-size: 12px; color: #50575e;"><?php esc_html_e('Extracted elements:', 'rapls-ai-chatbot'); ?></caption>
+                                <tbody>
+                                    <tr>
+                                        <td><code>&lt;h1&gt;</code> ~ <code>&lt;h6&gt;</code></td>
+                                        <td><?php esc_html_e('Markdown headings', 'rapls-ai-chatbot'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>&lt;table&gt;</code> <code>&lt;tr&gt;</code> <code>&lt;td&gt;</code> <code>&lt;th&gt;</code></td>
+                                        <td><?php esc_html_e('Structured table data', 'rapls-ai-chatbot'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>&lt;ul&gt;</code> <code>&lt;ol&gt;</code> <code>&lt;li&gt;</code></td>
+                                        <td><?php esc_html_e('Formatted lists', 'rapls-ai-chatbot'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>&lt;pre&gt;</code> <code>&lt;code&gt;</code></td>
+                                        <td><?php esc_html_e('Code blocks', 'rapls-ai-chatbot'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>&lt;blockquote&gt;</code></td>
+                                        <td><?php esc_html_e('Quoted text', 'rapls-ai-chatbot'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td><code>&lt;meta&gt;</code></td>
+                                        <td><?php esc_html_e('SEO description & keywords', 'rapls-ai-chatbot'); ?></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                             <p class="description" style="margin-top: 8px; color: #d63638;">
                                 <span class="dashicons dashicons-info" style="font-size: 14px; width: 14px; height: 14px; vertical-align: text-bottom;"></span>
                                 <?php esc_html_e('After changing this setting, re-run Site Learning to re-index all content.', 'rapls-ai-chatbot'); ?>
@@ -248,7 +297,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                             <th><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('post_type', __('Type', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                             <th><?php esc_html_e('URL', 'rapls-ai-chatbot'); ?></th>
                             <th><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('indexed_at', __('Indexed Date', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
-                            <th style="width: 80px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                            <th style="width: 100px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
                         </tr>
                     </thead>
                     <tbody id="indexed-list-body">
@@ -266,9 +315,12 @@ $post_types = get_post_types(['public' => true], 'objects');
                                     </a>
                                 </td>
                                 <td><?php echo esc_html(mysql2date('Y/m/d H:i', $item['indexed_at'])); ?></td>
-                                <td>
+                                <td style="white-space: nowrap;">
                                     <button type="button" class="button button-small wpaic-delete-index" data-post-id="<?php echo esc_attr($item['post_id']); ?>" title="<?php esc_attr_e('Delete', 'rapls-ai-chatbot'); ?>">
                                         🗑️
+                                    </button>
+                                    <button type="button" class="button button-small wpaic-exclude-post" data-post-id="<?php echo esc_attr($item['post_id']); ?>" data-title="<?php echo esc_attr($item['title']); ?>" title="<?php esc_attr_e('Exclude from learning', 'rapls-ai-chatbot'); ?>">
+                                        🚫
                                     </button>
                                 </td>
                             </tr>
@@ -314,6 +366,109 @@ jQuery(document).ready(function($) {
                 alert(response.data || '<?php echo esc_js(__('Failed to delete.', 'rapls-ai-chatbot')); ?>');
                 $btn.prop('disabled', false);
             }
+        }).fail(function() {
+            alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+            $btn.prop('disabled', false);
+        });
+    });
+
+    // Exclude post from indexed list
+    $(document).on('click', '.wpaic-exclude-post', function() {
+        var $btn = $(this);
+        var postId = $btn.data('post-id');
+        var title = $btn.data('title');
+        var $row = $btn.closest('tr');
+
+        $btn.prop('disabled', true);
+
+        $.post(ajaxurl, {
+            action: 'wpaic_crawler_exclude_post',
+            nonce: wpaicAdmin.nonce,
+            post_id: postId
+        }, function(response) {
+            if (response.success) {
+                // Add tag to exclusion list
+                var tag = '<span class="wpaic-exclude-tag" data-post-id="' + postId + '" style="display: inline-flex; align-items: center; gap: 4px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 3px; padding: 2px 8px; font-size: 13px;">' +
+                    $('<span>').text(title).html() + ' <small>(ID:' + postId + ')</small>' +
+                    ' <button type="button" class="wpaic-include-post" data-post-id="' + postId + '" style="background: none; border: none; cursor: pointer; color: #b32d2e; font-size: 14px; padding: 0 2px;" title="<?php echo esc_js(__('Remove exclusion', 'rapls-ai-chatbot')); ?>">&times;</button>' +
+                    '<input type="hidden" name="wpaic_settings[crawler_exclude_ids][]" value="' + postId + '">' +
+                    '</span>';
+                $('#wpaic-exclude-tags').append(tag);
+                $row.fadeOut(300, function() {
+                    $(this).remove();
+                    if ($('#indexed-list-body tr').length === 0) {
+                        location.reload();
+                    }
+                });
+            } else {
+                alert(response.data || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false);
+            }
+        }).fail(function() {
+            alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+            $btn.prop('disabled', false);
+        });
+    });
+
+    // Remove exclusion (include post)
+    $(document).on('click', '.wpaic-include-post', function() {
+        var $btn = $(this);
+        var postId = $btn.data('post-id');
+        var $tag = $btn.closest('.wpaic-exclude-tag');
+
+        $btn.prop('disabled', true);
+
+        $.post(ajaxurl, {
+            action: 'wpaic_crawler_include_post',
+            nonce: wpaicAdmin.nonce,
+            post_id: postId
+        }, function(response) {
+            if (response.success) {
+                $tag.fadeOut(200, function() { $(this).remove(); });
+            } else {
+                alert(response.data || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false);
+            }
+        }).fail(function() {
+            alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+            $btn.prop('disabled', false);
+        });
+    });
+
+    // Add exclusion by ID
+    $('#wpaic-add-exclude').on('click', function() {
+        var $input = $('#wpaic-exclude-id-input');
+        var postId = parseInt($input.val(), 10);
+        if (!postId || postId < 1) return;
+
+        // Check if already excluded
+        if ($('#wpaic-exclude-tags .wpaic-exclude-tag[data-post-id="' + postId + '"]').length) {
+            $input.val('');
+            return;
+        }
+
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+
+        $.post(ajaxurl, {
+            action: 'wpaic_crawler_exclude_post',
+            nonce: wpaicAdmin.nonce,
+            post_id: postId
+        }, function(response) {
+            if (response.success) {
+                var tag = '<span class="wpaic-exclude-tag" data-post-id="' + postId + '" style="display: inline-flex; align-items: center; gap: 4px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 3px; padding: 2px 8px; font-size: 13px;">' +
+                    '#' + postId + ' <small>(ID:' + postId + ')</small>' +
+                    ' <button type="button" class="wpaic-include-post" data-post-id="' + postId + '" style="background: none; border: none; cursor: pointer; color: #b32d2e; font-size: 14px; padding: 0 2px;" title="<?php echo esc_js(__('Remove exclusion', 'rapls-ai-chatbot')); ?>">&times;</button>' +
+                    '<input type="hidden" name="wpaic_settings[crawler_exclude_ids][]" value="' + postId + '">' +
+                    '</span>';
+                $('#wpaic-exclude-tags').append(tag);
+                $input.val('');
+                // Remove from indexed list if present
+                $('#indexed-list-body tr[data-post-id="' + postId + '"]').fadeOut(300, function() { $(this).remove(); });
+            } else {
+                alert(response.data || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+            }
+            $btn.prop('disabled', false);
         }).fail(function() {
             alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
             $btn.prop('disabled', false);

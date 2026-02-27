@@ -453,6 +453,17 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Feedback Buttons', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[show_feedback_buttons]" value="1"
+                                    <?php checked($settings['show_feedback_buttons'] ?? false); ?>>
+                                <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Allow users to rate bot responses. Feedback is used to improve AI response quality.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Feedback Learning: Good Examples', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
@@ -633,7 +644,7 @@ if (!defined('ABSPATH')) {
                                 </div>
                                 <div>
                                     <?php if ($is_pro_active) : ?>
-                                        <span class="description"><?php esc_html_e('Configured in Pro Settings > Badge Icon tab.', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="description"><span class="wpaic-pro-menu-badge wpaic-pro-badge-active" style="font-size: 10px; padding: 1px 5px; vertical-align: middle;">PRO</span> <?php esc_html_e('Configured in Pro Settings > Badge Icon tab.', 'rapls-ai-chatbot'); ?></span>
                                     <?php else : ?>
                                         <span class="description" style="color: #999;">
                                             <span class="dashicons dashicons-lock" style="font-size: 14px; width: 14px; height: 14px; vertical-align: text-bottom;"></span>
@@ -647,8 +658,9 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Primary Color', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="color" name="wpaic_settings[primary_color]" id="wpaic_primary_color"
-                                   value="<?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>">
+                            <input type="text" name="wpaic_settings[primary_color]" id="wpaic_primary_color"
+                                   value="<?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>"
+                                   class="wpaic-color-field" data-default-color="#007bff">
                             <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_primary_color" data-default="#007bff">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
@@ -684,14 +696,17 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Feedback Buttons', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('Markdown Rendering', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[show_feedback_buttons]" value="1"
-                                    <?php checked($settings['show_feedback_buttons'] ?? false); ?>>
-                                <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
+                                <input type="checkbox" name="wpaic_settings[markdown_enabled]" value="1"
+                                    <?php checked($settings['markdown_enabled'] ?? true); ?>>
+                                <?php
+                                /* translators: Markdown is a text formatting syntax used in AI responses */
+                                esc_html_e('Enable Markdown rendering in bot messages', 'rapls-ai-chatbot');
+                                ?>
                             </label>
-                            <p class="description"><?php esc_html_e('Allow users to rate bot responses. Feedback is used to improve AI response quality.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><?php esc_html_e('Render bold, italic, code blocks, lists, and headings in AI responses.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

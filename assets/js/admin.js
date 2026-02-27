@@ -304,6 +304,7 @@
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
                 method: 'POST',
+                timeout: 300000, // 5 minutes — manual crawl processes all content
                 data: {
                     action: 'wpaic_manual_crawl',
                     nonce: wpaicAdmin.nonce
@@ -590,7 +591,12 @@
             // テーマに対応するプライマリカラーを設定
             var themeValue = $radio.val();
             if (themeColors[themeValue]) {
-                $('input[name="wpaic_settings[primary_color]"]').val(themeColors[themeValue]);
+                var $colorField = $('#wpaic_primary_color');
+                if ($colorField.length && $.fn.wpColorPicker) {
+                    $colorField.wpColorPicker('color', themeColors[themeValue]);
+                } else {
+                    $colorField.val(themeColors[themeValue]);
+                }
             }
 
             // ダーク系テーマの場合はダークモードをオンに、それ以外はオフに
@@ -716,9 +722,19 @@
             var defaultValue = $btn.data('default');
 
             if (targetId && defaultValue !== undefined) {
-                $('#' + targetId).val(defaultValue);
+                var $field = $('#' + targetId);
+                if ($field.hasClass('wpaic-color-field') && $.fn.wpColorPicker) {
+                    $field.wpColorPicker('color', defaultValue);
+                } else {
+                    $field.val(defaultValue).trigger('change');
+                }
             }
         });
+
+        // Initialize WordPress color picker
+        if ($.fn.wpColorPicker) {
+            $('.wpaic-color-field').wpColorPicker();
+        }
 
     });
 

@@ -67,12 +67,99 @@ class WPAIC_Site_Crawler {
     }
 
     /**
+     * Manual crawl: process ALL content regardless of crawler_enabled.
+     * Resets incremental progress and processes every post type in one go.
+     */
+    public function crawl_all_manual(): array {
+        // Prevent overlapping runs
+        if (get_transient(self::LOCK_KEY)) {
+            return ['skipped' => 'Crawl already in progress'];
+        }
+        set_transient(self::LOCK_KEY, time(), self::LOCK_TIMEOUT);
+
+        try {
+            // Reset incremental progress so we start fresh
+            delete_option(self::PROGRESS_KEY);
+
+            $settings = get_option('wpaic_settings', []);
+            $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
+            $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
+            $exclude_ids = array_map('absint', $settings['crawler_exclude_ids'] ?? []);
+
+            if (in_array('all', $post_types, true)) {
+                $post_types = get_post_types(['public' => true], 'names');
+                unset($post_types['attachment']);
+            }
+            $post_types = array_values($post_types);
+
+            $this->chunker->set_chunk_size($chunk_size);
+
+            $results = [
+                'indexed' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors'  => 0,
+            ];
+
+            foreach ($post_types as $current_type) {
+                $offset = 0;
+                $batch_size = 100;
+
+                while (true) {
+                    $query_args = [
+                        'post_type'      => $current_type,
+                        'post_status'    => 'publish',
+                        'posts_per_page' => $batch_size,
+                        'offset'         => $offset,
+                        'fields'         => 'ids',
+                        'orderby'        => 'ID',
+                        'order'          => 'ASC',
+                    ];
+                    if (!empty($exclude_ids)) {
+                        $query_args['post__not_in'] = $exclude_ids;
+                    }
+                    $post_ids = get_posts($query_args);
+
+                    if (empty($post_ids)) {
+                        break;
+                    }
+
+                    foreach ($post_ids as $post_id) {
+                        $post = get_post($post_id);
+                        if (!$post) {
+                            continue;
+                        }
+                        try {
+                            $result = $this->index_post($post);
+                            $results[$result]++;
+                        } catch (Exception $e) {
+                            $results['errors']++;
+                        }
+                    }
+
+                    if (count($post_ids) < $batch_size) {
+                        break;
+                    }
+                    $offset += $batch_size;
+                }
+            }
+
+            $this->finish_crawl_cycle($results);
+
+            return $results;
+        } finally {
+            delete_transient(self::LOCK_KEY);
+        }
+    }
+
+    /**
      * Run one incremental batch.
      */
     private function run_incremental_crawl(array $settings): array {
         $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
         $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
         $batch_size = 100;
+        $exclude_ids = array_map('absint', $settings['crawler_exclude_ids'] ?? []);
 
         // If "all" is specified, get all public post types
         if (in_array('all', $post_types, true)) {
@@ -108,7 +195,7 @@ class WPAIC_Site_Crawler {
 
         $current_type = $post_types[$type_index];
 
-        $post_ids = get_posts([
+        $query_args = [
             'post_type'      => $current_type,
             'post_status'    => 'publish',
             'posts_per_page' => $batch_size,
@@ -116,7 +203,11 @@ class WPAIC_Site_Crawler {
             'fields'         => 'ids',
             'orderby'        => 'ID',
             'order'          => 'ASC',
-        ]);
+        ];
+        if (!empty($exclude_ids)) {
+            $query_args['post__not_in'] = $exclude_ids;
+        }
+        $post_ids = get_posts($query_args);
 
         foreach ($post_ids as $post_id) {
             $post = get_post($post_id);

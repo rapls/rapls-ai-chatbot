@@ -4946,6 +4946,49 @@ msgstr "チャットを開始"
 msgid "Skip"
 msgstr "スキップ"
 
+# Markdown rendering
+#: templates/admin/settings.php
+msgid "Markdown Rendering"
+msgstr "Markdown レンダリング"
+
+#: templates/admin/settings.php
+#, php-format
+msgid "Enable Markdown rendering in bot messages"
+msgstr "ボットメッセージで Markdown レンダリングを有効にする"
+
+#: templates/admin/settings.php
+msgid "Render bold, italic, code blocks, lists, and headings in AI responses."
+msgstr "AI の応答で太字、斜体、コードブロック、リスト、見出しをレンダリングします。"
+
+# Crawler exclusion feature
+#: templates/admin/crawler.php
+msgid "Excluded Pages"
+msgstr "除外ページ"
+
+#: templates/admin/crawler.php
+msgid "Exclude from learning"
+msgstr "学習から除外"
+
+#: templates/admin/crawler.php
+msgid "Remove exclusion"
+msgstr "除外を解除"
+
+#: templates/admin/crawler.php
+msgid "Add by ID"
+msgstr "ID で追加"
+
+#: templates/admin/crawler.php
+msgid "Pages listed here will be skipped during learning and removed from the index."
+msgstr "ここに表示されているページは学習時にスキップされ、インデックスから削除されます。"
+
+#: includes/admin/class-admin.php
+msgid "Excluded from learning."
+msgstr "学習から除外しました。"
+
+#: includes/admin/class-admin.php
+msgid "Exclusion removed."
+msgstr "除外を解除しました。"
+
 #~ msgid ""
 #~ "To add trusted proxy IPs or CIDR ranges, use the "
 #~ "<code>wpaic_trusted_proxies</code> filter in your theme or a custom "

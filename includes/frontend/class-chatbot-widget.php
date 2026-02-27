@@ -128,6 +128,7 @@ class WPAIC_Chatbot_Widget {
             'recaptcha_site_key'  => $recaptcha_site_key,
             'is_pro'              => (bool) get_option('wpaic_pro_active'),
             'session_version'     => get_option('wpaic_session_version', 1),
+            'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
             'show_regenerate'     => (bool) $show_regenerate,
             'related_suggestions' => $related_suggestions,

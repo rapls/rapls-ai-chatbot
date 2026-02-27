@@ -1324,3 +1324,96 @@ textarea.wpaic-offline-input {
 .wpaic-offline-error {
     color: #dc2626;
 }
+
+/* Markdown rendering in bot messages */
+.wpaic-markdown {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.wpaic-markdown p {
+    margin: 0 0 0.6em 0;
+}
+
+.wpaic-markdown p:last-child {
+    margin-bottom: 0;
+}
+
+.wpaic-markdown strong {
+    font-weight: 700;
+}
+
+.wpaic-markdown em {
+    font-style: italic;
+}
+
+.wpaic-markdown code {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
+    padding: 0.15em 0.35em;
+    font-family: Menlo, Consolas, "Courier New", monospace;
+    font-size: 0.9em;
+}
+
+.wpaic-markdown pre {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 6px;
+    padding: 0.8em 1em;
+    overflow-x: auto;
+    margin: 0.6em 0;
+}
+
+.wpaic-markdown pre code {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.85em;
+}
+
+.wpaic-markdown h2,
+.wpaic-markdown h3,
+.wpaic-markdown h4 {
+    margin: 0.8em 0 0.4em 0;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.wpaic-markdown h2 {
+    font-size: 1.2em;
+}
+
+.wpaic-markdown h3 {
+    font-size: 1.1em;
+}
+
+.wpaic-markdown h4 {
+    font-size: 1em;
+}
+
+.wpaic-markdown h2:first-child,
+.wpaic-markdown h3:first-child,
+.wpaic-markdown h4:first-child {
+    margin-top: 0;
+}
+
+.wpaic-markdown ul,
+.wpaic-markdown ol {
+    margin: 0.4em 0;
+    padding-left: 1.5em;
+}
+
+.wpaic-markdown li {
+    margin-bottom: 0.2em;
+}
+
+.wpaic-markdown blockquote {
+    border-left: 3px solid rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.03);
+    margin: 0.6em 0;
+    padding: 0.4em 0.8em;
+    border-radius: 0 4px 4px 0;
+}
+
+.wpaic-markdown blockquote p {
+    margin: 0;
+}

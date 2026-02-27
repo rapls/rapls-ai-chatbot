@@ -258,7 +258,7 @@ class WPAIC_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -481,6 +481,17 @@ class WPAIC_Admin {
         $sanitized['crawler_interval'] = sanitize_text_field($input['crawler_interval'] ?? ($existing['crawler_interval'] ?? 'daily'));
         $sanitized['crawler_chunk_size'] = absint($input['crawler_chunk_size'] ?? ($existing['crawler_chunk_size'] ?? 1000));
         $sanitized['crawler_max_results'] = absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3));
+        $sanitized['crawler_exclude_ids'] = array_values(array_unique(array_map(
+            'absint',
+            array_filter($input['crawler_exclude_ids'] ?? ($existing['crawler_exclude_ids'] ?? []))
+        )));
+
+        // Markdown rendering setting (Display Settings form)
+        if ($display_form_submitted) {
+            $sanitized['markdown_enabled'] = !empty($input['markdown_enabled']);
+        } else {
+            $sanitized['markdown_enabled'] = $existing['markdown_enabled'] ?? true;
+        }
 
         // Feedback buttons setting (Display Settings form)
         if ($display_form_submitted) {
@@ -494,6 +505,12 @@ class WPAIC_Admin {
             $input['pro_features'] ?? [],
             $existing['pro_features'] ?? []
         );
+
+        // Enhanced content extraction checkbox (on Crawler page, outside pro_features form)
+        $crawler_form_submitted = array_key_exists('crawler_interval', $input);
+        if ($crawler_form_submitted) {
+            $sanitized['pro_features']['enhanced_content_extraction'] = !empty($input['enhanced_content_extraction']);
+        }
 
         return $sanitized;
     }
@@ -794,9 +811,10 @@ class WPAIC_Admin {
             return;
         }
 
-        // Enqueue media uploader for avatar image selection
+        // Enqueue media uploader and color picker for settings page
         if (strpos($hook, 'wpaic-settings') !== false) {
             wp_enqueue_media();
+            wp_enqueue_style('wp-color-picker');
         }
 
         // Enqueue Chart.js for dashboard
@@ -813,7 +831,7 @@ class WPAIC_Admin {
         wp_enqueue_script(
             'wpaic-admin',
             WPAIC_PLUGIN_URL . 'assets/js/admin.js',
-            ['jquery'],
+            ['jquery', 'wp-color-picker'],
             WPAIC_VERSION,
             true
         );
@@ -1056,7 +1074,7 @@ class WPAIC_Admin {
         }
 
         $crawler = new WPAIC_Site_Crawler();
-        $results = $crawler->crawl_all();
+        $results = $crawler->crawl_all_manual();
 
         wp_send_json_success([
             'message' => sprintf(
@@ -1119,6 +1137,66 @@ class WPAIC_Admin {
 
         wp_send_json_success([
             'message' => __('All index data deleted.', 'rapls-ai-chatbot'),
+        ]);
+    }
+
+    /**
+     * Exclude a post from crawler AJAX
+     */
+    public function ajax_crawler_exclude_post(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $post_id = absint(wp_unslash($_POST['post_id'] ?? 0));
+        if (!$post_id) {
+            wp_send_json_error(__('ID not specified.', 'rapls-ai-chatbot'));
+        }
+
+        $settings = get_option('wpaic_settings', []);
+        $exclude_ids = $settings['crawler_exclude_ids'] ?? [];
+
+        if (!in_array($post_id, $exclude_ids, true)) {
+            $exclude_ids[] = $post_id;
+            $settings['crawler_exclude_ids'] = array_values($exclude_ids);
+            update_option('wpaic_settings', $settings);
+        }
+
+        // Remove from index
+        WPAIC_Content_Index::delete_by_post_id($post_id);
+
+        wp_send_json_success([
+            /* translators: notification after excluding a page from learning */
+            'message' => __('Excluded from learning.', 'rapls-ai-chatbot'),
+        ]);
+    }
+
+    /**
+     * Re-include a post in crawler AJAX
+     */
+    public function ajax_crawler_include_post(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $post_id = absint(wp_unslash($_POST['post_id'] ?? 0));
+        if (!$post_id) {
+            wp_send_json_error(__('ID not specified.', 'rapls-ai-chatbot'));
+        }
+
+        $settings = get_option('wpaic_settings', []);
+        $exclude_ids = $settings['crawler_exclude_ids'] ?? [];
+        $exclude_ids = array_values(array_diff($exclude_ids, [$post_id]));
+        $settings['crawler_exclude_ids'] = $exclude_ids;
+        update_option('wpaic_settings', $settings);
+
+        wp_send_json_success([
+            /* translators: notification after removing a page from the exclusion list */
+            'message' => __('Exclusion removed.', 'rapls-ai-chatbot'),
         ]);
     }
 
@@ -2192,6 +2270,7 @@ class WPAIC_Admin {
             'show_on_mobile'        => true,
             'widget_theme'          => 'default',
             'dark_mode'             => false,
+            'markdown_enabled'      => true,
 
             // Page Visibility
             'badge_show_on_home'    => true,
@@ -2218,6 +2297,7 @@ class WPAIC_Admin {
             'crawler_interval'      => 'daily',
             'crawler_chunk_size'    => 1000,
             'crawler_max_results'   => 3,
+            'crawler_exclude_ids'   => [],
 
             // Pro Features
             'pro_features'          => WPAIC_Pro_Features::get_default_settings(),
