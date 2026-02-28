@@ -116,6 +116,7 @@ class WPAIC_Site_Crawler {
                         'order'          => 'ASC',
                     ];
                     if (!empty($exclude_ids)) {
+                        // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- exclude_ids is a small bounded set of already-indexed posts
                         $query_args['post__not_in'] = $exclude_ids;
                     }
                     $post_ids = get_posts($query_args);
@@ -205,6 +206,7 @@ class WPAIC_Site_Crawler {
             'order'          => 'ASC',
         ];
         if (!empty($exclude_ids)) {
+            // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- exclude_ids is a small bounded set of already-indexed posts
             $query_args['post__not_in'] = $exclude_ids;
         }
         $post_ids = get_posts($query_args);
