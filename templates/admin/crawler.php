@@ -15,7 +15,7 @@ $post_types = get_post_types(['public' => true], 'objects');
 
     <div class="wpaic-crawler-grid">
         <!-- Status -->
-        <div class="wpaic-card">
+        <div class="wpaic-card wpaic-card-status">
             <h2><?php esc_html_e('Learning Status', 'rapls-ai-chatbot'); ?></h2>
             <table class="wpaic-status-table">
                 <tr>
@@ -89,7 +89,7 @@ $post_types = get_post_types(['public' => true], 'objects');
         $emb_done = $index_stats['embedded_chunks'] + $knowledge_stats['embedded'];
         $emb_pct = $emb_total > 0 ? round(($emb_done / $emb_total) * 100) : 0;
         ?>
-        <div class="wpaic-card">
+        <div class="wpaic-card wpaic-card-embedding">
             <h2><?php esc_html_e('Vector Embedding', 'rapls-ai-chatbot'); ?></h2>
             <table class="wpaic-status-table">
                 <tr>
@@ -98,7 +98,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                         <?php if ($embedding_enabled && $emb_configured) : ?>
                             <span class="status-badge status-ok"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
                         <?php elseif ($embedding_enabled) : ?>
-                            <span class="status-badge status-off"><?php esc_html_e('API Key Missing', 'rapls-ai-chatbot'); ?></span>
+                            <span class="status-badge status-off"><?php esc_html_e('Not Configured', 'rapls-ai-chatbot'); ?></span>
                         <?php else : ?>
                             <span class="status-badge status-off"><?php esc_html_e('Disabled', 'rapls-ai-chatbot'); ?></span>
                         <?php endif; ?>
@@ -130,7 +130,7 @@ $post_types = get_post_types(['public' => true], 'objects');
             <div class="wpaic-actions" style="margin-top: 12px;">
                 <?php if ($emb_done < $emb_total) : ?>
                 <button type="button" id="wpaic-generate-embeddings" class="button button-primary">
-                    🧠 <?php esc_html_e('Generate Embeddings', 'rapls-ai-chatbot'); ?>
+                    <?php esc_html_e('Generate Embeddings', 'rapls-ai-chatbot'); ?>
                 </button>
                 <?php endif; ?>
                 <?php if ($emb_done > 0) : ?>
@@ -140,6 +140,11 @@ $post_types = get_post_types(['public' => true], 'objects');
                 <?php endif; ?>
                 <span id="embedding-status"></span>
             </div>
+            <?php elseif ($embedding_enabled && !$emb_configured) : ?>
+            <p class="description" style="margin-top: 8px; color: #d63638;">
+                <?php esc_html_e('An OpenAI or Gemini API key is required for vector embedding. Claude and OpenRouter do not provide embedding APIs.', 'rapls-ai-chatbot'); ?>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=wpaic-settings')); ?>"><?php esc_html_e('Go to Settings', 'rapls-ai-chatbot'); ?></a>
+            </p>
             <?php elseif (!$embedding_enabled) : ?>
             <p class="description" style="margin-top: 8px;">
                 <?php esc_html_e('Enable vector embedding in Settings > AI Settings to improve search accuracy.', 'rapls-ai-chatbot'); ?>
@@ -148,7 +153,7 @@ $post_types = get_post_types(['public' => true], 'objects');
         </div>
 
         <!-- Settings -->
-        <div class="wpaic-card">
+        <div class="wpaic-card wpaic-card-settings">
             <h2><?php esc_html_e('Learning Settings', 'rapls-ai-chatbot'); ?></h2>
             <form method="post" action="options.php">
                 <?php settings_fields('wpaic_settings_group'); ?>

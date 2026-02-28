@@ -267,7 +267,7 @@ if (!defined('ABSPATH')) {
 
                 <!-- Embedding Settings -->
                 <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
-                    🧠 <?php esc_html_e('Vector Embedding (RAG)', 'rapls-ai-chatbot'); ?>
+                    <?php esc_html_e('Vector Embedding (RAG)', 'rapls-ai-chatbot'); ?>
                 </h3>
                 <table class="form-table">
                     <tr>
@@ -324,6 +324,14 @@ if (!defined('ABSPATH')) {
                                 esc_html(number_format($idx_stats['total_chunks']))
                             );
                             ?>
+                        </td>
+                    </tr>
+                    <?php elseif (!empty($settings['embedding_enabled'])) : ?>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <span style="color: #d63638;">&#10007;</span>
+                            <?php esc_html_e('An OpenAI or Gemini API key is required for vector embedding.', 'rapls-ai-chatbot'); ?>
                         </td>
                     </tr>
                     <?php endif; ?>

@@ -71,44 +71,27 @@ class WPAIC_Embedding_Generator {
      * Auto-detect provider from chat provider settings
      */
     private function auto_detect_provider(array $settings, string $chat_provider): void {
-        if ($chat_provider === 'openai') {
-            $key = $this->decrypt_key($settings['openai_api_key'] ?? '');
-            if ($key) {
-                $this->provider = 'openai';
-                $this->api_key = $key;
-                $this->model = 'text-embedding-3-small';
-                $this->dimensions = 1536;
-                return;
-            }
-        }
-
+        // Preferred order: match chat provider first, then try all available keys
+        $providers_to_try = ['openai', 'gemini'];
         if ($chat_provider === 'gemini') {
-            $key = $this->decrypt_key($settings['gemini_api_key'] ?? '');
+            $providers_to_try = ['gemini', 'openai'];
+        }
+
+        foreach ($providers_to_try as $provider) {
+            $key_name = $provider . '_api_key';
+            $key = $this->decrypt_key($settings[$key_name] ?? '');
             if ($key) {
-                $this->provider = 'gemini';
+                $this->provider = $provider;
                 $this->api_key = $key;
-                $this->model = 'text-embedding-004';
-                $this->dimensions = 768;
+                if ($provider === 'openai') {
+                    $this->model = 'text-embedding-3-small';
+                    $this->dimensions = 1536;
+                } else {
+                    $this->model = 'text-embedding-004';
+                    $this->dimensions = 768;
+                }
                 return;
             }
-        }
-
-        // Claude/OpenRouter: try OpenAI key, then Gemini key
-        $openai_key = $this->decrypt_key($settings['openai_api_key'] ?? '');
-        if ($openai_key) {
-            $this->provider = 'openai';
-            $this->api_key = $openai_key;
-            $this->model = 'text-embedding-3-small';
-            $this->dimensions = 1536;
-            return;
-        }
-
-        $gemini_key = $this->decrypt_key($settings['gemini_api_key'] ?? '');
-        if ($gemini_key) {
-            $this->provider = 'gemini';
-            $this->api_key = $gemini_key;
-            $this->model = 'text-embedding-004';
-            $this->dimensions = 768;
         }
     }
 
@@ -402,9 +385,9 @@ class WPAIC_Embedding_Generator {
         $iv = substr($data, 0, $iv_length);
         $encrypted_data = substr($data, $iv_length);
 
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, 0, $iv);
+        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
         if ($decrypted === false) {
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, 0, $iv);
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
         }
 
         return $decrypted !== false ? $decrypted : '';

@@ -258,8 +258,23 @@
 ============================================ */
 .wpaic-crawler-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
+}
+
+.wpaic-crawler-grid .wpaic-card-status {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.wpaic-crawler-grid .wpaic-card-embedding {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.wpaic-crawler-grid .wpaic-card-settings {
+    grid-column: 2;
+    grid-row: 1 / 3;
 }
 
 .wpaic-crawler-grid .wpaic-card-full {
@@ -618,6 +633,13 @@
 
     .wpaic-crawler-grid {
         grid-template-columns: 1fr;
+    }
+
+    .wpaic-crawler-grid .wpaic-card-status,
+    .wpaic-crawler-grid .wpaic-card-embedding,
+    .wpaic-crawler-grid .wpaic-card-settings {
+        grid-column: 1;
+        grid-row: auto;
     }
 
     .wpaic-modal-content {

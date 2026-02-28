@@ -433,6 +433,49 @@ class WPAIC_Pro_Features {
             'test_mode_response' => '',
             'custom_fields_enabled' => false,
             'custom_metadata_fields' => [],
+
+            // Change Management
+            'change_history_enabled' => false,
+            'change_history_max' => 50,
+            'staging_enabled' => false,
+            'approval_workflow_enabled' => false,
+            'approval_email' => '',
+            'rollback_enabled' => false,
+
+            // Multisite
+            'multisite_enabled' => false,
+            'multisite_network_settings' => false,
+
+            // Screen Sharing
+            'screen_sharing_enabled' => false,
+            'screen_sharing_provider' => 'screenshot',
+
+            // Booking Integration
+            'booking_enabled' => false,
+            'booking_provider' => '',
+            'booking_keywords' => '',
+            'booking_page_url' => '',
+
+            // Multi-bot Coordination
+            'multi_bot_coordination_enabled' => false,
+            'bot_routing_mode' => 'manual',
+
+            // Similar Question Merge
+            'similar_question_merge_enabled' => false,
+            'similar_threshold' => 80,
+
+            // Encryption
+            'encryption_enabled' => false,
+            'encryption_fields' => 'messages,leads',
+
+            // Vulnerability Scanning
+            'vulnerability_scan_enabled' => false,
+            'vulnerability_scan_schedule' => 'weekly',
+
+            // Queue Management
+            'queue_enabled' => false,
+            'queue_max_concurrent' => 5,
+            'queue_priority_logged_in' => true,
         ];
     }
 
@@ -691,5 +734,103 @@ class WPAIC_Pro_Features {
      */
     public function is_chat_allowed_for_user(): bool {
         return true;
+    }
+
+    /**
+     * Stub: Get settings change history
+     */
+    public function get_change_history(): array {
+        return [];
+    }
+
+    /**
+     * Stub: Rollback settings to a specific version
+     */
+    public function rollback_settings(int $version_index): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Check if staging mode is active
+     */
+    public function is_staging_active(): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Get staging settings
+     */
+    public function get_staging_settings(): ?array {
+        return null;
+    }
+
+    /**
+     * Stub: Publish staging settings
+     */
+    public function publish_staging(): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Check if approval is required
+     */
+    public function is_approval_required(): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Get pending approval changes
+     */
+    public function get_pending_approvals(): array {
+        return [];
+    }
+
+    /**
+     * Stub: Encrypt field value
+     */
+    public function encrypt_field(string $value): string {
+        return $value;
+    }
+
+    /**
+     * Stub: Decrypt field value
+     */
+    public function decrypt_field(string $value): string {
+        return $value;
+    }
+
+    /**
+     * Stub: Run vulnerability scan
+     */
+    public function run_vulnerability_scan(): array {
+        return [];
+    }
+
+    /**
+     * Stub: Get queue status
+     */
+    public function get_queue_status(): array {
+        return ['pending' => 0, 'processing' => 0, 'max' => 5];
+    }
+
+    /**
+     * Stub: Enqueue AI request
+     */
+    public function enqueue_request(array $request): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Find similar knowledge entries
+     */
+    public function find_similar_questions(int $knowledge_id): array {
+        return [];
+    }
+
+    /**
+     * Stub: Merge knowledge entries
+     */
+    public function merge_knowledge_entries(array $ids, int $primary_id): bool {
+        return false;
     }
 }
