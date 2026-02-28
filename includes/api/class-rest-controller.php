@@ -3065,28 +3065,39 @@ class WPAIC_REST_Controller {
         );
 
         // Build HTML message
+        $row_style = 'text-align: left; padding: 8px; border-bottom: 1px solid #ddd;';
         $message_html = sprintf(
             '<h2>%s</h2>
             <table style="border-collapse: collapse; width: 100%%; max-width: 500px;">
-                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
-                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;"><a href="mailto:%s">%s</a></td></tr>
-                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
-                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
-                <tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">%s</th><td style="padding: 8px; border-bottom: 1px solid #ddd;">%s</td></tr>
-            </table>
-            <p style="margin-top: 20px;"><a href="%s">%s</a></p>',
+                <tr><th style="%s">%s</th><td style="%s">%s</td></tr>
+                <tr><th style="%s">%s</th><td style="%s"><a href="mailto:%s">%s</a></td></tr>
+                <tr><th style="%s">%s</th><td style="%s">%s</td></tr>
+                <tr><th style="%s">%s</th><td style="%s">%s</td></tr>
+                <tr><th style="%s">%s</th><td style="%s">%s</td></tr>',
             __('New Lead Captured', 'rapls-ai-chatbot'),
-            __('Name', 'rapls-ai-chatbot'),
-            esc_html($lead['name'] ?: '-'),
-            __('Email', 'rapls-ai-chatbot'),
-            esc_attr($lead['email']),
-            esc_html($lead['email']),
-            __('Phone', 'rapls-ai-chatbot'),
-            esc_html($lead['phone'] ?: '-'),
-            __('Company', 'rapls-ai-chatbot'),
-            esc_html($lead['company'] ?: '-'),
-            __('Date', 'rapls-ai-chatbot'),
-            esc_html($lead['created_at']),
+            $row_style, __('Name', 'rapls-ai-chatbot'), $row_style, esc_html($lead['name'] ?: '-'),
+            $row_style, __('Email', 'rapls-ai-chatbot'), $row_style, esc_attr($lead['email']), esc_html($lead['email']),
+            $row_style, __('Phone', 'rapls-ai-chatbot'), $row_style, esc_html($lead['phone'] ?: '-'),
+            $row_style, __('Company', 'rapls-ai-chatbot'), $row_style, esc_html($lead['company'] ?: '-'),
+            $row_style, __('Date', 'rapls-ai-chatbot'), $row_style, esc_html($lead['created_at'])
+        );
+
+        // Append custom fields to email if present
+        $cf = $lead['custom_fields'] ?? null;
+        if (is_array($cf) && !empty($cf)) {
+            foreach ($cf as $cf_key => $cf_val) {
+                $message_html .= sprintf(
+                    '<tr><th style="%s">%s</th><td style="%s">%s</td></tr>',
+                    $row_style,
+                    esc_html($cf_key),
+                    $row_style,
+                    esc_html((string) $cf_val)
+                );
+            }
+        }
+
+        $message_html .= sprintf(
+            '</table><p style="margin-top: 20px;"><a href="%s">%s</a></p>',
             esc_url(admin_url('admin.php?page=wpaic-leads')),
             __('View all leads', 'rapls-ai-chatbot')
         );
@@ -3102,6 +3113,14 @@ class WPAIC_REST_Controller {
             $lead['created_at'],
             admin_url('admin.php?page=wpaic-leads')
         );
+
+        // Append custom fields to plain text
+        if (is_array($cf) && !empty($cf)) {
+            $message_text .= "\n";
+            foreach ($cf as $cf_key => $cf_val) {
+                $message_text .= "\n" . $cf_key . ': ' . (string) $cf_val;
+            }
+        }
 
         // Headers
         $headers = [
