@@ -925,6 +925,9 @@ class WPAIC_REST_Controller {
             case 'gemini':
                 $api_key = $this->decrypt_api_key($settings['gemini_api_key'] ?? '');
                 break;
+            case 'openrouter':
+                $api_key = $this->decrypt_api_key($settings['openrouter_api_key'] ?? '');
+                break;
             default:
                 $api_key = $this->decrypt_api_key($settings['openai_api_key'] ?? '');
                 break;

@@ -62,6 +62,11 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
             $body['temperature'] = (float) $options['temperature'];
         }
 
+        // Web search tool (OpenAI-compatible)
+        if (!empty($options['web_search'])) {
+            $body['tools'] = [['type' => 'web_search_preview']];
+        }
+
         $headers = [
             'Authorization' => 'Bearer ' . $this->api_key,
             'Content-Type'  => 'application/json',

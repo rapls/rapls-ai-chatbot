@@ -100,6 +100,7 @@ class WPAIC_Vector_Search {
                 $score = self::cosine_similarity($query_embedding, $emb);
                 $top_ids[(int) $row['id']] = $score;
             }
+            $fetched_count = count($rows);
             unset($rows); // free embedding data immediately
 
             // Prune to top candidates to cap memory growth
@@ -108,7 +109,7 @@ class WPAIC_Vector_Search {
                 $top_ids = array_slice($top_ids, 0, $keep_count, true);
             }
 
-            if (count($rows ?? []) < $batch_size) {
+            if ($fetched_count < $batch_size) {
                 break;
             }
             $offset += $batch_size;

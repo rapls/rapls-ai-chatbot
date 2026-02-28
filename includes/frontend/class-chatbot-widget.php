@@ -431,7 +431,17 @@ class WPAIC_Chatbot_Widget {
 
         // Remove X-Frame-Options to allow iframe embedding and use CSP instead
         header_remove('X-Frame-Options');
-        header('Content-Security-Policy: frame-ancestors *');
+
+        /**
+         * Filter the allowed origins for iframe embedding.
+         *
+         * @param string[] $origins List of allowed origin URLs, or ['*'] for any.
+         */
+        $allowed = apply_filters('wpaic_embed_allowed_origins', ['*']);
+        $origins = implode(' ', array_map(function ($o) {
+            return $o === '*' ? '*' : esc_url($o);
+        }, $allowed));
+        header('Content-Security-Policy: frame-ancestors ' . $origins);
 
         $settings = get_option('wpaic_settings', []);
         $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');
