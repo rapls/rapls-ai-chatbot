@@ -6539,3 +6539,122 @@ msgstr "現在のフィルター条件に一致する会話はありません。
 #: includes/api/class-rest-controller.php
 msgid "Chat is not available for your account."
 msgstr "お客様のアカウントではチャットをご利用いただけません。"
+
+#: includes/api/class-rest-controller.php
+#, php-format
+msgid ""
+"A new lead has been captured:\n"
+"\n"
+"Name: %1$s\n"
+"Email: %2$s\n"
+"Phone: %3$s\n"
+"Company: %4$s\n"
+"Date: %5$s\n"
+"\n"
+"Conversation URL: %6$s"
+msgstr ""
+"新しいリードが獲得されました:\n"
+"\n"
+"名前: %1$s\n"
+"メール: %2$s\n"
+"電話: %3$s\n"
+"会社: %4$s\n"
+"日時: %5$s\n"
+"\n"
+"会話 URL: %6$s"
+
+#: templates/admin/settings.php
+msgid ""
+"A randomly selected style instruction (e.g. \"Use a casual tone\", \"Explain "
+"from a different angle\") that is injected into the system prompt per "
+"message. This adds natural variation to AI responses without affecting "
+"accuracy."
+msgstr ""
+"ランダムに選ばれたスタイル指示（例:「カジュアルな口調で」「別の角度から説明し"
+"て」）がメッセージごとにシステムプロンプトに注入されます。精度に影響を与えずに "
+"AI の応答に自然なバリエーションを追加します。"
+
+#: includes/ai-providers/class-claude-provider.php
+#: includes/ai-providers/class-gemini-provider.php
+#: includes/ai-providers/class-openai-provider.php
+#, php-format
+msgid ""
+"Access denied for model \"%s\". Your API account may not have permission to "
+"use this model. Please check your API plan at the provider's website."
+msgstr ""
+"モデル「%s」へのアクセスが拒否されました。ご利用の API アカウントにこのモデル"
+"の使用権限がない可能性があります。プロバイダーの Web サイトで API プランをご確"
+"認ください。"
+
+#: includes/ai-providers/class-openai-provider.php
+msgid "Access denied from your region."
+msgstr "お住まいの地域からのアクセスは制限されています。"
+
+#: includes/crawler/class-embedding-generator.php
+msgid "An OpenAI or Gemini API key is required for vector embedding."
+msgstr "ベクトル埋め込みには OpenAI または Gemini の API キーが必要です。"
+
+#: includes/crawler/class-embedding-generator.php
+msgid ""
+"An OpenAI or Gemini API key is required for vector embedding. Claude and "
+"OpenRouter do not provide embedding APIs."
+msgstr ""
+"ベクトル埋め込みには OpenAI または Gemini の API キーが必要です。Claude と "
+"OpenRouter は埋め込み API を提供していません。"
+
+#: templates/admin/dashboard.php
+msgid ""
+"Are you sure you want to reset usage statistics?\\nThis will clear all token "
+"counts but keep conversations."
+msgstr ""
+"使用統計をリセットしてもよろしいですか？\\nすべてのトークン数がクリアされます"
+"が、会話は保持されます。"
+
+#: includes/crawler/class-embedding-generator.php
+msgid "Embedding"
+msgstr "埋め込み"
+
+#: templates/admin/settings.php
+msgid ""
+"Enable only if your site is behind Cloudflare. Uses Cloudflare's header to "
+"detect the real visitor IP address."
+msgstr ""
+"サイトが Cloudflare の背後にある場合のみ有効にしてください。Cloudflare のヘッ"
+"ダーを使用して実際の訪問者 IP アドレスを検出します。"
+
+#: includes/api/class-rest-controller.php
+msgid "Error:"
+msgstr "エラー:"
+
+#: includes/api/class-rest-controller.php
+msgid "Failed to generate suggestions."
+msgstr "提案の生成に失敗しました。"
+
+#: templates/admin/settings.php
+msgid "Not Configured"
+msgstr "未設定"
+
+#: includes/api/class-rest-controller.php
+msgid "Request failed."
+msgstr "リクエストに失敗しました。"
+
+#: templates/admin/dashboard.php
+msgid ""
+"Requests blocked by bot detection in the past hour. \"(approx)\" = sampled "
+"1-in-10, shown as estimated total."
+msgstr ""
+"過去1時間にボット検出によりブロックされたリクエスト数。「(概算)」= 10件に1件を"
+"サンプリングし、推定合計として表示。"
+
+#: includes/admin/class-admin.php
+msgid "Suggest Improvement"
+msgstr "改善を提案"
+
+#: templates/admin/settings.php
+msgid ""
+"This feature requires reCAPTCHA. Visitors will see \"form unavailable\" "
+"until reCAPTCHA is enabled and configured in Settings."
+msgstr ""
+"この機能には reCAPTCHA が必要です。設定で reCAPTCHA を有効化して設定するまで、"
+"訪問者には「フォームを利用できません」と表示されます。"
+
