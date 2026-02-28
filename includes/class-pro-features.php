@@ -343,6 +343,9 @@ class WPAIC_Pro_Features {
             'line_channel_secret' => '',
             'line_channel_access_token' => '',
 
+            // AI Content Generation (Editor Sidebar)
+            'ai_content_enabled' => false,
+
             // Actions / Intent Recognition
             'actions_enabled' => false,
             'actions' => [],
