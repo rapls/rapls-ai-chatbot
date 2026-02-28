@@ -4,26 +4,29 @@ Contributors: raplsworks
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 5.8
 Tested up to: 6.9
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered chatbot for WordPress. Supports OpenAI, Claude, and Gemini with site learning and custom knowledge base.
+AI-powered chatbot for WordPress. Supports OpenAI, Claude, Gemini, and OpenRouter with site learning, knowledge base, and web search.
 
 
 
 == Description ==
 
-Rapls AI Chatbot is a powerful AI chatbot plugin that integrates seamlessly with your WordPress site. It supports multiple AI providers including OpenAI (GPT-4o, GPT-4o-mini), Anthropic Claude, and Google Gemini, allowing you to choose the best AI for your needs.
+Rapls AI Chatbot is a powerful AI chatbot plugin that integrates seamlessly with your WordPress site. It supports multiple AI providers including OpenAI (GPT-5, GPT-4o), Anthropic Claude, Google Gemini, and OpenRouter, allowing you to choose the best AI for your needs.
 
-The free version is fully functional — no Pro add-on required for core AI chat features, site learning, knowledge base, and 6 built-in themes.
+The free version is fully functional — no Pro add-on required for core AI chat features, site learning, knowledge base, web search, and 6 built-in themes.
 
 = Key Features =
 
-* **Multiple AI Providers** - Support for OpenAI, Anthropic Claude, and Google Gemini
+* **Multiple AI Providers** - Support for OpenAI, Anthropic Claude, Google Gemini, and OpenRouter (100+ models)
+* **Web Search** - AI automatically searches the web when knowledge base lacks a sufficient answer
 * **Site Learning** - Automatically learn from your website content (posts, pages, custom post types)
-* **Custom Knowledge Base** - Add custom Q&A pairs and training data
+* **Vector Embedding RAG** - Hybrid search combining keyword (40%) and vector similarity (60%) for accurate retrieval
+* **Custom Knowledge Base** - Add custom Q&A pairs, free-form content, PDF/DOCX uploads
+* **Cross-site Embed** - Embed the chatbot on external sites via iframe
 * **Conversation History** - Save and review all chat conversations
 * **Usage Statistics** - Track token usage and estimated API costs with visual charts
 * **Feedback & Regeneration** - Users can rate responses and request regeneration
@@ -36,7 +39,7 @@ The free version is fully functional — no Pro add-on required for core AI chat
 **OpenAI:**
 * GPT-5.2, GPT-5.1, GPT-5 series (Latest generation)
 * GPT-4.1 series (Long context, 1M tokens)
-* GPT-4o, GPT-4o-mini (Recommended, Multimodal)
+* GPT-4o, GPT-4o-mini (Multimodal)
 * o1, o3, o4-mini (Reasoning Models)
 
 **Anthropic Claude:**
@@ -50,6 +53,9 @@ The free version is fully functional — no Pro add-on required for core AI chat
 * Gemini 2.5 Pro/Flash (Recommended)
 * Gemini 2.0 Flash (Stable)
 * Gemini 1.5 Pro/Flash (Legacy)
+
+**OpenRouter:**
+* Access 100+ models from multiple providers through a single API key
 
 = Site Learning =
 
@@ -66,8 +72,10 @@ Create a custom knowledge base with:
 
 * Q&A format data for FAQ-style responses
 * Free-form content for general information
+* PDF and DOCX file uploads (server-side parsing)
 * Priority levels to control response relevance
-* Import/Export functionality
+* Draft/published status workflow
+* Import/Export functionality (CSV/JSON)
 
 = Usage Statistics & Cost Tracking =
 
@@ -81,24 +89,25 @@ Monitor your AI usage with:
 
 = Free vs Pro =
 
-The free version is fully functional. Upgrade with the optional Pro add-on to unlock advanced features.
+The free version is fully functional. Upgrade with the optional Pro add-on to unlock 80+ advanced features.
 
 * **Free** — Great for personal blogs and small sites
 * **Pro** — Built for business sites, customer support, and lead generation
 
 **AI Chat Core**
 
-* ✅ Free: OpenAI, Claude, Gemini — all providers supported
-* ✅ Free: Custom system prompt with improved accuracy defaults
+* ✅ Free: OpenAI, Claude, Gemini, OpenRouter — all providers supported
+* ✅ Free: Web search integration (AI searches the web automatically)
+* ✅ Free: Custom system prompt with accuracy defaults
 * ✅ Free: Customizable feature prompts (regeneration, feedback, summary)
-* ✅ Free: Knowledge base (up to 20 entries)
+* ✅ Free: Knowledge base (up to 20 entries, PDF/DOCX upload)
 * ✅ Free: Monthly 500 AI responses (FAQ fallback after limit)
 * ⭐ Pro: Unlimited AI responses
 * ⭐ Pro: Unlimited knowledge base entries
 
 **Site Learning**
 
-* ✅ Free: Manual content indexing
+* ✅ Free: Manual content indexing with vector embedding RAG
 * ⭐ Pro: Scheduled automatic crawling
 * ⭐ Pro: Differential crawl (changed pages only)
 
@@ -106,17 +115,17 @@ The free version is fully functional. Upgrade with the optional Pro add-on to un
 
 * ✅ Free: 6 themes (Default, Simple, Classic, Light, Minimal, Flat)
 * ⭐ Pro: 10 additional themes (Modern, Gradient, Dark, Glass, Rounded, Ocean, Sunset, Forest, Neon, Elegant)
-* ⭐ Pro: Dark mode
-* ⭐ Pro: Custom badge icon
-* ⭐ Pro: White label
+* ⭐ Pro: Dark mode, seasonal themes, custom fonts
+* ⭐ Pro: Fullscreen mode, welcome screen
+* ⭐ Pro: White label / custom branding
 
 **Analytics & Insights**
 
 * ✅ Free: Token usage & cost tracking
 * ⭐ Pro: Conversation analytics dashboard
+* ⭐ Pro: AI quality score & churn/bounce analysis
 * ⭐ Pro: FAQ ranking & auto-generation
 * ⭐ Pro: Satisfaction score tracking
-* ⭐ Pro: Unresolved questions detection
 * ⭐ Pro: Real-time conversation monitor
 * ⭐ Pro: Knowledge gap detection
 * ⭐ Pro: Monthly email reports
@@ -125,49 +134,51 @@ The free version is fully functional. Upgrade with the optional Pro add-on to un
 
 **Lead Capture**
 
-* ⭐ Pro: Customizable lead forms
-* ⭐ Pro: Custom fields
+* ⭐ Pro: Customizable lead forms with custom fields
 * ⭐ Pro: CSV/JSON export (conversations, leads, knowledge)
 * ⭐ Pro: Webhook integration (HMAC-signed)
+* ⭐ Pro: Google Sheets export
 
 **AI Enhancements**
 
 * ✅ Free: Feedback (thumbs up/down)
 * ✅ Free: Response regeneration
 * ⭐ Pro: Multimodal (image upload)
-* ⭐ Pro: Sentiment analysis (customizable prompts)
-* ⭐ Pro: Cross-session context memory (customizable prompts)
+* ⭐ Pro: Voice input (STT) and text-to-speech (TTS)
+* ⭐ Pro: Sentiment analysis
+* ⭐ Pro: Cross-session context memory
 * ⭐ Pro: Related questions & autocomplete
 * ⭐ Pro: Conversation summary
-* ⭐ Pro: AI Prompts settings tab (customize all AI prompts)
+* ⭐ Pro: AI content editor sidebar (Gutenberg)
+* ⭐ Pro: AI Forms builder (shortcode-based)
+* ⭐ Pro: Response edit suggestions
 
-**Budget & Operations**
+**Automation & Operations**
 
-* ⭐ Pro: API cost alerts (email notification)
-* ⭐ Pro: Budget limits (auto-block when exceeded)
-* ⭐ Pro: Business hours scheduling
-* ⭐ Pro: Holiday calendar
-* ⭐ Pro: Banned words filter
-* ⭐ Pro: IP blocking
-* ⭐ Pro: Enhanced rate limiting (per-minute burst + per-hour sustained)
+* ⭐ Pro: Conversation scenarios (multi-step guided flows)
+* ⭐ Pro: Action handler (intent-driven redirects, emails, webhooks)
+* ⭐ Pro: Business hours scheduling & holiday calendar
+* ⭐ Pro: Human handoff / Operator mode
+* ⭐ Pro: Multiple chatbots (per-page routing)
+* ⭐ Pro: API cost alerts & budget limits
+* ⭐ Pro: Queue management (concurrent request control)
+* ⭐ Pro: Booking integration (Calendly, Cal.com)
 
-**Performance & Security**
+**Integrations**
+
+* ⭐ Pro: WooCommerce product cards in chat
+* ⭐ Pro: LINE Messaging API
+* ⭐ Pro: Slack notifications
+* ⭐ Pro: Google Sheets export
+
+**Security & Compliance**
 
 * ⭐ Pro: Response caching (reduce API costs 30-50%)
-* ⭐ Pro: Server-side PDF analytics export (Dompdf)
+* ⭐ Pro: AES-256-GCM data encryption at rest
+* ⭐ Pro: PII masking, spam detection, country blocking
+* ⭐ Pro: Vulnerability scanning
 * ⭐ Pro: Audit logs (admin action tracking, CSV export)
-* ⭐ Pro: Offline messages (business hours form)
-
-**Advanced**
-
-* ⭐ Pro: Conversation tags & notes
-* ⭐ Pro: Human handoff / Operator mode
-* ⭐ Pro: Post-chat surveys
-* ⭐ Pro: Multiple chatbots (per-page)
-* ⭐ Pro: Prompt templates
-* ⭐ Pro: Answer templates (operator quick-insert)
-* ⭐ Pro: Dynamic variables ({site_name}, {current_date}, etc.)
-* ⭐ Pro: Settings import/export
+* ⭐ Pro: Settings change history, rollback, staging mode
 
 Learn more at [raplsworks.com](https://raplsworks.com/rapls-ai-chatbot-pro)
 
@@ -188,6 +199,7 @@ You'll need an API key from at least one AI provider:
 * **OpenAI:** Get your key at [platform.openai.com](https://platform.openai.com/)
 * **Anthropic Claude:** Get your key at [console.anthropic.com](https://console.anthropic.com/)
 * **Google Gemini:** Get your key at [aistudio.google.com](https://aistudio.google.com/)
+* **OpenRouter:** Get your key at [openrouter.ai](https://openrouter.ai/)
 
 
 
@@ -196,7 +208,7 @@ You'll need an API key from at least one AI provider:
 1. Dashboard - Overview of conversations, messages, and usage statistics with cost tracking
 2. Settings - Configure AI provider, model selection, and chat behavior
 3. Site Learning - Automatic content indexing and manual learning controls
-4. Knowledge Base - Custom Q&A management with priority levels
+4. Knowledge Base - Custom Q&A management with priority levels and PDF/DOCX upload
 5. Conversation History - View and manage all chat conversations
 6. Chatbot Widget - Clean, modern chat interface on your website
 7. Analytics Dashboard (Pro) - Conversation insights, satisfaction tracking, and FAQ analysis
@@ -209,15 +221,16 @@ You'll need an API key from at least one AI provider:
 
 Each provider has different strengths:
 * **OpenAI GPT-4o-mini** - Best balance of cost and performance for most use cases
-* **Claude Sonnet 4** - Excellent for nuanced, helpful responses
-* **Gemini 2.0 Flash** - Fast and cost-effective, good for high-volume sites
+* **Claude Sonnet 4.5** - Excellent for nuanced, helpful responses
+* **Gemini 2.5 Flash** - Fast and cost-effective, good for high-volume sites
+* **OpenRouter** - Access to 100+ models from multiple providers with a single API key
 
 = How much does it cost to use? =
 
 The plugin itself is free. You pay for AI API usage directly to your chosen provider. Typical costs:
 * GPT-4o-mini: ~$0.15/1M input tokens, ~$0.60/1M output tokens
-* Claude 3.5 Haiku: ~$0.80/1M input tokens, ~$4.00/1M output tokens
-* Gemini 1.5 Flash: ~$0.075/1M input tokens, ~$0.30/1M output tokens
+* Claude Haiku 4.5: ~$0.80/1M input tokens, ~$4.00/1M output tokens
+* Gemini 2.5 Flash: ~$0.15/1M input tokens, ~$0.60/1M output tokens
 
 = Can I use multiple AI providers? =
 
@@ -225,7 +238,15 @@ You can configure multiple API keys, but only one provider is active at a time. 
 
 = How does Site Learning work? =
 
-The plugin crawls your published content and creates a searchable index. When users ask questions, relevant content is automatically included in the AI context for accurate responses.
+The plugin crawls your published content and creates a searchable index. When users ask questions, relevant content is automatically included in the AI context for accurate responses. With vector embedding enabled, hybrid search combines keyword matching (40%) and vector similarity (60%) for better retrieval accuracy.
+
+= How does Web Search work? =
+
+When the knowledge base and site content don't have a sufficient answer, the AI can automatically search the web for up-to-date information. This uses each provider's built-in web search capability (OpenAI web_search_preview, Claude web_search, Gemini google_search). Web sources are displayed with a globe icon.
+
+= Can I embed the chatbot on external sites? =
+
+Yes. The plugin provides a cross-site embed page (`?wpaic_embed=1`) and a loader script (`assets/js/embed-loader.js`) for easy integration on any external website via iframe.
 
 = Can I customize the chatbot appearance? =
 
@@ -247,7 +268,7 @@ Yes, the chatbot widget works with any theme and page builder including Elemento
 
 = Can I use custom system prompts? =
 
-Yes. Configure your own system prompt to define the AI's personality, behavior, and response style.
+Yes. Configure your own system prompt to define the AI's personality, behavior, and response style. The `wpaic_system_prompt` filter is also available for programmatic customization.
 
 = What happens if I exceed my API quota? =
 
@@ -255,7 +276,7 @@ The plugin displays a customizable error message when quota limits are reached.
 
 = What is the Pro add-on? =
 
-The Pro add-on is a separate plugin that extends this free version with advanced features like analytics, lead capture, business hours, and more. The free version works fully on its own.
+The Pro add-on is a separate plugin that extends this free version with 80+ advanced features including analytics, lead capture, business hours, conversation scenarios, WooCommerce integration, LINE integration, and more. The free version works fully on its own.
 
 = What happens to my data when I uninstall? =
 
@@ -269,7 +290,7 @@ On large multisite networks, uninstall batch size is adjustable via filters. Add
 
 `add_filter( 'wpaic_uninstall_snapshot_threshold', function() { return 1000; } );`
 
-Guide: low-memory/slow-DB → batch size 20–50, standard → 100, fast/large-scale → 200–500. Snapshot threshold (default 10000) controls when the plugin switches from snapshot to batched mode. Note: actual performance depends on host DB speed and memory limits — start with 20–50 if unsure. If uninstall times out, lower the batch size; if it takes too long to finish, raise it.
+Guide: low-memory/slow-DB → batch size 20-50, standard → 100, fast/large-scale → 200-500.
 
 
 == External Services ==
@@ -295,6 +316,11 @@ The plugin sends user messages and optionally site content to AI providers for g
 * Terms of Use: https://policies.google.com/terms
 * Privacy Policy: https://policies.google.com/privacy
 
+**OpenRouter**
+* Service URL: https://openrouter.ai/api/
+* Terms of Use: https://openrouter.ai/terms
+* Privacy Policy: https://openrouter.ai/privacy
+
 = Google reCAPTCHA (Optional) =
 
 If enabled, the plugin uses Google reCAPTCHA v3 for spam protection:
@@ -302,6 +328,14 @@ If enabled, the plugin uses Google reCAPTCHA v3 for spam protection:
 * Service URL: https://www.google.com/recaptcha/
 * Terms of Use: https://policies.google.com/terms
 * Privacy Policy: https://policies.google.com/privacy
+
+= LINE Messaging API (Pro, Optional) =
+
+If enabled via the Pro add-on, the plugin connects to the LINE Messaging API:
+
+* Service URL: https://api.line.me/
+* Terms of Use: https://terms.line.me/
+* Privacy Policy: https://line.me/en/terms/policy/
 
 = Data Transmitted =
 
@@ -322,6 +356,7 @@ You can disable these features in the plugin settings:
 * Conversation history saving
 * Site content crawling/learning
 * Google reCAPTCHA verification
+* Web search
 
 
 
@@ -362,6 +397,8 @@ The plugin provides hooks and filters for customization:
 * `wpaic_context` - Modify the context from site learning
 * `wpaic_ai_response` - Filter the AI response before display
 * `wpaic_chatbot_enabled` - Control chatbot visibility programmatically
+* `wpaic_allowed_origins` - Add allowed origin hosts for same-origin check
+* `wpaic_chat_response_data` - Filter chat response data before returning to client
 
 = Example: Custom System Prompt =
 
@@ -387,7 +424,7 @@ add_filter( 'wpaic_chatbot_enabled', function( $enabled ) {
 
 The plugin registers REST API endpoints under the `wp-ai-chatbot/v1` namespace:
 
-**Session authentication:** Pass the session ID via the `X-WPAIC-Session` HTTP header (recommended). When the header is present, any session_id in the request body is ignored (prevents APM/WAF body-logging leakage). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs. For POST requests without the header, the session ID may be sent in the JSON body as a fallback. When calling the REST API directly (outside the chatbot widget), always include the `X-WPAIC-Session` header to avoid NAT/shared-IP rate-limit false positives.
+**Session authentication:** Pass the session ID via the `X-WPAIC-Session` HTTP header (recommended). When the header is present, any session_id in the request body is ignored (prevents APM/WAF body-logging leakage). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs.
 
 **Free:**
 
@@ -406,10 +443,9 @@ The plugin registers REST API endpoints under the `wp-ai-chatbot/v1` namespace:
 * `POST /wp-ai-chatbot/v1/offline-message` - Submit offline message
 * `POST /wp-ai-chatbot/v1/conversion` - Track conversion event
 * `GET /wp-ai-chatbot/v1/templates` - Get answer templates
-
-**Known limitations:**
-
-* `GET /history/{session_id}` and `GET /summary/{session_id}` include the session ID in the URL path, which may appear in server access logs. If your environment requires zero session exposure in logs, a header-only endpoint (`/history/me`) may be added in a future release.
+* `POST /wp-ai-chatbot/v1/ai-generate` - AI content generation (editor sidebar)
+* `POST /wp-ai-chatbot/v1/ai-form-submit` - AI Forms submission
+* `POST /wp-ai-chatbot/v1/line-webhook` - LINE Messaging API webhook
 
 = Database Tables =
 
@@ -434,6 +470,15 @@ When uninstalled, the plugin removes all database tables, options, and transient
 Release ZIPs are CI-verified for packaging correctness. If you encounter unexpected files in a release, please report via the support forum.
 
 == Changelog ==
+
+= 1.5.0 =
+* Added: Pro feature defaults and stubs for 80+ features (scenarios, actions, WooCommerce, LINE, AI forms, encryption, queue, booking, screen sharing, multi-bot coordination, change management, vulnerability scanning, similar question merge)
+* Added: Voice input (STT) and text-to-speech (TTS) as Pro feature stubs
+* Added: OpenRouter provider support (100+ models via single API key)
+* Improved: Free vs Pro comparison updated to reflect all current Pro capabilities
+* Improved: REST API endpoint list updated with new Pro endpoints
+* Updated: Japanese translation — all strings translated
+* Updated: WordPress Plugin Check compliance fixes
 
 = 1.4.0 =
 * Added: Web search integration — AI automatically searches the web when knowledge base lacks a sufficient answer (OpenAI web_search_preview, Claude web_search, Gemini google_search grounding)
@@ -561,6 +606,9 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 
 == Upgrade Notice ==
+
+= 1.5.0 =
+Major update: Pro feature stubs for 80+ features (scenarios, WooCommerce, LINE, AI forms, encryption, queue management, and more). OpenRouter provider support. Full Japanese translation. Recommended update for all users.
 
 = 1.4.0 =
 Feature release: Web search integration (AI auto-searches the web when knowledge base is insufficient), cross-site embed support, PDF/DOCX knowledge upload, vector embedding hybrid search, and updated AI model lists. Recommended update for all users.

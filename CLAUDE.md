@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 WordPress AI chatbot plugin supporting OpenAI, Anthropic Claude, and Google Gemini.
 Two-tier architecture: **Free** (this repo, WordPress.org) + **Pro** (separate plugin `rapls-ai-chatbot-pro/`).
 
-- Version: 1.4.0 | PHP 7.4+ | WordPress 5.8+
+- Version: 1.5.0 | PHP 7.4+ | WordPress 5.8+
 - Text Domain: `rapls-ai-chatbot`
 - All settings stored in: `get_option('wpaic_settings')`
 - Pro settings nested at: `wpaic_settings['pro_features']`
