@@ -1,0 +1,32 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "rapls-ai-chatbot/chatbot",
+    "version": "1.5.0",
+    "title": "AI Chatbot",
+    "category": "widgets",
+    "icon": "format-chat",
+    "description": "Embed an AI chatbot inline on your page.",
+    "keywords": [ "chat", "ai", "chatbot", "assistant", "rapls" ],
+    "supports": {
+        "html": false,
+        "multiple": false
+    },
+    "attributes": {
+        "height": {
+            "type": "string",
+            "default": "500px"
+        },
+        "theme": {
+            "type": "string",
+            "default": ""
+        },
+        "bot": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "textdomain": "rapls-ai-chatbot",
+    "editorScript": "file:./editor.js",
+    "render": "file:./render.php"
+}

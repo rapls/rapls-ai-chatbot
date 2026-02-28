@@ -221,6 +221,11 @@ class WPAIC_Main {
         // Shortcode [rapls_chatbot] for inline embedding
         add_shortcode('rapls_chatbot', [$widget, 'render_shortcode']);
 
+        // Gutenberg block (server-side rendered, wraps the shortcode)
+        add_action('init', function () {
+            register_block_type(WPAIC_PLUGIN_DIR . 'includes/block');
+        });
+
         // Cross-site embed endpoint: ?wpaic_embed=1
         add_filter('query_vars', function ($vars) {
             $vars[] = 'wpaic_embed';
