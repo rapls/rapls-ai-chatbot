@@ -429,10 +429,9 @@ class WPAIC_Chatbot_Widget {
             return;
         }
 
-        // Remove X-Frame-Options to allow iframe embedding
+        // Remove X-Frame-Options to allow iframe embedding and use CSP instead
         header_remove('X-Frame-Options');
-        // Prevent clickjacking on non-embed pages — this page is explicitly for embedding
-        header('X-Frame-Options: ALLOWALL');
+        header('Content-Security-Policy: frame-ancestors *');
 
         $settings = get_option('wpaic_settings', []);
         $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');

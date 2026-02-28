@@ -123,20 +123,18 @@ class WPAIC_PDF_Parser {
             // TJ operator: [(string) num (string) ...] TJ
             if (preg_match_all('/\[(.*?)\]\s*TJ/s', $text_block, $tj_array_matches)) {
                 foreach ($tj_array_matches[1] as $array_content) {
-                    if (preg_match_all('/\(([^)]*)\)/', $array_content, $str_matches)) {
-                        foreach ($str_matches[1] as $str) {
-                            $block_text .= self::decode_pdf_string($str);
+                    // Parse TJ array tokens in order: strings and kerning numbers
+                    if (preg_match_all('/\(([^)]*)\)|(-?\d+)/', $array_content, $tokens, PREG_SET_ORDER)) {
+                        foreach ($tokens as $token) {
+                            if ($token[0][0] === '(') {
+                                // String token
+                                $block_text .= self::decode_pdf_string($token[1]);
+                            } elseif (abs((int) $token[2]) > 100) {
+                                // Large negative kerning = word space
+                                $block_text .= ' ';
+                            }
                         }
                     }
-                    // Check for large negative kerning = word space
-                    $block_text = preg_replace_callback(
-                        '/\)\s*(-?\d+)\s*\(/',
-                        function ($m) {
-                            // Large negative values typically represent word spacing
-                            return (abs((int) $m[1]) > 100) ? ' ' : '';
-                        },
-                        $block_text
-                    );
                 }
             }
 

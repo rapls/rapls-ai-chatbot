@@ -467,6 +467,7 @@ if (!function_exists('wpaic_rate_limited_log')) {
  */
 function wpaic_run()
 {
+    require_once WPAIC_PLUGIN_DIR . 'includes/helpers.php';
     require_once WPAIC_PLUGIN_DIR . 'includes/class-loader.php';
     require_once WPAIC_PLUGIN_DIR . 'includes/class-main.php';
 

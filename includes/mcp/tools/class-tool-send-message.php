@@ -195,81 +195,12 @@ class WPAIC_MCP_Tool_Send_Message {
     }
 
     /**
-     * Get AI provider instance.
+     * Get AI provider instance — delegates to global helper.
      *
      * @param array $settings Plugin settings.
-     * @return WPAIC_AI_Provider_Interface|WP_Error
+     * @return WPAIC_AI_Provider_Interface
      */
-    private function get_ai_provider(array $settings) {
-        $provider_name = $settings['ai_provider'] ?? 'openai';
-
-        switch ($provider_name) {
-            case 'claude':
-                $provider = new WPAIC_Claude_Provider();
-                $provider->set_api_key($this->decrypt_api_key($settings['claude_api_key'] ?? ''));
-                $provider->set_model($settings['claude_model'] ?? 'claude-sonnet-4-20250514');
-                break;
-
-            case 'gemini':
-                $provider = new WPAIC_Gemini_Provider();
-                $provider->set_api_key($this->decrypt_api_key($settings['gemini_api_key'] ?? ''));
-                $provider->set_model($settings['gemini_model'] ?? 'gemini-2.0-flash-exp');
-                break;
-
-            case 'openrouter':
-                $provider = new WPAIC_OpenRouter_Provider();
-                $provider->set_api_key($this->decrypt_api_key($settings['openrouter_api_key'] ?? ''));
-                $provider->set_model($settings['openrouter_model'] ?? 'openrouter/auto');
-                break;
-
-            default: // openai
-                $provider = new WPAIC_OpenAI_Provider();
-                $provider->set_api_key($this->decrypt_api_key($settings['openai_api_key'] ?? ''));
-                $provider->set_model($settings['openai_model'] ?? 'gpt-4o');
-                break;
-        }
-
-        return $provider;
-    }
-
-    /**
-     * Decrypt an API key (delegates to REST controller's pattern).
-     *
-     * @param string $encrypted Encrypted key.
-     * @return string Decrypted key.
-     */
-    private function decrypt_api_key(string $encrypted): string {
-        if (empty($encrypted)) {
-            return '';
-        }
-
-        // Same decryption as WPAIC_REST_Controller
-        $key = defined('WPAIC_ENCRYPTION_KEY')
-            ? WPAIC_ENCRYPTION_KEY
-            : wp_salt('auth');
-
-        $decoded = base64_decode($encrypted, true);
-        if ($decoded === false || strlen($decoded) < 13) {
-            return $encrypted; // Not encrypted, return as-is
-        }
-
-        $iv_length = 12;
-        $tag_length = 16;
-
-        if (strlen($decoded) < $iv_length + $tag_length + 1) {
-            return $encrypted;
-        }
-
-        $iv         = substr($decoded, 0, $iv_length);
-        $tag        = substr($decoded, $iv_length, $tag_length);
-        $ciphertext = substr($decoded, $iv_length + $tag_length);
-
-        if (!function_exists('openssl_decrypt')) {
-            return $encrypted;
-        }
-
-        $decrypted = openssl_decrypt($ciphertext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
-
-        return $decrypted !== false ? $decrypted : $encrypted;
+    private function get_ai_provider(array $settings): WPAIC_AI_Provider_Interface {
+        return wpaic_create_ai_provider($settings);
     }
 }

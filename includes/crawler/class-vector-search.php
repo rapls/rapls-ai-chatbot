@@ -74,15 +74,16 @@ class WPAIC_Vector_Search {
             return [];
         }
 
-        // Load embeddings in batches
+        // Phase 1: Score embeddings in memory-efficient batches (load only id + embedding).
         $offset = 0;
         $batch_size = 500;
-        $scored = [];
+        $top_ids = []; // id => vector_score (keep only top N×3 candidates)
+        $keep_count = max($limit * 3, 30);
 
         while (true) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $rows = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, post_id, post_type, title, content, url, embedding FROM `{$table}` WHERE embedding IS NOT NULL LIMIT %d OFFSET %d",
+                "SELECT id, embedding FROM `{$table}` WHERE embedding IS NOT NULL LIMIT %d OFFSET %d",
                 $batch_size,
                 $offset
             ), ARRAY_A);
@@ -95,26 +96,53 @@ class WPAIC_Vector_Search {
                 if (empty($row['embedding'])) {
                     continue;
                 }
-
-                $emb = self::unpack_embedding($row['embedding']);
+                $emb   = self::unpack_embedding($row['embedding']);
                 $score = self::cosine_similarity($query_embedding, $emb);
+                $top_ids[(int) $row['id']] = $score;
+            }
+            unset($rows); // free embedding data immediately
 
-                $scored[] = [
-                    'type'         => 'index',
-                    'post_id'      => (int) $row['post_id'],
-                    'post_type'    => $row['post_type'],
-                    'title'        => $row['title'],
-                    'content'      => $row['content'],
-                    'url'          => $row['url'],
-                    'score'        => 0.0,
-                    'vector_score' => $score,
-                ];
+            // Prune to top candidates to cap memory growth
+            if (count($top_ids) > $keep_count * 2) {
+                arsort($top_ids);
+                $top_ids = array_slice($top_ids, 0, $keep_count, true);
             }
 
-            if (count($rows) < $batch_size) {
+            if (count($rows ?? []) < $batch_size) {
                 break;
             }
             $offset += $batch_size;
+        }
+
+        if (empty($top_ids)) {
+            return [];
+        }
+
+        // Keep only top candidates
+        arsort($top_ids);
+        $top_ids = array_slice($top_ids, 0, $keep_count, true);
+
+        // Phase 2: Fetch metadata only for top candidates (no embedding column).
+        $id_list = implode(',', array_map('intval', array_keys($top_ids)));
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $meta_rows = $wpdb->get_results(
+            "SELECT id, post_id, post_type, title, content, url FROM `{$table}` WHERE id IN ({$id_list})",
+            ARRAY_A
+        );
+
+        $scored = [];
+        foreach ($meta_rows as $row) {
+            $row_id = (int) $row['id'];
+            $scored[] = [
+                'type'         => 'index',
+                'post_id'      => (int) $row['post_id'],
+                'post_type'    => $row['post_type'],
+                'title'        => $row['title'],
+                'content'      => $row['content'],
+                'url'          => $row['url'],
+                'score'        => 0.0,
+                'vector_score' => $top_ids[$row_id] ?? 0.0,
+            ];
         }
 
         // Sort by vector score descending
