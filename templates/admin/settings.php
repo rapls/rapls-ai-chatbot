@@ -1101,6 +1101,7 @@ if (!defined('ABSPATH')) {
                 $embed_site_url = esc_url(home_url());
                 $embed_plugin_url = esc_url(WPAIC_PLUGIN_URL . 'assets/js/embed-loader.js');
                 $embed_primary_color = esc_attr($settings['primary_color'] ?? '#007bff');
+                // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- embed snippet for external sites, not enqueued here
                 $embed_script_code = '<script src="' . $embed_plugin_url . '"' . "\n"
                     . '        data-site="' . $embed_site_url . '"' . "\n"
                     . '        data-color="' . $embed_primary_color . '"' . "\n"
