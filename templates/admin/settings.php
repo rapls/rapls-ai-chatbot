@@ -573,6 +573,24 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Response Language', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <select name="wpaic_settings[response_language]" id="wpaic_response_language">
+                                <option value="" <?php selected($settings['response_language'] ?? '', ''); ?>><?php esc_html_e('Site language', 'rapls-ai-chatbot'); ?> (<?php echo esc_html(get_locale()); ?>)</option>
+                                <option value="auto" <?php selected($settings['response_language'] ?? '', 'auto'); ?>><?php esc_html_e('Auto-detect (match user language)', 'rapls-ai-chatbot'); ?></option>
+                                <option value="en" <?php selected($settings['response_language'] ?? '', 'en'); ?>>English</option>
+                                <option value="ja" <?php selected($settings['response_language'] ?? '', 'ja'); ?>>日本語</option>
+                                <option value="zh" <?php selected($settings['response_language'] ?? '', 'zh'); ?>>中文</option>
+                                <option value="ko" <?php selected($settings['response_language'] ?? '', 'ko'); ?>>한국어</option>
+                                <option value="es" <?php selected($settings['response_language'] ?? '', 'es'); ?>>Español</option>
+                                <option value="fr" <?php selected($settings['response_language'] ?? '', 'fr'); ?>>Français</option>
+                                <option value="de" <?php selected($settings['response_language'] ?? '', 'de'); ?>>Deutsch</option>
+                                <option value="pt" <?php selected($settings['response_language'] ?? '', 'pt'); ?>>Português</option>
+                            </select>
+                            <p class="description"><?php esc_html_e('Choose the language for AI responses. "Auto-detect" will respond in the same language as the user\'s message.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('API Quota Error Message', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <input type="text" name="wpaic_settings[quota_error_message]"

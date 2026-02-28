@@ -6698,3 +6698,19 @@ msgstr "高さ:"
 msgid "The chatbot will appear here on the frontend."
 msgstr "フロントエンドにチャットボットが表示されます。"
 
+#: templates/admin/settings.php
+msgid "Response Language"
+msgstr "応答言語"
+
+#: templates/admin/settings.php
+msgid "Site language"
+msgstr "サイトの言語"
+
+#: templates/admin/settings.php
+msgid "Auto-detect (match user language)"
+msgstr "自動検出（ユーザーの言語に合わせる）"
+
+#: templates/admin/settings.php
+msgid "Choose the language for AI responses. \"Auto-detect\" will respond in the same language as the user's message."
+msgstr "AI の応答言語を選択します。「自動検出」を選ぶと、ユーザーのメッセージと同じ言語で応答します。"
+

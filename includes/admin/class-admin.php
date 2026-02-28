@@ -367,6 +367,9 @@ class WPAIC_Admin {
         }
         $sanitized['welcome_message'] = sanitize_textarea_field($input['welcome_message'] ?? ($existing['welcome_message'] ?? ''));
         $sanitized['system_prompt'] = sanitize_textarea_field($input['system_prompt'] ?? ($existing['system_prompt'] ?? ''));
+        $valid_langs = ['', 'auto', 'en', 'ja', 'zh', 'ko', 'es', 'fr', 'de', 'pt'];
+        $raw_lang = $input['response_language'] ?? ($existing['response_language'] ?? '');
+        $sanitized['response_language'] = in_array($raw_lang, $valid_langs, true) ? $raw_lang : '';
         $sanitized['quota_error_message'] = sanitize_text_field($input['quota_error_message'] ?? ($existing['quota_error_message'] ?? ''));
         $sanitized['max_tokens'] = max(1, min(16384, absint($input['max_tokens'] ?? ($existing['max_tokens'] ?? 1000))));
         $sanitized['temperature'] = max(0.0, min(2.0, floatval($input['temperature'] ?? ($existing['temperature'] ?? 0.7))));

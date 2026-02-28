@@ -1132,6 +1132,20 @@ class WPAIC_REST_Controller {
              */
             $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt, $settings);
 
+            // Response language instruction
+            $response_lang = $settings['response_language'] ?? '';
+            if ($response_lang === 'auto') {
+                $system_prompt .= "\n\nIMPORTANT: Always detect the language of the user's message and respond in that same language.";
+            } elseif (!empty($response_lang)) {
+                $lang_names = [
+                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
+                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
+                    'de' => 'German', 'pt' => 'Portuguese',
+                ];
+                $lang_name = $lang_names[$response_lang] ?? $response_lang;
+                $system_prompt .= "\n\nIMPORTANT: Always respond in {$lang_name}.";
+            }
+
             // Add sentiment analysis (Pro feature)
             $sentiment = $pro_features->analyze_sentiment($message);
             $sentiment_prompt = $pro_features->get_sentiment_prompt($sentiment);
