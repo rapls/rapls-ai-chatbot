@@ -34,6 +34,25 @@ class WPAIC_MCP_Server {
         $this->registry = new WPAIC_MCP_Tool_Registry();
         $this->register_default_tools();
 
+        // Pro tools + Abilities Bridge deferred until rest_api_init
+        // so Pro plugin has time to register its wpaic_mcp_register_tools listener.
+        add_action('rest_api_init', [$this, 'late_init'], 5);
+    }
+
+    /**
+     * Late initialization: register Pro/third-party tools and Abilities Bridge.
+     *
+     * Runs on rest_api_init (priority 5) so Pro plugin's plugins_loaded hook
+     * has already fired and registered its wpaic_mcp_register_tools listener.
+     */
+    public function late_init(): void {
+        /**
+         * Allow Pro and third-party plugins to register additional MCP tools.
+         *
+         * @param WPAIC_MCP_Tool_Registry $registry Tool registry instance.
+         */
+        do_action('wpaic_mcp_register_tools', $this->registry);
+
         // Bridge MCP tools to WordPress Abilities API (WP 6.9+)
         require_once __DIR__ . '/class-abilities-bridge.php';
         (new WPAIC_Abilities_Bridge($this->registry))->init();
@@ -285,12 +304,5 @@ class WPAIC_MCP_Server {
         (new WPAIC_MCP_Tool_Get_Conversation())->register($this->registry);
         (new WPAIC_MCP_Tool_Send_Message())->register($this->registry);
         (new WPAIC_MCP_Tool_Get_Site_Info())->register($this->registry);
-
-        /**
-         * Allow Pro and third-party plugins to register additional MCP tools.
-         *
-         * @param WPAIC_MCP_Tool_Registry $registry Tool registry instance.
-         */
-        do_action('wpaic_mcp_register_tools', $this->registry);
     }
 }

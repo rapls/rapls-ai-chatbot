@@ -39,7 +39,7 @@ class WPAIC_Abilities_Bridge {
     }
 
     /**
-     * Initialize: hook into wp_abilities_api_init if available.
+     * Initialize: hook into Abilities API if available.
      */
     public function init(): void {
         // Only register if the Abilities API is available (WordPress 6.9+)
@@ -47,7 +47,21 @@ class WPAIC_Abilities_Bridge {
             return;
         }
 
+        add_action('wp_abilities_api_categories_init', [$this, 'register_category']);
         add_action('wp_abilities_api_init', [$this, 'register_abilities']);
+    }
+
+    /**
+     * Register the ability category.
+     *
+     * Categories must be registered before abilities that reference them.
+     * Hooked to wp_abilities_api_categories_init.
+     */
+    public function register_category(): void {
+        wp_register_ability_category(self::CATEGORY, [
+            'label'       => __('AI Chatbot', 'rapls-ai-chatbot'),
+            'description' => __('AI chatbot abilities powered by Rapls AI Chatbot.', 'rapls-ai-chatbot'),
+        ]);
     }
 
     /**
@@ -58,22 +72,30 @@ class WPAIC_Abilities_Bridge {
     public function register_abilities(): void {
         $tools = $this->registry->list_tools();
 
+        // Read-only tools get readonly annotation
+        $readonly_tools = [
+            'get-site-info',
+            'search-knowledge',
+            'list-conversations',
+            'get-conversation',
+            'get-analytics',
+        ];
+
         foreach ($tools as $schema) {
             $name = $schema['name'] ?? '';
             if (empty($name)) {
                 continue;
             }
 
-            $ability_id = self::CATEGORY . '/' . $name;
-            $description = $schema['description'] ?? '';
-            $input_schema = $schema['inputSchema'] ?? [];
+            // Abilities API requires lowercase alphanumeric, dashes, and slashes only
+            $ability_name = str_replace('_', '-', $name);
+            $ability_id   = self::CATEGORY . '/' . $ability_name;
 
-            // Convert MCP inputSchema to Abilities input_schema format
-            $input = $this->normalize_schema($input_schema);
+            $input = $this->normalize_schema($schema['inputSchema'] ?? []);
 
             wp_register_ability($ability_id, [
                 'label'               => $this->make_label($name),
-                'description'         => $description,
+                'description'         => $schema['description'] ?? '',
                 'category'            => self::CATEGORY,
                 'input_schema'        => $input,
                 'output_schema'       => [
@@ -88,8 +110,9 @@ class WPAIC_Abilities_Bridge {
                 'execute_callback'    => $this->make_executor($name),
                 'permission_callback' => [$this, 'check_permission'],
                 'meta'                => [
-                    'mcp' => [
-                        'public' => true,
+                    'show_in_rest' => true,
+                    'annotations'  => [
+                        'readonly' => in_array($ability_name, $readonly_tools, true),
                     ],
                 ],
             ]);
