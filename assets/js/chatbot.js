@@ -759,7 +759,7 @@
                                 : '';
                             self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                         } else {
-                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards);
+                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario);
                             // Fetch related question suggestions (Pro)
                             self.fetchSuggestions();
                             // Save context for memory (Pro) - async, don't wait
@@ -988,7 +988,7 @@
         /**
          * Add message to UI
          */
-        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards) {
+        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards, scenarioData) {
             var self = this;
             var messageEl = document.createElement('div');
             messageEl.className = 'chatbot-message chatbot-message--' + role;
@@ -1228,6 +1228,69 @@
                 }
 
                 contentEl.appendChild(actionEl);
+            }
+
+            // Scenario UI (Pro conversation scenarios)
+            if (scenarioData) {
+                var scenarioEl = document.createElement('div');
+                scenarioEl.className = 'chatbot-scenario-ui';
+
+                // Progress bar
+                if (typeof scenarioData.progress === 'number') {
+                    var progressEl = document.createElement('div');
+                    progressEl.className = 'chatbot-scenario-progress';
+
+                    var labelEl = document.createElement('div');
+                    labelEl.className = 'chatbot-scenario-progress__label';
+                    var nameSpan = document.createElement('span');
+                    nameSpan.textContent = scenarioData.name || '';
+                    labelEl.appendChild(nameSpan);
+                    var pctSpan = document.createElement('span');
+                    pctSpan.textContent = scenarioData.progress + '%';
+                    labelEl.appendChild(pctSpan);
+                    progressEl.appendChild(labelEl);
+
+                    var barEl = document.createElement('div');
+                    barEl.className = 'chatbot-scenario-progress__bar';
+                    var fillEl = document.createElement('div');
+                    fillEl.className = 'chatbot-scenario-progress__fill';
+                    fillEl.style.width = scenarioData.progress + '%';
+                    barEl.appendChild(fillEl);
+                    progressEl.appendChild(barEl);
+
+                    scenarioEl.appendChild(progressEl);
+                }
+
+                // Select options as clickable buttons (for input steps with select type)
+                if (scenarioData.input && scenarioData.input.options && scenarioData.input.options.length > 0) {
+                    var optionsEl = document.createElement('div');
+                    optionsEl.className = 'chatbot-scenario-options';
+                    scenarioData.input.options.forEach(function(opt) {
+                        var optBtn = document.createElement('button');
+                        optBtn.type = 'button';
+                        optBtn.className = 'chatbot-scenario-option-btn';
+                        optBtn.textContent = opt;
+                        optBtn.onclick = function() {
+                            optionsEl.remove();
+                            self.inputTextarea.value = opt;
+                            self.handleSubmit();
+                        };
+                        optionsEl.appendChild(optBtn);
+                    });
+                    scenarioEl.appendChild(optionsEl);
+                }
+
+                // Completion indicator
+                if (scenarioData.status === 'completed') {
+                    var completeEl = document.createElement('div');
+                    completeEl.className = 'chatbot-scenario-complete';
+                    completeEl.textContent = '\u2713 ' + (scenarioData.name || 'Scenario') + ' completed';
+                    scenarioEl.appendChild(completeEl);
+                }
+
+                if (scenarioEl.childNodes.length > 0) {
+                    contentEl.appendChild(scenarioEl);
+                }
             }
 
             // Add feedback buttons for bot messages

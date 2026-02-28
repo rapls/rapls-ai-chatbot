@@ -354,6 +354,10 @@ class WPAIC_Pro_Features {
             'actions_enabled' => false,
             'actions' => [],
 
+            // Conversation Scenarios
+            'scenarios_enabled' => false,
+            'scenarios' => [],
+
             // Offline Messages
             'offline_message_enabled' => false,
             'offline_form_title' => __('We are currently offline', 'rapls-ai-chatbot'),
@@ -535,6 +539,13 @@ class WPAIC_Pro_Features {
      * Stub: Check if WooCommerce product cards are enabled
      */
     public function is_woocommerce_cards_enabled(): bool {
+        return false;
+    }
+
+    /**
+     * Stub: Check if scenarios are enabled
+     */
+    public function is_scenarios_enabled(): bool {
         return false;
     }
 
