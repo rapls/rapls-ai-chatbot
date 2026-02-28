@@ -338,6 +338,11 @@ class WPAIC_Pro_Features {
             'tts_enabled' => false,
             'tts_lang' => '',
 
+            // LINE Messaging API
+            'line_enabled' => false,
+            'line_channel_secret' => '',
+            'line_channel_access_token' => '',
+
             // Actions / Intent Recognition
             'actions_enabled' => false,
             'actions' => [],
