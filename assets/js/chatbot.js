@@ -117,6 +117,10 @@
             this.setupAutocomplete();
             this.setupImageUpload();
             this.setupVoiceInput();
+            this.initWelcomeScreen();
+            this.initFullscreenMode();
+            this.initResponseDelay();
+            this.initNotificationSound();
             this.bindLeadFormEvents();
             this.initOfflineForm();
             this.initConversionTracking();
@@ -1345,6 +1349,7 @@
             // TTS: speak bot responses
             if (role === 'bot' && content && this.ttsEnabled && this.ttsActive) {
                 this.speakText(content);
+                this.playNotificationSound();
             }
 
             // スクロール
@@ -2523,6 +2528,125 @@
         /**
          * Initialize offline message form if outside business hours
          */
+        /**
+         * Initialize welcome screen (Pro)
+         */
+        initWelcomeScreen: function() {
+            if (!this.config.is_pro || !this.config.welcome_screen_enabled) return;
+            var self = this;
+            var title = this.config.welcome_screen_title || '';
+            var message = this.config.welcome_screen_message || '';
+            var buttons = this.config.welcome_screen_buttons || [];
+            if (!title && !message) return;
+
+            this._welcomeShown = false;
+            var origToggle = this.toggleChat.bind(this);
+            this.toggleChat = function() {
+                origToggle();
+                if (self.isOpen && !self._welcomeShown) {
+                    self._welcomeShown = true;
+                    var welcomeEl = document.createElement('div');
+                    welcomeEl.className = 'chatbot-welcome-screen';
+                    if (title) {
+                        var titleEl = document.createElement('div');
+                        titleEl.className = 'chatbot-welcome-title';
+                        titleEl.textContent = title;
+                        welcomeEl.appendChild(titleEl);
+                    }
+                    if (message) {
+                        var msgEl = document.createElement('div');
+                        msgEl.className = 'chatbot-welcome-message';
+                        msgEl.textContent = message;
+                        welcomeEl.appendChild(msgEl);
+                    }
+                    if (buttons.length > 0) {
+                        var btnsEl = document.createElement('div');
+                        btnsEl.className = 'chatbot-welcome-buttons';
+                        buttons.forEach(function(btn) {
+                            var btnEl = document.createElement('button');
+                            btnEl.type = 'button';
+                            btnEl.className = 'chatbot-welcome-btn';
+                            btnEl.textContent = btn;
+                            btnEl.onclick = function() {
+                                welcomeEl.remove();
+                                self.inputTextarea.value = btn;
+                                self.handleSubmit();
+                            };
+                            btnsEl.appendChild(btnEl);
+                        });
+                        welcomeEl.appendChild(btnsEl);
+                    }
+                    if (self.messagesEl && self.messagesEl.children.length === 0) {
+                        self.messagesEl.appendChild(welcomeEl);
+                    }
+                }
+            };
+        },
+
+        /**
+         * Initialize fullscreen mode (Pro)
+         */
+        initFullscreenMode: function() {
+            if (!this.config.is_pro || !this.config.fullscreen_mode) return;
+            if (!this.window) return;
+
+            var self = this;
+            var fsBtn = document.createElement('button');
+            fsBtn.type = 'button';
+            fsBtn.className = 'chatbot-fullscreen-btn';
+            fsBtn.innerHTML = '&#x26F6;';
+            fsBtn.title = 'Fullscreen';
+            fsBtn.onclick = function() {
+                self.window.classList.toggle('chatbot-window--fullscreen');
+                fsBtn.innerHTML = self.window.classList.contains('chatbot-window--fullscreen') ? '&#x2716;' : '&#x26F6;';
+            };
+
+            var header = this.window.querySelector('.chatbot-header');
+            if (header) {
+                header.style.position = 'relative';
+                fsBtn.style.cssText = 'position: absolute; right: 40px; top: 50%; transform: translateY(-50%); background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; opacity: 0.7;';
+                header.appendChild(fsBtn);
+            }
+        },
+
+        /**
+         * Initialize response delay typing effect (Pro)
+         */
+        initResponseDelay: function() {
+            if (!this.config.is_pro || !this.config.response_delay_enabled) return;
+            this._responseDelayMs = this.config.response_delay_ms || 500;
+        },
+
+        /**
+         * Initialize notification sound (Pro)
+         */
+        initNotificationSound: function() {
+            if (!this.config.is_pro || !this.config.notification_sound_enabled) return;
+            this._notifSoundEnabled = true;
+        },
+
+        /**
+         * Play notification sound when bot message arrives
+         */
+        playNotificationSound: function() {
+            if (!this._notifSoundEnabled) return;
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.value = 0.1;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                osc.stop(ctx.currentTime + 0.3);
+            } catch (e) {
+                // AudioContext not available
+            }
+        },
+
         initOfflineForm: function() {
             var config = window.wpAiChatbotConfig || {};
             var offline = config.offline_message;

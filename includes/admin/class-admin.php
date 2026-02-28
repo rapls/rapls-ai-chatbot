@@ -894,6 +894,7 @@ class WPAIC_Admin {
         wp_localize_script('wpaic-admin', 'wpaicAdmin', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wpaic_admin_nonce'),
+            'isPro'   => WPAIC_Pro_Features::get_instance()->is_pro(),
             'defaults' => self::get_all_defaults(),
             'i18n'    => [
                 'confirmDelete' => __('Are you sure you want to delete?', 'rapls-ai-chatbot'),

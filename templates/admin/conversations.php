@@ -320,6 +320,18 @@ jQuery(document).ready(function($) {
                         wrap.appendChild(header);
                         wrap.appendChild(p);
 
+                        // Response edit suggestion button (Pro)
+                        if (msg.role === 'assistant' && wpaicAdmin.isPro) {
+                            var suggestBtn = document.createElement('button');
+                            suggestBtn.type = 'button';
+                            suggestBtn.className = 'button button-small wpaic-suggest-edit';
+                            suggestBtn.textContent = '<?php echo esc_js(__('Suggest Improvement', 'rapls-ai-chatbot')); ?>';
+                            suggestBtn.style.cssText = 'margin-top: 6px; font-size: 11px;';
+                            suggestBtn.dataset.content = msg.content;
+                            suggestBtn.dataset.userMsg = (response.data[response.data.indexOf(msg) - 1] || {}).content || '';
+                            wrap.appendChild(suggestBtn);
+                        }
+
                         // Show AI metadata badges
                         if (msg.role === 'assistant' && (msg.ai_model || msg.tokens || msg.cache_hit)) {
                             var metaDiv = document.createElement('div');
@@ -355,6 +367,45 @@ jQuery(document).ready(function($) {
                 } else {
                     messagesContainer.html('<p>' + (i18n.error || 'Error occurred.') + '</p>');
                 }
+            }
+        });
+    });
+
+    // Response edit suggestion (Pro)
+    $(document).on('click', '.wpaic-suggest-edit', function() {
+        var $btn = $(this);
+        var content = $btn.data('content');
+        var userMsg = $btn.data('userMsg') || '';
+        $btn.prop('disabled', true).text('<?php echo esc_js(__('Generating...', 'rapls-ai-chatbot')); ?>');
+
+        // Remove any existing suggestion
+        $btn.siblings('.wpaic-edit-suggestion').remove();
+
+        $.ajax({
+            url: wpaicAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'wpaic_suggest_response_edit',
+                nonce: wpaicAdmin.nonce,
+                content: content,
+                user_message: userMsg
+            },
+            success: function(response) {
+                if (response.success && response.data.suggestions) {
+                    var sugDiv = document.createElement('div');
+                    sugDiv.className = 'wpaic-edit-suggestion';
+                    sugDiv.style.cssText = 'margin-top: 8px; padding: 10px; background: #fef9e7; border: 1px solid #f0c36d; border-radius: 4px; font-size: 13px; white-space: pre-wrap;';
+                    sugDiv.textContent = response.data.suggestions;
+                    $btn.after(sugDiv);
+                } else {
+                    alert(response.data || '<?php echo esc_js(__('Failed to generate suggestions.', 'rapls-ai-chatbot')); ?>');
+                }
+            },
+            error: function() {
+                alert('<?php echo esc_js(__('Request failed.', 'rapls-ai-chatbot')); ?>');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).text('<?php echo esc_js(__('Suggest Improvement', 'rapls-ai-chatbot')); ?>');
             }
         });
     });

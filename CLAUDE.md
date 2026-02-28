@@ -254,18 +254,27 @@ All Phase 0-5 features are implemented. See the full backlog of unimplemented fe
 - Offline messages (business hours form, email notification, webhook)
 - Answer templates (knowledge type field, operator mode insertion, dynamic variables)
 - WooCommerce integration (product data auto-crawl, product card display in chat)
+- Conversation scenarios (multi-step guided flows with triggers, conditions, actions)
+- Voice input (STT) and text-to-speech (TTS)
+- LINE Messaging API integration, AI content editor sidebar, AI Forms builder
+- Response edit suggestions (AI-powered admin tool)
+- AI quality score, churn/bounce analysis in analytics
+- Fullscreen mode, welcome screen, response delay, notification sounds
+- Custom fonts, seasonal themes
+- Slack notifications, Google Sheets export
+- Spam detection, country blocking, IP whitelist
+- PII masking, data retention policies, security headers
+- Knowledge versioning, expiration, auto-priority, related links, intent classification
+- File upload, chat bookmarks, conversation search, conversation sharing
+- Similar question cache, batch processing, performance monitoring
+- Test mode, custom metadata fields
 
 ### Unimplemented Pro Features (Backlog)
-**AI**: Text-to-speech, response edit suggestions
-**Analytics**: AI quality score, churn analysis
-**UI**: Badge customization, fullscreen/embedded modes, custom fonts, animations, sounds, welcome screen, seasonal themes
-**Integrations**: Slack, LINE, Google Sheets
-**Operations**: Response delay, AI approval workflow, spam detection, country blocking, external site/PDF/video learning, staging, change history, rollback, multisite
-**Chat**: File sending, screen sharing, booking integration, embedded forms, bookmarks, full-text search, conversation sharing, multi-bot coordination
-**Knowledge**: Similar question merge, conditional answers, intent classification, versioning, expiration, priority auto-adjustment, related links
-**Security**: Encryption, GDPR, cookie consent, PII masking, data retention policies, RBAC, IP whitelist, security headers, vulnerability scanning
-**Performance**: Similar question cache, batch processing, queue management, performance monitoring
-**Developer**: Custom fields, test mode, multi-API key management
+**Operations**: AI approval workflow, staging, change history, rollback, multisite
+**Chat**: Screen sharing, booking integration, multi-bot coordination
+**Knowledge**: Similar question merge
+**Security**: Encryption, vulnerability scanning
+**Performance**: Queue management
 
 
 <claude-mem-context>

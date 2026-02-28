@@ -369,6 +369,70 @@ class WPAIC_Pro_Features {
             'role_access_enabled' => false,
             'role_access_default' => 'allow',
             'role_limits' => [],
+
+            // UI Enhancements
+            'fullscreen_mode' => false,
+            'welcome_screen_enabled' => false,
+            'welcome_screen_title' => '',
+            'welcome_screen_message' => '',
+            'welcome_screen_buttons' => [],
+            'response_delay_enabled' => false,
+            'response_delay_ms' => 500,
+            'notification_sound_enabled' => false,
+            'custom_font' => '',
+            'seasonal_theme' => '',
+
+            // Integrations
+            'slack_enabled' => false,
+            'slack_webhook_url' => '',
+            'slack_events' => ['new_conversation' => false, 'new_message' => false, 'lead_captured' => true, 'handoff_requested' => true],
+            'google_sheets_enabled' => false,
+            'google_sheets_url' => '',
+
+            // Operations
+            'spam_detection_enabled' => false,
+            'spam_score_threshold' => 3,
+            'country_block_enabled' => false,
+            'blocked_countries' => '',
+            'country_block_message' => __('Access denied from your region.', 'rapls-ai-chatbot'),
+            'ip_whitelist_enabled' => false,
+            'whitelisted_ips' => '',
+            'external_learning_enabled' => false,
+            'external_urls' => '',
+
+            // Chat
+            'file_upload_enabled' => false,
+            'file_upload_max_size' => 5120,
+            'file_upload_types' => ['pdf', 'doc', 'docx', 'txt', 'csv'],
+            'chat_bookmarks_enabled' => false,
+            'chat_search_enabled' => false,
+            'conversation_sharing_enabled' => false,
+
+            // Knowledge
+            'knowledge_versioning_enabled' => false,
+            'knowledge_expiration_enabled' => false,
+            'knowledge_expiration_days' => 90,
+            'knowledge_auto_priority_enabled' => false,
+            'knowledge_related_links_enabled' => false,
+            'intent_classification_enabled' => false,
+
+            // Security
+            'pii_masking_enabled' => false,
+            'pii_patterns' => 'email,phone,credit_card',
+            'data_retention_enabled' => false,
+            'data_retention_days' => 365,
+            'security_headers_enabled' => false,
+
+            // Performance
+            'similar_cache_enabled' => false,
+            'batch_processing_enabled' => false,
+            'performance_monitoring_enabled' => false,
+
+            // Developer
+            'test_mode_enabled' => false,
+            'test_mode_response' => '',
+            'custom_fields_enabled' => false,
+            'custom_metadata_fields' => [],
         ];
     }
 
