@@ -585,6 +585,30 @@
          */
         showWelcomeMessage: function() {
             var welcomeMsg = this.config.welcome_message || 'Hello! How can I help you today?';
+
+            // Auto-detect: translate welcome message to browser language
+            if (this.config.response_language === 'auto') {
+                var browserLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
+                var welcomeTranslations = {
+                    en: 'Hello! How can I help you today?',
+                    ja: 'こんにちは！何かお手伝いできることはありますか？',
+                    zh: '您好！有什么可以帮助您的吗？',
+                    ko: '안녕하세요! 무엇을 도와드릴까요?',
+                    es: '¡Hola! ¿En qué puedo ayudarte hoy?',
+                    fr: 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?',
+                    de: 'Hallo! Wie kann ich Ihnen heute helfen?',
+                    pt: 'Olá! Como posso ajudá-lo hoje?',
+                    it: 'Ciao! Come posso aiutarti oggi?',
+                    ru: 'Здравствуйте! Чем могу помочь?',
+                    ar: 'مرحبا! كيف يمكنني مساعدتك اليوم؟',
+                    th: 'สวัสดีครับ! มีอะไรให้ช่วยไหมครับ?',
+                    vi: 'Xin chào! Tôi có thể giúp gì cho bạn?',
+                };
+                if (welcomeTranslations[browserLang]) {
+                    welcomeMsg = welcomeTranslations[browserLang];
+                }
+            }
+
             this.addMessage('bot', welcomeMsg);
         },
 

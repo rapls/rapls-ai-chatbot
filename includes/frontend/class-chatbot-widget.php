@@ -245,6 +245,7 @@ class WPAIC_Chatbot_Widget {
             'bot_avatar'          => $bot_avatar,
             'bot_avatar_is_image' => $bot_avatar_is_image,
             'welcome_message'     => $settings['welcome_message'] ?? 'Hello! How can I help you today?',
+            'response_language'   => $settings['response_language'] ?? '',
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
             'is_pro'              => (bool) get_option('wpaic_pro_active'),
