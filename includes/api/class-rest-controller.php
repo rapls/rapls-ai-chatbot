@@ -1076,6 +1076,36 @@ class WPAIC_REST_Controller {
                         'session_id'         => $session_id,
                     ];
 
+                    // Build content cards for cache path (same logic as main path)
+                    if (is_array($related_content) && !empty($related_content)) {
+                        $cache_cards = [];
+                        foreach ($related_content as $item) {
+                            if (($item['type'] ?? '') !== 'index') {
+                                continue;
+                            }
+                            $pt = $item['post_type'] ?? '';
+                            if ($pt === 'product' || $pt === 'product_variation') {
+                                continue;
+                            }
+                            $url = $item['url'] ?? '';
+                            if (empty($url)) {
+                                continue;
+                            }
+                            $cache_cards[] = [
+                                'title'   => $item['title'] ?? '',
+                                'url'     => esc_url_raw($url, ['http', 'https']),
+                                'excerpt' => wp_trim_words(wp_strip_all_tags($item['content'] ?? ''), 20, '…'),
+                                'type'    => $pt ?: 'page',
+                            ];
+                            if (count($cache_cards) >= 3) {
+                                break;
+                            }
+                        }
+                        if (!empty($cache_cards)) {
+                            $cache_response_data['content_cards'] = $cache_cards;
+                        }
+                    }
+
                     /** This filter is documented above in the main response path. */
                     $cache_response_data = apply_filters('wpaic_chat_response_data', $cache_response_data, $related_content, $message);
 
@@ -1311,6 +1341,36 @@ class WPAIC_REST_Controller {
                 $response_data['sentiment'] = $sentiment;
             }
 
+            // Build content cards from RAG sources (non-product pages)
+            if (is_array($related_content) && !empty($related_content)) {
+                $content_cards = [];
+                foreach ($related_content as $item) {
+                    if (($item['type'] ?? '') !== 'index') {
+                        continue;
+                    }
+                    $pt = $item['post_type'] ?? '';
+                    if ($pt === 'product' || $pt === 'product_variation') {
+                        continue;
+                    }
+                    $url = $item['url'] ?? '';
+                    if (empty($url)) {
+                        continue;
+                    }
+                    $content_cards[] = [
+                        'title'   => $item['title'] ?? '',
+                        'url'     => esc_url_raw($url, ['http', 'https']),
+                        'excerpt' => wp_trim_words(wp_strip_all_tags($item['content'] ?? ''), 20, '…'),
+                        'type'    => $pt ?: 'page',
+                    ];
+                    if (count($content_cards) >= 3) {
+                        break;
+                    }
+                }
+                if (!empty($content_cards)) {
+                    $response_data['content_cards'] = $content_cards;
+                }
+            }
+
             /**
              * Filter the chat response data before returning to the client.
              * Pro plugins can use this to enrich the response (e.g. product cards).
@@ -1346,6 +1406,10 @@ class WPAIC_REST_Controller {
                 // Include product cards in dedup cache if present
                 if (!empty($response_data['product_cards'])) {
                     $dedup_data_inner['product_cards'] = $response_data['product_cards'];
+                }
+                // Include content cards in dedup cache if present
+                if (!empty($response_data['content_cards'])) {
+                    $dedup_data_inner['content_cards'] = $response_data['content_cards'];
                 }
                 $dedup_data = [
                     'success' => true,
@@ -2735,6 +2799,19 @@ class WPAIC_REST_Controller {
             $company    = sanitize_text_field($request->get_param('company') ?? '');
             $page_url   = esc_url_raw($request->get_param('page_url') ?? '');
 
+            // Collect custom fields if present
+            $raw_custom = $request->get_param('custom_fields');
+            $custom_fields_data = [];
+            if (is_array($raw_custom)) {
+                foreach ($raw_custom as $cf_key => $cf_val) {
+                    $safe_key = sanitize_key($cf_key);
+                    if ($safe_key === '') {
+                        continue;
+                    }
+                    $custom_fields_data[$safe_key] = sanitize_textarea_field($cf_val);
+                }
+            }
+
             // Validate email
             if (empty($email) || !is_email($email)) {
                 return new WP_REST_Response([
@@ -2780,13 +2857,17 @@ class WPAIC_REST_Controller {
             }
 
             // Create lead
-            $lead = WPAIC_Lead::create([
+            $lead_data = [
                 'conversation_id' => $conversation['id'],
                 'name'            => $name,
                 'email'           => $email,
                 'phone'           => $phone,
                 'company'         => $company,
-            ]);
+            ];
+            if (!empty($custom_fields_data)) {
+                $lead_data['custom_fields'] = $custom_fields_data;
+            }
+            $lead = WPAIC_Lead::create($lead_data);
 
             if (!$lead) {
                 return new WP_REST_Response([
@@ -2875,9 +2956,28 @@ class WPAIC_REST_Controller {
                     $fields[$field_name] = [
                         'label'    => $field_config['label'] ?? ucfirst($field_name),
                         'required' => !empty($field_config['required']),
-                        'type'     => $field_name === 'email' ? 'email' : ($field_name === 'phone' ? 'tel' : 'text'),
+                        'type'     => $field_config['type'] ?? ($field_name === 'email' ? 'email' : ($field_name === 'phone' ? 'tel' : 'text')),
                     ];
                 }
+            }
+
+            // Append custom fields
+            $custom_fields = $pro_settings['lead_custom_fields'] ?? [];
+            foreach ($custom_fields as $cf) {
+                $key = $cf['key'] ?? '';
+                if ($key === '') {
+                    continue;
+                }
+                $field_def = [
+                    'label'    => $cf['label'] ?? $key,
+                    'required' => !empty($cf['required']),
+                    'type'     => $cf['type'] ?? 'text',
+                    'custom'   => true,
+                ];
+                if (($cf['type'] ?? '') === 'select' && !empty($cf['options'])) {
+                    $field_def['options'] = array_map('trim', explode(',', $cf['options']));
+                }
+                $fields['custom_' . $key] = $field_def;
             }
 
             return $this->no_cache(new WP_REST_Response([
@@ -3304,6 +3404,36 @@ class WPAIC_REST_Controller {
                 'sources'     => array_values($sources),
                 'session_id'  => $session_id,
             ];
+
+            // Build content cards for regen path
+            if (is_array($related_content) && !empty($related_content)) {
+                $regen_cards = [];
+                foreach ($related_content as $item) {
+                    if (($item['type'] ?? '') !== 'index') {
+                        continue;
+                    }
+                    $pt = $item['post_type'] ?? '';
+                    if ($pt === 'product' || $pt === 'product_variation') {
+                        continue;
+                    }
+                    $url = $item['url'] ?? '';
+                    if (empty($url)) {
+                        continue;
+                    }
+                    $regen_cards[] = [
+                        'title'   => $item['title'] ?? '',
+                        'url'     => esc_url_raw($url, ['http', 'https']),
+                        'excerpt' => wp_trim_words(wp_strip_all_tags($item['content'] ?? ''), 20, '…'),
+                        'type'    => $pt ?: 'page',
+                    ];
+                    if (count($regen_cards) >= 3) {
+                        break;
+                    }
+                }
+                if (!empty($regen_cards)) {
+                    $regen_response_data['content_cards'] = $regen_cards;
+                }
+            }
 
             /** This filter is documented in the main chat response path. */
             $regen_response_data = apply_filters('wpaic_chat_response_data', $regen_response_data, $related_content, $user_message_content);

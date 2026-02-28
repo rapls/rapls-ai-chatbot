@@ -758,7 +758,7 @@
                                 : '';
                             self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                         } else {
-                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action);
+                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards);
                             // Fetch related question suggestions (Pro)
                             self.fetchSuggestions();
                             // Save context for memory (Pro) - async, don't wait
@@ -987,7 +987,7 @@
         /**
          * Add message to UI
          */
-        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData) {
+        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards) {
             var self = this;
             var messageEl = document.createElement('div');
             messageEl.className = 'chatbot-message chatbot-message--' + role;
@@ -1103,6 +1103,47 @@
                 });
 
                 contentEl.appendChild(webSourcesEl);
+            }
+
+            // Content cards (RAG source links)
+            if (contentCards && contentCards.length > 0) {
+                var ccContainer = document.createElement('div');
+                ccContainer.className = 'chatbot-content-cards';
+
+                contentCards.forEach(function(cc) {
+                    var ccUrl = cc.url || '';
+                    try {
+                        var parsed = new URL(ccUrl);
+                        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+                    } catch (e) { return; }
+
+                    var ccLink = document.createElement('a');
+                    ccLink.className = 'chatbot-content-card';
+                    ccLink.href = ccUrl;
+                    ccLink.target = '_blank';
+                    ccLink.rel = 'noopener noreferrer';
+
+                    var ccType = document.createElement('div');
+                    ccType.className = 'chatbot-content-card__type';
+                    ccType.textContent = cc.type || 'page';
+                    ccLink.appendChild(ccType);
+
+                    var ccTitle = document.createElement('div');
+                    ccTitle.className = 'chatbot-content-card__title';
+                    ccTitle.textContent = cc.title || ccUrl;
+                    ccLink.appendChild(ccTitle);
+
+                    if (cc.excerpt) {
+                        var ccExcerpt = document.createElement('div');
+                        ccExcerpt.className = 'chatbot-content-card__excerpt';
+                        ccExcerpt.textContent = cc.excerpt;
+                        ccLink.appendChild(ccExcerpt);
+                    }
+
+                    ccContainer.appendChild(ccLink);
+                });
+
+                contentEl.appendChild(ccContainer);
             }
 
             // Product cards (Pro WooCommerce feature)
@@ -1373,6 +1414,40 @@
                             webSourcesEl.appendChild(linkEl);
                         });
                         contentEl.appendChild(webSourcesEl);
+                    }
+
+                    // Re-add content cards if any (RAG source links)
+                    if (data.data.content_cards && data.data.content_cards.length > 0) {
+                        var regenCcContainer = document.createElement('div');
+                        regenCcContainer.className = 'chatbot-content-cards';
+                        data.data.content_cards.forEach(function(cc) {
+                            var ccUrl = cc.url || '';
+                            try {
+                                var parsed = new URL(ccUrl);
+                                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
+                            } catch (e) { return; }
+                            var ccLink = document.createElement('a');
+                            ccLink.className = 'chatbot-content-card';
+                            ccLink.href = ccUrl;
+                            ccLink.target = '_blank';
+                            ccLink.rel = 'noopener noreferrer';
+                            var ccType = document.createElement('div');
+                            ccType.className = 'chatbot-content-card__type';
+                            ccType.textContent = cc.type || 'page';
+                            ccLink.appendChild(ccType);
+                            var ccTitle = document.createElement('div');
+                            ccTitle.className = 'chatbot-content-card__title';
+                            ccTitle.textContent = cc.title || ccUrl;
+                            ccLink.appendChild(ccTitle);
+                            if (cc.excerpt) {
+                                var ccExcerpt = document.createElement('div');
+                                ccExcerpt.className = 'chatbot-content-card__excerpt';
+                                ccExcerpt.textContent = cc.excerpt;
+                                ccLink.appendChild(ccExcerpt);
+                            }
+                            regenCcContainer.appendChild(ccLink);
+                        });
+                        contentEl.appendChild(regenCcContainer);
                     }
 
                     // Re-add product cards if any (Pro WooCommerce)
@@ -1981,10 +2056,21 @@
 
             // フィールドを設定
             var fields = config.fields || {};
+            var formEl = this.leadForm;
+            var buttonsEl = formEl ? formEl.querySelector('.lead-form-buttons') : null;
+
+            // Remove previously injected custom fields (re-show safety)
+            var oldCustom = formEl ? formEl.querySelectorAll('.lead-field-custom') : [];
+            for (var oc = 0; oc < oldCustom.length; oc++) {
+                oldCustom[oc].parentNode.removeChild(oldCustom[oc]);
+            }
+
             for (var fieldName in fields) {
                 var fieldConfig = fields[fieldName];
                 var fieldEl = this.leadFormEl.querySelector('.lead-field-' + fieldName);
+
                 if (fieldEl) {
+                    // Built-in field (name, email, phone, company)
                     fieldEl.hidden = false;
                     var label = fieldEl.querySelector('label');
                     var input = fieldEl.querySelector('input');
@@ -2002,6 +2088,53 @@
                     if (input) {
                         input.required = fieldConfig.required;
                     }
+                } else if (fieldConfig.custom && formEl && buttonsEl) {
+                    // Dynamic custom field
+                    var cfDiv = document.createElement('div');
+                    cfDiv.className = 'lead-field lead-field-custom';
+
+                    var cfLabel = document.createElement('label');
+                    cfLabel.setAttribute('for', 'lead-cf-' + fieldName);
+                    cfLabel.textContent = fieldConfig.label || fieldName;
+                    if (fieldConfig.required) {
+                        var cfReq = document.createElement('span');
+                        cfReq.className = 'required';
+                        cfReq.textContent = '*';
+                        cfLabel.appendChild(document.createTextNode(' '));
+                        cfLabel.appendChild(cfReq);
+                    }
+                    cfDiv.appendChild(cfLabel);
+
+                    var cfInput;
+                    if (fieldConfig.type === 'textarea') {
+                        cfInput = document.createElement('textarea');
+                        cfInput.rows = 3;
+                    } else if (fieldConfig.type === 'select') {
+                        cfInput = document.createElement('select');
+                        var defaultOpt = document.createElement('option');
+                        defaultOpt.value = '';
+                        defaultOpt.textContent = '— ' + (fieldConfig.label || fieldName) + ' —';
+                        cfInput.appendChild(defaultOpt);
+                        if (fieldConfig.options && fieldConfig.options.length) {
+                            fieldConfig.options.forEach(function(opt) {
+                                var optEl = document.createElement('option');
+                                optEl.value = opt;
+                                optEl.textContent = opt;
+                                cfInput.appendChild(optEl);
+                            });
+                        }
+                    } else {
+                        cfInput = document.createElement('input');
+                        cfInput.type = fieldConfig.type || 'text';
+                    }
+                    cfInput.id = 'lead-cf-' + fieldName;
+                    cfInput.name = fieldName;
+                    if (fieldConfig.required) {
+                        cfInput.required = true;
+                    }
+                    cfDiv.appendChild(cfInput);
+
+                    formEl.insertBefore(cfDiv, buttonsEl);
                 }
             }
 
@@ -2083,9 +2216,22 @@
             if (phoneInput) formData.phone = phoneInput.value.trim();
             if (companyInput) formData.company = companyInput.value.trim();
 
+            // Collect custom field values
+            var customFields = {};
+            var cfEls = this.leadForm.querySelectorAll('.lead-field-custom');
+            for (var ci = 0; ci < cfEls.length; ci++) {
+                var cfInputEl = cfEls[ci].querySelector('input, textarea, select');
+                if (cfInputEl && cfInputEl.name) {
+                    customFields[cfInputEl.name] = (cfInputEl.value || '').trim();
+                }
+            }
+            if (Object.keys(customFields).length > 0) {
+                formData.custom_fields = customFields;
+            }
+
             // バリデーション
             var hasError = false;
-            this.leadForm.querySelectorAll('input[required]').forEach(function(input) {
+            this.leadForm.querySelectorAll('input[required], textarea[required], select[required]').forEach(function(input) {
                 if (!input.value.trim()) {
                     input.classList.add('error');
                     hasError = true;

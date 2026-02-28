@@ -370,20 +370,45 @@
     text-decoration: underline;
 }
 
+/* カルーセル共通 (Shared carousel for product cards & content cards) */
+.chatbot-card-carousel {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--wpaic-border);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.chatbot-card-carousel::-webkit-scrollbar {
+    display: none;
+}
+
 /* 商品カード (WooCommerce Product Cards) */
 .chatbot-product-cards {
     display: flex;
-    flex-direction: column;
     gap: 8px;
     margin-top: 10px;
-    padding-top: 8px;
+    padding: 8px 0 4px;
     border-top: 1px solid var(--wpaic-border);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.chatbot-product-cards::-webkit-scrollbar {
+    display: none;
 }
 
 .chatbot-product-card {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    min-width: 160px;
+    max-width: 180px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
     padding: 8px;
     border: 1px solid var(--wpaic-border);
     border-radius: 8px;
@@ -399,16 +424,15 @@
 }
 
 .chatbot-product-card__image {
-    width: 48px;
-    height: 48px;
+    width: 100%;
+    height: 100px;
     object-fit: cover;
     border-radius: 6px;
-    flex-shrink: 0;
+    margin-bottom: 6px;
 }
 
 .chatbot-product-card__info {
     min-width: 0;
-    flex: 1;
 }
 
 .chatbot-product-card__name {
@@ -432,6 +456,75 @@
     font-size: 11px;
     color: #b32d2e;
     margin-top: 2px;
+}
+
+/* コンテンツカード (Generic content/link cards from RAG) */
+.chatbot-content-cards {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--wpaic-border);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.chatbot-content-cards::-webkit-scrollbar {
+    display: none;
+}
+
+.chatbot-content-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+    max-width: 220px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 10px;
+    border: 1px solid var(--wpaic-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.chatbot-content-card:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    text-decoration: none;
+}
+
+.chatbot-content-card__type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--wpaic-primary, #4a90d9);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.chatbot-content-card__title {
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.chatbot-content-card__excerpt {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
 }
 
 /* アクションボタン (Intent Recognition Actions) */
@@ -1217,7 +1310,9 @@
     margin-left: 2px;
 }
 
-.lead-field input {
+.lead-field input,
+.lead-field textarea,
+.lead-field select {
     width: 100%;
     padding: 10px 12px;
     font-size: 14px;
@@ -1226,15 +1321,26 @@
     background: var(--wpaic-bg);
     color: var(--wpaic-text);
     transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    box-sizing: border-box;
 }
 
-.lead-field input:focus {
+.lead-field textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.lead-field input:focus,
+.lead-field textarea:focus,
+.lead-field select:focus {
     outline: none;
     border-color: var(--wpaic-primary);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.lead-field input.error {
+.lead-field input.error,
+.lead-field textarea.error,
+.lead-field select.error {
     border-color: #dc3545;
 }
 
@@ -1311,13 +1417,17 @@
     color: #e0e0e0;
 }
 
-.wpaic-chatbot.dark-mode .lead-field input {
+.wpaic-chatbot.dark-mode .lead-field input,
+.wpaic-chatbot.dark-mode .lead-field textarea,
+.wpaic-chatbot.dark-mode .lead-field select {
     background: #2d2d2d;
     border-color: #444;
     color: #fff;
 }
 
-.wpaic-chatbot.dark-mode .lead-field input:focus {
+.wpaic-chatbot.dark-mode .lead-field input:focus,
+.wpaic-chatbot.dark-mode .lead-field textarea:focus,
+.wpaic-chatbot.dark-mode .lead-field select:focus {
     border-color: var(--wpaic-primary);
 }
 

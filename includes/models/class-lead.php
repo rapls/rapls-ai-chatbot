@@ -369,8 +369,20 @@ class WPAIC_Lead {
     public static function format_for_csv(array $leads): array {
         $rows = [];
 
+        // Collect all custom field keys across leads
+        $cf_keys = [];
+        foreach ($leads as $lead) {
+            if (!empty($lead['custom_fields']) && is_array($lead['custom_fields'])) {
+                foreach (array_keys($lead['custom_fields']) as $k) {
+                    if (!in_array($k, $cf_keys, true)) {
+                        $cf_keys[] = $k;
+                    }
+                }
+            }
+        }
+
         // Header row
-        $rows[] = [
+        $header = [
             __('ID', 'rapls-ai-chatbot'),
             __('Name', 'rapls-ai-chatbot'),
             __('Email', 'rapls-ai-chatbot'),
@@ -379,9 +391,13 @@ class WPAIC_Lead {
             __('Conversation ID', 'rapls-ai-chatbot'),
             __('Created At', 'rapls-ai-chatbot'),
         ];
+        foreach ($cf_keys as $cfk) {
+            $header[] = self::csv_safe_cell($cfk);
+        }
+        $rows[] = $header;
 
         foreach ($leads as $lead) {
-            $rows[] = [
+            $row = [
                 $lead['id'],
                 self::csv_safe_cell($lead['name']),
                 self::csv_safe_cell($lead['email']),
@@ -390,6 +406,11 @@ class WPAIC_Lead {
                 $lead['conversation_id'],
                 $lead['created_at'],
             ];
+            $cf_data = (!empty($lead['custom_fields']) && is_array($lead['custom_fields'])) ? $lead['custom_fields'] : [];
+            foreach ($cf_keys as $cfk) {
+                $row[] = self::csv_safe_cell($cf_data[$cfk] ?? '');
+            }
+            $rows[] = $row;
         }
 
         return $rows;
