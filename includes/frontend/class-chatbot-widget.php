@@ -256,6 +256,8 @@ class WPAIC_Chatbot_Widget {
             'autocomplete'        => $autocomplete,
             'multimodal_enabled'  => $multimodal_enabled,
             'multimodal_max_size' => $multimodal_max_size,
+            'voice_input_enabled' => !empty($pro_features['voice_input_enabled']),
+            'tts_enabled'         => !empty($pro_features['tts_enabled']),
             'conversion_tracking'  => !empty($pro_features['conversion_tracking_enabled']),
             'conversion_goals'     => !empty($pro_features['conversion_tracking_enabled']) ? ($pro_features['conversion_goals'] ?? []) : [],
             'offline_message'      => $this->get_offline_config($pro_features),

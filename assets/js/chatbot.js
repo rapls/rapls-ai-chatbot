@@ -116,6 +116,7 @@
             this.loadWindowSize();
             this.setupAutocomplete();
             this.setupImageUpload();
+            this.setupVoiceInput();
             this.bindLeadFormEvents();
             this.initOfflineForm();
             this.initConversionTracking();
@@ -1278,6 +1279,11 @@
 
             this.messagesEl.appendChild(messageEl);
 
+            // TTS: speak bot responses
+            if (role === 'bot' && content && this.ttsEnabled && this.ttsActive) {
+                this.speakText(content);
+            }
+
             // スクロール
             this.scrollToBottom();
 
@@ -2329,6 +2335,128 @@
         /**
          * メールバリデーション
          */
+        /**
+         * Setup voice input (STT) and text-to-speech (TTS)
+         */
+        setupVoiceInput: function() {
+            var self = this;
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            // Voice input (STT)
+            this.micBtn = this.container.querySelector('.chatbot-mic-btn');
+            this.recognition = null;
+            this.isRecording = false;
+
+            if (SpeechRecognition && this.micBtn && this.config.voice_input_enabled) {
+                this.micBtn.hidden = false;
+
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false;
+                this.recognition.interimResults = true;
+                this.recognition.lang = this.config.tts_lang || document.documentElement.lang || 'ja';
+
+                this.recognition.onresult = function(event) {
+                    var transcript = '';
+                    for (var i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    if (self.inputTextarea) {
+                        self.inputTextarea.value = transcript;
+                        self.autoResize();
+                    }
+                };
+
+                this.recognition.onend = function() {
+                    self.stopRecording();
+                    // Auto-send if we got text
+                    if (self.inputTextarea && self.inputTextarea.value.trim()) {
+                        self.inputForm.dispatchEvent(new Event('submit', { cancelable: true }));
+                    }
+                };
+
+                this.recognition.onerror = function(event) {
+                    self.stopRecording();
+                    if (event.error !== 'aborted' && event.error !== 'no-speech') {
+                        if (self.config.debug) {
+                            console.warn('WPAIC Voice: SpeechRecognition error:', event.error);
+                        }
+                    }
+                };
+
+                this.micBtn.addEventListener('click', function() {
+                    if (self.isRecording) {
+                        self.recognition.stop();
+                    } else {
+                        self.startRecording();
+                    }
+                });
+            }
+
+            // TTS toggle
+            this.ttsEnabled = this.config.tts_enabled && ('speechSynthesis' in window);
+            this.ttsActive = false;
+            this.ttsToggle = this.container.querySelector('.chatbot-tts-toggle');
+            if (this.ttsEnabled && this.ttsToggle) {
+                this.ttsToggle.hidden = false;
+                this.ttsToggle.addEventListener('click', function() {
+                    self.ttsActive = !self.ttsActive;
+                    self.ttsToggle.classList.toggle('active', self.ttsActive);
+                    if (!self.ttsActive) {
+                        window.speechSynthesis.cancel();
+                    }
+                });
+            }
+        },
+
+        startRecording: function() {
+            if (!this.recognition) return;
+            try {
+                this.isRecording = true;
+                this.micBtn.classList.add('recording');
+                this.micBtn.querySelector('.chatbot-mic-icon').style.display = 'none';
+                this.micBtn.querySelector('.chatbot-mic-stop-icon').style.display = '';
+                if (this.inputTextarea) {
+                    this.inputTextarea.value = '';
+                    this.inputTextarea.placeholder = (this.config.strings && this.config.strings.listening) || 'Listening...';
+                }
+                this.recognition.start();
+            } catch (e) {
+                this.stopRecording();
+            }
+        },
+
+        stopRecording: function() {
+            this.isRecording = false;
+            if (this.micBtn) {
+                this.micBtn.classList.remove('recording');
+                var micIcon = this.micBtn.querySelector('.chatbot-mic-icon');
+                var stopIcon = this.micBtn.querySelector('.chatbot-mic-stop-icon');
+                if (micIcon) micIcon.style.display = '';
+                if (stopIcon) stopIcon.style.display = 'none';
+            }
+            if (this.inputTextarea) {
+                this.inputTextarea.placeholder = (this.config.strings && this.config.strings.placeholder) || 'メッセージを入力...';
+            }
+        },
+
+        /**
+         * Speak text using browser TTS
+         */
+        speakText: function(text) {
+            if (!this.ttsEnabled || !this.ttsActive) return;
+            // Strip markdown/HTML for cleaner speech
+            var clean = text.replace(/[#*_`~\[\]()>|\\-]/g, '').replace(/<[^>]*>/g, '').trim();
+            if (!clean) return;
+            // Limit to first 500 chars to avoid long speeches
+            if (clean.length > 500) {
+                clean = clean.substring(0, 500);
+            }
+            var utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = this.config.tts_lang || document.documentElement.lang || 'ja';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        },
+
         /**
          * Initialize offline message form if outside business hours
          */

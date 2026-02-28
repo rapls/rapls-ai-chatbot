@@ -44,6 +44,11 @@ if (!defined('ABSPATH')) {
                     <span class="bot-status">オンライン</span>
                 </div>
             </div>
+            <button class="chatbot-tts-toggle" aria-label="<?php esc_attr_e('Text-to-speech', 'rapls-ai-chatbot'); ?>" hidden>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
             <button class="chatbot-close" aria-label="閉じる">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -110,6 +115,15 @@ if (!defined('ABSPATH')) {
             <button type="button" class="chatbot-image-btn" aria-label="画像をアップロード" hidden>
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+            </button>
+            <button type="button" class="chatbot-mic-btn" aria-label="<?php esc_attr_e('Voice input', 'rapls-ai-chatbot'); ?>" hidden>
+                <svg class="chatbot-mic-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                </svg>
+                <svg class="chatbot-mic-stop-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+                    <rect x="6" y="6" width="12" height="12" rx="2"/>
                 </svg>
             </button>
             <textarea

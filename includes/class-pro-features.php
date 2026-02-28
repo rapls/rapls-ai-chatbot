@@ -333,6 +333,11 @@ class WPAIC_Pro_Features {
             'embedding_enabled'  => false,
             'embedding_provider' => 'auto',  // 'auto' | 'openai' | 'gemini'
 
+            // Voice Input / TTS
+            'voice_input_enabled' => false,
+            'tts_enabled' => false,
+            'tts_lang' => '',
+
             // Actions / Intent Recognition
             'actions_enabled' => false,
             'actions' => [],
