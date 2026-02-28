@@ -346,6 +346,10 @@ class WPAIC_Pro_Features {
             // AI Content Generation (Editor Sidebar)
             'ai_content_enabled' => false,
 
+            // AI Forms
+            'ai_forms_enabled' => false,
+            'ai_forms' => [],
+
             // Actions / Intent Recognition
             'actions_enabled' => false,
             'actions' => [],
