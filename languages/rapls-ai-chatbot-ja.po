@@ -6714,3 +6714,7 @@ msgstr "自動検出（ユーザーの言語に合わせる）"
 msgid "Choose the language for AI responses. \"Auto-detect\" will respond in the same language as the user's message."
 msgstr "AI の応答言語を選択します。「自動検出」を選ぶと、ユーザーのメッセージと同じ言語で応答します。"
 
+#: includes/mcp/class-abilities-bridge.php
+msgid "AI chatbot abilities powered by Rapls AI Chatbot."
+msgstr "Rapls AI Chatbot の AI チャットボット機能。"
+

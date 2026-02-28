@@ -79,6 +79,7 @@ class WPAIC_Abilities_Bridge {
             'list-conversations',
             'get-conversation',
             'get-analytics',
+            'search-products',
         ];
 
         foreach ($tools as $schema) {

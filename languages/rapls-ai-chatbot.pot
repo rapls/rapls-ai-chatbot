@@ -343,3 +343,7 @@ msgstr ""
 #: includes/api/class-rest-controller.php
 msgid "License expired. Please activate a valid license to use this feature."
 msgstr ""
+
+#: includes/mcp/class-abilities-bridge.php
+msgid "AI chatbot abilities powered by Rapls AI Chatbot."
+msgstr ""
