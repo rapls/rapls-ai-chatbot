@@ -33,6 +33,10 @@ class WPAIC_MCP_Server {
     public function __construct() {
         $this->registry = new WPAIC_MCP_Tool_Registry();
         $this->register_default_tools();
+
+        // Bridge MCP tools to WordPress Abilities API (WP 6.9+)
+        require_once __DIR__ . '/class-abilities-bridge.php';
+        (new WPAIC_Abilities_Bridge($this->registry))->init();
     }
 
     /**

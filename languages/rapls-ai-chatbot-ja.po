@@ -6658,3 +6658,43 @@ msgstr ""
 "この機能には reCAPTCHA が必要です。設定で reCAPTCHA を有効化して設定するまで、"
 "訪問者には「フォームを利用できません」と表示されます。"
 
+#: includes/block/block.json
+msgid "Embed an AI chatbot inline on your page."
+msgstr "ページにAI チャットボットをインラインで埋め込みます。"
+
+#: includes/block/editor.js
+msgid "Chatbot Settings"
+msgstr "チャットボット設定"
+
+#: includes/block/editor.js
+msgid "Height"
+msgstr "高さ"
+
+#: includes/block/editor.js
+msgid "e.g., 500px, 80vh"
+msgstr "例: 500px, 80vh"
+
+#: includes/block/editor.js
+msgid "Theme"
+msgstr "テーマ"
+
+#: includes/block/editor.js
+msgid "Leave empty to use the default theme."
+msgstr "空にするとデフォルトテーマが使われます。"
+
+#: includes/block/editor.js
+msgid "Bot ID"
+msgstr "ボット ID"
+
+#: includes/block/editor.js
+msgid "Leave empty to use the default bot."
+msgstr "空にするとデフォルトボットが使われます。"
+
+#: includes/block/editor.js
+msgid "Height:"
+msgstr "高さ:"
+
+#: includes/block/editor.js
+msgid "The chatbot will appear here on the frontend."
+msgstr "フロントエンドにチャットボットが表示されます。"
+

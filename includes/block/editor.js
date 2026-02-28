@@ -4,7 +4,6 @@
     var InspectorControls = blockEditor.InspectorControls;
     var PanelBody = components.PanelBody;
     var TextControl = components.TextControl;
-    var SelectControl = components.SelectControl;
     var __ = i18n.__;
 
     blocks.registerBlockType( 'rapls-ai-chatbot/chatbot', {

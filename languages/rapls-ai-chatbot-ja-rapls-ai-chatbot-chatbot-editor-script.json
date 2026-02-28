@@ -1,0 +1,21 @@
+{
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "rapls-ai-chatbot",
+                "lang": "ja",
+                "plural-forms": "nplurals=1; plural=0;"
+            },
+            "Chatbot Settings": [ "チャットボット設定" ],
+            "Height": [ "高さ" ],
+            "e.g., 500px, 80vh": [ "例: 500px, 80vh" ],
+            "Theme": [ "テーマ" ],
+            "Leave empty to use the default theme.": [ "空にするとデフォルトテーマが使われます。" ],
+            "Bot ID": [ "ボット ID" ],
+            "Leave empty to use the default bot.": [ "空にするとデフォルトボットが使われます。" ],
+            "Height:": [ "高さ:" ],
+            "The chatbot will appear here on the frontend.": [ "フロントエンドにチャットボットが表示されます。" ],
+            "Embed an AI chatbot inline on your page.": [ "ページにAI チャットボットをインラインで埋め込みます。" ]
+        }
+    }
+}

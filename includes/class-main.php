@@ -224,6 +224,11 @@ class WPAIC_Main {
         // Gutenberg block (server-side rendered, wraps the shortcode)
         add_action('init', function () {
             register_block_type(WPAIC_PLUGIN_DIR . 'includes/block');
+            wp_set_script_translations(
+                'rapls-ai-chatbot-chatbot-editor-script',
+                'rapls-ai-chatbot',
+                WPAIC_PLUGIN_DIR . 'languages'
+            );
         });
 
         // Cross-site embed endpoint: ?wpaic_embed=1
