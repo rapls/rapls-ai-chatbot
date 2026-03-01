@@ -553,6 +553,49 @@ if (!defined('ABSPATH')) {
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
+
+                            <?php
+                            $welcome_messages = $settings['welcome_messages'] ?? [];
+                            $welcome_langs = [
+                                'en' => ['English', 'Hello! How can I help you today?'],
+                                'ja' => ['日本語', 'こんにちは！何かお手伝いできることはありますか？'],
+                                'zh' => ['中文', '您好！有什么可以帮助您的吗？'],
+                                'ko' => ['한국어', '안녕하세요! 무엇을 도와드릴까요?'],
+                                'es' => ['Español', '¡Hola! ¿En qué puedo ayudarte hoy?'],
+                                'fr' => ['Français', 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?'],
+                                'de' => ['Deutsch', 'Hallo! Wie kann ich Ihnen heute helfen?'],
+                                'pt' => ['Português', 'Olá! Como posso ajudá-lo hoje?'],
+                                'it' => ['Italiano', 'Ciao! Come posso aiutarti oggi?'],
+                                'ru' => ['Русский', 'Здравствуйте! Чем могу помочь?'],
+                                'ar' => ['العربية', 'مرحبا! كيف يمكنني مساعدتك اليوم؟'],
+                                'th' => ['ไทย', 'สวัสดีครับ! มีอะไรให้ช่วยไหมครับ?'],
+                                'vi' => ['Tiếng Việt', 'Xin chào! Tôi có thể giúp gì cho bạn?'],
+                            ];
+                            ?>
+                            <div id="wpaic-per-language-welcome" style="display: <?php echo ($settings['response_language'] ?? '') === 'auto' ? 'block' : 'none'; ?>; margin-top: 12px;">
+                                <details>
+                                    <summary style="cursor: pointer; font-weight: 600; margin-bottom: 8px;">
+                                        <?php esc_html_e('Per-Language Welcome Messages', 'rapls-ai-chatbot'); ?>
+                                    </summary>
+                                    <p class="description" style="margin-bottom: 10px;">
+                                        <?php esc_html_e('Customize the welcome message for each language. Leave blank to use the default.', 'rapls-ai-chatbot'); ?>
+                                    </p>
+                                    <?php foreach ($welcome_langs as $lang_code => $lang_info) : ?>
+                                        <div style="margin-bottom: 8px;">
+                                            <label for="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>">
+                                                <strong><?php echo esc_html($lang_info[0]); ?></strong> (<?php echo esc_html($lang_code); ?>)
+                                            </label>
+                                            <textarea
+                                                name="wpaic_settings[welcome_messages][<?php echo esc_attr($lang_code); ?>]"
+                                                id="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>"
+                                                rows="2"
+                                                class="large-text"
+                                                placeholder="<?php echo esc_attr($lang_info[1]); ?>"
+                                            ><?php echo esc_textarea($welcome_messages[$lang_code] ?? ''); ?></textarea>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </details>
+                            </div>
                         </td>
                     </tr>
                     <tr>

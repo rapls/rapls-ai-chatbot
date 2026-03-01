@@ -749,4 +749,9 @@
         }
     });
 
+    // Per-language welcome messages: show/hide based on response_language
+    $('#wpaic_response_language').on('change', function() {
+        $('#wpaic-per-language-welcome').toggle($(this).val() === 'auto');
+    });
+
 })(jQuery);

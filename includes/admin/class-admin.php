@@ -366,6 +366,19 @@ class WPAIC_Admin {
             $sanitized['bot_avatar'] = sanitize_text_field($avatar_input);
         }
         $sanitized['welcome_message'] = sanitize_textarea_field($input['welcome_message'] ?? ($existing['welcome_message'] ?? ''));
+
+        // Per-language welcome messages
+        $allowed_welcome_langs = ['en', 'ja', 'zh', 'ko', 'es', 'fr', 'de', 'pt', 'it', 'ru', 'ar', 'th', 'vi'];
+        $sanitized['welcome_messages'] = [];
+        $input_welcome = $input['welcome_messages'] ?? ($existing['welcome_messages'] ?? []);
+        if (is_array($input_welcome)) {
+            foreach ($input_welcome as $lang => $msg) {
+                if (in_array($lang, $allowed_welcome_langs, true)) {
+                    $sanitized['welcome_messages'][$lang] = sanitize_textarea_field($msg);
+                }
+            }
+        }
+
         $sanitized['system_prompt'] = sanitize_textarea_field($input['system_prompt'] ?? ($existing['system_prompt'] ?? ''));
         $valid_langs = ['', 'auto', 'en', 'ja', 'zh', 'ko', 'es', 'fr', 'de', 'pt'];
         $raw_lang = $input['response_language'] ?? ($existing['response_language'] ?? '');

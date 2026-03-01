@@ -6837,3 +6837,11 @@ msgstr "AI の応答言語を選択します。「自動検出」を選ぶと、
 msgid "AI chatbot abilities powered by Rapls AI Chatbot."
 msgstr "Rapls AI Chatbot の AI チャットボット機能。"
 
+#: templates/admin/settings.php
+msgid "Per-Language Welcome Messages"
+msgstr "言語別ウェルカムメッセージ"
+
+#: templates/admin/settings.php
+msgid "Customize the welcome message for each language. Leave blank to use the default."
+msgstr "各言語のウェルカムメッセージをカスタマイズできます。空欄の場合はデフォルトが使用されます。"
+

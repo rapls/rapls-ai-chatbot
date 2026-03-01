@@ -347,3 +347,11 @@ msgstr ""
 #: includes/mcp/class-abilities-bridge.php
 msgid "AI chatbot abilities powered by Rapls AI Chatbot."
 msgstr ""
+
+#: templates/admin/settings.php
+msgid "Per-Language Welcome Messages"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Customize the welcome message for each language. Leave blank to use the default."
+msgstr ""

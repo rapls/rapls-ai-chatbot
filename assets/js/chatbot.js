@@ -586,10 +586,10 @@
         showWelcomeMessage: function() {
             var welcomeMsg = this.config.welcome_message || 'Hello! How can I help you today?';
 
-            // Auto-detect: translate welcome message to browser language
+            // Auto-detect: use per-language welcome message for browser language
             if (this.config.response_language === 'auto') {
                 var browserLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
-                var welcomeTranslations = {
+                var defaultTranslations = {
                     en: 'Hello! How can I help you today?',
                     ja: 'こんにちは！何かお手伝いできることはありますか？',
                     zh: '您好！有什么可以帮助您的吗？',
@@ -604,8 +604,12 @@
                     th: 'สวัสดีครับ! มีอะไรให้ช่วยไหมครับ?',
                     vi: 'Xin chào! Tôi có thể giúp gì cho bạn?',
                 };
-                if (welcomeTranslations[browserLang]) {
-                    welcomeMsg = welcomeTranslations[browserLang];
+                var adminMessages = this.config.welcome_messages || {};
+                // Admin-customized message takes priority, then default translation
+                if (adminMessages[browserLang]) {
+                    welcomeMsg = adminMessages[browserLang];
+                } else if (defaultTranslations[browserLang]) {
+                    welcomeMsg = defaultTranslations[browserLang];
                 }
             }
 
