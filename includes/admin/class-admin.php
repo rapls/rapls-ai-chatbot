@@ -2948,8 +2948,11 @@ class WPAIC_Admin {
                 <h3><?php esc_html_e('Pro Features Include:', 'rapls-ai-chatbot'); ?></h3>
                 <ul>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Scheduled automatic crawling', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Differential crawl (changed pages only)', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Enhanced HTML content extraction', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Custom post type support', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('WooCommerce product data crawl', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Knowledge versioning & expiration', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Reference count control', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Post type statistics', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Crawl progress tracking', 'rapls-ai-chatbot'); ?></li>
@@ -3113,7 +3116,9 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation statistics', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('AI conversation summary', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Feedback tracking on messages', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation detail view', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation tags & search', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation sharing & bookmarks', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Human handoff history', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Bulk operations', 'rapls-ai-chatbot'); ?></li>
                 </ul>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
@@ -3390,6 +3395,10 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Negative feedback review & improvement', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('PDF report download', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Period comparison analytics', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('AI Quality Score', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Churn & bounce analysis', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Monthly email reports', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversion tracking analytics', 'rapls-ai-chatbot'); ?></li>
                 </ul>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
                     <div style="background: #f0f6fc; border-radius: 6px; padding: 12px; text-align: center;">
@@ -3520,9 +3529,11 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Lead capture form customization', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('CSV/JSON export', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Email notifications for new leads', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Webhook notifications', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Custom fields support', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Lead-conversation linking', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Lead status management', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Survey integration', 'rapls-ai-chatbot'); ?></li>
                 </ul>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
                     <p style="margin: 0 0 8px; color: #1d2327; font-weight: 600;">
@@ -3648,6 +3659,8 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Date range search', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Configurable retention policy', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('User activity tracking', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Settings change tracking', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Approval workflow', 'rapls-ai-chatbot'); ?></li>
                 </ul>
             </div>
         </div><!-- .wrap -->
@@ -3695,6 +3708,10 @@ class WPAIC_Admin {
                                 <span class="dashicons dashicons-admin-settings"></span>
                                 <?php esc_html_e('Operations', 'rapls-ai-chatbot'); ?>
                             </a>
+                            <a href="#" class="wpaic-tab-group" data-group="integrations">
+                                <span class="dashicons dashicons-networking"></span>
+                                <?php esc_html_e('Integrations', 'rapls-ai-chatbot'); ?>
+                            </a>
                             <a href="#" class="wpaic-tab-group" data-group="management">
                                 <span class="dashicons dashicons-chart-bar"></span>
                                 <?php esc_html_e('Management', 'rapls-ai-chatbot'); ?>
@@ -3705,6 +3722,7 @@ class WPAIC_Admin {
                             <a href="#tab-lead" class="wpaic-sub-tab wpaic-sub-tab-active" data-tab="tab-lead"><?php esc_html_e('Lead Capture', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-offline" class="wpaic-sub-tab" data-tab="tab-offline"><?php esc_html_e('Offline', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-conversion" class="wpaic-sub-tab" data-tab="tab-conversion"><?php esc_html_e('Conversion', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-ui" class="wpaic-sub-tab" data-tab="tab-ui"><?php esc_html_e('UI', 'rapls-ai-chatbot'); ?></a>
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="ai" style="display:none;">
                             <a href="#tab-ai" class="wpaic-sub-tab" data-tab="tab-ai"><?php esc_html_e('AI Enhancement', 'rapls-ai-chatbot'); ?></a>
@@ -3713,13 +3731,30 @@ class WPAIC_Admin {
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="operations" style="display:none;">
                             <a href="#tab-business" class="wpaic-sub-tab" data-tab="tab-business"><?php esc_html_e('Business Hours', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-webhook" class="wpaic-sub-tab" data-tab="tab-webhook"><?php esc_html_e('Webhook', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-handoff" class="wpaic-sub-tab" data-tab="tab-handoff"><?php esc_html_e('Handoff', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-ai-forms" class="wpaic-sub-tab" data-tab="tab-ai-forms"><?php esc_html_e('AI Forms', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-badge" class="wpaic-sub-tab" data-tab="tab-badge"><?php esc_html_e('Badge Icon', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-actions" class="wpaic-sub-tab" data-tab="tab-actions"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-scenarios" class="wpaic-sub-tab" data-tab="tab-scenarios"><?php esc_html_e('Scenarios', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-chatbots" class="wpaic-sub-tab" data-tab="tab-chatbots"><?php esc_html_e('Chatbots', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-screen-sharing" class="wpaic-sub-tab" data-tab="tab-screen-sharing"><?php esc_html_e('Screen Sharing', 'rapls-ai-chatbot'); ?></a>
+                        </nav>
+                        <nav class="wpaic-sub-tabs" data-for="integrations" style="display:none;">
+                            <a href="#tab-webhook" class="wpaic-sub-tab" data-tab="tab-webhook"><?php esc_html_e('Webhook', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-line" class="wpaic-sub-tab" data-tab="tab-line"><?php esc_html_e('LINE', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-integrations" class="wpaic-sub-tab" data-tab="tab-integrations"><?php esc_html_e('Integrations', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-booking" class="wpaic-sub-tab" data-tab="tab-booking"><?php esc_html_e('Booking', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-cache" class="wpaic-sub-tab" data-tab="tab-cache"><?php esc_html_e('Cache', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-queue" class="wpaic-sub-tab" data-tab="tab-queue"><?php esc_html_e('Queue', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-security" class="wpaic-sub-tab" data-tab="tab-security"><?php esc_html_e('Security', 'rapls-ai-chatbot'); ?></a>
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="management" style="display:none;">
                             <a href="#tab-budget" class="wpaic-sub-tab" data-tab="tab-budget"><?php esc_html_e('Usage & Budget', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-role-access" class="wpaic-sub-tab" data-tab="tab-role-access"><?php esc_html_e('Role Access', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-maintenance" class="wpaic-sub-tab" data-tab="tab-maintenance"><?php esc_html_e('Backup', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-history" class="wpaic-sub-tab" data-tab="tab-history"><?php esc_html_e('Change History', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-encryption" class="wpaic-sub-tab" data-tab="tab-encryption"><?php esc_html_e('Encryption', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-security-scan" class="wpaic-sub-tab" data-tab="tab-security-scan"><?php esc_html_e('Security Scan', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-license" class="wpaic-sub-tab" data-tab="tab-license"><?php esc_html_e('License', 'rapls-ai-chatbot'); ?></a>
                         </nav>
 
@@ -4396,25 +4431,42 @@ class WPAIC_Admin {
             <!-- Pro Features List -->
             <div class="wpaic-pro-features-list">
                 <h3><?php esc_html_e('Pro Features Include:', 'rapls-ai-chatbot'); ?></h3>
-                <ul>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Lead Capture Forms', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Business Hours & Holidays', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Content Filters (Banned Words, IP Blocking, Rate Limiting)', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Webhook Integration', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('AI Enhancement (Related Suggestions, Autocomplete, Sentiment Analysis)', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Customizable AI Prompts', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('API Cost Alerts & Budget Caps', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Context Memory (Cross-session)', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Multimodal Support (Image Upload & Analysis)', 'rapls-ai-chatbot'); ?></li>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px;">
+                <ul style="margin: 0;">
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Lead Capture Forms & Custom Fields', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Offline Messages & Contact Form', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversion Tracking', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Response Cache (API Cost Reduction)', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Settings Backup & Restore', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Lead Management Dashboard', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Analytics Dashboard & PDF Export', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Audit Log', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Pro Themes & Dark Mode', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Fullscreen Mode, Welcome Screen & Custom Fonts', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('AI Enhancement (Suggestions, Autocomplete, Sentiment)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Context Memory (Cross-session)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Multimodal Support (Image Upload & Analysis)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Voice Input (STT) & Text-to-Speech (TTS)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Customizable AI Prompts', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Response Edit Suggestions & AI Quality Score', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Business Hours & Holidays', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Human Handoff & Operator Mode', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Webhook Integration & LINE Messaging', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('AI Forms Builder & Conversation Scenarios', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('WooCommerce Integration & Product Cards', 'rapls-ai-chatbot'); ?></li>
                 </ul>
+                <ul style="margin: 0;">
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Content Filters (Banned Words, IP/Country Blocking, Spam)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Response Cache (API Cost Reduction)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Multiple Chatbots (per-page) & Multi-bot Coordination', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Booking Integration (Calendly, Cal.com)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Screen Sharing & File Upload', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Notification Sounds & Seasonal Themes', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('API Cost Alerts & Budget Caps', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Monthly Email Reports & PDF Export', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Settings Backup & Restore (JSON)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Change History, Rollback & Staging Mode', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Data Encryption (AES-256-GCM) & PII Masking', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Knowledge Versioning & Intent Classification', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Analytics Dashboard & Lead Management', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Audit Log & Compliance', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Pro Themes (10) & Dark Mode', 'rapls-ai-chatbot'); ?></li>
+                </ul>
+                </div>
             </div>
         </div>
 
@@ -4515,14 +4567,27 @@ class WPAIC_Admin {
             border-bottom: 2px solid transparent;
             cursor: pointer;
         }
+        .wpaic-sub-tab:visited {
+            color: #50575e;
+        }
         .wpaic-sub-tab:hover {
             color: #1d2327;
             background: #eaeaea;
         }
-        .wpaic-sub-tab-active {
+        .wpaic-sub-tab:focus {
+            color: #50575e;
+            box-shadow: none;
+            outline: none;
+        }
+        .wpaic-sub-tab-active,
+        .wpaic-sub-tab-active:visited,
+        .wpaic-sub-tab-active:focus,
+        .wpaic-sub-tab-active:active {
             color: #667eea;
             border-bottom-color: #667eea;
             font-weight: 600;
+            box-shadow: none;
+            outline: none;
         }
         .wpaic-sub-tab-active:hover {
             color: #5a6fd6;

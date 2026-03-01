@@ -747,6 +747,15 @@ msgstr "投稿タイプ統計"
 msgid "Crawl progress tracking"
 msgstr "学習進捗トラッキング"
 
+msgid "Differential crawl (changed pages only)"
+msgstr "差分クロール（変更ページのみ）"
+
+msgid "WooCommerce product data crawl"
+msgstr "WooCommerce 商品データクロール"
+
+msgid "Knowledge versioning & expiration"
+msgstr "ナレッジバージョン管理 & 有効期限"
+
 # Crawler preview - Free note
 #: includes/admin/class-admin.php:2653
 msgid "Manual content indexing is available in the Free version."
@@ -905,9 +914,14 @@ msgstr "AI 会話要約"
 msgid "Feedback tracking on messages"
 msgstr "メッセージのフィードバックトラッキング"
 
-#: includes/admin/class-admin.php:2809
-msgid "Conversation detail view"
-msgstr "会話詳細ビュー"
+msgid "Conversation tags & search"
+msgstr "会話タグ & 検索"
+
+msgid "Conversation sharing & bookmarks"
+msgstr "会話共有 & ブックマーク"
+
+msgid "Human handoff history"
+msgstr "有人引き継ぎ履歴"
 
 #: includes/admin/class-admin.php:2810
 msgid "Bulk operations"
@@ -1108,6 +1122,18 @@ msgstr "PDF レポートダウンロード"
 msgid "Period comparison analytics"
 msgstr "期間比較分析"
 
+msgid "AI Quality Score"
+msgstr "AI 品質スコア"
+
+msgid "Churn & bounce analysis"
+msgstr "離脱 & バウンス分析"
+
+msgid "Monthly email reports"
+msgstr "月次メールレポート"
+
+msgid "Conversion tracking analytics"
+msgstr "コンバージョントラッキング分析"
+
 #: includes/admin/class-admin.php:3116
 msgid ""
 "Capture and manage visitor information collected through the chatbot. Export "
@@ -1221,6 +1247,12 @@ msgstr "リードと会話の紐付け"
 msgid "Lead status management"
 msgstr "リードステータス管理"
 
+msgid "Webhook notifications"
+msgstr "Webhook 通知"
+
+msgid "Survey integration"
+msgstr "アンケート連携"
+
 # Leads preview - Webhook examples
 #: includes/admin/class-admin.php:3222
 msgid "Webhook Integration Examples:"
@@ -1309,6 +1341,12 @@ msgstr "設定可能な保持ポリシー"
 msgid "User activity tracking"
 msgstr "ユーザーアクティビティトラッキング"
 
+msgid "Settings change tracking"
+msgstr "設定変更トラッキング"
+
+msgid "Approval workflow"
+msgstr "承認ワークフロー"
+
 # Pro Settings Preview
 #: includes/admin/class-admin.php:3365
 msgid ""
@@ -1329,9 +1367,55 @@ msgstr "AI"
 msgid "Operations"
 msgstr "オペレーション"
 
+msgid "Integrations"
+msgstr "連携"
+
 #: includes/admin/class-admin.php:3393
 msgid "Management"
 msgstr "管理"
+
+# Pro Settings sub-tab labels
+msgid "UI"
+msgstr "UI"
+
+msgid "Handoff"
+msgstr "引き継ぎ"
+
+msgid "AI Forms"
+msgstr "AI フォーム"
+
+msgid "Scenarios"
+msgstr "シナリオ"
+
+msgid "Chatbots"
+msgstr "チャットボット"
+
+msgid "Screen Sharing"
+msgstr "画面共有"
+
+msgid "LINE"
+msgstr "LINE"
+
+msgid "Booking"
+msgstr "予約"
+
+msgid "Queue"
+msgstr "キュー"
+
+msgid "Security"
+msgstr "セキュリティ"
+
+msgid "Role Access"
+msgstr "ロールアクセス"
+
+msgid "Change History"
+msgstr "変更履歴"
+
+msgid "Encryption"
+msgstr "暗号化"
+
+msgid "Security Scan"
+msgstr "セキュリティスキャン"
 
 # Pro Features - Lead Capture
 #: includes/admin/class-admin.php:3398 includes/admin/class-admin.php:3421
@@ -1944,67 +2028,96 @@ msgstr "ライセンスキー"
 msgid "Activate License"
 msgstr "ライセンスを有効化"
 
-#: includes/admin/class-admin.php:4093
-msgid "Lead Capture Forms"
-msgstr "リード獲得フォーム"
+# Pro Settings - Features List (Left Column)
+msgid "Lead Capture Forms & Custom Fields"
+msgstr "リード獲得フォーム & カスタムフィールド"
 
-#: includes/admin/class-admin.php:4094
-msgid "Business Hours & Holidays"
-msgstr "営業時間と休日"
-
-#: includes/admin/class-admin.php:4095
-msgid "Content Filters (Banned Words, IP Blocking, Rate Limiting)"
-msgstr "コンテンツフィルター（禁止ワード、IP ブロック、レート制限）"
-
-# Pro Features - Webhook
-#: includes/admin/class-admin.php:4096
-msgid "Webhook Integration"
-msgstr "Webhook 連携"
-
-# Pro Features List
-#: includes/admin/class-admin.php:4097
-msgid "AI Enhancement (Related Suggestions, Autocomplete, Sentiment Analysis)"
-msgstr "AI 機能強化（関連質問サジェスト、入力補完、感情分析）"
-
-#: includes/admin/class-admin.php:4098
-msgid "Customizable AI Prompts"
-msgstr "カスタマイズ可能な AI プロンプト"
-
-#: includes/admin/class-admin.php:4099
-msgid "API Cost Alerts & Budget Caps"
-msgstr "API コストアラート & 予算上限"
-
-#: includes/admin/class-admin.php:4100
-msgid "Context Memory (Cross-session)"
-msgstr "コンテキスト記憶（セッション間記憶）"
-
-#: includes/admin/class-admin.php:4101
-msgid "Multimodal Support (Image Upload & Analysis)"
-msgstr "マルチモーダル対応（画像アップロード・解析）"
-
-#: includes/admin/class-admin.php:4102
 msgid "Offline Messages & Contact Form"
 msgstr "オフラインメッセージ & お問い合わせフォーム"
 
-#: includes/admin/class-admin.php:4104
+#. Already translated: "Conversion Tracking"
+
+msgid "Fullscreen Mode, Welcome Screen & Custom Fonts"
+msgstr "フルスクリーンモード、ウェルカム画面 & カスタムフォント"
+
+msgid "AI Enhancement (Suggestions, Autocomplete, Sentiment)"
+msgstr "AI 機能強化（サジェスト、入力補完、感情分析）"
+
+msgid "Context Memory (Cross-session)"
+msgstr "コンテキスト記憶（セッション間記憶）"
+
+msgid "Multimodal Support (Image Upload & Analysis)"
+msgstr "マルチモーダル対応（画像アップロード・解析）"
+
+msgid "Voice Input (STT) & Text-to-Speech (TTS)"
+msgstr "音声入力 (STT) & テキスト読み上げ (TTS)"
+
+msgid "Customizable AI Prompts"
+msgstr "カスタマイズ可能な AI プロンプト"
+
+msgid "Response Edit Suggestions & AI Quality Score"
+msgstr "回答編集サジェスト & AI 品質スコア"
+
+msgid "Business Hours & Holidays"
+msgstr "営業時間と休日"
+
+msgid "Human Handoff & Operator Mode"
+msgstr "有人引き継ぎ & オペレーターモード"
+
+msgid "Webhook Integration & LINE Messaging"
+msgstr "Webhook 連携 & LINE メッセージング"
+
+msgid "AI Forms Builder & Conversation Scenarios"
+msgstr "AI フォームビルダー & 会話シナリオ"
+
+msgid "WooCommerce Integration & Product Cards"
+msgstr "WooCommerce 連携 & 商品カード"
+
+# Pro Settings - Features List (Right Column)
+msgid "Content Filters (Banned Words, IP/Country Blocking, Spam)"
+msgstr "コンテンツフィルター（禁止ワード、IP/国別ブロック、スパム検出）"
+
 msgid "Response Cache (API Cost Reduction)"
 msgstr "レスポンスキャッシュ（API コスト削減）"
 
-#: includes/admin/class-admin.php:4105
-msgid "Settings Backup & Restore"
-msgstr "設定のバックアップと復元"
+msgid "Multiple Chatbots (per-page) & Multi-bot Coordination"
+msgstr "複数チャットボット（ページ別）& マルチボット連携"
 
-#: includes/admin/class-admin.php:4106
-msgid "Lead Management Dashboard"
-msgstr "リード管理ダッシュボード"
+msgid "Booking Integration (Calendly, Cal.com)"
+msgstr "予約連携 (Calendly, Cal.com)"
 
-#: includes/admin/class-admin.php:4107
-msgid "Analytics Dashboard & PDF Export"
-msgstr "分析ダッシュボード & PDF エクスポート"
+msgid "Screen Sharing & File Upload"
+msgstr "画面共有 & ファイルアップロード"
 
-#: includes/admin/class-admin.php:4109
-msgid "Pro Themes & Dark Mode"
-msgstr "Pro テーマ & ダークモード"
+msgid "Notification Sounds & Seasonal Themes"
+msgstr "通知音 & 季節テーマ"
+
+msgid "API Cost Alerts & Budget Caps"
+msgstr "API コストアラート & 予算上限"
+
+msgid "Monthly Email Reports & PDF Export"
+msgstr "月次メールレポート & PDF エクスポート"
+
+msgid "Settings Backup & Restore (JSON)"
+msgstr "設定のバックアップと復元 (JSON)"
+
+msgid "Change History, Rollback & Staging Mode"
+msgstr "変更履歴、ロールバック & ステージングモード"
+
+msgid "Data Encryption (AES-256-GCM) & PII Masking"
+msgstr "データ暗号化 (AES-256-GCM) & PII マスキング"
+
+msgid "Knowledge Versioning & Intent Classification"
+msgstr "ナレッジバージョン管理 & 意図分類"
+
+msgid "Analytics Dashboard & Lead Management"
+msgstr "分析ダッシュボード & リード管理"
+
+msgid "Audit Log & Compliance"
+msgstr "監査ログ & コンプライアンス"
+
+msgid "Pro Themes (10) & Dark Mode"
+msgstr "Pro テーマ (10種) & ダークモード"
 
 #: includes/admin/class-admin.php:4345
 msgid ""
@@ -4969,6 +5082,15 @@ msgstr "アバターとして使用"
 msgid "No vision support"
 msgstr "ビジョン非対応"
 
+# Frontend accessibility labels
+#: templates/frontend/chatbot-widget.php:47
+msgid "Text-to-speech"
+msgstr "テキスト読み上げ"
+
+#: templates/frontend/chatbot-widget.php:120
+msgid "Voice input"
+msgstr "音声入力"
+
 # Lead form
 #: templates/frontend/chatbot-widget.php:77
 msgid "Start Chat"
@@ -6199,9 +6321,6 @@ msgstr "%s 商品"
 
 #~ msgid "3 changed pages re-indexed"
 #~ msgstr "変更された3ページを再インデックスしました"
-
-#~ msgid "Differential crawl (changed pages only)"
-#~ msgstr "差分学習（変更ページのみ）"
 
 #~ msgid "URL exclusion rules"
 #~ msgstr "URL 除外ルール"

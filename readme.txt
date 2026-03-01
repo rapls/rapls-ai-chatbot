@@ -23,6 +23,10 @@ The free version is fully functional — no Pro add-on required for core AI chat
 
 * **Multiple AI Providers** - Support for OpenAI, Anthropic Claude, Google Gemini, and OpenRouter (100+ models)
 * **Web Search** - AI automatically searches the web when knowledge base lacks a sufficient answer
+* **Gutenberg Block** - Insert AI Chatbot block in the block editor with height, theme, and bot-id settings; SSR support
+* **MCP Server** - 7 built-in tools via JSON-RPC 2.0 for AI agent integration (Claude Desktop, Cursor, VS Code)
+* **WordPress Abilities API** - Auto-register MCP tools as WordPress Abilities for MCP Adapter discovery
+* **Response Language Auto-detect** - Automatically detect browser language for welcome message and AI responses
 * **Site Learning** - Automatically learn from your website content (posts, pages, custom post types)
 * **Vector Embedding RAG** - Hybrid search combining keyword (40%) and vector similarity (60%) for accurate retrieval
 * **Custom Knowledge Base** - Add custom Q&A pairs, free-form content, PDF/DOCX uploads
@@ -472,12 +476,20 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 == Changelog ==
 
 = 1.5.0 =
+* Added: Gutenberg block — Insert AI Chatbot block in the block editor with height, theme, and bot-id settings; SSR (server-side rendering) support; i18n (JA/EN translation JSON)
+* Added: WordPress Abilities API Bridge — Register all 7 MCP tools as WordPress Abilities for auto-discovery by MCP Adapters (Claude Desktop, Cursor, VS Code)
+* Added: Response language auto-detect — Automatically detect browser language for welcome message and AI responses; choose from "Site language", "Auto-detect", or manual
+* Added: OpenRouter provider support (100+ models via single API key)
 * Added: Pro feature defaults and stubs for 80+ features (scenarios, actions, WooCommerce, LINE, AI forms, encryption, queue, booking, screen sharing, multi-bot coordination, change management, vulnerability scanning, similar question merge)
 * Added: Voice input (STT) and text-to-speech (TTS) as Pro feature stubs
-* Added: OpenRouter provider support (100+ models via single API key)
+* Added: Pro Settings page restructured with Integrations, Operations, and Management groups; additional sub-tabs for all Pro features
+* Fixed: MCP tool registration timing — Pro tools (search_products, get_analytics) now register reliably via rest_api_init hook
+* Fixed: Abilities API category registration and naming compliance (underscore-to-dash conversion for kebab-case identifiers)
+* Fixed: Abilities REST API exposure with show_in_rest and readonly annotations for MCP Adapter discovery
 * Improved: Free vs Pro comparison updated to reflect all current Pro capabilities
 * Improved: REST API endpoint list updated with new Pro endpoints
-* Updated: Japanese translation — all strings translated
+* Improved: Pro Features listing expanded to two-column layout with complete feature coverage
+* Updated: Japanese translation — all strings translated including Abilities API, Gutenberg block, and response language settings
 * Updated: WordPress Plugin Check compliance fixes
 
 = 1.4.0 =
@@ -608,7 +620,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 == Upgrade Notice ==
 
 = 1.5.0 =
-Major update: Pro feature stubs for 80+ features (scenarios, WooCommerce, LINE, AI forms, encryption, queue management, and more). OpenRouter provider support. Full Japanese translation. Recommended update for all users.
+Major update: Gutenberg block support, WordPress Abilities API bridge, response language auto-detect, and OpenRouter provider. Pro feature stubs for 80+ features (scenarios, WooCommerce, LINE, AI forms, encryption, queue management, and more). MCP tool registration fixes for reliable Pro integration. Full Japanese translation. Recommended update for all users.
 
 = 1.4.0 =
 Feature release: Web search integration (AI auto-searches the web when knowledge base is insufficient), cross-site embed support, PDF/DOCX knowledge upload, vector embedding hybrid search, and updated AI model lists. Recommended update for all users.
