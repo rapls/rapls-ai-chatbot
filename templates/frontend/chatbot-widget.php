@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div id="wp-ai-chatbot" class="wp-ai-chatbot wpaic-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed">
+<div id="wp-ai-chatbot" class="wp-ai-chatbot wpaic-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed" data-position="<?php echo esc_attr($badge_position ?? 'bottom-right'); ?>">
 
     <!-- バッジ（閉じた状態） -->
     <button class="chatbot-badge" aria-label="チャットを開く">

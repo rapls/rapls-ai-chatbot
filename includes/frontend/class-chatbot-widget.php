@@ -74,6 +74,7 @@ class WPAIC_Chatbot_Widget {
         }
         $theme_class = trim($theme_class);
 
+        $badge_position = $settings['badge_position'] ?? 'bottom-right';
         $pro_features = $settings['pro_features'] ?? [];
         $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
         $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
@@ -150,8 +151,25 @@ class WPAIC_Chatbot_Widget {
         if (empty($primary_color) || !preg_match('/^#[0-9a-fA-F]{3,6}$/', $primary_color)) {
             $primary_color = '#007bff';
         }
-        $margin_right = absint($settings['badge_margin_right'] ?? 20);
-        $margin_bottom = absint($settings['badge_margin_bottom'] ?? 20);
+        $badge_position = $settings['badge_position'] ?? 'bottom-right';
+        $margin_h = absint($settings['badge_margin_right'] ?? 20);
+        $margin_v = absint($settings['badge_margin_bottom'] ?? 20);
+
+        // Build position CSS based on badge_position setting
+        switch ($badge_position) {
+            case 'bottom-left':
+                $position_css = "left: {$margin_h}px; bottom: {$margin_v}px; right: auto;";
+                break;
+            case 'top-right':
+                $position_css = "right: {$margin_h}px; top: {$margin_v}px; bottom: auto;";
+                break;
+            case 'top-left':
+                $position_css = "left: {$margin_h}px; top: {$margin_v}px; right: auto; bottom: auto;";
+                break;
+            default: // bottom-right
+                $position_css = "right: {$margin_h}px; bottom: {$margin_v}px;";
+                break;
+        }
 
         $custom_css = "
             :root {
@@ -159,8 +177,7 @@ class WPAIC_Chatbot_Widget {
                 --wpaic-primary-dark: " . $this->darken_color($primary_color, 20) . ";
             }
             .wp-ai-chatbot {
-                right: {$margin_right}px;
-                bottom: {$margin_bottom}px;
+                {$position_css}
             }
         ";
 
@@ -271,6 +288,8 @@ class WPAIC_Chatbot_Widget {
             'conversion_tracking'  => !empty($pro_features['conversion_tracking_enabled']),
             'conversion_goals'     => !empty($pro_features['conversion_tracking_enabled']) ? ($pro_features['conversion_goals'] ?? []) : [],
             'offline_message'      => $this->get_offline_config($pro_features),
+            'save_history'         => !empty($settings['save_history']),
+            'context_memory'       => !empty($pro_features['context_memory_enabled']),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
             // wpaic_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
@@ -375,6 +394,7 @@ class WPAIC_Chatbot_Widget {
         $theme_class = trim($theme_class);
 
         // Badge icon settings
+        $badge_position = $settings['badge_position'] ?? 'bottom-right';
         $pro_features = $settings['pro_features'] ?? [];
         $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
         $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
@@ -465,6 +485,7 @@ class WPAIC_Chatbot_Widget {
         }
         $theme_class = trim($theme_class);
 
+        $badge_position = $settings['badge_position'] ?? 'bottom-right';
         $pro_features = $settings['pro_features'] ?? [];
         $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
         $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';

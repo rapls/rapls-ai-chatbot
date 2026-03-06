@@ -355,3 +355,115 @@ msgstr ""
 #: templates/admin/settings.php
 msgid "Customize the welcome message for each language. Leave blank to use the default."
 msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Vector embedding (RAG)"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Page exclusion control"
+msgstr ""
+
+#: includes/admin/class-admin.php
+msgid "Learning Settings"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Customer Support"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Friendly and empathetic support agent for general customer service."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "E-Commerce"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Shopping assistant for online stores with product recommendations."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Educational"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Patient tutor that explains concepts clearly for learning platforms."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "FAQ Assistant"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Concise answers from knowledge base, focused on common questions."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Appointment Booking"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Scheduling assistant for service-based businesses."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Restaurant"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Restaurant assistant for menus, reservations, and dietary needs."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Real Estate"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Property assistant for real estate listings and inquiries."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "SaaS / Tech Support"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Technical support for software products with troubleshooting guidance."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Healthcare"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Medical office assistant for appointments and general health info."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Business Consulting"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Professional and trustworthy assistant for B2B and consulting sites."
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Legal / Consulting"
+msgstr ""
+
+#: includes/class-pro-features.php
+msgid "Professional services assistant for consultations and general legal info."
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Message History Count"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Number of previous messages sent as context to the AI. Higher values give more context but increase token usage."
+msgstr ""
+
+#: templates/admin/crawler.php
+msgid "Monthly"
+msgstr ""

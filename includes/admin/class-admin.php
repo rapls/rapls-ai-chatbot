@@ -227,8 +227,11 @@ class WPAIC_Admin {
         if (isset($settings['temperature'])) {
             $settings['temperature'] = max(0.0, min(2.0, floatval($settings['temperature'])));
         }
+        if (isset($settings['message_history_count'])) {
+            $settings['message_history_count'] = max(1, min(50, absint($settings['message_history_count'])));
+        }
         if (isset($settings['rate_limit'])) {
-            $settings['rate_limit'] = max(1, absint($settings['rate_limit']));
+            $settings['rate_limit'] = absint($settings['rate_limit']);
         }
         if (isset($settings['rate_limit_window'])) {
             $settings['rate_limit_window'] = max(60, absint($settings['rate_limit_window']));
@@ -386,6 +389,7 @@ class WPAIC_Admin {
         $sanitized['quota_error_message'] = sanitize_text_field($input['quota_error_message'] ?? ($existing['quota_error_message'] ?? ''));
         $sanitized['max_tokens'] = max(1, min(16384, absint($input['max_tokens'] ?? ($existing['max_tokens'] ?? 1000))));
         $sanitized['temperature'] = max(0.0, min(2.0, floatval($input['temperature'] ?? ($existing['temperature'] ?? 0.7))));
+        $sanitized['message_history_count'] = max(1, min(50, absint($input['message_history_count'] ?? ($existing['message_history_count'] ?? 10))));
 
         // Context prompt settings
         $sanitized['knowledge_exact_prompt'] = sanitize_textarea_field($input['knowledge_exact_prompt'] ?? ($existing['knowledge_exact_prompt'] ?? ''));
@@ -398,7 +402,24 @@ class WPAIC_Admin {
         $sanitized['feedback_bad_header'] = sanitize_textarea_field($input['feedback_bad_header'] ?? ($existing['feedback_bad_header'] ?? ''));
         $sanitized['summary_prompt'] = sanitize_textarea_field($input['summary_prompt'] ?? ($existing['summary_prompt'] ?? ''));
 
+        // Restore defaults for prompt fields when saved empty
+        $defaults = self::get_all_defaults();
+        $prompt_fields = [
+            'welcome_message', 'system_prompt', 'quota_error_message',
+            'knowledge_exact_prompt', 'knowledge_qa_prompt', 'site_context_prompt',
+            'regenerate_prompt', 'feedback_good_header', 'feedback_bad_header', 'summary_prompt',
+        ];
+        foreach ($prompt_fields as $field) {
+            if (isset($sanitized[$field]) && trim($sanitized[$field]) === '' && !empty($defaults[$field])) {
+                $sanitized[$field] = $defaults[$field];
+            }
+        }
+
         // Display settings (use array_key_exists for numeric values that could be 0)
+        $valid_positions = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
+        $sanitized['badge_position'] = in_array($input['badge_position'] ?? '', $valid_positions)
+            ? sanitize_text_field($input['badge_position'])
+            : ($existing['badge_position'] ?? 'bottom-right');
         $sanitized['badge_margin_right'] = array_key_exists('badge_margin_right', $input)
             ? absint($input['badge_margin_right'])
             : ($existing['badge_margin_right'] ?? 20);
@@ -452,8 +473,15 @@ class WPAIC_Admin {
             $sanitized['excluded_pages'] = $existing['excluded_pages'] ?? [];
         }
 
+        // Sentinel: settings.php includes _settings_page hidden field; crawler.php does not
+        $settings_page_submitted = !empty($input['_settings_page']);
+
         // reCAPTCHA settings — trim keys to prevent whitespace-only values passing empty checks
-        $sanitized['recaptcha_enabled'] = !empty($input['recaptcha_enabled']);
+        if ($settings_page_submitted) {
+            $sanitized['recaptcha_enabled'] = !empty($input['recaptcha_enabled']);
+        } else {
+            $sanitized['recaptcha_enabled'] = $existing['recaptcha_enabled'] ?? false;
+        }
         $sanitized['recaptcha_site_key'] = trim(sanitize_text_field($input['recaptcha_site_key'] ?? ($existing['recaptcha_site_key'] ?? '')));
         // Encrypt reCAPTCHA secret key (preserve existing if field submitted empty)
         // Use lighter sanitization — only trim + control char removal (sanitize_text_field
@@ -465,29 +493,53 @@ class WPAIC_Admin {
             $sanitized['recaptcha_secret_key'] = $existing['recaptcha_secret_key'] ?? '';
         }
         $sanitized['recaptcha_threshold'] = floatval($input['recaptcha_threshold'] ?? ($existing['recaptcha_threshold'] ?? 0.5));
-        $sanitized['recaptcha_use_existing'] = !empty($input['recaptcha_use_existing']);
+        if ($settings_page_submitted) {
+            $sanitized['recaptcha_use_existing'] = !empty($input['recaptcha_use_existing']);
+        } else {
+            $sanitized['recaptcha_use_existing'] = $existing['recaptcha_use_existing'] ?? false;
+        }
 
-        // History settings
-        $sanitized['save_history'] = !empty($input['save_history']);
+        // History settings (save_history has hidden input in crawler.php, but guard for safety)
+        if ($settings_page_submitted || array_key_exists('save_history', $input)) {
+            $sanitized['save_history'] = !empty($input['save_history']);
+        } else {
+            $sanitized['save_history'] = $existing['save_history'] ?? true;
+        }
         $sanitized['retention_days'] = absint($input['retention_days'] ?? ($existing['retention_days'] ?? 90));
 
         // Web search setting (AI Settings tab)
-        $sanitized['web_search_enabled'] = !empty($input['web_search_enabled']);
+        if ($settings_page_submitted) {
+            $sanitized['web_search_enabled'] = !empty($input['web_search_enabled']);
+        } else {
+            $sanitized['web_search_enabled'] = $existing['web_search_enabled'] ?? false;
+        }
 
         // Uninstall settings
-        $sanitized['delete_data_on_uninstall'] = !empty($input['delete_data_on_uninstall']);
+        if ($settings_page_submitted) {
+            $sanitized['delete_data_on_uninstall'] = !empty($input['delete_data_on_uninstall']);
+        } else {
+            $sanitized['delete_data_on_uninstall'] = $existing['delete_data_on_uninstall'] ?? false;
+        }
 
         // WP Consent API: strict mode (require Consent API for storage/tracking)
-        $sanitized['consent_strict_mode'] = !empty($input['consent_strict_mode']);
+        if ($settings_page_submitted) {
+            $sanitized['consent_strict_mode'] = !empty($input['consent_strict_mode']);
+        } else {
+            $sanitized['consent_strict_mode'] = $existing['consent_strict_mode'] ?? false;
+        }
 
         // Rate limiting
-        $sanitized['rate_limit'] = max(1, absint($input['rate_limit'] ?? ($existing['rate_limit'] ?? 20)));
+        $sanitized['rate_limit'] = absint($input['rate_limit'] ?? ($existing['rate_limit'] ?? 20));
         $sanitized['rate_limit_window'] = max(60, absint($input['rate_limit_window'] ?? ($existing['rate_limit_window'] ?? 3600)));
 
         // Cloudflare IP trust
-        $sanitized['trust_cloudflare_ip'] = !empty($input['trust_cloudflare_ip']);
-        // Reverse proxy X-Forwarded-For trust (Nginx, ALB, etc.)
-        $sanitized['trust_proxy_ip'] = !empty($input['trust_proxy_ip']);
+        if ($settings_page_submitted) {
+            $sanitized['trust_cloudflare_ip'] = !empty($input['trust_cloudflare_ip']);
+            $sanitized['trust_proxy_ip'] = !empty($input['trust_proxy_ip']);
+        } else {
+            $sanitized['trust_cloudflare_ip'] = $existing['trust_cloudflare_ip'] ?? false;
+            $sanitized['trust_proxy_ip'] = $existing['trust_proxy_ip'] ?? false;
+        }
 
         // reCAPTCHA failure mode
         $sanitized['recaptcha_fail_mode'] = in_array($input['recaptcha_fail_mode'] ?? '', ['open', 'closed'], true)
@@ -507,7 +559,10 @@ class WPAIC_Admin {
         $sanitized['crawler_post_types'] = array_key_exists('crawler_post_types', $input)
             ? array_map('sanitize_text_field', $input['crawler_post_types'])
             : ($existing['crawler_post_types'] ?? ['post', 'page']);
-        $sanitized['crawler_interval'] = sanitize_text_field($input['crawler_interval'] ?? ($existing['crawler_interval'] ?? 'daily'));
+        $crawler_interval_raw = sanitize_text_field($input['crawler_interval'] ?? ($existing['crawler_interval'] ?? 'daily'));
+        $sanitized['crawler_interval'] = in_array($crawler_interval_raw, ['hourly', 'twicedaily', 'daily', 'weekly', 'monthly'], true)
+            ? $crawler_interval_raw
+            : 'daily';
         $sanitized['crawler_chunk_size'] = absint($input['crawler_chunk_size'] ?? ($existing['crawler_chunk_size'] ?? 1000));
         $sanitized['crawler_max_results'] = absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3));
         $sanitized['crawler_exclude_ids'] = array_values(array_unique(array_map(
@@ -533,16 +588,15 @@ class WPAIC_Admin {
             $sanitized['markdown_enabled'] = $existing['markdown_enabled'] ?? true;
         }
 
-        // Feedback buttons setting (Display Settings form)
-        if ($display_form_submitted) {
+        // Feedback buttons setting (Chat Settings tab)
+        if ($settings_page_submitted) {
             $sanitized['show_feedback_buttons'] = !empty($input['show_feedback_buttons']);
         } else {
             $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? false;
         }
 
-        // MCP settings (AI Settings form)
-        $ai_form_submitted = array_key_exists('ai_provider', $input);
-        if ($ai_form_submitted) {
+        // MCP settings (AI Settings form — use _settings_page sentinel, not ai_provider which is also in crawler)
+        if ($settings_page_submitted) {
             $sanitized['mcp_enabled'] = !empty($input['mcp_enabled']);
         } else {
             $sanitized['mcp_enabled'] = $existing['mcp_enabled'] ?? false;
@@ -790,7 +844,11 @@ class WPAIC_Admin {
             $sanitized['role_limits'] = $existing['role_limits'] ?? [];
         }
 
-        return $sanitized;
+        // Preserve Pro-only keys not handled by Free sanitizer (e.g. badge_icon_*, scheduling, etc.)
+        // 1. $existing: base from DB (preserves keys not in current form submission)
+        // 2. $input: pass-through for Pro-managed keys (badge_icon_*, etc.) added via update_option()
+        // 3. $sanitized: explicitly sanitized keys take final priority
+        return array_merge($existing, $input, $sanitized);
     }
 
     /**
@@ -935,6 +993,10 @@ class WPAIC_Admin {
                 'noModels' => __('No models available', 'rapls-ai-chatbot'),
                 'refreshModels' => __('Refresh model list', 'rapls-ai-chatbot'),
                 'modelSaved' => __('(saved)', 'rapls-ai-chatbot'),
+                'rightLabel' => __('Right:', 'rapls-ai-chatbot'),
+                'leftLabel' => __('Left:', 'rapls-ai-chatbot'),
+                'bottomLabel' => __('Bottom:', 'rapls-ai-chatbot'),
+                'topLabel' => __('Top:', 'rapls-ai-chatbot'),
             ],
         ]);
     }
@@ -995,7 +1057,7 @@ class WPAIC_Admin {
      * Called on settings page load so migration happens when an admin visits settings.
      */
     private function maybe_migrate_legacy_keys(array &$settings): void {
-        $key_fields = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'recaptcha_secret_key'];
+        $key_fields = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'recaptcha_secret_key'];
         $migrated = false;
 
         foreach ($key_fields as $field) {
@@ -2355,6 +2417,7 @@ class WPAIC_Admin {
             'quota_error_message'   => 'Currently recharging. Please try again later.',
             'max_tokens'            => 1000,
             'temperature'           => 0.7,
+            'message_history_count' => 10,
 
             // Context Prompts
             'knowledge_exact_prompt' => "=== STRICT INSTRUCTIONS ===\nAn EXACT MATCH has been found for the user's question.\nYou MUST:\n1. Use ONLY the Answer provided below\n2. DO NOT add any information not in this Answer\n3. DO NOT combine with other sources\n4. Respond naturally using this Answer's content\n\n=== ANSWER TO USE ===\n{context}\n=== END ===",
@@ -2435,6 +2498,7 @@ class WPAIC_Admin {
             'quota_error_message'   => 'Currently recharging. Please try again later.',
             'max_tokens'            => 1000,
             'temperature'           => 0.7,
+            'message_history_count' => 10,
             'rate_limit'            => 20,
             'rate_limit_window'     => 3600,
             'crawler_enabled'       => false,
@@ -2832,52 +2896,101 @@ class WPAIC_Admin {
             __('Automatically crawl and index your website content so the chatbot can answer questions based on your site information.', 'rapls-ai-chatbot')
         );
         ?>
+        <div class="wpaic-crawler-grid">
         <!-- Status Card -->
-        <div class="wpaic-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin-bottom: 20px;">
-            <h2 style="margin-top: 0;"><?php esc_html_e('Learning Status', 'rapls-ai-chatbot'); ?></h2>
-            <table class="wpaic-status-table" style="width: 100%;">
+        <div class="wpaic-card wpaic-card-status">
+            <h2><?php esc_html_e('Learning Status', 'rapls-ai-chatbot'); ?></h2>
+            <table class="wpaic-status-table">
                 <tr>
-                    <td><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></td>
-                    <td><span style="background: #e7f5e7; color: #00a32a; padding: 3px 10px; border-radius: 3px;"><?php esc_html_e('Enabled', 'rapls-ai-chatbot'); ?></span></td>
+                    <td><?php esc_html_e('Learning Feature', 'rapls-ai-chatbot'); ?></td>
+                    <td><span class="status-badge status-ok"><?php esc_html_e('Enabled', 'rapls-ai-chatbot'); ?></span></td>
                 </tr>
                 <tr>
                     <td><?php esc_html_e('Indexed Pages', 'rapls-ai-chatbot'); ?></td>
-                    <td><strong>24</strong></td>
+                    <td><strong>24</strong> <?php esc_html_e('pages', 'rapls-ai-chatbot'); ?></td>
                 </tr>
                 <tr>
                     <td><?php esc_html_e('Last Crawl', 'rapls-ai-chatbot'); ?></td>
-                    <td>2026-02-13 09:00</td>
+                    <td>2026/02/13 09:00</td>
+                </tr>
+                <tr>
+                    <td>WooCommerce</td>
+                    <td>
+                        <span class="status-badge status-ok"><?php esc_html_e('Detected', 'rapls-ai-chatbot'); ?></span>
+                        (<?php
+                        /* translators: %s: number of products */
+                        printf(esc_html__('%s products', 'rapls-ai-chatbot'), '15');
+                        ?>)
+                    </td>
                 </tr>
                 <tr>
                     <td><?php esc_html_e('Last Result', 'rapls-ai-chatbot'); ?></td>
                     <td>
-                        <span style="color: #00a32a;">✓ 5 <?php esc_html_e('new', 'rapls-ai-chatbot'); ?></span> /
-                        <span style="color: #2271b1;">↻ 3 <?php esc_html_e('updated', 'rapls-ai-chatbot'); ?></span> /
-                        <span style="color: #666;">— 16 <?php esc_html_e('skipped', 'rapls-ai-chatbot'); ?></span>
+                        <?php esc_html_e('New:', 'rapls-ai-chatbot'); ?> 5,
+                        <?php esc_html_e('Updated:', 'rapls-ai-chatbot'); ?> 3,
+                        <?php esc_html_e('Skipped:', 'rapls-ai-chatbot'); ?> 16
                     </td>
                 </tr>
             </table>
-            <p style="display: flex; gap: 8px;">
+            <div class="wpaic-actions">
                 <button type="button" class="button button-primary" disabled>🔄 <?php esc_html_e('Run Learning Now', 'rapls-ai-chatbot'); ?></button>
-            </p>
+            </div>
+        </div>
+
+        <!-- Vector Embedding Card -->
+        <div class="wpaic-card wpaic-card-embedding">
+            <h2><?php esc_html_e('Vector Embedding', 'rapls-ai-chatbot'); ?></h2>
+            <table class="wpaic-status-table">
+                <tr>
+                    <td><?php esc_html_e('Embedding', 'rapls-ai-chatbot'); ?></td>
+                    <td><span class="status-badge status-ok"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span></td>
+                </tr>
+                <tr>
+                    <td><?php esc_html_e('Provider', 'rapls-ai-chatbot'); ?></td>
+                    <td>Openai / text-embedding-3-small</td>
+                </tr>
+                <tr>
+                    <td><?php esc_html_e('Embedded Chunks', 'rapls-ai-chatbot'); ?></td>
+                    <td><strong>42</strong> / 48 (88%)</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-top: 8px;">
+                        <div style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div style="background: #667eea; height: 100%; width: 88%; transition: width 0.3s;"></div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <div class="wpaic-actions" style="margin-top: 12px;">
+                <button type="button" class="button button-primary" disabled><?php esc_html_e('Generate Embeddings', 'rapls-ai-chatbot'); ?></button>
+                <button type="button" class="button button-secondary" disabled>🗑️ <?php esc_html_e('Clear All Embeddings', 'rapls-ai-chatbot'); ?></button>
+            </div>
         </div>
 
         <!-- Settings Card -->
-        <div class="wpaic-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin-bottom: 20px;">
-            <h2 style="margin-top: 0;"><?php esc_html_e('Settings', 'rapls-ai-chatbot'); ?></h2>
+        <div class="wpaic-card wpaic-card-settings">
+            <h2><?php esc_html_e('Learning Settings', 'rapls-ai-chatbot'); ?></h2>
             <table class="form-table">
                 <tr>
                     <th scope="row"><?php esc_html_e('Learning Feature', 'rapls-ai-chatbot'); ?></th>
-                    <td><label><input type="checkbox" checked disabled> <?php esc_html_e('Enable site learning', 'rapls-ai-chatbot'); ?></label></td>
+                    <td><label><input type="checkbox" checked disabled> <?php esc_html_e('Auto-learn site content', 'rapls-ai-chatbot'); ?></label></td>
                 </tr>
                 <tr>
                     <th scope="row"><?php esc_html_e('Target Content', 'rapls-ai-chatbot'); ?></th>
                     <td>
-                        <select disabled style="width: 100%; max-width: 350px;">
-                            <option selected><?php esc_html_e('All Public Content (Recommended)', 'rapls-ai-chatbot'); ?></option>
-                            <option><?php esc_html_e('Select specific post types', 'rapls-ai-chatbot'); ?></option>
-                        </select>
-                        <p class="description"><?php esc_html_e('Posts, Pages, and all public custom post types will be indexed.', 'rapls-ai-chatbot'); ?></p>
+                        <label style="display: block; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+                            <input type="checkbox" checked disabled>
+                            <strong><?php esc_html_e('All Public Content (Recommended)', 'rapls-ai-chatbot'); ?></strong>
+                            <p class="description" style="margin-left: 24px; margin-top: 4px;">
+                                <?php esc_html_e('Learn all posts, pages, custom post types, and custom fields.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </label>
+                        <div style="opacity: 0.5;">
+                            <p class="description" style="margin-bottom: 8px;"><?php esc_html_e('Or select individually:', 'rapls-ai-chatbot'); ?></p>
+                            <label style="display: block; margin-bottom: 5px;"><input type="checkbox" disabled> post</label>
+                            <label style="display: block; margin-bottom: 5px;"><input type="checkbox" disabled> page</label>
+                            <label style="display: block; margin-bottom: 5px;"><input type="checkbox" disabled> product</label>
+                        </div>
                     </td>
                 </tr>
                 <tr>
@@ -2894,63 +3007,82 @@ class WPAIC_Admin {
                 <tr>
                     <th scope="row"><?php esc_html_e('Reference Count', 'rapls-ai-chatbot'); ?></th>
                     <td>
-                        <input type="number" value="3" min="1" max="10" disabled style="width: 80px;">
-                        <p class="description"><?php esc_html_e('Maximum number of indexed pages to reference per response (1-10).', 'rapls-ai-chatbot'); ?></p>
+                        <input type="number" value="3" min="1" max="10" disabled class="small-text">
+                        <p class="description"><?php esc_html_e('Maximum pages to reference when answering', 'rapls-ai-chatbot'); ?></p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><?php esc_html_e('Excluded Pages', 'rapls-ai-chatbot'); ?></th>
+                    <td>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                            <span style="display: inline-flex; align-items: center; gap: 4px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 3px; padding: 2px 8px; font-size: 13px;">
+                                Contact <small>(ID:5)</small> <span style="color: #b32d2e; cursor: default;">&times;</span>
+                            </span>
+                            <span style="display: inline-flex; align-items: center; gap: 4px; background: #f0f0f1; border: 1px solid #c3c4c7; border-radius: 3px; padding: 2px 8px; font-size: 13px;">
+                                Privacy Policy <small>(ID:3)</small> <span style="color: #b32d2e; cursor: default;">&times;</span>
+                            </span>
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" min="1" class="small-text" placeholder="ID" disabled>
+                            <button type="button" class="button button-small" disabled><?php esc_html_e('Add by ID', 'rapls-ai-chatbot'); ?></button>
+                        </div>
+                        <p class="description"><?php esc_html_e('Pages listed here will be skipped during learning and removed from the index.', 'rapls-ai-chatbot'); ?></p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><?php esc_html_e('Enhanced Content Extraction', 'rapls-ai-chatbot'); ?> <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-left: 5px;">PRO</span></th>
                     <td>
-                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable enhanced HTML content extraction for Site Learning', 'rapls-ai-chatbot'); ?></label>
-                        <p class="description"><?php esc_html_e('Uses DOMDocument to parse HTML structure and extract content from headings, tables, lists, code blocks, blockquotes, and meta tags.', 'rapls-ai-chatbot'); ?></p>
+                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable enhanced HTML content extraction', 'rapls-ai-chatbot'); ?></label>
+                        <p class="description"><?php esc_html_e('Uses DOMDocument to parse HTML and extract structured content from headings, tables, lists, code blocks, and meta tags.', 'rapls-ai-chatbot'); ?></p>
                     </td>
                 </tr>
             </table>
         </div>
 
         <!-- Post Type Statistics -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px;">
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 12px; text-align: center;">
-                <div style="font-size: 20px; font-weight: 700; color: #1d2327;">24</div>
-                <div style="font-size: 12px; color: #646970;"><?php esc_html_e('Total', 'rapls-ai-chatbot'); ?></div>
+        <div class="wpaic-list-stats wpaic-card-full" style="margin-bottom: 20px;">
+            <div class="wpaic-list-stat-card">
+                <div class="stat-value">24</div>
+                <div class="stat-label"><?php esc_html_e('Total', 'rapls-ai-chatbot'); ?></div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 12px; text-align: center;">
-                <div style="font-size: 20px; font-weight: 700; color: #2271b1;">12</div>
-                <div style="font-size: 12px; color: #646970;">post</div>
+            <div class="wpaic-list-stat-card stat-info">
+                <div class="stat-value">12</div>
+                <div class="stat-label">post</div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 12px; text-align: center;">
-                <div style="font-size: 20px; font-weight: 700; color: #2271b1;">8</div>
-                <div style="font-size: 12px; color: #646970;">page</div>
+            <div class="wpaic-list-stat-card stat-warning">
+                <div class="stat-value">8</div>
+                <div class="stat-label">page</div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 12px; text-align: center;">
-                <div style="font-size: 20px; font-weight: 700; color: #2271b1;">4</div>
-                <div style="font-size: 12px; color: #646970;">product</div>
+            <div class="wpaic-list-stat-card">
+                <div class="stat-value">4</div>
+                <div class="stat-label">product</div>
             </div>
         </div>
 
         <!-- Indexed Pages Table -->
-        <div class="wpaic-card" style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div class="wpaic-card wpaic-card-full">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h2 style="margin: 0;"><?php esc_html_e('Indexed Pages', 'rapls-ai-chatbot'); ?></h2>
-                <button class="button button-small" disabled style="color: #d63638;"><?php esc_html_e('Delete All', 'rapls-ai-chatbot'); ?></button>
+                <button type="button" class="button button-secondary" disabled>🗑️ <?php esc_html_e('Delete All', 'rapls-ai-chatbot'); ?></button>
             </div>
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
                         <th><?php esc_html_e('Title', 'rapls-ai-chatbot'); ?></th>
-                        <th style="width: 80px;"><?php esc_html_e('Type', 'rapls-ai-chatbot'); ?></th>
+                        <th><?php esc_html_e('Type', 'rapls-ai-chatbot'); ?></th>
                         <th><?php esc_html_e('URL', 'rapls-ai-chatbot'); ?></th>
-                        <th style="width: 150px;"><?php esc_html_e('Indexed Date', 'rapls-ai-chatbot'); ?></th>
-                        <th style="width: 60px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                        <th><?php esc_html_e('Indexed Date', 'rapls-ai-chatbot'); ?></th>
+                        <th style="width: 100px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>Sample Page</td><td>page</td><td>/sample-page/</td><td>2026-02-13</td><td><button class="button button-small" disabled><span class="dashicons dashicons-trash" style="font-size: 14px; width: 14px; height: 14px;"></span></button></td></tr>
-                    <tr><td>Hello World</td><td>post</td><td>/hello-world/</td><td>2026-02-13</td><td><button class="button button-small" disabled><span class="dashicons dashicons-trash" style="font-size: 14px; width: 14px; height: 14px;"></span></button></td></tr>
-                    <tr><td>About Us</td><td>page</td><td>/about/</td><td>2026-02-12</td><td><button class="button button-small" disabled><span class="dashicons dashicons-trash" style="font-size: 14px; width: 14px; height: 14px;"></span></button></td></tr>
+                    <tr><td>Sample Page</td><td>page</td><td>/sample-page/</td><td>2026/02/13 09:00</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
+                    <tr><td>Hello World</td><td>post</td><td>/hello-world/</td><td>2026/02/13 09:00</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
+                    <tr><td>About Us</td><td>page</td><td>/about/</td><td>2026/02/12 14:30</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
                 </tbody>
             </table>
         </div>
+        </div><!-- .wpaic-crawler-grid -->
         <?php
         // Close preview and wrapper divs manually to insert features list outside the faded area
         ?>
@@ -2965,7 +3097,8 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Enhanced HTML content extraction', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Custom post type support', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('WooCommerce product data crawl', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Knowledge versioning & expiration', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Vector embedding (RAG)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Page exclusion control', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Reference count control', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Post type statistics', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Crawl progress tracking', 'rapls-ai-chatbot'); ?></li>
@@ -3014,11 +3147,28 @@ class WPAIC_Admin {
             </div>
         </div>
 
+        <!-- Search & Filter -->
+        <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 15px; margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('Search messages', 'rapls-ai-chatbot'); ?>">
+            <select disabled>
+                <option><?php esc_html_e('All Statuses', 'rapls-ai-chatbot'); ?></option>
+                <option>Active</option>
+                <option>Closed</option>
+                <option>Archived</option>
+            </select>
+            <label style="font-size: 13px; color: #666;"><?php esc_html_e('From:', 'rapls-ai-chatbot'); ?></label>
+            <input type="date" disabled>
+            <label style="font-size: 13px; color: #666;"><?php esc_html_e('To:', 'rapls-ai-chatbot'); ?></label>
+            <input type="date" disabled>
+            <button class="button" disabled><?php esc_html_e('Filter', 'rapls-ai-chatbot'); ?></button>
+        </div>
+
         <!-- Actions Bar -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div style="display: flex; gap: 8px;">
                 <button class="button" disabled><?php esc_html_e('Delete Selected', 'rapls-ai-chatbot'); ?></button>
                 <button class="button" disabled style="color: #d63638;"><?php esc_html_e('Delete All', 'rapls-ai-chatbot'); ?></button>
+                <button class="button" disabled><?php esc_html_e('Reset All User Sessions', 'rapls-ai-chatbot'); ?></button>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <select disabled><option>CSV</option><option>JSON</option></select>
@@ -3035,6 +3185,7 @@ class WPAIC_Admin {
                     <th style="width: 30px;"><input type="checkbox" disabled></th>
                     <th style="width: 50px;">ID</th>
                     <th><?php esc_html_e('Session', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 50px; text-align: center;"><?php esc_html_e('Msgs', 'rapls-ai-chatbot'); ?></th>
                     <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
                     <th><?php esc_html_e('Start Page', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 80px;"><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></th>
@@ -3048,11 +3199,12 @@ class WPAIC_Admin {
                     <td><input type="checkbox" disabled></td>
                     <td>1</td>
                     <td><code>abc123...</code></td>
+                    <td style="text-align: center;">6</td>
                     <td>Taro Yamada<br><small>taro@example.com</small></td>
                     <td>/</td>
                     <td><span style="background: #e7f5e7; color: #00a32a; padding: 2px 8px; border-radius: 3px; font-size: 12px;">active</span></td>
-                    <td>2026-02-13 10:00</td>
-                    <td>2026-02-13 10:15</td>
+                    <td>2026/02/13 10:00</td>
+                    <td>2026/02/13 10:15</td>
                     <td>
                         <button class="button button-small" disabled><?php esc_html_e('Details', 'rapls-ai-chatbot'); ?></button>
                         <button class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button>
@@ -3062,11 +3214,12 @@ class WPAIC_Admin {
                     <td><input type="checkbox" disabled></td>
                     <td>2</td>
                     <td><code>def456...</code></td>
+                    <td style="text-align: center;">4</td>
                     <td>&mdash;</td>
                     <td>/about/</td>
                     <td><span style="background: #f0f0f1; color: #50575e; padding: 2px 8px; border-radius: 3px; font-size: 12px;">closed</span></td>
-                    <td>2026-02-12 15:30</td>
-                    <td>2026-02-12 15:45</td>
+                    <td>2026/02/12 15:30</td>
+                    <td>2026/02/12 15:45</td>
                     <td>
                         <button class="button button-small" disabled><?php esc_html_e('Details', 'rapls-ai-chatbot'); ?></button>
                         <button class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button>
@@ -3076,11 +3229,12 @@ class WPAIC_Admin {
                     <td><input type="checkbox" disabled></td>
                     <td>3</td>
                     <td><code>ghi789...</code></td>
+                    <td style="text-align: center;">8</td>
                     <td>Hanako Suzuki<br><small>hanako@example.com</small></td>
                     <td>/contact/</td>
                     <td><span style="background: #f0f0f1; color: #50575e; padding: 2px 8px; border-radius: 3px; font-size: 12px;">closed</span></td>
-                    <td>2026-02-11 09:15</td>
-                    <td>2026-02-11 09:30</td>
+                    <td>2026/02/11 09:15</td>
+                    <td>2026/02/11 09:30</td>
                     <td>
                         <button class="button button-small" disabled><?php esc_html_e('Details', 'rapls-ai-chatbot'); ?></button>
                         <button class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button>
@@ -3108,7 +3262,14 @@ class WPAIC_Admin {
                 </div>
                 <div style="margin-bottom: 12px; text-align: right;">
                     <div style="font-size: 12px; color: #999; margin-bottom: 3px;"><strong><?php esc_html_e('Bot', 'rapls-ai-chatbot'); ?></strong> — 10:00</div>
-                    <div style="background: #667eea; color: #fff; padding: 8px 12px; border-radius: 8px; display: inline-block; max-width: 70%; text-align: left;"><?php esc_html_e('You can reset your password from the account settings page...', 'rapls-ai-chatbot'); ?></div>
+                    <div style="background: #667eea; color: #fff; padding: 8px 12px; border-radius: 8px; display: inline-block; max-width: 70%; text-align: left;">
+                        <?php esc_html_e('You can reset your password from the account settings page...', 'rapls-ai-chatbot'); ?>
+                        <div style="margin-top: 6px; display: flex; gap: 6px; align-items: center;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 3px; font-size: 10px;">👍 1</span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 3px; font-size: 10px;">gpt-4o</span>
+                            <span style="background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 3px; font-size: 10px;">245 tokens</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div style="margin-top: 10px;">
@@ -3126,11 +3287,11 @@ class WPAIC_Admin {
                 <h3><?php esc_html_e('Pro Features Include:', 'rapls-ai-chatbot'); ?></h3>
                 <ul>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation export (CSV/JSON)', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation statistics', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Advanced search & status filter', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('AI conversation summary', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Feedback tracking on messages', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation tags & search', 'rapls-ai-chatbot'); ?></li>
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversation sharing & bookmarks', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Feedback & AI metadata on messages', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Response improvement suggestions', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Session management & reset', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Human handoff history', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Bulk operations', 'rapls-ai-chatbot'); ?></li>
                 </ul>
@@ -3186,22 +3347,41 @@ class WPAIC_Admin {
         </div>
 
         <!-- Stats Cards -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
                 <div style="font-size: 32px; font-weight: bold; color: #2271b1;">128</div>
                 <div style="color: #666; font-size: 13px;"><?php esc_html_e('Conversations', 'rapls-ai-chatbot'); ?></div>
+                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 12%</div>
             </div>
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
                 <div style="font-size: 32px; font-weight: bold; color: #00a32a;">512</div>
                 <div style="color: #666; font-size: 13px;"><?php esc_html_e('Messages', 'rapls-ai-chatbot'); ?></div>
+                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 8%</div>
             </div>
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
                 <div style="font-size: 32px; font-weight: bold; color: #dba617;">4.0</div>
                 <div style="color: #666; font-size: 13px;"><?php esc_html_e('Avg Messages', 'rapls-ai-chatbot'); ?></div>
+                <div style="font-size: 11px; color: #d63638; margin-top: 4px;">▼ 5%</div>
             </div>
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #d63638;">85%</div>
+                <div style="font-size: 32px; font-weight: bold; color: #00a32a;">85%</div>
                 <div style="color: #666; font-size: 13px;"><?php esc_html_e('Satisfaction', 'rapls-ai-chatbot'); ?></div>
+                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 3%</div>
+            </div>
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
+                <div style="font-size: 32px; font-weight: bold; color: #667eea;">2.4%</div>
+                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Conversion Rate', 'rapls-ai-chatbot'); ?></div>
+                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 0.5%</div>
+            </div>
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
+                <div style="font-size: 32px; font-weight: bold; color: #1d2327;">$1.24</div>
+                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Estimated Cost', 'rapls-ai-chatbot'); ?></div>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">18,420 tokens</div>
+            </div>
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
+                <div style="font-size: 32px; font-weight: bold; color: #00a32a;">78</div>
+                <div style="color: #666; font-size: 13px;"><?php esc_html_e('AI Quality Score', 'rapls-ai-chatbot'); ?> /100</div>
+                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 5</div>
             </div>
         </div>
 
@@ -3306,6 +3486,32 @@ class WPAIC_Admin {
             <div style="height: 24px; border-radius: 12px; overflow: hidden; display: flex; margin-bottom: 10px;">
                 <div style="width: 84%; background: #00a32a; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: bold;">84%</div>
                 <div style="width: 16%; background: #d63638; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: bold;">16%</div>
+            </div>
+        </div>
+
+        <!-- Usage & Cost -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
+                <h3 style="margin-top: 0;"><?php esc_html_e('Daily Cost Trend', 'rapls-ai-chatbot'); ?></h3>
+                <div style="height: 150px; background: linear-gradient(to bottom, #f8f9fa, #fff); border-radius: 4px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px 10px 0;">
+                    <?php for ($i = 0; $i < 14; $i++): $h = rand(10, 80); ?>
+                    <div style="width: 5%; height: <?php echo esc_attr($h); ?>%; background: linear-gradient(to top, #dba617, #f0d060); border-radius: 3px 3px 0 0;"></div>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0;"><?php esc_html_e('Cost Breakdown by Model', 'rapls-ai-chatbot'); ?></h3>
+                    <button class="button button-small" disabled><?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?></button>
+                </div>
+                <table class="wp-list-table widefat fixed striped" style="font-size: 12px;">
+                    <thead><tr><th><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th><th style="width: 50px;"><?php esc_html_e('Msgs', 'rapls-ai-chatbot'); ?></th><th style="width: 70px;"><?php esc_html_e('Tokens', 'rapls-ai-chatbot'); ?></th><th style="width: 60px;"><?php esc_html_e('Cost', 'rapls-ai-chatbot'); ?></th></tr></thead>
+                    <tbody>
+                        <tr><td>gpt-4o</td><td>320</td><td>12,800</td><td>$0.89</td></tr>
+                        <tr><td>gpt-4o-mini</td><td>192</td><td>5,620</td><td>$0.35</td></tr>
+                    </tbody>
+                    <tfoot><tr style="font-weight: bold;"><td><?php esc_html_e('Total', 'rapls-ai-chatbot'); ?></td><td>512</td><td>18,420</td><td>$1.24</td></tr></tfoot>
+                </table>
             </div>
         </div>
 
@@ -3445,7 +3651,7 @@ class WPAIC_Admin {
             __('Capture and manage visitor information collected through the chatbot. Export leads to CSV/JSON and receive email notifications.', 'rapls-ai-chatbot')
         );
         ?>
-        <!-- Export -->
+        <!-- Export Buttons -->
         <div style="display: flex; gap: 8px; margin-bottom: 15px;">
             <button class="button" disabled><?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?></button>
             <button class="button" disabled><?php esc_html_e('Export JSON', 'rapls-ai-chatbot'); ?></button>
@@ -3589,68 +3795,71 @@ class WPAIC_Admin {
             __('Track all administrative actions for compliance and security monitoring.', 'rapls-ai-chatbot')
         );
         ?>
+        <p class="description" style="margin-bottom: 15px;"><?php esc_html_e('Track all administrative actions performed on the plugin.', 'rapls-ai-chatbot'); ?></p>
+
         <!-- Controls -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <select disabled>
-                    <option><?php esc_html_e('All Actions', 'rapls-ai-chatbot'); ?></option>
-                    <option>settings_updated</option>
-                    <option>knowledge_created</option>
-                    <option>conversations_exported</option>
-                </select>
-                <input type="date" disabled>
-                <input type="date" disabled>
-                <button class="button" disabled><?php esc_html_e('Filter', 'rapls-ai-chatbot'); ?></button>
-            </div>
-            <button class="button" disabled><?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?></button>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+            <select disabled>
+                <option><?php esc_html_e('All Actions', 'rapls-ai-chatbot'); ?></option>
+                <option>Settings Updated</option>
+                <option>Knowledge Created</option>
+                <option>Conversations Exported</option>
+                <option>Lead Exported</option>
+                <option>License Activated</option>
+            </select>
+            <input type="date" disabled>
+            <input type="date" disabled>
+            <input type="search" disabled placeholder="<?php esc_attr_e('Search...', 'rapls-ai-chatbot'); ?>">
+            <button class="button" disabled><?php esc_html_e('Filter', 'rapls-ai-chatbot'); ?></button>
+            <button class="button button-secondary" disabled style="margin-left: auto;"><span class="dashicons dashicons-download" style="vertical-align: text-bottom;"></span> <?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?></button>
         </div>
 
         <!-- Audit Log Table -->
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
-                    <th style="width: 50px;">ID</th>
-                    <th style="width: 160px;"><?php esc_html_e('Action', 'rapls-ai-chatbot'); ?></th>
-                    <th><?php esc_html_e('User', 'rapls-ai-chatbot'); ?></th>
-                    <th><?php esc_html_e('Details', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 160px;"><?php esc_html_e('Date', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 180px;"><?php esc_html_e('Action', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 120px;"><?php esc_html_e('User', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 100px;"><?php esc_html_e('Object', 'rapls-ai-chatbot'); ?></th>
+                    <th><?php esc_html_e('Details', 'rapls-ai-chatbot'); ?></th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>5</td>
-                    <td><code>settings_updated</code></td>
+                    <td>2026/02/20 10:30</td>
+                    <td><span style="background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Settings Updated</span></td>
                     <td>admin</td>
+                    <td>&mdash;</td>
                     <td><?php esc_html_e('Pro settings saved', 'rapls-ai-chatbot'); ?></td>
-                    <td>2026-02-20 10:30</td>
                 </tr>
                 <tr>
-                    <td>4</td>
-                    <td><code>knowledge_created</code></td>
+                    <td>2026/02/19 15:20</td>
+                    <td><span style="background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Knowledge Created</span></td>
                     <td>admin</td>
+                    <td>KB #12</td>
                     <td><?php esc_html_e('FAQ entry added: "How to reset password?"', 'rapls-ai-chatbot'); ?></td>
-                    <td>2026-02-19 15:20</td>
                 </tr>
                 <tr>
-                    <td>3</td>
-                    <td><code>conversations_exported</code></td>
+                    <td>2026/02/18 09:00</td>
+                    <td><span style="background: #fef7e0; color: #b06000; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Conversations Exported</span></td>
                     <td>admin</td>
-                    <td><?php esc_html_e('Exported 48 conversations as CSV', 'rapls-ai-chatbot'); ?></td>
-                    <td>2026-02-18 09:00</td>
+                    <td>&mdash;</td>
+                    <td>format: CSV, count: 48</td>
                 </tr>
                 <tr>
-                    <td>2</td>
-                    <td><code>lead_exported</code></td>
+                    <td>2026/02/17 14:45</td>
+                    <td><span style="background: #fef7e0; color: #b06000; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Lead Exported</span></td>
                     <td>admin</td>
-                    <td><?php esc_html_e('Exported 15 leads as JSON', 'rapls-ai-chatbot'); ?></td>
-                    <td>2026-02-17 14:45</td>
+                    <td>&mdash;</td>
+                    <td>format: JSON, count: 15</td>
                 </tr>
                 <tr>
-                    <td>1</td>
-                    <td><code>license_activated</code></td>
+                    <td>2026/02/15 11:00</td>
+                    <td><span style="background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 3px; font-size: 12px;">License Activated</span></td>
                     <td>admin</td>
+                    <td>&mdash;</td>
                     <td><?php esc_html_e('License activated successfully', 'rapls-ai-chatbot'); ?></td>
-                    <td>2026-02-15 11:00</td>
                 </tr>
             </tbody>
         </table>

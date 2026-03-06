@@ -86,7 +86,6 @@
         leadSubmitted: false,
         historyLoaded: false,
         sessionLoading: false,
-        navType: 'navigate',
         selectedImage: null,
         selectedImageData: null,
 
@@ -206,7 +205,7 @@
                         this.window.style.height = size.height + 'px';
                     }
                 } catch (e) {
-                    console.error('Failed to load window size:', e);
+                    if (this.config.debug) { console.error('Failed to load window size:', e); }
                 }
             }
         },
@@ -405,17 +404,10 @@
         loadSession: function() {
             var self = this;
 
-            // ナビゲーションタイプをチェック
-            // 'reload' = ページリロード（履歴を表示）
-            // 'navigate' = 新規ナビゲーション（ウェルカムメッセージを表示）
-            this.navType = 'navigate';
-            try {
-                var navEntries = performance.getEntriesByType('navigation');
-                if (navEntries && navEntries.length > 0) {
-                    this.navType = navEntries[0].type;
-                }
-            } catch (e) {
-                // Navigation API not supported
+            // 会話履歴保存がオフの場合、毎回新規セッションを作成（会話を引き継がない）
+            if (!this.config.save_history) {
+                this.clearSession();
+                this.sessionId = null;
             }
 
             // セッションバージョンチェック（sessionStorageを使用）
@@ -457,7 +449,10 @@
                         self.sessionId = response.session_id;
                         wpaicSsSet('wpaic_session', self.sessionId);
                         wpaicSsSet('wpaic_session_version', String(currentVersion));
-                        wpaicLsSet('wpaic_session', self.sessionId);
+                        // 会話履歴保存がオンの場合のみ localStorage に永続化
+                        if (self.config.save_history) {
+                            wpaicLsSet('wpaic_session', self.sessionId);
+                        }
                         // HMAC トークンを保存（IP 変動時のフォールバック認証用）
                         if (response.session_token) {
                             wpaicLsSet('wpaic_session_token', response.session_token);
@@ -469,15 +464,17 @@
                         finishLoading();
                     })
                     .catch(function(error) {
-                        console.error('Session creation failed:', error);
+                        if (self.config.debug) {
+                            console.error('Session creation failed:', error);
+                        }
                         finishLoading();
                     });
             } else {
                 // 既存セッションの場合
                 this.sessionLoading = true;
 
-                // リロード時のみ履歴を読み込む（新規ナビゲーション時はウェルカムメッセージから開始）
-                var loadHistoryPromise = (this.navType === 'reload')
+                // 会話履歴保存がオンの場合のみ履歴を読み込む
+                var loadHistoryPromise = this.config.save_history
                     ? this.loadHistory()
                     : Promise.resolve();
 
@@ -489,7 +486,9 @@
                         finishLoading();
                     })
                     .catch(function(error) {
-                        console.error('Failed to load session data:', error);
+                        if (self.config.debug) {
+                            console.error('Failed to load session data:', error);
+                        }
                         finishLoading();
                     });
             }
@@ -566,6 +565,9 @@
                         // 既存のメッセージをクリア
                         self.messagesEl.innerHTML = '';
 
+                        // ウェルカムメッセージを先頭に表示
+                        self.showWelcomeMessage();
+
                         // 履歴からメッセージを復元
                         response.messages.forEach(function(msg) {
                             var role = msg.role === 'assistant' ? 'bot' : msg.role;
@@ -576,7 +578,9 @@
                     }
                 })
                 .catch(function(error) {
-                    console.error('Failed to load history:', error);
+                    if (self.config.debug) {
+                        console.error('Failed to load history:', error);
+                    }
                 });
         },
 
@@ -605,10 +609,11 @@
                     vi: 'Xin chào! Tôi có thể giúp gì cho bạn?',
                 };
                 var adminMessages = this.config.welcome_messages || {};
-                // Admin-customized message takes priority, then default translation
+                // Priority: 1) per-language admin message, 2) main welcome_message (kept as-is),
+                // 3) default translation (only when main message is unchanged from default)
                 if (adminMessages[browserLang]) {
                     welcomeMsg = adminMessages[browserLang];
-                } else if (defaultTranslations[browserLang]) {
+                } else if (welcomeMsg === 'Hello! How can I help you today?' && defaultTranslations[browserLang]) {
                     welcomeMsg = defaultTranslations[browserLang];
                 }
             }
@@ -2031,6 +2036,16 @@
                             var errorCode = json.error_code || (json.data && json.data.error_code) || json.code || '';
                             var errorMsg = json.error || json.message || 'API error: ' + response.status;
 
+                            // Auto-retry: 429 rate limited → wait and retry with exponential backoff (up to 2 retries)
+                            if (response.status === 429 && _retryCount < 2) {
+                                var retryDelay = (Math.pow(2, _retryCount) * 2000) + Math.floor(Math.random() * 1000);
+                                return new Promise(function(resolve) {
+                                    setTimeout(resolve, retryDelay);
+                                }).then(function() {
+                                    return self.apiRequest(method, endpoint, data, _retryCount + 1);
+                                });
+                            }
+
                             // Auto-retry: session_expired → clear session, re-acquire, retry original request (once)
                             if (errorCode === 'session_expired' && _retryCount < 1) {
                                 self.clearSession();
@@ -3098,9 +3113,9 @@
          * All content is created via DOM API — no innerHTML.
          */
         _appendInlineMarkdown: function(el, text) {
-            // Tokenize: inline code, bold, italic, URLs, line breaks, plain text
-            // Order matters: code first (prevents bold/italic inside code), then bold, italic, URLs
-            var pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|https?:\/\/[^\s<>"'\)\]]+|\n)/g;
+            // Tokenize: inline code, bold, italic, markdown links, URLs, line breaks, plain text
+            // Order matters: code first, then bold, italic, markdown links [text](url), raw URLs
+            var pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\(https?:\/\/[^\s\)]+\)|https?:\/\/[^\s<>"'\)\]]+|\n)/g;
             var lastIndex = 0;
             var match;
 
@@ -3128,8 +3143,21 @@
                     var em = document.createElement('em');
                     em.textContent = token.substring(1, token.length - 1);
                     el.appendChild(em);
+                } else if (token.charAt(0) === '[') {
+                    // Markdown link: [text](url)
+                    var linkMatch = token.match(/^\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)$/);
+                    if (linkMatch) {
+                        var a = document.createElement('a');
+                        a.href = linkMatch[2];
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                        a.textContent = linkMatch[1];
+                        el.appendChild(a);
+                    } else {
+                        el.appendChild(document.createTextNode(token));
+                    }
                 } else if (/^https?:\/\//.test(token)) {
-                    // URL
+                    // Raw URL
                     var a = document.createElement('a');
                     a.href = token;
                     a.target = '_blank';

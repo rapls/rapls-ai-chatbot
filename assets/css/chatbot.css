@@ -82,8 +82,8 @@
 }
 
 .chatbot-badge .badge-icon-image {
-    width: 36px;
-    height: 36px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -179,6 +179,49 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+@keyframes wpaic-slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ============================================
+   バッジ位置バリエーション
+============================================ */
+/* 上配置: ウィンドウは下方向に開く */
+.wp-ai-chatbot[data-position="top-right"] .chatbot-window,
+.wp-ai-chatbot[data-position="top-left"] .chatbot-window {
+    animation: wpaic-slideDown 0.3s ease;
+}
+
+/* 上配置: リサイズハンドルを左下に移動 */
+.wp-ai-chatbot[data-position="top-right"] .chatbot-resize-handle,
+.wp-ai-chatbot[data-position="top-left"] .chatbot-resize-handle {
+    top: auto;
+    bottom: 0;
+    cursor: nesw-resize;
+}
+
+.wp-ai-chatbot[data-position="top-right"] .chatbot-resize-handle::before,
+.wp-ai-chatbot[data-position="top-left"] .chatbot-resize-handle::before {
+    top: auto;
+    bottom: 6px;
+    border-top: none;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.8);
+}
+
+/* 左配置: 通知ドットを左側に */
+.wp-ai-chatbot[data-position="bottom-left"] .badge-notification,
+.wp-ai-chatbot[data-position="top-left"] .badge-notification {
+    right: auto;
+    left: -2px;
 }
 
 /* ============================================
@@ -701,6 +744,10 @@
     border-top: 1px solid var(--wpaic-border);
 }
 
+.chatbot-message__actions:empty {
+    display: none;
+}
+
 .chatbot-message__feedback {
     display: flex;
     gap: 4px;
@@ -895,6 +942,11 @@
 /* ============================================
    画像アップロード（Pro: マルチモーダル）
 ============================================ */
+.chatbot-image-btn[hidden],
+.chatbot-mic-btn[hidden] {
+    display: none !important;
+}
+
 .chatbot-image-btn {
     width: 40px;
     height: 40px;
@@ -1012,13 +1064,17 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     padding: 0;
     opacity: 0.5;
     transition: opacity 0.2s;
+}
+
+.chatbot-tts-toggle:not([hidden]) {
+    display: flex;
 }
 
 .chatbot-tts-toggle:hover,
@@ -1302,13 +1358,13 @@
     border-radius: 0;
 }
 
-.wpaic-chatbot.theme-classic .chatbot-message--bot {
+.wpaic-chatbot.theme-classic .chatbot-message--bot .chatbot-message__content {
     background: #ecf0f1;
     border-radius: 0;
     border-left: 3px solid #2c3e50;
 }
 
-.wpaic-chatbot.theme-classic .chatbot-message--user {
+.wpaic-chatbot.theme-classic .chatbot-message--user .chatbot-message__content {
     background: #2c3e50;
     border-radius: 0;
 }
@@ -1357,12 +1413,12 @@
     background: #fafafa;
 }
 
-.wpaic-chatbot.theme-light .chatbot-message--bot {
+.wpaic-chatbot.theme-light .chatbot-message--bot .chatbot-message__content {
     background: #fff;
     border: 1px solid #e8e8e8;
 }
 
-.wpaic-chatbot.theme-light .chatbot-message--user {
+.wpaic-chatbot.theme-light .chatbot-message--user .chatbot-message__content {
     background: #5c9eff;
 }
 
@@ -1394,13 +1450,13 @@
     padding: 12px 16px;
 }
 
-.wpaic-chatbot.theme-minimal .chatbot-message--bot {
+.wpaic-chatbot.theme-minimal .chatbot-message--bot .chatbot-message__content {
     background: #f5f5f5;
     border-radius: 4px;
     border: none;
 }
 
-.wpaic-chatbot.theme-minimal .chatbot-message--user {
+.wpaic-chatbot.theme-minimal .chatbot-message--user .chatbot-message__content {
     background: #333;
     border-radius: 4px;
 }
@@ -1433,12 +1489,12 @@
     border-radius: 0;
 }
 
-.wpaic-chatbot.theme-flat .chatbot-message--bot {
+.wpaic-chatbot.theme-flat .chatbot-message--bot .chatbot-message__content {
     background: #ecf0f1;
     border-radius: 0;
 }
 
-.wpaic-chatbot.theme-flat .chatbot-message--user {
+.wpaic-chatbot.theme-flat .chatbot-message--user .chatbot-message__content {
     background: #3498db;
     border-radius: 0;
 }

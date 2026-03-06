@@ -218,8 +218,9 @@ class WPAIC_Main {
         $this->loader->add_action('wp_enqueue_scripts', $widget, 'enqueue_scripts');
         $this->loader->add_action('wp_footer', $widget, 'render_widget');
 
-        // Shortcode [rapls_chatbot] for inline embedding
+        // Shortcode [rapls_chatbot] and [wpaic_chatbot] for inline embedding
         add_shortcode('rapls_chatbot', [$widget, 'render_shortcode']);
+        add_shortcode('wpaic_chatbot', [$widget, 'render_shortcode']);
 
         // Gutenberg block (server-side rendered, wraps the shortcode)
         add_action('init', function () {
@@ -258,9 +259,28 @@ class WPAIC_Main {
     }
 
     /**
+     * Register custom cron schedules (monthly).
+     *
+     * @param array $schedules Existing schedules.
+     * @return array
+     */
+    public function add_cron_schedules($schedules) {
+        if (!isset($schedules['monthly'])) {
+            $schedules['monthly'] = [
+                'interval' => 30 * DAY_IN_SECONDS,
+                'display'  => __('Monthly', 'rapls-ai-chatbot'),
+            ];
+        }
+        return $schedules;
+    }
+
+    /**
      * Define cron hooks
      */
     private function define_cron_hooks() {
+        // Register custom schedules
+        $this->loader->add_filter('cron_schedules', $this, 'add_cron_schedules');
+
         // Cleanup is always registered
         $this->loader->add_action('wpaic_cleanup_old_conversations', $this, 'cleanup_old_conversations');
 

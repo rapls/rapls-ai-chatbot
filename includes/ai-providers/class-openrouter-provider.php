@@ -49,6 +49,20 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
             throw new Exception(esc_html__('OpenRouter API key is not configured.', 'rapls-ai-chatbot'));
         }
 
+        // Inject image into the last user message (OpenAI vision format)
+        if (!empty($options['image'])) {
+            for ($i = count($messages) - 1; $i >= 0; $i--) {
+                if ($messages[$i]['role'] === 'user') {
+                    $text = $messages[$i]['content'];
+                    $messages[$i]['content'] = [
+                        ['type' => 'text', 'text' => $text],
+                        ['type' => 'image_url', 'image_url' => ['url' => $options['image']]],
+                    ];
+                    break;
+                }
+            }
+        }
+
         $body = [
             'model'    => $this->model,
             'messages' => $messages,

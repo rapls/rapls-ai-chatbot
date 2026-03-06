@@ -107,12 +107,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * Models NOT in this list use Responses API as first choice.
      */
     private function is_legacy_chat_only(): bool {
+        // gpt-4o series and gpt-4.1+ are NOT legacy (use Responses API)
+        if (strpos($this->model, 'gpt-4o') === 0 || strpos($this->model, 'gpt-4.') === 0) {
+            return false;
+        }
         foreach ($this->legacy_chat_only_models as $prefix) {
             if (strpos($this->model, $prefix) === 0) {
                 return true;
             }
         }
-        // GPT-4o is special: not legacy, supports both APIs
         return false;
     }
 
@@ -293,6 +296,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     private function send_via_chat_completions(array $messages, array $options): array {
         $is_reasoning = $this->is_reasoning_model();
 
+        // Inject image into the last user message for multimodal vision
+        if (!empty($options['image'])) {
+            $messages = $this->inject_image_into_messages($messages, $options['image']);
+        }
+
         // Convert messages for reasoning models
         if ($is_reasoning) {
             $messages = $this->convert_messages_for_reasoning($messages);
@@ -351,6 +359,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * Send via Responses API (/v1/responses) — fallback for newer models
      */
     private function send_via_responses_api(array $messages, array $options): array {
+        // Inject image into the last user message for multimodal vision
+        if (!empty($options['image'])) {
+            $messages = $this->inject_image_into_messages($messages, $options['image']);
+        }
+
         // Convert messages to Responses API input format
         $input = [];
         foreach ($messages as $message) {
@@ -371,8 +384,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         ];
 
         // Web search tool (Responses API only)
+        $has_web_search = false;
         if (!empty($options['web_search'])) {
             $body['tools'] = [['type' => 'web_search_preview']];
+            $has_web_search = true;
         }
 
         $configured_max = $options['max_tokens'] ?? 4000;
@@ -390,9 +405,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         if ($this->should_log()) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf(
-                'WPAIC OpenAI: endpoint=responses model=%s max_output_tokens=%s request_id=%s',
+                'WPAIC OpenAI: endpoint=responses model=%s max_output_tokens=%s web_search=%s request_id=%s',
                 $this->model,
                 $body['max_output_tokens'] ?? '?',
+                $has_web_search ? 'yes' : 'no',
                 $options['_request_id'] ?? 'none'
             ));
         }
@@ -405,7 +421,17 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $headers[$options['_request_id_header']] = $options['_request_id'];
         }
 
-        return $this->send_http_request($this->responses_api_url, $headers, $body);
+        // If web search tool causes a 400 error, retry without it
+        // (the tool type may not be supported for this model/account)
+        try {
+            return $this->send_http_request($this->responses_api_url, $headers, $body);
+        } catch (Exception $e) {
+            if ($has_web_search && $e->getCode() === 400) {
+                unset($body['tools']);
+                return $this->send_http_request($this->responses_api_url, $headers, $body);
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -1045,6 +1071,25 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Inject image data into the last user message for vision models.
+     * Converts text content to OpenAI vision format: array of content parts.
+     */
+    private function inject_image_into_messages(array $messages, string $image_data): array {
+        // Find the last user message and convert to vision format
+        for ($i = count($messages) - 1; $i >= 0; $i--) {
+            if ($messages[$i]['role'] === 'user') {
+                $text = $messages[$i]['content'];
+                $messages[$i]['content'] = [
+                    ['type' => 'text', 'text' => $text],
+                    ['type' => 'image_url', 'image_url' => ['url' => $image_data]],
+                ];
+                break;
+            }
+        }
+        return $messages;
     }
 
     /**

@@ -532,10 +532,13 @@ class WPAIC_REST_Controller {
         }
 
         $session_version = get_option('wpaic_session_version', 1);
+        $settings = get_option('wpaic_settings', []);
+        $save_history = !empty($settings['save_history']);
 
-        // Reuse existing session from cookie only if it passes strict validation
+        // Reuse existing session from cookie only when save_history is ON.
+        // When OFF, always create a new session so conversations are not carried over.
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $existing_session = isset($_COOKIE['wpaic_session_id']) ? sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) : '';
+        $existing_session = ($save_history && isset($_COOKIE['wpaic_session_id'])) ? sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) : '';
         if (!empty($existing_session)) {
             // Strict format check: must be UUID4 (8-4-4-4-12 hex)
             if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $existing_session)) {
@@ -1197,11 +1200,7 @@ class WPAIC_REST_Controller {
                     }
                 }
             }
-            // Web search instruction (appended before RAG context so AI knows it can search)
             $web_search_enabled = !empty($settings['web_search_enabled']);
-            if ($web_search_enabled) {
-                $system_prompt .= "\n\n[WEB SEARCH]\nYou have access to web search. Use it ONLY when the provided reference information does not contain a sufficient answer. Prefer the reference information over web results. When citing web sources, mention the source naturally in your response.";
-            }
 
             /**
              * Filter the RAG context before injection into the system prompt.
@@ -1231,14 +1230,26 @@ class WPAIC_REST_Controller {
                     }
                 } else {
                     // Standard reference information - use configurable prompt
-                    $site_prompt = $settings['site_context_prompt'] ?? "[IMPORTANT: Reference Information]\nYou MUST use the following information as the primary source when answering. If the answer can be found in this information, use it directly.\nIf the reference information does NOT contain the answer, clearly state that you don't have specific information about it. Do NOT guess or fabricate details.\n\n{context}";
+                    $site_prompt = $settings['site_context_prompt'] ?? "[IMPORTANT: Reference Information]\nBelow is reference information from this site's knowledge base. You MUST use this as the primary source when answering.\n- Search the ENTIRE reference information thoroughly before concluding that no relevant data exists.\n- The user's wording may differ from the reference text (e.g. \"料金プラン\" vs \"料金体系\", \"price\" vs \"pricing\"). Match by MEANING, not exact keywords.\n- If ANY part of the reference information is relevant to the user's question, use it to answer.\n- Only say you don't have the information if, after careful review, absolutely nothing in the reference is related.\n\n{context}";
                     $system_prompt .= "\n\n" . str_replace('{context}', $context, $site_prompt);
                 }
             }
 
+            // Web search instruction — strength depends on whether knowledge base had relevant content
+            if ($web_search_enabled) {
+                if (empty($context)) {
+                    // No knowledge base context — force web search
+                    $system_prompt .= "\n\n[WEB SEARCH — MANDATORY]\nNo reference information is available for this question. You MUST use your web search tool to find current, accurate information before answering. Do NOT answer from memory or training data alone — ALWAYS search the web first.";
+                } else {
+                    // Knowledge base context available — web search as supplement
+                    $system_prompt .= "\n\n[WEB SEARCH]\nYou have access to a web search tool. If the reference information above does not fully answer the question, use web search to find additional or more current information. For questions about dates, recent events, or current status, ALWAYS search the web.";
+                }
+            }
+
             // Get conversation history
+            $history_count = absint($settings['message_history_count'] ?? 10);
             $history = $save_history
-                ? WPAIC_Message::get_context_messages($conversation_id, 10)
+                ? WPAIC_Message::get_context_messages($conversation_id, $history_count)
                 : $this->get_transient_context($session_id);
 
             // Build message array
@@ -1269,6 +1280,15 @@ class WPAIC_REST_Controller {
             ];
             if ($web_search_enabled) {
                 $send_options['web_search'] = true;
+                // Force web search when knowledge base has no relevant content
+                if (empty($context)) {
+                    $send_options['force_web_search'] = true;
+                }
+            }
+
+            // Pass image data to AI provider for multimodal vision
+            if (!empty($image)) {
+                $send_options['image'] = $image;
             }
 
             $response = $ai_provider->send_message($messages, $send_options);
@@ -2054,10 +2074,9 @@ class WPAIC_REST_Controller {
         $limit = (int) ($settings['rate_limit'] ?? 20);
         $window = (int) ($settings['rate_limit_window'] ?? 3600);
 
-        // Enforce minimum floor: even if admin sets 0, always apply at least
-        // 60 requests per hour to prevent bot abuse
-        if ($limit < 1) {
-            $limit = 60;
+        // 0 = unlimited (no rate limiting, including burst)
+        if ($limit === 0) {
+            return true;
         }
         if ($window < 60) {
             $window = 3600;

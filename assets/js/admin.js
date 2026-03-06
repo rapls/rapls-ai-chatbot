@@ -738,20 +738,54 @@
 
     });
 
-    // Advanced section toggle (checkbox-gated)
-    $('.wpaic-advanced-toggle').on('change', function () {
+    // Advanced section toggle (checkbox-gated, state persisted in localStorage)
+    $('.wpaic-advanced-toggle').each(function () {
+        var key = 'wpaic_adv_' + this.id;
+        if (localStorage.getItem(key) === '1') {
+            this.checked = true;
+            $('#' + $(this).data('target')).removeClass('wpaic-advanced-disabled');
+        }
+    }).on('change', function () {
         var targetId = $(this).data('target');
         var $section = $('#' + targetId);
+        var key = 'wpaic_adv_' + this.id;
         if (this.checked) {
             $section.removeClass('wpaic-advanced-disabled');
+            localStorage.setItem(key, '1');
         } else {
             $section.addClass('wpaic-advanced-disabled');
+            localStorage.removeItem(key);
         }
     });
 
     // Per-language welcome messages: show/hide based on response_language
     $('#wpaic_response_language').on('change', function() {
         $('#wpaic-per-language-welcome').toggle($(this).val() === 'auto');
+    });
+
+    // Clear individual per-language welcome message
+    $(document).on('click', '.wpaic-reset-welcome-lang', function() {
+        var targetId = $(this).data('target');
+        $('#' + targetId).val('');
+    });
+
+    // Clear all per-language welcome messages
+    $('#wpaic-reset-all-welcome-langs').on('click', function() {
+        $('#wpaic-per-language-welcome textarea').val('');
+    });
+
+    // Badge position: update active state and margin labels
+    $('input[name="wpaic_settings[badge_position]"]').on('change', function() {
+        var pos = $(this).val();
+        var isLeft = (pos === 'bottom-left' || pos === 'top-left');
+        var isTop = (pos === 'top-right' || pos === 'top-left');
+        var i18n = (typeof wpaicAdmin !== 'undefined' && wpaicAdmin.i18n) ? wpaicAdmin.i18n : {};
+        // Update active class on grid
+        $('.wpaic-badge-pos-option').removeClass('active');
+        $(this).closest('.wpaic-badge-pos-option').addClass('active');
+        // Update margin labels
+        $('#wpaic_margin_h_label').text(isLeft ? (i18n.leftLabel || 'Left:') : (i18n.rightLabel || 'Right:'));
+        $('#wpaic_margin_v_label').text(isTop ? (i18n.topLabel || 'Top:') : (i18n.bottomLabel || 'Bottom:'));
     });
 
 })(jQuery);

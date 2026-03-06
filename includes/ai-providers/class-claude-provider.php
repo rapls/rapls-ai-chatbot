@@ -69,13 +69,33 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         $system_message = '';
         $chat_messages = [];
 
-        foreach ($messages as $msg) {
+        $image_data = $options['image'] ?? '';
+
+        // Find last user message index for image injection
+        $last_user_idx = -1;
+        if (!empty($image_data)) {
+            for ($i = count($messages) - 1; $i >= 0; $i--) {
+                if ($messages[$i]['role'] === 'user') {
+                    $last_user_idx = $i;
+                    break;
+                }
+            }
+        }
+
+        foreach ($messages as $idx => $msg) {
             if ($msg['role'] === 'system') {
                 $system_message .= $msg['content'] . "\n";
             } else {
+                $content = $msg['content'];
+
+                // Inject image into the last user message for vision
+                if ($idx === $last_user_idx) {
+                    $content = $this->build_vision_content($content, $image_data);
+                }
+
                 $chat_messages[] = [
                     'role'    => $msg['role'],
-                    'content' => $msg['content'],
+                    'content' => $content,
                 ];
             }
         }
@@ -100,6 +120,10 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                     'max_uses' => 3,
                 ],
             ];
+            // Force web search when knowledge base has no relevant content
+            if (!empty($options['force_web_search'])) {
+                $body['tool_choice'] = ['type' => 'any'];
+            }
         }
 
         /** @see WPAIC_OpenAI_Provider::send_http_request() for filter docs */
@@ -327,6 +351,36 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
      */
     public function fetch_models_from_api(): array {
         return [];
+    }
+
+    /**
+     * Build vision content array for Claude API.
+     * Converts text + image data URL to Claude's multimodal content format.
+     */
+    private function build_vision_content(string $text, string $image_data): array {
+        // Parse data URI: data:image/jpeg;base64,/9j/4AAQ...
+        $media_type = 'image/jpeg';
+        $base64 = $image_data;
+
+        if (preg_match('#^data:(image/[a-z+]+);base64,(.+)$#s', $image_data, $m)) {
+            $media_type = $m[1];
+            $base64 = $m[2];
+        }
+
+        return [
+            [
+                'type'   => 'image',
+                'source' => [
+                    'type'       => 'base64',
+                    'media_type' => $media_type,
+                    'data'       => $base64,
+                ],
+            ],
+            [
+                'type' => 'text',
+                'text' => $text,
+            ],
+        ];
     }
 
     /**

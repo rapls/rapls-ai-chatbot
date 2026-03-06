@@ -50,17 +50,41 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         $system_instruction = '';
         $contents = [];
 
-        foreach ($messages as $msg) {
+        $image_data = $options['image'] ?? '';
+
+        // Find last user message index for image injection
+        $last_user_idx = -1;
+        if (!empty($image_data)) {
+            for ($i = count($messages) - 1; $i >= 0; $i--) {
+                if ($messages[$i]['role'] === 'user') {
+                    $last_user_idx = $i;
+                    break;
+                }
+            }
+        }
+
+        foreach ($messages as $idx => $msg) {
             if ($msg['role'] === 'system') {
                 $system_instruction .= $msg['content'] . "\n";
             } else {
                 // Convert to Gemini role format (user/model)
                 $role = $msg['role'] === 'assistant' ? 'model' : 'user';
+                $parts = [['text' => $msg['content']]];
+
+                // Inject image into the last user message for vision
+                if ($idx === $last_user_idx) {
+                    $mime = 'image/jpeg';
+                    $b64 = $image_data;
+                    if (preg_match('#^data:(image/[a-z+]+);base64,(.+)$#s', $image_data, $m)) {
+                        $mime = $m[1];
+                        $b64 = $m[2];
+                    }
+                    $parts[] = ['inline_data' => ['mime_type' => $mime, 'data' => $b64]];
+                }
+
                 $contents[] = [
                     'role'  => $role,
-                    'parts' => [
-                        ['text' => $msg['content']]
-                    ]
+                    'parts' => $parts,
                 ];
             }
         }
@@ -83,8 +107,10 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         }
 
         // Web search grounding tool
+        $has_web_search = false;
         if (!empty($options['web_search'])) {
             $body['tools'] = [['google_search' => new \stdClass()]];
+            $has_web_search = true;
         }
 
         $url = $this->api_url . $this->model . ':generateContent?key=' . $this->api_key;
@@ -95,13 +121,25 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         $upper     = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
         $timeout   = max(10, min($upper, $requested));
 
-        $response = wp_remote_post($url, [
+        $request_args = [
             'headers' => [
                 'Content-Type' => 'application/json',
             ],
             'body'    => wp_json_encode($body),
             'timeout' => $timeout,
-        ]);
+        ];
+
+        $response = wp_remote_post($url, $request_args);
+
+        // If web search tool causes an error, retry without it
+        if ($has_web_search && !is_wp_error($response)) {
+            $resp_code = wp_remote_retrieve_response_code($response);
+            if ($resp_code === 400) {
+                unset($body['tools']);
+                $request_args['body'] = wp_json_encode($body);
+                $response = wp_remote_post($url, $request_args);
+            }
+        }
 
         if (is_wp_error($response)) {
             throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
@@ -263,9 +301,10 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
      * Check if current model supports vision
      */
     public function supports_vision(): bool {
-        // All Gemini 1.5+ and 2.0 models support vision
+        // All Gemini 1.5+ models support vision
         return strpos($this->model, 'gemini-1.5') !== false ||
-               strpos($this->model, 'gemini-2') !== false;
+               strpos($this->model, 'gemini-2') !== false ||
+               strpos($this->model, 'gemini-3') !== false;
     }
 
     /**

@@ -220,6 +220,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                                 <option value="twicedaily" <?php selected($settings['crawler_interval'] ?? 'daily', 'twicedaily'); ?>><?php esc_html_e('Twice Daily', 'rapls-ai-chatbot'); ?></option>
                                 <option value="daily" <?php selected($settings['crawler_interval'] ?? 'daily', 'daily'); ?>><?php esc_html_e('Daily', 'rapls-ai-chatbot'); ?></option>
                                 <option value="weekly" <?php selected($settings['crawler_interval'] ?? 'daily', 'weekly'); ?>><?php esc_html_e('Weekly', 'rapls-ai-chatbot'); ?></option>
+                                <option value="monthly" <?php selected($settings['crawler_interval'] ?? 'daily', 'monthly'); ?>><?php esc_html_e('Monthly', 'rapls-ai-chatbot'); ?></option>
                             </select>
                         </td>
                     </tr>
@@ -326,9 +327,11 @@ $post_types = get_post_types(['public' => true], 'objects');
                 <input type="hidden" name="wpaic_settings[openai_api_key]" value="<?php echo esc_attr($settings['openai_api_key'] ?? ''); ?>">
                 <input type="hidden" name="wpaic_settings[claude_api_key]" value="<?php echo esc_attr($settings['claude_api_key'] ?? ''); ?>">
                 <input type="hidden" name="wpaic_settings[gemini_api_key]" value="<?php echo esc_attr($settings['gemini_api_key'] ?? ''); ?>">
+                <input type="hidden" name="wpaic_settings[openrouter_api_key]" value="<?php echo esc_attr($settings['openrouter_api_key'] ?? ''); ?>">
                 <input type="hidden" name="wpaic_settings[openai_model]" value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o'); ?>">
                 <input type="hidden" name="wpaic_settings[claude_model]" value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-sonnet-4-20250514'); ?>">
                 <input type="hidden" name="wpaic_settings[gemini_model]" value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'); ?>">
+                <input type="hidden" name="wpaic_settings[openrouter_model]" value="<?php echo esc_attr($settings['openrouter_model'] ?? 'openrouter/auto'); ?>">
                 <input type="hidden" name="wpaic_settings[bot_name]" value="<?php echo esc_attr($settings['bot_name'] ?? 'Assistant'); ?>">
                 <input type="hidden" name="wpaic_settings[bot_avatar]" value="<?php echo esc_attr($settings['bot_avatar'] ?? '🤖'); ?>">
                 <input type="hidden" name="wpaic_settings[welcome_message]" value="<?php echo esc_attr($settings['welcome_message'] ?? ''); ?>">

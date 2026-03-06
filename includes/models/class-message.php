@@ -60,18 +60,22 @@ class WPAIC_Message {
     }
 
     /**
-     * Get messages by conversation ID
+     * Get messages by conversation ID (latest N messages in chronological order)
      */
     public static function get_by_conversation($conversation_id, $limit = 50) {
         global $wpdb;
         $table = self::get_table_name();
 
+        // Fetch latest N messages (DESC) then reverse to chronological order.
+        // This ensures long conversations show the most recent messages.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM `{$table}` WHERE conversation_id = %d ORDER BY created_at ASC LIMIT %d",
+        $messages = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM `{$table}` WHERE conversation_id = %d ORDER BY created_at DESC LIMIT %d",
             $conversation_id,
             $limit
         ), ARRAY_A);
+
+        return array_reverse($messages);
     }
 
     /**

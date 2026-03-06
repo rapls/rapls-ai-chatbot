@@ -42,6 +42,7 @@ if (!defined('ABSPATH')) {
 
             <!-- AI Settings -->
             <div id="tab-ai" class="tab-content active">
+                <input type="hidden" name="wpaic_settings[_settings_page]" value="1">
                 <div class="wpaic-tab-header">
                     <h2><?php esc_html_e('AI Settings', 'rapls-ai-chatbot'); ?></h2>
                     <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-ai">
@@ -458,16 +459,32 @@ if (!defined('ABSPATH')) {
                         });
                     }
 
+                    function wpaicCopyText(text, btn, originalLabel) {
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).then(function() {
+                                btn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
+                                setTimeout(function() { btn.textContent = originalLabel; }, 2000);
+                            });
+                        } else {
+                            var textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.style.cssText = 'position:fixed;opacity:0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            try {
+                                document.execCommand('copy');
+                                btn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
+                                setTimeout(function() { btn.textContent = originalLabel; }, 2000);
+                            } catch (e) {}
+                            document.body.removeChild(textarea);
+                        }
+                    }
+
                     if (copyKeyBtn) {
                         copyKeyBtn.addEventListener('click', function() {
                             var key = this.dataset.key;
-                            if (key && navigator.clipboard) {
-                                navigator.clipboard.writeText(key).then(function() {
-                                    copyKeyBtn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
-                                    setTimeout(function() {
-                                        copyKeyBtn.textContent = <?php echo wp_json_encode(__('Copy Key', 'rapls-ai-chatbot')); ?>;
-                                    }, 2000);
-                                });
+                            if (key) {
+                                wpaicCopyText(key, copyKeyBtn, <?php echo wp_json_encode(__('Copy Key', 'rapls-ai-chatbot')); ?>);
                             }
                         });
                     }
@@ -475,14 +492,7 @@ if (!defined('ABSPATH')) {
                     if (copyEndpointBtn) {
                         copyEndpointBtn.addEventListener('click', function() {
                             var endpoint = document.getElementById('wpaic-mcp-endpoint').textContent;
-                            if (navigator.clipboard) {
-                                navigator.clipboard.writeText(endpoint).then(function() {
-                                    copyEndpointBtn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
-                                    setTimeout(function() {
-                                        copyEndpointBtn.textContent = <?php echo wp_json_encode(__('Copy', 'rapls-ai-chatbot')); ?>;
-                                    }, 2000);
-                                });
-                            }
+                            wpaicCopyText(endpoint, copyEndpointBtn, <?php echo wp_json_encode(__('Copy', 'rapls-ai-chatbot')); ?>);
                         });
                     }
                 })();
@@ -577,23 +587,39 @@ if (!defined('ABSPATH')) {
                                     <summary style="cursor: pointer; font-weight: 600; margin-bottom: 8px;">
                                         <?php esc_html_e('Per-Language Welcome Messages', 'rapls-ai-chatbot'); ?>
                                     </summary>
-                                    <p class="description" style="margin-bottom: 10px;">
-                                        <?php esc_html_e('Customize the welcome message for each language. Leave blank to use the default.', 'rapls-ai-chatbot'); ?>
-                                    </p>
+                                    <div class="notice notice-info inline" style="margin: 8px 0 12px; padding: 8px 12px;">
+                                        <p style="margin: 0;">
+                                            <?php esc_html_e('Priority order:', 'rapls-ai-chatbot'); ?>
+                                            <strong>1.</strong> <?php esc_html_e('Per-language message (below)', 'rapls-ai-chatbot'); ?>
+                                            &rarr; <strong>2.</strong> <?php esc_html_e('Welcome Message (above)', 'rapls-ai-chatbot'); ?>
+                                            &rarr; <strong>3.</strong> <?php esc_html_e('Built-in default translation', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                        <p class="description" style="margin: 4px 0 0;">
+                                            <?php esc_html_e('If a per-language message is set, it is used. Otherwise, the Welcome Message above is shown. Built-in defaults are only used when the Welcome Message is unchanged.', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                    </div>
                                     <?php foreach ($welcome_langs as $lang_code => $lang_info) : ?>
                                         <div style="margin-bottom: 8px;">
                                             <label for="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>">
                                                 <strong><?php echo esc_html($lang_info[0]); ?></strong> (<?php echo esc_html($lang_code); ?>)
                                             </label>
-                                            <textarea
-                                                name="wpaic_settings[welcome_messages][<?php echo esc_attr($lang_code); ?>]"
-                                                id="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>"
-                                                rows="2"
-                                                class="large-text"
-                                                placeholder="<?php echo esc_attr($lang_info[1]); ?>"
-                                            ><?php echo esc_textarea($welcome_messages[$lang_code] ?? ''); ?></textarea>
+                                            <div style="display: flex; gap: 6px; align-items: flex-start;">
+                                                <textarea
+                                                    name="wpaic_settings[welcome_messages][<?php echo esc_attr($lang_code); ?>]"
+                                                    id="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>"
+                                                    rows="2"
+                                                    class="large-text"
+                                                    placeholder="<?php echo esc_attr($lang_info[1]); ?>"
+                                                ><?php echo esc_textarea($welcome_messages[$lang_code] ?? ''); ?></textarea>
+                                                <button type="button" class="button button-small wpaic-reset-welcome-lang" data-target="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>" style="flex-shrink: 0; margin-top: 4px;" title="<?php esc_attr_e('Clear', 'rapls-ai-chatbot'); ?>">&times;</button>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
+                                    <p>
+                                        <button type="button" class="button button-small" id="wpaic-reset-all-welcome-langs">
+                                            <?php esc_html_e('Clear All', 'rapls-ai-chatbot'); ?>
+                                        </button>
+                                    </p>
                                 </details>
                             </div>
                         </td>
@@ -631,6 +657,26 @@ if (!defined('ABSPATH')) {
                                 <option value="pt" <?php selected($settings['response_language'] ?? '', 'pt'); ?>>Português</option>
                             </select>
                             <p class="description"><?php esc_html_e('Choose the language for AI responses. "Auto-detect" will respond in the same language as the user\'s message.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="wpaic_message_history_count"><?php esc_html_e('Message History Count', 'rapls-ai-chatbot'); ?></label></th>
+                        <td>
+                            <input type="number" name="wpaic_settings[message_history_count]" id="wpaic_message_history_count"
+                                value="<?php echo esc_attr($settings['message_history_count'] ?? 10); ?>"
+                                min="1" max="50" class="small-text">
+                            <p class="description"><?php esc_html_e('Number of previous messages sent as context to the AI. Higher values give more context but increase token usage.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Feedback Buttons', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[show_feedback_buttons]" value="1"
+                                    <?php checked($settings['show_feedback_buttons'] ?? false); ?>>
+                                <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Allow users to rate bot responses with 👍👎. Feedback is used to improve AI response quality.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -748,7 +794,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Site Learning Context', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
-                            $default_site_prompt = "[IMPORTANT: Reference Information]\nYou MUST use the following information as the primary source when answering. If the answer can be found in this information, use it directly.\nIf the reference information does NOT contain the answer, clearly state that you don't have specific information about it. Do NOT guess or fabricate details.\n\n{context}";
+                            $default_site_prompt = "[IMPORTANT: Reference Information]\nBelow is reference information from this site's knowledge base. You MUST use this as the primary source when answering.\n- Search the ENTIRE reference information thoroughly before concluding that no relevant data exists.\n- The user's wording may differ from the reference text (e.g. \"料金プラン\" vs \"料金体系\", \"price\" vs \"pricing\"). Match by MEANING, not exact keywords.\n- If ANY part of the reference information is relevant to the user's question, use it to answer.\n- Only say you don't have the information if, after careful review, absolutely nothing in the reference is related.\n\n{context}";
                             ?>
                             <textarea name="wpaic_settings[site_context_prompt]" id="wpaic_site_context_prompt" rows="6" class="large-text"><?php
                                 echo esc_textarea($settings['site_context_prompt'] ?? $default_site_prompt);
@@ -799,17 +845,6 @@ if (!defined('ABSPATH')) {
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Feedback Buttons', 'rapls-ai-chatbot'); ?></th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="wpaic_settings[show_feedback_buttons]" value="1"
-                                    <?php checked($settings['show_feedback_buttons'] ?? false); ?>>
-                                <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
-                            </label>
-                            <p class="description"><?php esc_html_e('Allow users to rate bot responses. Feedback is used to improve AI response quality.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -944,26 +979,73 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Badge Position (Margin)', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('Badge Position', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <div class="wpaic-margin-inputs">
-                                <label>
-                                    <?php esc_html_e('Right:', 'rapls-ai-chatbot'); ?>
-                                    <input type="number" name="wpaic_settings[badge_margin_right]" id="wpaic_badge_margin_right"
-                                           value="<?php echo esc_attr($settings['badge_margin_right'] ?? 20); ?>"
-                                           min="0" max="200" style="width: 70px;"> px
-                                </label>
-                                <label>
-                                    <?php esc_html_e('Bottom:', 'rapls-ai-chatbot'); ?>
-                                    <input type="number" name="wpaic_settings[badge_margin_bottom]" id="wpaic_badge_margin_bottom"
-                                           value="<?php echo esc_attr($settings['badge_margin_bottom'] ?? 20); ?>"
-                                           min="0" max="200" style="width: 70px;"> px
-                                </label>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_badge_margin_right" data-default="20" onclick="jQuery('#wpaic_badge_margin_right').val(20); jQuery('#wpaic_badge_margin_bottom').val(20); return false;">
-                                    <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
-                                </button>
+                            <?php $badge_position = $settings['badge_position'] ?? 'bottom-right'; ?>
+                            <div class="wpaic-badge-position-selector">
+                                <div class="wpaic-badge-position-grid">
+                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'top-left' ? ' active' : ''; ?>">
+                                        <input type="radio" name="wpaic_settings[badge_position]" value="top-left" <?php checked($badge_position, 'top-left'); ?>>
+                                        <span class="wpaic-badge-pos-box">
+                                            <span class="wpaic-badge-pos-dot" style="top: 4px; left: 4px;"></span>
+                                        </span>
+                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Top Left', 'rapls-ai-chatbot'); ?></span>
+                                    </label>
+                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'top-right' ? ' active' : ''; ?>">
+                                        <input type="radio" name="wpaic_settings[badge_position]" value="top-right" <?php checked($badge_position, 'top-right'); ?>>
+                                        <span class="wpaic-badge-pos-box">
+                                            <span class="wpaic-badge-pos-dot" style="top: 4px; right: 4px;"></span>
+                                        </span>
+                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Top Right', 'rapls-ai-chatbot'); ?></span>
+                                    </label>
+                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'bottom-left' ? ' active' : ''; ?>">
+                                        <input type="radio" name="wpaic_settings[badge_position]" value="bottom-left" <?php checked($badge_position, 'bottom-left'); ?>>
+                                        <span class="wpaic-badge-pos-box">
+                                            <span class="wpaic-badge-pos-dot" style="bottom: 4px; left: 4px;"></span>
+                                        </span>
+                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Bottom Left', 'rapls-ai-chatbot'); ?></span>
+                                    </label>
+                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'bottom-right' ? ' active' : ''; ?>">
+                                        <input type="radio" name="wpaic_settings[badge_position]" value="bottom-right" <?php checked($badge_position, 'bottom-right'); ?>>
+                                        <span class="wpaic-badge-pos-box">
+                                            <span class="wpaic-badge-pos-dot" style="bottom: 4px; right: 4px;"></span>
+                                        </span>
+                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Bottom Right', 'rapls-ai-chatbot'); ?></span>
+                                    </label>
+                                </div>
+                                <div class="wpaic-badge-margin-group" style="margin-top: 12px;">
+                                    <span class="wpaic-badge-margin-label"><?php esc_html_e('Margin', 'rapls-ai-chatbot'); ?>:</span>
+                                    <label id="wpaic_margin_h_wrap">
+                                        <span id="wpaic_margin_h_label"><?php echo esc_html(in_array($badge_position, ['bottom-left', 'top-left']) ? __('Left:', 'rapls-ai-chatbot') : __('Right:', 'rapls-ai-chatbot')); ?></span>
+                                        <input type="number" name="wpaic_settings[badge_margin_right]" id="wpaic_badge_margin_right"
+                                               value="<?php echo esc_attr($settings['badge_margin_right'] ?? 20); ?>"
+                                               min="0" max="200" style="width: 70px;"> px
+                                    </label>
+                                    <label id="wpaic_margin_v_wrap">
+                                        <span id="wpaic_margin_v_label"><?php echo esc_html(in_array($badge_position, ['top-right', 'top-left']) ? __('Top:', 'rapls-ai-chatbot') : __('Bottom:', 'rapls-ai-chatbot')); ?></span>
+                                        <input type="number" name="wpaic_settings[badge_margin_bottom]" id="wpaic_badge_margin_bottom"
+                                               value="<?php echo esc_attr($settings['badge_margin_bottom'] ?? 20); ?>"
+                                               min="0" max="200" style="width: 70px;"> px
+                                    </label>
+                                    <button type="button" class="button button-small" onclick="jQuery('#wpaic_badge_margin_right').val(20); jQuery('#wpaic_badge_margin_bottom').val(20); return false;">
+                                        <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
+                                    </button>
+                                </div>
                             </div>
-                            <p class="description"><?php esc_html_e('Adjust the badge position from the bottom right of the screen.', 'rapls-ai-chatbot'); ?></p>
+                            <style>
+                                .wpaic-badge-position-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 260px; }
+                                .wpaic-badge-pos-option { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+                                .wpaic-badge-pos-option input[type="radio"] { display: none; }
+                                .wpaic-badge-pos-box { display: block; width: 80px; height: 50px; border: 2px solid #ddd; border-radius: 6px; background: #f9f9f9; position: relative; transition: border-color 0.2s, background 0.2s; }
+                                .wpaic-badge-pos-option:hover .wpaic-badge-pos-box { border-color: #999; }
+                                .wpaic-badge-pos-option.active .wpaic-badge-pos-box { border-color: #007bff; background: #f0f6ff; }
+                                .wpaic-badge-pos-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #999; transition: background 0.2s; }
+                                .wpaic-badge-pos-option.active .wpaic-badge-pos-dot { background: #007bff; }
+                                .wpaic-badge-pos-label { font-size: 12px; margin-top: 4px; color: #666; }
+                                .wpaic-badge-pos-option.active .wpaic-badge-pos-label { color: #007bff; font-weight: 600; }
+                                .wpaic-badge-margin-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+                                .wpaic-badge-margin-label { font-weight: 600; }
+                            </style>
                         </td>
                     </tr>
                     <tr>
@@ -1352,6 +1434,9 @@ if (!defined('ABSPATH')) {
                                         <option value="600" <?php selected($settings['rate_limit_window'] ?? 3600, 600); ?>><?php esc_html_e('10 minutes', 'rapls-ai-chatbot'); ?></option>
                                         <option value="1800" <?php selected($settings['rate_limit_window'] ?? 3600, 1800); ?>><?php esc_html_e('30 minutes', 'rapls-ai-chatbot'); ?></option>
                                         <option value="3600" <?php selected($settings['rate_limit_window'] ?? 3600, 3600); ?>><?php esc_html_e('1 hour', 'rapls-ai-chatbot'); ?></option>
+                                        <option value="10800" <?php selected($settings['rate_limit_window'] ?? 3600, 10800); ?>><?php esc_html_e('3 hours', 'rapls-ai-chatbot'); ?></option>
+                                        <option value="21600" <?php selected($settings['rate_limit_window'] ?? 3600, 21600); ?>><?php esc_html_e('6 hours', 'rapls-ai-chatbot'); ?></option>
+                                        <option value="43200" <?php selected($settings['rate_limit_window'] ?? 3600, 43200); ?>><?php esc_html_e('12 hours', 'rapls-ai-chatbot'); ?></option>
                                         <option value="86400" <?php selected($settings['rate_limit_window'] ?? 3600, 86400); ?>><?php esc_html_e('1 day', 'rapls-ai-chatbot'); ?></option>
                                     </select>
                                 </div>
@@ -2199,6 +2284,10 @@ jQuery(document).ready(function($) {
         if (modelSelect.length) {
             var selectedOption = modelSelect.find('option:selected');
             var vision = selectedOption.data('vision');
+
+            // Skip check for providers without vision metadata (e.g., OpenRouter)
+            if (typeof vision === 'undefined') return true;
+
             var isVision = (vision === 1 || vision === '1' || vision === true);
 
             if (!isVision) {

@@ -84,7 +84,8 @@ class WPAIC_MCP_Tool_Send_Message {
         $conversation_id = (int) $conversation['id'];
 
         // Get conversation history for context
-        $context_messages = WPAIC_Message::get_context_messages($conversation_id, 10);
+        $history_count = absint($settings['message_history_count'] ?? 10);
+        $context_messages = WPAIC_Message::get_context_messages($conversation_id, $history_count);
 
         // Build AI messages array
         $ai_messages = [];

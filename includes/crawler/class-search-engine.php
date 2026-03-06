@@ -580,6 +580,9 @@ class WPAIC_Search_Engine {
         // Japanese stopwords (remove as substring)
         $jp_stopwords = ['について', 'に関して', 'とは', 'ですか', 'ください', 'ありますか', 'でしょうか', 'ですが', 'ですね', 'ですよ', 'ません', 'ました', 'します', 'される', 'している', 'された', 'できる', 'できます', 'ありません', 'おしえて', '教えて', 'どうやって', 'どのように', 'なぜ', 'どこ', 'いつ', 'だれ', 'なに', '何'];
 
+        // Japanese particles used for splitting compound phrases
+        $jp_split_particles = ['の', 'は', 'が', 'を', 'に', 'で', 'と', 'も', 'や', 'へ'];
+
         // Japanese particles/auxiliaries (remove at word boundary)
         $jp_particles = ['の', 'は', 'が', 'を', 'に', 'で', 'と', 'も', 'や', 'へ', 'から', 'まで', 'より', 'など', 'って', 'だと', 'では', 'には', 'とか', 'けど', 'でも'];
 
@@ -629,6 +632,25 @@ class WPAIC_Search_Engine {
                 $keywords[] = $word;
             }
         }
+
+        // Split long Japanese keywords on particles to get sub-phrases
+        // e.g. "AIチャットボットの料金プラン" → ["AIチャットボット", "料金プラン"]
+        $sub_keywords = [];
+        foreach ($keywords as $kw) {
+            if (wpaic_mb_strlen($kw) >= 6 && preg_match('/[\p{Hiragana}\p{Katakana}\p{Han}]/u', $kw)) {
+                $particle_pattern = '/(' . implode('|', $jp_split_particles) . ')/u';
+                $parts = preg_split($particle_pattern, $kw, -1, PREG_SPLIT_NO_EMPTY);
+                if (count($parts) > 1) {
+                    foreach ($parts as $part) {
+                        $part = trim($part);
+                        if (wpaic_mb_strlen($part) >= 2 && !in_array($part, $keywords, true)) {
+                            $sub_keywords[] = $part;
+                        }
+                    }
+                }
+            }
+        }
+        $keywords = array_merge($keywords, $sub_keywords);
 
         // If no keywords found, clean up and use original text
         if (empty($keywords)) {
@@ -782,15 +804,12 @@ class WPAIC_Search_Engine {
      * Check if content is Q&A format
      */
     private function is_qa_format(string $content): bool {
-        // Check if Question: and Answer: patterns exist, or separated by ---
+        // Check if explicit Question/Answer patterns exist
+        // Must have actual Q&A markers — generic "---" separators with colons are NOT sufficient
         return (
             preg_match('/Question\s*[:：]/ui', $content) && preg_match('/Answer\s*[:：]/ui', $content)
         ) || (
-            preg_match('/Q\s*[:：]/u', $content) && preg_match('/A\s*[:：]/u', $content)
-        ) || (
-            strpos($content, '---') !== false && (
-                preg_match('/[:：]\s*.+\n/u', $content)
-            )
+            preg_match('/(?:^|\n)\s*Q\s*[:：]/u', $content) && preg_match('/(?:^|\n)\s*A\s*[:：]/u', $content)
         );
     }
 
