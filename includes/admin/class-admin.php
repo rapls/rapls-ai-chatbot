@@ -602,7 +602,10 @@ class WPAIC_Admin {
             $sanitized['mcp_enabled'] = $existing['mcp_enabled'] ?? false;
         }
         // Preserve MCP API key hash (managed via AJAX, not form submission)
-        $sanitized['mcp_api_key_hash'] = $existing['mcp_api_key_hash'] ?? '';
+        // When called via update_option (AJAX key generation), $input may contain the new hash.
+        $sanitized['mcp_api_key_hash'] = !empty($input['mcp_api_key_hash'])
+            ? $input['mcp_api_key_hash']
+            : ($existing['mcp_api_key_hash'] ?? '');
 
         // Pro features settings
         $sanitized['pro_features'] = $this->sanitize_pro_features_settings(
@@ -2698,9 +2701,17 @@ class WPAIC_Admin {
         $raw_key = wp_generate_password(40, false);
 
         // Store hashed version
+        // Bypass sanitize_settings callback to prevent it from overwriting
+        // the hash with the stale $existing value (update_option triggers
+        // sanitize_option_{option} which calls sanitize_settings).
         $settings = get_option('wpaic_settings', []);
         $settings['mcp_api_key_hash'] = wp_hash_password($raw_key);
+        remove_all_filters('sanitize_option_wpaic_settings');
         update_option('wpaic_settings', $settings);
+        // Re-register so subsequent form saves still sanitize
+        register_setting('wpaic_settings_group', 'wpaic_settings', [
+            'sanitize_callback' => [$this, 'sanitize_settings'],
+        ]);
 
         wp_send_json_success([
             'api_key'  => $raw_key,
