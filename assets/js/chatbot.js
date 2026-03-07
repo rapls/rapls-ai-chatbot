@@ -795,9 +795,14 @@
                         bot_id: self.config.bot_id || 'default'
                     };
 
-                    // 画像がある場合は追加
+                    // 画像/ファイルがある場合は追加
                     if (imageData) {
-                        requestData.image = imageData;
+                        if (imageData.indexOf('data:image/') === 0) {
+                            requestData.image = imageData;
+                        } else {
+                            requestData.file = imageData;
+                            requestData.file_name = self._selectedFileName || '';
+                        }
                     }
 
                     return self.apiRequest('POST', '/chat', requestData);
@@ -1942,6 +1947,7 @@
             reader.onload = function(e) {
                 self.selectedImage = file;
                 self.selectedImageData = e.target.result;
+                self._selectedFileName = file.name;
                 if (isImage) {
                     self.showImagePreview(e.target.result);
                 } else {
@@ -1989,6 +1995,7 @@
         clearSelectedImage: function() {
             this.selectedImage = null;
             this.selectedImageData = null;
+            this._selectedFileName = null;
             if (this.imageInput) {
                 this.imageInput.value = '';
             }

@@ -273,6 +273,16 @@ class WPAIC_REST_Controller {
                     'type'              => 'string',
                     'validate_callback' => [$this, 'validate_image_param'],
                 ],
+                'file' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'validate_callback' => [$this, 'validate_file_param'],
+                ],
+                'file_name' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_file_name',
+                ],
                 'bot_id' => [
                     'required'          => false,
                     'type'              => 'string',
@@ -697,6 +707,8 @@ class WPAIC_REST_Controller {
         $recaptcha_token   = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
         $client_request_id = sanitize_text_field($request->get_param('client_request_id') ?? '');
         $image             = $request->get_param('image');
+        $file_data         = $request->get_param('file');
+        $file_name         = $request->get_param('file_name') ?? '';
 
         // Reject image if multimodal is not enabled (Pro feature)
         if (!empty($image)) {
@@ -707,6 +719,25 @@ class WPAIC_REST_Controller {
                     'error'      => __('Image upload is not available.', 'rapls-ai-chatbot'),
                     'error_code' => 'multimodal_disabled',
                 ], 400);
+            }
+        }
+
+        // Extract text from uploaded file and prepend to message
+        if (!empty($file_data)) {
+            $file_text = $this->extract_file_text($file_data, $file_name);
+            if (is_wp_error($file_text)) {
+                return new WP_REST_Response([
+                    'success'    => false,
+                    'error'      => $file_text->get_error_message(),
+                    'error_code' => 'file_extract_error',
+                ], 400);
+            }
+            if (!empty($file_text)) {
+                $message = $message . "\n\n---\n" . sprintf(
+                    /* translators: %s: file name */
+                    __('Uploaded file (%s) content:', 'rapls-ai-chatbot'),
+                    $file_name
+                ) . "\n" . $file_text;
             }
         }
 
@@ -1806,6 +1837,210 @@ class WPAIC_REST_Controller {
         }
 
         return true;
+    }
+
+    /**
+     * Validate uploaded file parameter (PDF, Word, etc.)
+     */
+    public function validate_file_param( $value, $request, $param ) {
+        if (empty($value)) {
+            return true;
+        }
+
+        // Must be a data URI
+        if (!preg_match('/^data:([^;]+);base64,/', $value, $matches)) {
+            return new WP_Error('invalid_file', __('Invalid file format.', 'rapls-ai-chatbot'));
+        }
+
+        $settings = get_option('wpaic_settings', []);
+        $pro_settings = $settings['pro_features'] ?? [];
+        if (empty($pro_settings['file_upload_enabled'])) {
+            return new WP_Error('file_upload_disabled', __('File upload is not enabled.', 'rapls-ai-chatbot'));
+        }
+
+        // Check file size
+        $max_size_kb = (int) ($pro_settings['file_upload_max_size'] ?? 5120);
+        $comma_pos = strpos($value, ',');
+        if ($comma_pos === false) {
+            return new WP_Error('invalid_file', __('Invalid file data.', 'rapls-ai-chatbot'));
+        }
+
+        $base64_data = substr($value, $comma_pos + 1);
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+        $decoded = base64_decode($base64_data, true);
+        if ($decoded === false) {
+            return new WP_Error('invalid_file', __('Invalid file data.', 'rapls-ai-chatbot'));
+        }
+
+        if (strlen($decoded) > $max_size_kb * 1024) {
+            return new WP_Error('file_too_large', sprintf(
+                /* translators: %d: maximum file size in KB */
+                __('File is too large. Maximum size is %dKB.', 'rapls-ai-chatbot'),
+                $max_size_kb
+            ));
+        }
+
+        // Validate MIME type against allowed file types
+        $allowed_types = $pro_settings['file_upload_types'] ?? ['pdf', 'doc', 'docx', 'txt', 'csv'];
+        $ext_to_mime = [
+            'pdf'  => ['application/pdf'],
+            'doc'  => ['application/msword'],
+            'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'txt'  => ['text/plain'],
+            'csv'  => ['text/csv', 'text/plain', 'application/csv'],
+            'xls'  => ['application/vnd.ms-excel'],
+            'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'pptx' => ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+            'rtf'  => ['application/rtf', 'text/rtf'],
+            'json' => ['application/json'],
+        ];
+
+        $allowed_mimes = [];
+        foreach ($allowed_types as $ext) {
+            if (isset($ext_to_mime[$ext])) {
+                $allowed_mimes = array_merge($allowed_mimes, $ext_to_mime[$ext]);
+            }
+        }
+
+        $mime = $matches[1];
+        // Also check with finfo for safety
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $real_mime = finfo_buffer($finfo, $decoded);
+                finfo_close($finfo);
+                if ($real_mime !== false) {
+                    $mime = $real_mime;
+                }
+            }
+        }
+
+        if (!in_array($mime, $allowed_mimes, true)) {
+            return new WP_Error('invalid_file_type', __('This file type is not allowed.', 'rapls-ai-chatbot'));
+        }
+
+        return true;
+    }
+
+    /**
+     * Extract text content from uploaded file data URI
+     *
+     * @param string $data_uri Base64-encoded data URI
+     * @param string $file_name Original file name
+     * @return string|WP_Error Extracted text or error
+     */
+    private function extract_file_text(string $data_uri, string $file_name): string {
+        $comma_pos = strpos($data_uri, ',');
+        if ($comma_pos === false) {
+            return '';
+        }
+
+        $base64_data = substr($data_uri, $comma_pos + 1);
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+        $decoded = base64_decode($base64_data, true);
+        if ($decoded === false) {
+            return '';
+        }
+
+        $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+        switch ($ext) {
+            case 'txt':
+            case 'csv':
+            case 'json':
+                // Plain text files: use content directly
+                $text = wp_check_invalid_utf8($decoded, true);
+                break;
+
+            case 'pdf':
+                $text = $this->extract_pdf_text($decoded);
+                break;
+
+            default:
+                // For doc/docx/xls etc., send file name as context
+                $text = sprintf(
+                    /* translators: %s: file name */
+                    __('[File uploaded: %s — text extraction not supported for this format. Please describe what you need help with regarding this file.]', 'rapls-ai-chatbot'),
+                    $file_name
+                );
+                break;
+        }
+
+        // Truncate to prevent context overflow
+        $max_chars = 30000;
+        if (function_exists('mb_substr')) {
+            $text = mb_substr($text, 0, $max_chars);
+        } else {
+            $text = substr($text, 0, $max_chars);
+        }
+
+        return $text;
+    }
+
+    /**
+     * Extract text from PDF binary data
+     */
+    private function extract_pdf_text(string $binary): string {
+        // Simple PDF text extraction: look for text streams
+        $text = '';
+
+        // Try to extract text between BT/ET markers (text objects)
+        if (preg_match_all('/\(([^)]+)\)/', $binary, $matches)) {
+            $parts = [];
+            foreach ($matches[1] as $part) {
+                // Filter out non-printable/binary sequences
+                $cleaned = preg_replace('/[^\x20-\x7E\x80-\xFF]/u', '', $part);
+                if (strlen($cleaned) > 2) {
+                    $parts[] = $cleaned;
+                }
+            }
+            $text = implode(' ', $parts);
+        }
+
+        // If simple extraction fails, try stream decompression
+        if (strlen($text) < 50 && preg_match_all('/stream\r?\n(.+?)\r?\nendstream/s', $binary, $streams)) {
+            foreach ($streams[1] as $stream) {
+                // Try zlib decompression
+                // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+                $decompressed = @gzuncompress($stream);
+                if ($decompressed === false) {
+                    // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+                    $decompressed = @gzinflate($stream);
+                }
+                if ($decompressed !== false) {
+                    // Extract text from decompressed stream
+                    if (preg_match_all('/\(([^)]+)\)/', $decompressed, $dm)) {
+                        foreach ($dm[1] as $part) {
+                            $cleaned = preg_replace('/[^\x20-\x7E\x80-\xFF]/u', '', $part);
+                            if (strlen($cleaned) > 2) {
+                                $text .= ' ' . $cleaned;
+                            }
+                        }
+                    }
+                    // Also try Tj/TJ operator extraction
+                    if (preg_match_all('/\[([^\]]+)\]\s*TJ/s', $decompressed, $tj)) {
+                        foreach ($tj[1] as $arr) {
+                            if (preg_match_all('/\(([^)]+)\)/', $arr, $tjm)) {
+                                foreach ($tjm[1] as $part) {
+                                    $cleaned = preg_replace('/[^\x20-\x7E\x80-\xFF]/u', '', $part);
+                                    if (strlen($cleaned) > 0) {
+                                        $text .= $cleaned;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $text = trim($text);
+
+        if (empty($text)) {
+            return __('[PDF uploaded but text could not be extracted. The PDF may contain images or encrypted content.]', 'rapls-ai-chatbot');
+        }
+
+        return $text;
     }
 
     private function get_client_ip(): string {
