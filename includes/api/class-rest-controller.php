@@ -3691,7 +3691,7 @@ class WPAIC_REST_Controller {
             $query = sanitize_text_field($request->get_param('query'));
 
             $query_len = function_exists('mb_strlen') ? mb_strlen($query) : strlen($query);
-            if ($query_len < 3) {
+            if ($query_len < 2) {
                 return new WP_REST_Response([
                     'success' => true,
                     'data'    => ['suggestions' => []],

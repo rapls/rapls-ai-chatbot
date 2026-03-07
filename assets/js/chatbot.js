@@ -1786,7 +1786,7 @@
                 clearTimeout(debounceTimer);
                 var query = this.value.trim();
 
-                if (query.length < 3) {
+                if (query.length < 2) {
                     self.autocompleteEl.hidden = true;
                     return;
                 }
