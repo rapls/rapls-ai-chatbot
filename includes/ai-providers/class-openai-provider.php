@@ -382,9 +382,41 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             if ($role === 'system') {
                 $role = 'developer';
             }
+
+            $content = $message['content'];
+
+            // Convert Chat Completions multimodal format to Responses API format
+            if (is_array($content)) {
+                $converted = [];
+                foreach ($content as $part) {
+                    if (!isset($part['type'])) {
+                        $converted[] = $part;
+                        continue;
+                    }
+                    switch ($part['type']) {
+                        case 'text':
+                            $converted[] = ['type' => 'input_text', 'text' => $part['text']];
+                            break;
+                        case 'image_url':
+                            $converted[] = ['type' => 'input_image', 'image_url' => $part['image_url']['url']];
+                            break;
+                        case 'input_text':
+                        case 'input_image':
+                        case 'input_file':
+                            // Already in Responses API format
+                            $converted[] = $part;
+                            break;
+                        default:
+                            $converted[] = $part;
+                            break;
+                    }
+                }
+                $content = $converted;
+            }
+
             $input[] = [
                 'role'    => $role,
-                'content' => $message['content'],
+                'content' => $content,
             ];
         }
 
