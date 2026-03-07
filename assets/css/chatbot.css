@@ -1071,34 +1071,36 @@
 }
 
 .chatbot-tts-toggle {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: none;
     background: transparent;
+    border: none;
+    color: #ffffff;
     cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s, opacity 0.2s;
     display: none;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    padding: 0;
-    opacity: 0.5;
-    transition: opacity 0.2s;
+    opacity: 0.6;
 }
 
 .chatbot-tts-toggle:not([hidden]) {
     display: flex;
 }
 
-.chatbot-tts-toggle:hover,
+.chatbot-tts-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    opacity: 1;
+}
+
 .chatbot-tts-toggle.active {
     opacity: 1;
 }
 
 .chatbot-tts-toggle svg {
-    width: 16px;
-    height: 16px;
-    color: var(--wpaic-primary, #4a90d9);
+    width: 18px;
+    height: 18px;
 }
 
 /* ============================================
