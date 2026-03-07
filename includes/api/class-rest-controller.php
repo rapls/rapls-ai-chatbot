@@ -1087,7 +1087,7 @@ class WPAIC_REST_Controller {
                         }
                     } elseif ($cache_sources_mode === 'matched' && is_array($related_content)) {
                         foreach ($related_content as $rc) {
-                            if (empty($rc['url'])) {
+                            if (empty($rc['url']) || empty($rc['keyword_matched'])) {
                                 continue;
                             }
                             $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
@@ -1120,6 +1120,9 @@ class WPAIC_REST_Controller {
                         $cache_cards = [];
                         foreach ($cache_card_items as $item) {
                             if (($item['type'] ?? '') !== 'index') {
+                                continue;
+                            }
+                            if ($cache_sources_mode === 'matched' && empty($item['keyword_matched'])) {
                                 continue;
                             }
                             $pt = $item['post_type'] ?? '';
@@ -1372,7 +1375,7 @@ class WPAIC_REST_Controller {
                 }
             } elseif ($sources_mode === 'matched' && is_array($related_content)) {
                 foreach ($related_content as $rc) {
-                    if (empty($rc['url'])) {
+                    if (empty($rc['url']) || empty($rc['keyword_matched'])) {
                         continue;
                     }
                     $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
@@ -1435,6 +1438,9 @@ class WPAIC_REST_Controller {
                 $content_cards = [];
                 foreach ($card_items as $item) {
                     if (($item['type'] ?? '') !== 'index') {
+                        continue;
+                    }
+                    if ($sources_mode === 'matched' && empty($item['keyword_matched'])) {
                         continue;
                     }
                     $pt = $item['post_type'] ?? '';
@@ -3398,7 +3404,7 @@ class WPAIC_REST_Controller {
                 }
             } elseif ($sources_mode === 'matched' && is_array($related_content)) {
                 foreach ($related_content as $rc) {
-                    if (empty($rc['url'])) {
+                    if (empty($rc['url']) || empty($rc['keyword_matched'])) {
                         continue;
                     }
                     $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
@@ -3425,6 +3431,9 @@ class WPAIC_REST_Controller {
                 $regen_cards = [];
                 foreach ($regen_card_items as $item) {
                     if (($item['type'] ?? '') !== 'index') {
+                        continue;
+                    }
+                    if ($sources_mode === 'matched' && empty($item['keyword_matched'])) {
                         continue;
                     }
                     $pt = $item['post_type'] ?? '';

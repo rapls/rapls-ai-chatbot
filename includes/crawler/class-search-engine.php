@@ -83,15 +83,22 @@ class WPAIC_Search_Engine {
         // Always get knowledge (regardless of keywords)
         $knowledge_limit = max($limit * 2, 5);
         $priority_knowledge = $this->get_high_priority_knowledge($knowledge_limit);
+        // Priority knowledge is not keyword-matched
+        foreach ($priority_knowledge as &$pk) {
+            $pk['keyword_matched'] = false;
+        }
+        unset($pk);
         $results = array_merge($results, $priority_knowledge);
 
         // Search knowledge base by keywords (additional match)
         $knowledge_results = $this->search_knowledge($query, $limit);
         foreach ($knowledge_results as $kr) {
+            $kr['keyword_matched'] = true;
             $exists = false;
             foreach ($results as &$r) {
                 if ($r['type'] === 'knowledge' && $r['title'] === $kr['title']) {
                     $r['score'] = max($r['score'], $kr['score']);
+                    $r['keyword_matched'] = true;
                     $exists = true;
                     break;
                 }
@@ -102,8 +109,15 @@ class WPAIC_Search_Engine {
             }
         }
 
-        // Search from index (keyword)
-        $index_results = $this->search_index($query, $limit);
+        // Search from index (keyword) — skip for greetings/chitchat
+        $index_results = [];
+        if (!$this->is_greeting($query)) {
+            $index_results = $this->search_index($query, $limit);
+            foreach ($index_results as &$ir) {
+                $ir['keyword_matched'] = true;
+            }
+            unset($ir);
+        }
         $results = array_merge($results, $index_results);
 
         // Vector search (if embedding is configured)
@@ -568,6 +582,28 @@ class WPAIC_Search_Engine {
     /**
      * Extract keywords
      */
+    /**
+     * Check if the query is a greeting/chitchat (not an information-seeking question)
+     */
+    private function is_greeting(string $query): bool {
+        $normalized = trim(wpaic_mb_strtolower($query));
+        // Remove trailing punctuation
+        $normalized = preg_replace('/[。！？!?.…]+$/u', '', $normalized);
+        $normalized = trim($normalized);
+
+        $greetings = [
+            'こんにちは', 'こんばんは', 'おはよう', 'おはようございます',
+            'はじめまして', 'よろしく', 'よろしくお願いします',
+            'ありがとう', 'ありがとうございます', 'どうも',
+            'すみません', 'おつかれ', 'おつかれさま', 'お疲れ様',
+            'やあ', 'ども', 'はーい', 'はい', 'うん',
+            'hello', 'hi', 'hey', 'good morning', 'good evening',
+            'good afternoon', 'thanks', 'thank you', 'bye', 'goodbye',
+        ];
+
+        return in_array($normalized, $greetings, true);
+    }
+
     private function extract_keywords(string $text): array {
         // Remove symbols
         $text = preg_replace('/[、。！？「」『』（）\[\]【】・,.!?\'"：:；;]+/u', ' ', $text);

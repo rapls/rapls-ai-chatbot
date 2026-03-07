@@ -1810,17 +1810,9 @@
         fetchAutocomplete: function(query) {
             var self = this;
 
-            fetch(this.config.restUrl + 'autocomplete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: query, session_id: self.sessionId }),
-            })
-            .then(function(response) {
-                var contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return null;
-                }
-                return response.json();
+            this.apiRequest('POST', '/autocomplete', {
+                query: query,
+                session_id: this.sessionId
             })
             .then(function(data) {
                 if (data && data.success && data.data && data.data.suggestions && data.data.suggestions.length > 0) {
@@ -1829,7 +1821,7 @@
                     self.autocompleteEl.hidden = true;
                 }
             })
-            .catch(function(error) {
+            .catch(function() {
                 self.autocompleteEl.hidden = true;
             });
         },
