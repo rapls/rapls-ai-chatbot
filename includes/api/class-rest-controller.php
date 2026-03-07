@@ -1077,12 +1077,17 @@ class WPAIC_REST_Controller {
                     // Get source URLs (filter by display mode)
                     $cache_sources_mode = $settings['sources_display_mode'] ?? 'matched';
                     $cache_sources = [];
-                    if ($cache_sources_mode !== 'none' && is_array($related_content)) {
+                    if ($cache_sources_mode === 'all') {
+                        // Show all indexed page URLs
+                        foreach ($search_engine->get_indexed_urls() as $url) {
+                            $url = esc_url_raw($url, ['http', 'https']);
+                            if ($url) {
+                                $cache_sources[] = $url;
+                            }
+                        }
+                    } elseif ($cache_sources_mode === 'matched' && is_array($related_content)) {
                         foreach ($related_content as $rc) {
                             if (empty($rc['url'])) {
-                                continue;
-                            }
-                            if ($cache_sources_mode === 'matched' && (float) ($rc['score'] ?? 0) <= 0) {
                                 continue;
                             }
                             $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
@@ -1108,9 +1113,12 @@ class WPAIC_REST_Controller {
                     ];
 
                     // Build content cards for cache path (same logic as main path)
-                    if ($cache_sources_mode !== 'none' && is_array($related_content) && !empty($related_content)) {
+                    $cache_card_items = ($cache_sources_mode === 'all')
+                        ? $search_engine->get_indexed_pages()
+                        : $related_content;
+                    if ($cache_sources_mode !== 'none' && is_array($cache_card_items) && !empty($cache_card_items)) {
                         $cache_cards = [];
-                        foreach ($related_content as $item) {
+                        foreach ($cache_card_items as $item) {
                             if (($item['type'] ?? '') !== 'index') {
                                 continue;
                             }
@@ -1354,13 +1362,17 @@ class WPAIC_REST_Controller {
             // Get source URLs (filter by display mode)
             $sources_mode = $settings['sources_display_mode'] ?? 'matched';
             $sources = [];
-            if ($sources_mode !== 'none' && is_array($related_content)) {
+            if ($sources_mode === 'all') {
+                // Show all indexed page URLs
+                foreach ($search_engine->get_indexed_urls() as $url) {
+                    $url = esc_url_raw($url, ['http', 'https']);
+                    if ($url) {
+                        $sources[] = $url;
+                    }
+                }
+            } elseif ($sources_mode === 'matched' && is_array($related_content)) {
                 foreach ($related_content as $rc) {
                     if (empty($rc['url'])) {
-                        continue;
-                    }
-                    // "matched" mode: only include items with positive relevance score
-                    if ($sources_mode === 'matched' && (float) ($rc['score'] ?? 0) <= 0) {
                         continue;
                     }
                     $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
@@ -1416,9 +1428,12 @@ class WPAIC_REST_Controller {
 
             // Build content cards from RAG sources (non-product pages)
             // Respect sources_display_mode: skip content cards when set to "none"
-            if ($sources_mode !== 'none' && is_array($related_content) && !empty($related_content)) {
+            $card_items = ($sources_mode === 'all')
+                ? $search_engine->get_indexed_pages()
+                : $related_content;
+            if ($sources_mode !== 'none' && is_array($card_items) && !empty($card_items)) {
                 $content_cards = [];
-                foreach ($related_content as $item) {
+                foreach ($card_items as $item) {
                     if (($item['type'] ?? '') !== 'index') {
                         continue;
                     }
@@ -3373,12 +3388,17 @@ class WPAIC_REST_Controller {
             // Get source URLs (filter by display mode)
             $sources_mode = $settings['sources_display_mode'] ?? 'matched';
             $sources = [];
-            if ($sources_mode !== 'none' && is_array($related_content)) {
+            if ($sources_mode === 'all') {
+                // Show all indexed page URLs
+                foreach ($search->get_indexed_urls() as $url) {
+                    $url = esc_url_raw($url, ['http', 'https']);
+                    if ($url) {
+                        $sources[] = $url;
+                    }
+                }
+            } elseif ($sources_mode === 'matched' && is_array($related_content)) {
                 foreach ($related_content as $rc) {
                     if (empty($rc['url'])) {
-                        continue;
-                    }
-                    if ($sources_mode === 'matched' && (float) ($rc['score'] ?? 0) <= 0) {
                         continue;
                     }
                     $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
@@ -3398,9 +3418,12 @@ class WPAIC_REST_Controller {
             ];
 
             // Build content cards for regen path
-            if ($sources_mode !== 'none' && is_array($related_content) && !empty($related_content)) {
+            $regen_card_items = ($sources_mode === 'all')
+                ? $search->get_indexed_pages()
+                : $related_content;
+            if ($sources_mode !== 'none' && is_array($regen_card_items) && !empty($regen_card_items)) {
                 $regen_cards = [];
-                foreach ($related_content as $item) {
+                foreach ($regen_card_items as $item) {
                     if (($item['type'] ?? '') !== 'index') {
                         continue;
                     }

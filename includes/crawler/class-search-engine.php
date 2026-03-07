@@ -696,6 +696,48 @@ class WPAIC_Search_Engine {
     }
 
     /**
+     * Get all distinct indexed page URLs
+     */
+    public function get_indexed_urls(int $limit = 20): array {
+        return array_column($this->get_indexed_pages($limit), 'url');
+    }
+
+    /**
+     * Get all distinct indexed pages with metadata (for content cards in "all" mode)
+     */
+    public function get_indexed_pages(int $limit = 20): array {
+        global $wpdb;
+        $table = $this->get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $results = $wpdb->get_results($wpdb->prepare(
+            "SELECT post_id, post_type, title, content, url
+             FROM {$table}
+             WHERE url IS NOT NULL AND url != ''
+             GROUP BY url
+             ORDER BY post_id DESC
+             LIMIT %d",
+            $limit
+        ), ARRAY_A);
+
+        if (empty($results)) {
+            return [];
+        }
+
+        return array_map(function ($item) {
+            return [
+                'type'      => 'index',
+                'post_id'   => (int) ($item['post_id'] ?? 0),
+                'post_type' => $item['post_type'] ?? '',
+                'title'     => $item['title'] ?? '',
+                'content'   => $item['content'] ?? '',
+                'url'       => $item['url'],
+                'score'     => 0,
+            ];
+        }, $results);
+    }
+
+    /**
      * キーワードマッチ数でスコア計算
      */
     private function calculate_keyword_score(array $item, array $keywords): float {
