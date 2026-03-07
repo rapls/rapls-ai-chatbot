@@ -3698,38 +3698,72 @@ class WPAIC_REST_Controller {
                 ], 200);
             }
 
-            // Get suggestions from knowledge base and past questions
+            // Get suggestions from knowledge base, indexed pages, and past questions
             $suggestions = [];
+            global $wpdb;
 
-            // Search knowledge base for matching titles (safe: KB is admin-curated content)
+            // 1. Extract matching Q&A questions from knowledge base content
             try {
-                global $wpdb;
                 $kb_table = wpaic_validated_table('aichat_knowledge');
 
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-                $kb_titles = $wpdb->get_col($wpdb->prepare(
-                    "SELECT title FROM {$kb_table}
+                $kb_rows = $wpdb->get_col($wpdb->prepare(
+                    "SELECT content FROM {$kb_table}
                      WHERE is_active = 1 AND status = 'published'
-                     AND title LIKE %s
+                     AND content LIKE %s
                      ORDER BY priority DESC
                      LIMIT 5",
                     '%' . $wpdb->esc_like($query) . '%'
                 ));
 
-                if ($kb_titles) {
-                    $suggestions = array_merge($suggestions, $kb_titles);
+                if ($kb_rows) {
+                    foreach ($kb_rows as $content) {
+                        // Extract "Question: ..." lines that match the query
+                        if (preg_match_all('/Question:\s*(.+)/u', $content, $matches)) {
+                            $q_lower = wpaic_mb_strtolower($query);
+                            foreach ($matches[1] as $q) {
+                                $q = trim($q);
+                                $q_check = wpaic_mb_strtolower($q);
+                                if (wpaic_mb_strpos($q_check, $q_lower) !== false && wpaic_mb_strlen($q) <= 100) {
+                                    $suggestions[] = $q;
+                                }
+                            }
+                        }
+                    }
                 }
             } catch (\Throwable $e) {
                 // Skip knowledge search on error
             }
 
-            // Search past user messages from THIS session only (privacy: never expose other users' questions)
+            // 2. Search indexed page titles
+            try {
+                $index_table = wpaic_validated_table('aichat_index');
+
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+                $page_titles = $wpdb->get_col($wpdb->prepare(
+                    "SELECT DISTINCT title FROM {$index_table}
+                     WHERE title LIKE %s
+                     LIMIT 5",
+                    '%' . $wpdb->esc_like($query) . '%'
+                ));
+
+                if ($page_titles) {
+                    $locale = get_locale();
+                    $suffix = (strpos($locale, 'ja') === 0) ? 'について教えて' : '';
+                    foreach ($page_titles as $title) {
+                        $suggestions[] = $title . $suffix;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Skip index search on error
+            }
+
+            // 3. Search past user messages from THIS session only (privacy: never expose other users' questions)
             try {
                 $session_id = sanitize_text_field($request->get_param('session_id'));
                 $conversation = WPAIC_Conversation::get_by_session($session_id);
 
                 if ($conversation) {
-                    global $wpdb;
                     $msg_table = wpaic_validated_table('aichat_messages');
 
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
