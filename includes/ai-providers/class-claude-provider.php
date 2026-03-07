@@ -70,10 +70,12 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         $chat_messages = [];
 
         $image_data = $options['image'] ?? '';
+        $file_data = $options['file'] ?? '';
+        $file_name = $options['file_name'] ?? '';
 
-        // Find last user message index for image injection
+        // Find last user message index for image/file injection
         $last_user_idx = -1;
-        if (!empty($image_data)) {
+        if (!empty($image_data) || !empty($file_data)) {
             for ($i = count($messages) - 1; $i >= 0; $i--) {
                 if ($messages[$i]['role'] === 'user') {
                     $last_user_idx = $i;
@@ -89,8 +91,13 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                 $content = $msg['content'];
 
                 // Inject image into the last user message for vision
-                if ($idx === $last_user_idx) {
+                if ($idx === $last_user_idx && !empty($image_data)) {
                     $content = $this->build_vision_content($content, $image_data);
+                }
+
+                // Inject file into the last user message for document analysis
+                if ($idx === $last_user_idx && !empty($file_data)) {
+                    $content = $this->build_document_content($content, $file_data, $file_name);
                 }
 
                 $chat_messages[] = [
@@ -357,6 +364,32 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
      * Build vision content array for Claude API.
      * Converts text + image data URL to Claude's multimodal content format.
      */
+    /**
+     * Build document content array for Claude API (PDF support).
+     */
+    private function build_document_content($content, string $file_data, string $file_name): array {
+        $media_type = 'application/pdf';
+        $base64 = $file_data;
+
+        if (preg_match('#^data:([^;]+);base64,(.+)$#s', $file_data, $m)) {
+            $media_type = $m[1];
+            $base64 = $m[2];
+        }
+
+        $text = is_array($content) ? $content : [['type' => 'text', 'text' => $content]];
+
+        array_unshift($text, [
+            'type'   => 'document',
+            'source' => [
+                'type'       => 'base64',
+                'media_type' => $media_type,
+                'data'       => $base64,
+            ],
+        ]);
+
+        return $text;
+    }
+
     private function build_vision_content(string $text, string $image_data): array {
         // Parse data URI: data:image/jpeg;base64,/9j/4AAQ...
         $media_type = 'image/jpeg';

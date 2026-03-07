@@ -722,23 +722,24 @@ class WPAIC_REST_Controller {
             }
         }
 
-        // Extract text from uploaded file and prepend to message
+        // Handle uploaded file: extract text for plain text files, pass binary to AI for others
         if (!empty($file_data)) {
-            $file_text = $this->extract_file_text($file_data, $file_name);
-            if (is_wp_error($file_text)) {
-                return new WP_REST_Response([
-                    'success'    => false,
-                    'error'      => $file_text->get_error_message(),
-                    'error_code' => 'file_extract_error',
-                ], 400);
+            $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            $text_extensions = ['txt', 'csv', 'json', 'rtf'];
+
+            if (in_array($ext, $text_extensions, true)) {
+                // Plain text files: extract and append to message
+                $file_text = $this->extract_file_text($file_data);
+                if (!empty($file_text)) {
+                    $message = $message . "\n\n---\n" . sprintf(
+                        /* translators: %s: file name */
+                        __('Uploaded file (%s) content:', 'rapls-ai-chatbot'),
+                        $file_name
+                    ) . "\n" . $file_text;
+                }
+                $file_data = null; // Already handled, don't pass to AI
             }
-            if (!empty($file_text)) {
-                $message = $message . "\n\n---\n" . sprintf(
-                    /* translators: %s: file name */
-                    __('Uploaded file (%s) content:', 'rapls-ai-chatbot'),
-                    $file_name
-                ) . "\n" . $file_text;
-            }
+            // For PDF/doc/etc., $file_data stays set and will be passed to AI provider
         }
 
         // Multi-bot: resolve bot configuration (Pro feature)
@@ -1358,6 +1359,12 @@ class WPAIC_REST_Controller {
                 $send_options['image'] = $image;
             }
 
+            // Pass file data to AI provider (PDF, docx, etc.)
+            if (!empty($file_data)) {
+                $send_options['file'] = $file_data;
+                $send_options['file_name'] = $file_name;
+            }
+
             $response = $ai_provider->send_message($messages, $send_options);
 
             // Save AI response
@@ -1923,48 +1930,24 @@ class WPAIC_REST_Controller {
     }
 
     /**
-     * Extract text content from uploaded file data URI
+     * Extract text content from uploaded plain text file data URI
      *
      * @param string $data_uri Base64-encoded data URI
-     * @param string $file_name Original file name
-     * @return string|WP_Error Extracted text or error
+     * @return string Extracted text
      */
-    private function extract_file_text(string $data_uri, string $file_name): string {
+    private function extract_file_text(string $data_uri): string {
         $comma_pos = strpos($data_uri, ',');
         if ($comma_pos === false) {
             return '';
         }
 
-        $base64_data = substr($data_uri, $comma_pos + 1);
         // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
-        $decoded = base64_decode($base64_data, true);
+        $decoded = base64_decode(substr($data_uri, $comma_pos + 1), true);
         if ($decoded === false) {
             return '';
         }
 
-        $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
-
-        switch ($ext) {
-            case 'txt':
-            case 'csv':
-            case 'json':
-                // Plain text files: use content directly
-                $text = wp_check_invalid_utf8($decoded, true);
-                break;
-
-            case 'pdf':
-                $text = $this->extract_pdf_text($decoded);
-                break;
-
-            default:
-                // For doc/docx/xls etc., send file name as context
-                $text = sprintf(
-                    /* translators: %s: file name */
-                    __('[File uploaded: %s — text extraction not supported for this format. Please describe what you need help with regarding this file.]', 'rapls-ai-chatbot'),
-                    $file_name
-                );
-                break;
-        }
+        $text = wp_check_invalid_utf8($decoded, true);
 
         // Truncate to prevent context overflow
         $max_chars = 30000;
@@ -1972,72 +1955,6 @@ class WPAIC_REST_Controller {
             $text = mb_substr($text, 0, $max_chars);
         } else {
             $text = substr($text, 0, $max_chars);
-        }
-
-        return $text;
-    }
-
-    /**
-     * Extract text from PDF binary data
-     */
-    private function extract_pdf_text(string $binary): string {
-        // Simple PDF text extraction: look for text streams
-        $text = '';
-
-        // Try to extract text between BT/ET markers (text objects)
-        if (preg_match_all('/\(([^)]+)\)/', $binary, $matches)) {
-            $parts = [];
-            foreach ($matches[1] as $part) {
-                // Filter out non-printable/binary sequences
-                $cleaned = preg_replace('/[^\x20-\x7E\x80-\xFF]/u', '', $part);
-                if (strlen($cleaned) > 2) {
-                    $parts[] = $cleaned;
-                }
-            }
-            $text = implode(' ', $parts);
-        }
-
-        // If simple extraction fails, try stream decompression
-        if (strlen($text) < 50 && preg_match_all('/stream\r?\n(.+?)\r?\nendstream/s', $binary, $streams)) {
-            foreach ($streams[1] as $stream) {
-                // Try zlib decompression
-                // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-                $decompressed = @gzuncompress($stream);
-                if ($decompressed === false) {
-                    // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-                    $decompressed = @gzinflate($stream);
-                }
-                if ($decompressed !== false) {
-                    // Extract text from decompressed stream
-                    if (preg_match_all('/\(([^)]+)\)/', $decompressed, $dm)) {
-                        foreach ($dm[1] as $part) {
-                            $cleaned = preg_replace('/[^\x20-\x7E\x80-\xFF]/u', '', $part);
-                            if (strlen($cleaned) > 2) {
-                                $text .= ' ' . $cleaned;
-                            }
-                        }
-                    }
-                    // Also try Tj/TJ operator extraction
-                    if (preg_match_all('/\[([^\]]+)\]\s*TJ/s', $decompressed, $tj)) {
-                        foreach ($tj[1] as $arr) {
-                            if (preg_match_all('/\(([^)]+)\)/', $arr, $tjm)) {
-                                foreach ($tjm[1] as $part) {
-                                    $cleaned = preg_replace('/[^\x20-\x7E\x80-\xFF]/u', '', $part);
-                                    if (strlen($cleaned) > 0) {
-                                        $text .= $cleaned;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $text = trim($text);
-
-        if (empty($text)) {
-            return __('[PDF uploaded but text could not be extracted. The PDF may contain images or encrypted content.]', 'rapls-ai-chatbot');
         }
 
         return $text;

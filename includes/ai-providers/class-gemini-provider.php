@@ -51,10 +51,11 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         $contents = [];
 
         $image_data = $options['image'] ?? '';
+        $file_data = $options['file'] ?? '';
 
-        // Find last user message index for image injection
+        // Find last user message index for image/file injection
         $last_user_idx = -1;
-        if (!empty($image_data)) {
+        if (!empty($image_data) || !empty($file_data)) {
             for ($i = count($messages) - 1; $i >= 0; $i--) {
                 if ($messages[$i]['role'] === 'user') {
                     $last_user_idx = $i;
@@ -71,15 +72,28 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
                 $role = $msg['role'] === 'assistant' ? 'model' : 'user';
                 $parts = [['text' => $msg['content']]];
 
-                // Inject image into the last user message for vision
                 if ($idx === $last_user_idx) {
-                    $mime = 'image/jpeg';
-                    $b64 = $image_data;
-                    if (preg_match('#^data:(image/[a-z+]+);base64,(.+)$#s', $image_data, $m)) {
-                        $mime = $m[1];
-                        $b64 = $m[2];
+                    // Inject image into the last user message for vision
+                    if (!empty($image_data)) {
+                        $mime = 'image/jpeg';
+                        $b64 = $image_data;
+                        if (preg_match('#^data:(image/[a-z+]+);base64,(.+)$#s', $image_data, $m)) {
+                            $mime = $m[1];
+                            $b64 = $m[2];
+                        }
+                        $parts[] = ['inline_data' => ['mime_type' => $mime, 'data' => $b64]];
                     }
-                    $parts[] = ['inline_data' => ['mime_type' => $mime, 'data' => $b64]];
+
+                    // Inject file into the last user message
+                    if (!empty($file_data)) {
+                        $fmime = 'application/pdf';
+                        $fb64 = $file_data;
+                        if (preg_match('#^data:([^;]+);base64,(.+)$#s', $file_data, $fm)) {
+                            $fmime = $fm[1];
+                            $fb64 = $fm[2];
+                        }
+                        $parts[] = ['inline_data' => ['mime_type' => $fmime, 'data' => $fb64]];
+                    }
                 }
 
                 $contents[] = [

@@ -301,6 +301,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $messages = $this->inject_image_into_messages($messages, $options['image']);
         }
 
+        // Inject file content as text for chat completions (no native file support)
+        if (!empty($options['file'])) {
+            $messages = $this->inject_file_as_text($messages, $options['file'], $options['file_name'] ?? '');
+        }
+
         // Convert messages for reasoning models
         if ($is_reasoning) {
             $messages = $this->convert_messages_for_reasoning($messages);
@@ -362,6 +367,11 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Inject image into the last user message for multimodal vision
         if (!empty($options['image'])) {
             $messages = $this->inject_image_into_messages($messages, $options['image']);
+        }
+
+        // Inject file into the last user message for document analysis
+        if (!empty($options['file'])) {
+            $messages = $this->inject_file_into_messages($messages, $options['file'], $options['file_name'] ?? '');
         }
 
         // Convert messages to Responses API input format
@@ -1086,6 +1096,70 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                     ['type' => 'text', 'text' => $text],
                     ['type' => 'image_url', 'image_url' => ['url' => $image_data]],
                 ];
+                break;
+            }
+        }
+        return $messages;
+    }
+
+    /**
+     * Inject file into messages for Responses API (native file support)
+     */
+    private function inject_file_into_messages(array $messages, string $file_data, string $file_name): array {
+        for ($i = count($messages) - 1; $i >= 0; $i--) {
+            if ($messages[$i]['role'] === 'user') {
+                $text = is_array($messages[$i]['content'])
+                    ? $messages[$i]['content']
+                    : [['type' => 'input_text', 'text' => $messages[$i]['content']]];
+
+                $text[] = [
+                    'type' => 'input_file',
+                    'file_data' => $file_data,
+                    'filename' => $file_name,
+                ];
+                $messages[$i]['content'] = $text;
+                break;
+            }
+        }
+        return $messages;
+    }
+
+    /**
+     * Inject file as text fallback for Chat Completions API (no native file support)
+     */
+    private function inject_file_as_text(array $messages, string $file_data, string $file_name): array {
+        // Extract base64 data and decode
+        $comma_pos = strpos($file_data, ',');
+        if ($comma_pos === false) {
+            return $messages;
+        }
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+        $decoded = base64_decode(substr($file_data, $comma_pos + 1), true);
+        if ($decoded === false) {
+            return $messages;
+        }
+
+        // For text-based files, use content directly
+        $text = wp_check_invalid_utf8($decoded, true);
+        if (empty(trim($text))) {
+            $text = sprintf('[File uploaded: %s — unable to extract text content for this API mode.]', $file_name);
+        } else {
+            // Truncate
+            $max = 30000;
+            if (function_exists('mb_substr')) {
+                $text = mb_substr($text, 0, $max);
+            } else {
+                $text = substr($text, 0, $max);
+            }
+            $text = sprintf("Content of uploaded file (%s):\n%s", $file_name, $text);
+        }
+
+        // Append to last user message
+        for ($i = count($messages) - 1; $i >= 0; $i--) {
+            if ($messages[$i]['role'] === 'user') {
+                if (is_string($messages[$i]['content'])) {
+                    $messages[$i]['content'] .= "\n\n---\n" . $text;
+                }
                 break;
             }
         }
