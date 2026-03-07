@@ -124,7 +124,22 @@
             this.initOfflineForm();
             this.initConversionTracking();
             this.listenForConsentChange();
+            this.initTooltips();
             this.isInitialized = true;
+        },
+
+        /**
+         * ツールチップ初期化: aria-label を title 属性にコピー
+         */
+        initTooltips: function() {
+            if (!this.config.tooltips_enabled) return;
+            var buttons = this.container.querySelectorAll('[aria-label]');
+            for (var i = 0; i < buttons.length; i++) {
+                var label = buttons[i].getAttribute('aria-label');
+                if (label && !buttons[i].title) {
+                    buttons[i].title = label;
+                }
+            }
         },
 
         /**
@@ -2606,11 +2621,13 @@
 
             // TTS toggle
             this.ttsEnabled = this.config.tts_enabled && ('speechSynthesis' in window);
-            this.ttsActive = this.ttsEnabled; // Default to active when enabled
+            this.ttsActive = false;
             this.ttsToggle = this.container.querySelector('.chatbot-tts-toggle');
             if (this.ttsEnabled && this.ttsToggle) {
                 this.ttsToggle.hidden = false;
-                this.ttsToggle.classList.add('active');
+                if (this.config.tooltips_enabled) {
+                    this.ttsToggle.title = this.ttsToggle.getAttribute('aria-label') || '';
+                }
                 this.ttsToggle.addEventListener('click', function() {
                     self.ttsActive = !self.ttsActive;
                     self.ttsToggle.classList.toggle('active', self.ttsActive);

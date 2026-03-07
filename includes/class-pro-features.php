@@ -381,6 +381,7 @@ class WPAIC_Pro_Features {
             'response_delay_enabled' => false,
             'response_delay_ms' => 500,
             'notification_sound_enabled' => false,
+            'tooltips_enabled' => false,
             'custom_font' => '',
             'seasonal_theme' => '',
 

@@ -288,6 +288,7 @@ class WPAIC_Chatbot_Widget {
             'response_delay_enabled' => !empty($pro_features['response_delay_enabled']),
             'response_delay_ms'      => (int) ($pro_features['response_delay_ms'] ?? 500),
             'notification_sound_enabled' => !empty($pro_features['notification_sound_enabled']),
+            'tooltips_enabled'     => !empty($pro_features['tooltips_enabled']),
             'conversion_tracking'  => !empty($pro_features['conversion_tracking_enabled']),
             'conversion_goals'     => !empty($pro_features['conversion_tracking_enabled']) ? ($pro_features['conversion_goals'] ?? []) : [],
             'offline_message'      => $this->get_offline_config($pro_features),
