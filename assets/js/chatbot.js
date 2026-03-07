@@ -2606,10 +2606,11 @@
 
             // TTS toggle
             this.ttsEnabled = this.config.tts_enabled && ('speechSynthesis' in window);
-            this.ttsActive = false;
+            this.ttsActive = this.ttsEnabled; // Default to active when enabled
             this.ttsToggle = this.container.querySelector('.chatbot-tts-toggle');
             if (this.ttsEnabled && this.ttsToggle) {
                 this.ttsToggle.hidden = false;
+                this.ttsToggle.classList.add('active');
                 this.ttsToggle.addEventListener('click', function() {
                     self.ttsActive = !self.ttsActive;
                     self.ttsToggle.classList.toggle('active', self.ttsActive);
