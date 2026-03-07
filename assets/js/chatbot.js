@@ -142,11 +142,15 @@
             if (this.window) {
                 this.window.style.display = 'flex';
                 this.window.setAttribute('aria-hidden', 'false');
+                this.window.inert = false;
             }
 
-            var closeBtn = this.container.querySelector('.chatbot-close');
-            if (closeBtn) {
-                closeBtn.style.display = 'none';
+            // Hide close button in inline mode, but keep it in embed mode
+            if (!this.config.embedMode) {
+                var closeBtn = this.container.querySelector('.chatbot-close');
+                if (closeBtn) {
+                    closeBtn.style.display = 'none';
+                }
             }
         },
 
@@ -260,9 +264,9 @@
                 });
             }
 
-            // 閉じるボタン（インラインモードでは非表示のためスキップ）
+            // 閉じるボタン（インラインモードでは非表示のためスキップ、ただし埋め込みモードでは表示）
             var closeBtn = this.container.querySelector('.chatbot-close');
-            if (closeBtn && !this.config.inlineMode) {
+            if (closeBtn && (!this.config.inlineMode || this.config.embedMode)) {
                 closeBtn.addEventListener('click', function() {
                     self.close();
                 });
@@ -374,6 +378,7 @@
             this.isOpen = true;
             this.container.dataset.state = 'open';
             this.window.setAttribute('aria-hidden', 'false');
+            this.window.inert = false;
 
             // セッション読み込み中は待機（loadSession完了後にcheckAndShowLeadFormが呼ばれる）
             if (this.sessionLoading) {
@@ -388,9 +393,22 @@
          * ウィンドウを閉じる
          */
         close: function() {
+            // Embed mode: notify parent frame only, don't alter window state
+            if (this.config.embedMode) {
+                if (window.parent !== window) {
+                    window.parent.postMessage({type: 'wpaic:close'}, '*');
+                }
+                return;
+            }
+
             this.isOpen = false;
             this.container.dataset.state = 'closed';
+            // Blur any focused element inside before hiding to avoid aria-hidden warning
+            if (document.activeElement && this.window.contains(document.activeElement)) {
+                document.activeElement.blur();
+            }
             this.window.setAttribute('aria-hidden', 'true');
+            this.window.inert = true;
 
             // リサイズ状態をリセット
             wpaicLsRemove('wpaic_window_size');
@@ -439,6 +457,9 @@
                 if (self.isOpen) {
                     self.checkAndShowLeadForm();
                 }
+                // セッション確定後にコンバージョンゴールを再チェック
+                // （initConversionTracking時点ではsessionIdが未設定の場合があるため）
+                self.recheckConversionGoals();
             };
 
             if (!this.sessionId) {
@@ -521,7 +542,7 @@
             this.leadSubmitted = false;
             this.historyLoaded = false;
             this.leadConfig = null;
-            if (this.messagesEl) {
+            if (this.messagesEl && !this.isOfflineMode) {
                 this.messagesEl.innerHTML = '';
             }
         },
@@ -531,6 +552,8 @@
          */
         checkAndShowLeadForm: function() {
             var self = this;
+            // Skip in offline mode (form is already displayed)
+            if (this.isOfflineMode) return;
             if (this.shouldShowLeadForm()) {
                 this.showLeadForm();
             } else {
@@ -555,12 +578,19 @@
         loadHistory: function() {
             var self = this;
 
+            // Skip history loading in offline mode (form is already displayed)
+            if (this.isOfflineMode) {
+                return Promise.resolve();
+            }
+
             if (!this.sessionId) {
                 return Promise.resolve();
             }
 
             return this.apiRequest('GET', '/history/' + this.sessionId)
                 .then(function(response) {
+                    // Re-check offline mode (may have been set while fetch was in flight)
+                    if (self.isOfflineMode) return;
                     if (response.success && response.messages && response.messages.length > 0) {
                         // 既存のメッセージをクリア
                         self.messagesEl.innerHTML = '';
@@ -635,6 +665,11 @@
 
             // 空メッセージまたはロード中は何もしない
             if (!message || this.isLoading) return;
+
+            // Dismiss welcome screen if active
+            if (this._welcomeScreenActive) {
+                this._dismissWelcomeScreen();
+            }
 
             // 即座にクリア（値取得直後）
             this.clearInput();
@@ -724,7 +759,10 @@
                     }
                 })
                 .finally(function() {
-                    self.setLoading(false);
+                    // When response delay is active, setLoading(false) is called after the delay
+                    if (!self._responseDelayPending) {
+                        self.setLoading(false);
+                    }
                     self.inputTextarea.focus();
                 });
         },
@@ -765,52 +803,57 @@
                     return self.apiRequest('POST', '/chat', requestData);
                 })
                 .then(function(response) {
-                    if (response.success) {
-                        // Dedup done-marker: server processed the request but the
-                        // cached payload was too large to store. Show a gentle
-                        // notice instead of an empty bubble to avoid "blank reply" UX.
-                        // Dedup freshness check: only trust _truncated if saved
-                        // within 90s (transient TTL=60s + margin). Uses server
-                        // timestamps to avoid client clock skew issues.
-                        var dedupAge = (response._server_now && response.data && response.data._saved_at)
-                            ? (response._server_now - response.data._saved_at)
-                            : 999;
-                        var isDedupFresh = response.dedup_hit && response.data && response.data._truncated
-                            && dedupAge >= 0 && dedupAge < 90;
-                        if (isDedupFresh) {
-                            var truncMsg;
-                            if (response.data._history_saved) {
-                                truncMsg = self.config.strings.dedup_truncated || 'Your message was received and processed. Please reload the page to see the response.';
+                    var showResponse = function() {
+                        if (response.success) {
+                            var dedupAge = (response._server_now && response.data && response.data._saved_at)
+                                ? (response._server_now - response.data._saved_at)
+                                : 999;
+                            var isDedupFresh = response.dedup_hit && response.data && response.data._truncated
+                                && dedupAge >= 0 && dedupAge < 90;
+                            if (isDedupFresh) {
+                                var truncMsg;
+                                if (response.data._history_saved) {
+                                    truncMsg = self.config.strings.dedup_truncated || 'Your message was received and processed. Please reload the page to see the response.';
+                                } else {
+                                    truncMsg = self.config.strings.dedup_truncated_no_history || 'Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.';
+                                }
+                                if (response.data.client_request_id) {
+                                    truncMsg += ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')';
+                                }
+                                self.addMessage('bot', truncMsg);
+                            } else if (response.dedup_hit && response.data && response.data._truncated) {
+                                var staleRef = (response.data.client_request_id)
+                                    ? ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')'
+                                    : '';
+                                self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                             } else {
-                                truncMsg = self.config.strings.dedup_truncated_no_history || 'Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.';
+                                self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario);
+                                self.fetchSuggestions();
+                                self.saveContext();
+                                self.recheckConversionGoals();
                             }
-                            if (response.data.client_request_id) {
-                                truncMsg += ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')';
-                            }
-                            self.addMessage('bot', truncMsg);
-                        } else if (response.dedup_hit && response.data && response.data._truncated) {
-                            // Stale dedup hit (>90s or missing timestamps) — show
-                            // reload notice instead of empty content bubble.
-                            var staleRef = (response.data.client_request_id)
-                                ? ' (ref: ' + response.data.client_request_id.substring(0, 8) + ')'
-                                : '';
-                            self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
-                        } else {
-                            self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario);
-                            // Fetch related question suggestions (Pro)
-                            self.fetchSuggestions();
-                            // Save context for memory (Pro) - async, don't wait
-                            self.saveContext();
-                        }
 
-                        // Handoff detection (Pro: live agent escalation)
-                        if (response.data && response.data.handoff_triggered) {
-                            self.handleHandoffTriggered(response.data);
-                        } else if (response.data && response.data.handoff_status) {
-                            self.showHandoffIndicator(response.data.handoff_status);
+                            if (response.data && response.data.handoff_triggered) {
+                                self.handleHandoffTriggered(response.data);
+                            } else if (response.data && response.data.handoff_status) {
+                                self.showHandoffIndicator(response.data.handoff_status);
+                            }
+                        } else {
+                            self.addMessage('bot', response.error || (self.config.strings && self.config.strings.error_occurred) || 'An error occurred.');
                         }
+                    };
+
+                    // Response delay: keep loading indicator visible for a natural typing feel (Pro)
+                    var delay = self._responseDelayMs || 0;
+                    if (delay > 0) {
+                        self._responseDelayPending = true;
+                        setTimeout(function() {
+                            self._responseDelayPending = false;
+                            self.setLoading(false);
+                            showResponse();
+                        }, delay);
                     } else {
-                        self.addMessage('bot', response.error || (self.config.strings && self.config.strings.error_occurred) || 'An error occurred.');
+                        showResponse();
                     }
                 });
         },
@@ -1382,6 +1425,10 @@
             // TTS: speak bot responses
             if (role === 'bot' && content && this.ttsEnabled && this.ttsActive) {
                 this.speakText(content);
+            }
+
+            // Notification sound on bot message (Pro)
+            if (role === 'bot' && content) {
                 this.playNotificationSound();
             }
 
@@ -2582,48 +2629,90 @@
             var buttons = this.config.welcome_screen_buttons || [];
             if (!title && !message) return;
 
+            this._welcomeScreenActive = true;
             this._welcomeShown = false;
-            var origToggle = this.toggleChat.bind(this);
-            this.toggleChat = function() {
-                origToggle();
-                if (self.isOpen && !self._welcomeShown) {
+            var origOpen = this.open.bind(this);
+            this.open = function() {
+                origOpen();
+                if (!self._welcomeShown) {
                     self._welcomeShown = true;
-                    var welcomeEl = document.createElement('div');
-                    welcomeEl.className = 'chatbot-welcome-screen';
-                    if (title) {
-                        var titleEl = document.createElement('div');
-                        titleEl.className = 'chatbot-welcome-title';
-                        titleEl.textContent = title;
-                        welcomeEl.appendChild(titleEl);
-                    }
-                    if (message) {
-                        var msgEl = document.createElement('div');
-                        msgEl.className = 'chatbot-welcome-message';
-                        msgEl.textContent = message;
-                        welcomeEl.appendChild(msgEl);
-                    }
-                    if (buttons.length > 0) {
-                        var btnsEl = document.createElement('div');
-                        btnsEl.className = 'chatbot-welcome-buttons';
-                        buttons.forEach(function(btn) {
-                            var btnEl = document.createElement('button');
-                            btnEl.type = 'button';
-                            btnEl.className = 'chatbot-welcome-btn';
-                            btnEl.textContent = btn;
-                            btnEl.onclick = function() {
-                                welcomeEl.remove();
-                                self.inputTextarea.value = btn;
-                                self.handleSubmit();
-                            };
-                            btnsEl.appendChild(btnEl);
-                        });
-                        welcomeEl.appendChild(btnsEl);
-                    }
-                    if (self.messagesEl && self.messagesEl.children.length === 0) {
-                        self.messagesEl.appendChild(welcomeEl);
-                    }
+                    self._showWelcomeScreenOverlay();
                 }
             };
+        },
+
+        /**
+         * Build and display the welcome screen overlay (Pro)
+         */
+        _showWelcomeScreenOverlay: function() {
+            var self = this;
+            var title = this.config.welcome_screen_title || '';
+            var message = this.config.welcome_screen_message || '';
+            var buttons = this.config.welcome_screen_buttons || [];
+
+            var welcomeEl = document.createElement('div');
+            welcomeEl.className = 'chatbot-welcome-screen';
+            if (title) {
+                var titleEl = document.createElement('div');
+                titleEl.className = 'chatbot-welcome-title';
+                titleEl.textContent = title;
+                welcomeEl.appendChild(titleEl);
+            }
+            if (message) {
+                var msgEl = document.createElement('div');
+                msgEl.className = 'chatbot-welcome-message';
+                msgEl.textContent = message;
+                welcomeEl.appendChild(msgEl);
+            }
+            if (buttons.length > 0) {
+                var btnsEl = document.createElement('div');
+                btnsEl.className = 'chatbot-welcome-buttons';
+                buttons.forEach(function(btn) {
+                    var btnEl = document.createElement('button');
+                    btnEl.type = 'button';
+                    btnEl.className = 'chatbot-welcome-btn';
+                    btnEl.textContent = btn;
+                    btnEl.onclick = function() {
+                        self._dismissWelcomeScreen();
+                        self.inputTextarea.value = btn;
+                        self.handleSubmit();
+                    };
+                    btnsEl.appendChild(btnEl);
+                });
+                welcomeEl.appendChild(btnsEl);
+            }
+            // "Start Chat" button if no custom buttons
+            if (buttons.length === 0) {
+                var startBtn = document.createElement('button');
+                startBtn.type = 'button';
+                startBtn.className = 'chatbot-welcome-btn';
+                startBtn.textContent = this.config.start_chat_label || 'Start Chat';
+                startBtn.onclick = function() {
+                    self._dismissWelcomeScreen();
+                };
+                welcomeEl.appendChild(startBtn);
+            }
+
+            this._welcomeScreenEl = welcomeEl;
+            // Insert as overlay on top of messages area
+            if (this.messagesEl) {
+                this.messagesEl.parentNode.insertBefore(welcomeEl, this.messagesEl);
+                this.messagesEl.style.display = 'none';
+            }
+        },
+
+        /**
+         * Dismiss the welcome screen and show the messages area (Pro)
+         */
+        _dismissWelcomeScreen: function() {
+            this._welcomeScreenActive = false;
+            if (this._welcomeScreenEl) {
+                this._welcomeScreenEl.remove();
+                this._welcomeScreenEl = null;
+            }
+            if (this.messagesEl) {
+                this.messagesEl.style.display = '';
+            }
         },
 
         /**
@@ -2699,7 +2788,7 @@
             this.isOfflineMode = true;
 
             // Replace chat area with offline form (DOM API — no innerHTML)
-            var messagesArea = this.container.querySelector('.wpaic-messages');
+            var messagesArea = this.messagesEl || this.container.querySelector('.chatbot-messages');
             if (!messagesArea) return;
 
             var self = this;
@@ -2756,7 +2845,7 @@
             messagesArea.appendChild(wrapper);
 
             // Hide input area
-            var inputArea = this.container.querySelector('.wpaic-input-area');
+            var inputArea = this.container.querySelector('.chatbot-input');
             if (inputArea) inputArea.style.display = 'none';
 
             // Bind form submit
@@ -3258,6 +3347,21 @@
         },
 
         /**
+         * Re-check conversion goals after session is ready
+         */
+        recheckConversionGoals: function() {
+            var config = window.wpAiChatbotConfig || {};
+            if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
+                return;
+            }
+            if (!wpaicHasConsent('statistics') && !wpaicHasConsent('marketing')) {
+                return;
+            }
+            if (!this.sessionId) return;
+            this.checkConversionGoals(config.conversion_goals);
+        },
+
+        /**
          * Check current URL against conversion goals
          */
         checkConversionGoals: function(goals) {
@@ -3274,20 +3378,18 @@
                 var goal = goals[i];
                 if (!goal.url_pattern) continue;
 
+                var matched = false;
                 try {
                     var regex = new RegExp(goal.url_pattern);
-                    if (regex.test(currentUrl)) {
-                        this.trackConversion(sessionId, goal.name || '');
-                        wpaicSsSet(trackingKey, '1');
-                        break;
-                    }
+                    matched = regex.test(currentUrl);
                 } catch (e) {
                     // Invalid regex pattern - try simple contains match
-                    if (currentUrl.indexOf(goal.url_pattern) !== -1) {
-                        this.trackConversion(sessionId, goal.name || '');
-                        wpaicSsSet(trackingKey, '1');
-                        break;
-                    }
+                    matched = currentUrl.indexOf(goal.url_pattern) !== -1;
+                }
+
+                if (matched) {
+                    this.trackConversion(sessionId, goal.name || '', trackingKey);
+                    break;
                 }
             }
         },
@@ -3295,20 +3397,17 @@
         /**
          * Send conversion tracking API call
          */
-        trackConversion: function(sessionId, goalName) {
-            var config = window.wpAiChatbotConfig || {};
-            fetch(config.restUrl + 'conversion', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': config.nonce
-                },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    goal: goalName
-                })
+        trackConversion: function(sessionId, goalName, trackingKey) {
+            var self = this;
+            this.apiRequest('POST', '/conversion', {
+                session_id: sessionId,
+                goal: goalName
+            }).then(function(data) {
+                if (data.success && trackingKey) {
+                    wpaicSsSet(trackingKey, '1');
+                }
             }).catch(function() {
-                // Silently fail
+                // Silently fail - will retry on next page load
             });
         },
 

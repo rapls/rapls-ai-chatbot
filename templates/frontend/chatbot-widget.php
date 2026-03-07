@@ -141,5 +141,12 @@ if (!defined('ABSPATH')) {
             </button>
         </form>
 
+        <?php
+        $wl_footer = $settings['pro_features']['white_label_footer'] ?? '';
+        if ($wl_footer !== '' && WPAIC_Pro_Features::get_instance()->is_pro()) :
+        ?>
+        <div class="chatbot-footer-branding"><?php echo esc_html($wl_footer); ?></div>
+        <?php endif; ?>
+
     </div>
 </div>

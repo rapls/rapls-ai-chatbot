@@ -170,6 +170,7 @@ class WPAIC_Pro_Features {
             // White label
             'white_label_enabled' => false,
             'hide_powered_by' => false,
+            'white_label_footer' => '',
             'custom_css' => '',
 
             // Webhook

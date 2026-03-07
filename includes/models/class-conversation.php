@@ -48,6 +48,32 @@ class WPAIC_Conversation {
         ];
         $formats = ['%s', '%s', '%s', '%s'];
 
+        // Store user agent for device statistics (column added by migration)
+        // Defensive: check column exists (static cache) to avoid INSERT failure before migration runs
+        static $has_ua_col = null;
+        if ($has_ua_col === null) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $has_ua_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'user_agent'"));
+        }
+        if ($has_ua_col && !empty($user_agent)) {
+            $insert_data['user_agent'] = $user_agent;
+            $formats[] = '%s';
+        }
+
+        // Store country code for country statistics (column added by migration)
+        static $has_cc_col = null;
+        if ($has_cc_col === null) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $has_cc_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'country_code'"));
+        }
+        if ($has_cc_col) {
+            $cc = self::detect_country_code();
+            if ($cc) {
+                $insert_data['country_code'] = $cc;
+                $formats[] = '%s';
+            }
+        }
+
         // Only include user_id when logged in; omitting it lets MySQL store actual NULL
         // (avoids 0 or '' for anonymous visitors, which breaks IS NULL queries)
         if ($user_id) {
@@ -311,6 +337,54 @@ class WPAIC_Conversation {
             $result = $wpdb->query("DELETE FROM `{$table}`");
         }
         return $result;
+    }
+
+    /**
+     * Detect visitor country code from server headers or Accept-Language.
+     *
+     * Priority: CloudFlare CF-IPCountry > server GeoIP > Accept-Language locale.
+     *
+     * @return string Two-letter ISO 3166-1 alpha-2 code, or '' if unknown.
+     */
+    private static function detect_country_code(): string {
+        // 1. CloudFlare
+        if (!empty($_SERVER['HTTP_CF_IPCOUNTRY'])) {
+            $cc = strtoupper(sanitize_text_field(wp_unslash($_SERVER['HTTP_CF_IPCOUNTRY'])));
+            if (preg_match('/^[A-Z]{2}$/', $cc) && $cc !== 'XX') {
+                return $cc;
+            }
+        }
+        // 2. Server GeoIP module (nginx/Apache)
+        foreach (['GEOIP_COUNTRY_CODE', 'HTTP_X_COUNTRY_CODE'] as $header) {
+            if (!empty($_SERVER[$header])) {
+                $cc = strtoupper(sanitize_text_field(wp_unslash($_SERVER[$header])));
+                if (preg_match('/^[A-Z]{2}$/', $cc)) {
+                    return $cc;
+                }
+            }
+        }
+        // 3. Accept-Language fallback (e.g. "ja,en-US;q=0.9" → JP, "en-US" → US)
+        if (!empty($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+            $lang = sanitize_text_field(wp_unslash($_SERVER['HTTP_ACCEPT_LANGUAGE']));
+            // Try to extract country from first locale with region (e.g. en-US → US, zh-TW → TW)
+            if (preg_match('/^([a-z]{2})-([A-Z]{2})/', $lang, $m)) {
+                return $m[2];
+            }
+            // Map bare language codes to most likely country
+            $lang_map = [
+                'ja' => 'JP', 'ko' => 'KR', 'zh' => 'CN', 'de' => 'DE',
+                'fr' => 'FR', 'es' => 'ES', 'it' => 'IT', 'pt' => 'BR',
+                'ru' => 'RU', 'nl' => 'NL', 'sv' => 'SE', 'da' => 'DK',
+                'fi' => 'FI', 'no' => 'NO', 'pl' => 'PL', 'tr' => 'TR',
+                'th' => 'TH', 'vi' => 'VN', 'id' => 'ID', 'ms' => 'MY',
+                'ar' => 'SA', 'he' => 'IL', 'uk' => 'UA', 'cs' => 'CZ',
+                'el' => 'GR', 'hu' => 'HU', 'ro' => 'RO', 'hi' => 'IN',
+            ];
+            if (preg_match('/^([a-z]{2})/', $lang, $m) && isset($lang_map[$m[1]])) {
+                return $lang_map[$m[1]];
+            }
+        }
+        return '';
     }
 
     /**

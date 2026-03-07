@@ -234,6 +234,17 @@ $post_types = get_post_types(['public' => true], 'objects');
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Source Display', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <select name="wpaic_settings[sources_display_mode]">
+                                <option value="none" <?php selected($settings['sources_display_mode'] ?? 'matched', 'none'); ?>><?php esc_html_e('Do not show', 'rapls-ai-chatbot'); ?></option>
+                                <option value="matched" <?php selected($settings['sources_display_mode'] ?? 'matched', 'matched'); ?>><?php esc_html_e('Show only pages with matching content', 'rapls-ai-chatbot'); ?></option>
+                                <option value="all" <?php selected($settings['sources_display_mode'] ?? 'matched', 'all'); ?>><?php esc_html_e('Show all referenced pages', 'rapls-ai-chatbot'); ?></option>
+                            </select>
+                            <p class="description"><?php esc_html_e('Controls whether reference page links are displayed below AI responses.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Excluded Pages', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php

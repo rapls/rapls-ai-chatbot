@@ -89,6 +89,8 @@ class WPAIC_Activator {
             session_id VARCHAR(64) NOT NULL,
             user_id BIGINT(20) UNSIGNED DEFAULT NULL,
             visitor_ip VARCHAR(64) DEFAULT NULL COMMENT 'SHA-256 hash of IP+UA+salt (privacy fingerprint, not raw IP)',
+            user_agent TEXT DEFAULT NULL,
+            country_code VARCHAR(2) DEFAULT NULL,
             page_url TEXT DEFAULT NULL,
             status VARCHAR(20) DEFAULT 'active',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -337,6 +339,8 @@ class WPAIC_Activator {
         self::maybe_add_handoff_columns();
         self::maybe_add_embedding_columns();
         self::maybe_add_bot_id_column();
+        self::maybe_add_user_agent_column();
+        self::maybe_add_country_code_column();
         WPAIC_Lead::maybe_create_table();
     }
 
@@ -577,6 +581,37 @@ class WPAIC_Activator {
             self::safe_alter('aichat_conversations',
                 'ADD KEY bot_id (bot_id)',
                 'add index bot_id');
+        }
+    }
+
+    /**
+     * Add country_code column to conversations table for country statistics.
+     */
+    private static function maybe_add_country_code_column(): void {
+        if (!self::table_exists('aichat_conversations')) {
+            return;
+        }
+        if (!self::has_column('aichat_conversations', 'country_code')) {
+            self::safe_alter('aichat_conversations',
+                'ADD COLUMN country_code VARCHAR(2) DEFAULT NULL AFTER user_agent',
+                'add column country_code');
+            self::safe_alter('aichat_conversations',
+                'ADD KEY country_code (country_code)',
+                'add index country_code');
+        }
+    }
+
+    /**
+     * Add user_agent column to conversations table for device statistics.
+     */
+    private static function maybe_add_user_agent_column(): void {
+        if (!self::table_exists('aichat_conversations')) {
+            return;
+        }
+        if (!self::has_column('aichat_conversations', 'user_agent')) {
+            self::safe_alter('aichat_conversations',
+                'ADD COLUMN user_agent TEXT DEFAULT NULL AFTER visitor_ip',
+                'add column user_agent');
         }
     }
 

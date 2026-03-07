@@ -658,6 +658,21 @@ msgstr "毎週"
 msgid "Reference Count"
 msgstr "参照件数"
 
+msgid "Source Display"
+msgstr "参照ページ表示"
+
+msgid "Do not show"
+msgstr "表示しない"
+
+msgid "Show only pages with matching content"
+msgstr "情報がヒットしたページのみ表示"
+
+msgid "Show all referenced pages"
+msgstr "参照したページをすべて表示"
+
+msgid "Controls whether reference page links are displayed below AI responses."
+msgstr "AI 応答の下に参照ページのリンクを表示するかを制御します。"
+
 #: includes/admin/class-admin.php:2578
 msgid "Maximum number of indexed pages to reference per response (1-10)."
 msgstr "回答ごとに参照するインデックス済みページの最大数（1-10）。"
@@ -1898,7 +1913,7 @@ msgstr "営業時間外にお問い合わせフォームを表示"
 #: includes/admin/class-admin.php:3943 includes/class-pro-features.php:319
 #: includes/frontend/class-chatbot-widget.php:329
 msgid "We are currently offline"
-msgstr "現在オフラインです"
+msgstr "現在、営業時間外です"
 
 #: includes/admin/class-admin.php:3946
 msgid "Form Description"

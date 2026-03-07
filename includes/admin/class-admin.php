@@ -565,6 +565,8 @@ class WPAIC_Admin {
             : 'daily';
         $sanitized['crawler_chunk_size'] = absint($input['crawler_chunk_size'] ?? ($existing['crawler_chunk_size'] ?? 1000));
         $sanitized['crawler_max_results'] = absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3));
+        $sources_mode = $input['sources_display_mode'] ?? ($existing['sources_display_mode'] ?? 'matched');
+        $sanitized['sources_display_mode'] = in_array($sources_mode, ['none', 'matched', 'all'], true) ? $sources_mode : 'matched';
         $sanitized['crawler_exclude_ids'] = array_values(array_unique(array_map(
             'absint',
             array_filter($input['crawler_exclude_ids'] ?? ($existing['crawler_exclude_ids'] ?? []))
@@ -662,6 +664,7 @@ class WPAIC_Admin {
         // White label
         $sanitized['white_label_enabled'] = !empty($input['white_label_enabled']);
         $sanitized['hide_powered_by'] = !empty($input['hide_powered_by']);
+        $sanitized['white_label_footer'] = sanitize_text_field($input['white_label_footer'] ?? ($existing['white_label_footer'] ?? ''));
         $raw_css = wp_strip_all_tags($input['custom_css'] ?? ($existing['custom_css'] ?? ''));
         // Remove CSS injection vectors
         $raw_css = str_replace('expression(', '', $raw_css);

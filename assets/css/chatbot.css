@@ -692,7 +692,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 12px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .chatbot-welcome-title {
@@ -866,6 +869,16 @@
 /* ============================================
    入力エリア
 ============================================ */
+.chatbot-footer-branding {
+    padding: 4px 16px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--wpaic-text-light, #999);
+    background: var(--wpaic-bg, #fff);
+    flex-shrink: 0;
+    border-top: 1px solid var(--wpaic-border, #e0e0e0);
+}
+
 .chatbot-input {
     display: flex;
     align-items: flex-end;
@@ -1715,8 +1728,9 @@
 
 .wpaic-offline-header h3 {
     margin: 0 0 8px;
-    font-size: 16px;
-    color: var(--wpaic-bot-bg, #667eea);
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
 }
 
 .wpaic-offline-header p {
@@ -1753,19 +1767,19 @@ textarea.wpaic-offline-input {
 
 .wpaic-offline-submit {
     width: 100%;
-    padding: 10px;
-    background: var(--wpaic-bot-bg, #667eea);
+    padding: 12px;
+    background: var(--wpaic-primary, #007bff);
     color: #fff;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: background 0.2s;
 }
 
 .wpaic-offline-submit:hover {
-    opacity: 0.9;
+    background: var(--wpaic-primary-dark, #0056b3);
 }
 
 .wpaic-offline-submit:disabled {
@@ -1950,6 +1964,9 @@ textarea.wpaic-offline-input {
 
 .wpaic-inline .chatbot-close {
     display: none;
+}
+.wpaic-inline.wpaic-embed .chatbot-close {
+    display: flex;
 }
 
 .wpaic-inline .chatbot-resize-handle {

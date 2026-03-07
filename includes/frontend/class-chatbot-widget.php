@@ -523,7 +523,7 @@ class WPAIC_Chatbot_Widget {
 <?php wp_head(); ?>
 </head>
 <body class="wpaic-embed-body">
-<div class="wpaic-inline" style="height:100vh">
+<div class="wpaic-inline wpaic-embed" style="height:100vh">
 <?php include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php'; ?>
 </div>
 <?php wp_footer(); ?>

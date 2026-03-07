@@ -883,18 +883,9 @@ class WPAIC_REST_Controller {
             ], 403);
         }
 
-        // Check business hours and holidays (Pro feature)
+        // Check business hours and holidays (Pro feature) — checked here but
+        // response deferred until after user message is saved to conversation history.
         $unavailable_message = $pro_features->get_unavailable_message();
-        if ($unavailable_message !== null) {
-            return new WP_REST_Response([
-                'success' => true,
-                'data'    => [
-                    'content'     => $unavailable_message,
-                    'is_auto'     => true,
-                    'sources'     => [],
-                ],
-            ], 200);
-        }
 
         // Check budget limit (Pro feature)
         if ($pro_features->check_budget_limit()) {
@@ -973,6 +964,29 @@ class WPAIC_REST_Controller {
             } else {
                 // save_history OFF — store context in transient only
                 $this->append_transient_context($session_id, 'user', $message);
+            }
+
+            // Return business hours / holiday message (after saving user message)
+            if ($unavailable_message !== null) {
+                $unavail_msg_id = 0;
+                if ($save_history) {
+                    $ai_message = WPAIC_Message::create([
+                        'conversation_id' => $conversation_id,
+                        'role'            => 'assistant',
+                        'content'         => $unavailable_message,
+                    ]);
+                    $unavail_msg_id = $ai_message ? $ai_message['id'] : 0;
+                }
+                return $this->no_cache(new WP_REST_Response([
+                    'success' => true,
+                    'data'    => [
+                        'message_id'  => (string) $unavail_msg_id,
+                        'content'     => $unavailable_message,
+                        'is_auto'     => true,
+                        'sources'     => [],
+                        'session_id'  => $session_id,
+                    ],
+                ], 200));
             }
 
             // Check message limit — if reached, try FAQ fallback instead of AI
@@ -1060,13 +1074,24 @@ class WPAIC_REST_Controller {
                         $this->increment_no_history_monthly_count();
                     }
 
-                    $urls = is_array($related_content) ? array_column($related_content, 'url') : [];
-                    $sources = array_filter(array_map(
-                        static function ($u) {
-                            return esc_url_raw((string) $u, ['http', 'https']);
-                        },
-                        $urls
-                    ));
+                    // Get source URLs (filter by display mode)
+                    $cache_sources_mode = $settings['sources_display_mode'] ?? 'matched';
+                    $cache_sources = [];
+                    if ($cache_sources_mode !== 'none' && is_array($related_content)) {
+                        foreach ($related_content as $rc) {
+                            if (empty($rc['url'])) {
+                                continue;
+                            }
+                            if ($cache_sources_mode === 'matched' && (float) ($rc['score'] ?? 0) <= 0) {
+                                continue;
+                            }
+                            $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
+                            if ($url) {
+                                $cache_sources[] = $url;
+                            }
+                        }
+                        $cache_sources = array_values(array_unique($cache_sources));
+                    }
                     $remaining_messages = $pro_features->get_remaining_messages();
 
                     $cached_content = apply_filters('wpaic_ai_response', $cached['content'], $message, $settings);
@@ -1076,14 +1101,14 @@ class WPAIC_REST_Controller {
                         'content'            => $cached_content,
                         'tokens_used'        => (int) ($cached['tokens_used'] ?? 0),
                         'tokens_billed'      => 0,
-                        'sources'            => array_values($sources),
+                        'sources'            => $cache_sources,
                         'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
                         'cached'             => true,
                         'session_id'         => $session_id,
                     ];
 
                     // Build content cards for cache path (same logic as main path)
-                    if (is_array($related_content) && !empty($related_content)) {
+                    if ($cache_sources_mode !== 'none' && is_array($related_content) && !empty($related_content)) {
                         $cache_cards = [];
                         foreach ($related_content as $item) {
                             if (($item['type'] ?? '') !== 'index') {
@@ -1326,14 +1351,25 @@ class WPAIC_REST_Controller {
             );
             $pro_features->maybe_send_budget_alert($msg_cost);
 
-            // Get source URLs
-            $urls = is_array($related_content) ? array_column($related_content, 'url') : [];
-            $sources = array_filter(array_map(
-                static function ($u) {
-                    return esc_url_raw((string) $u, ['http', 'https']);
-                },
-                $urls
-            ));
+            // Get source URLs (filter by display mode)
+            $sources_mode = $settings['sources_display_mode'] ?? 'matched';
+            $sources = [];
+            if ($sources_mode !== 'none' && is_array($related_content)) {
+                foreach ($related_content as $rc) {
+                    if (empty($rc['url'])) {
+                        continue;
+                    }
+                    // "matched" mode: only include items with positive relevance score
+                    if ($sources_mode === 'matched' && (float) ($rc['score'] ?? 0) <= 0) {
+                        continue;
+                    }
+                    $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
+                    if ($url) {
+                        $sources[] = $url;
+                    }
+                }
+                $sources = array_values(array_unique($sources));
+            }
 
             // Trigger webhook for new message (Pro feature)
             if ($save_history && $conversation && class_exists('WPAIC_Webhook')) {
@@ -1362,7 +1398,7 @@ class WPAIC_REST_Controller {
                 'message_id'  => $resp_msg_id,
                 'content'     => $response['content'],
                 'tokens_used' => $response['tokens_used'],
-                'sources'     => array_values($sources),
+                'sources'     => $sources,
                 'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
                 'session_id'  => $session_id,
             ];
@@ -1379,7 +1415,8 @@ class WPAIC_REST_Controller {
             }
 
             // Build content cards from RAG sources (non-product pages)
-            if (is_array($related_content) && !empty($related_content)) {
+            // Respect sources_display_mode: skip content cards when set to "none"
+            if ($sources_mode !== 'none' && is_array($related_content) && !empty($related_content)) {
                 $content_cards = [];
                 foreach ($related_content as $item) {
                     if (($item['type'] ?? '') !== 'index') {
@@ -2348,7 +2385,7 @@ class WPAIC_REST_Controller {
         if ($origin_host && in_array(strtolower($origin_host), $allowed, true)) {
             header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
             header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Allow-Headers: Content-Type, X-WP-Nonce, X-WPAIC-Session');
+            header('Access-Control-Allow-Headers: Content-Type, X-WP-Nonce, X-WPAIC-Session, X-WPAIC-Session-Token');
             header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
             header('Vary: Origin');
         }
@@ -2627,11 +2664,8 @@ class WPAIC_REST_Controller {
         ]);
 
         if (is_wp_error($response)) {
-            // Determine fail mode: cost-sensitive actions (chat, lead, offline) default to closed
             $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
-            $cost_sensitive_actions = ['chat', 'lead', 'offline'];
-            $should_block = ($fail_mode === 'closed') || in_array($expected_action, $cost_sensitive_actions, true);
-            if ($should_block) {
+            if ($fail_mode === 'closed') {
                 return new WP_Error('recaptcha_unavailable', __('Security verification is temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'));
             }
             return true; // fail-open: allow request through
@@ -3336,24 +3370,35 @@ class WPAIC_REST_Controller {
                 'ai_model' => $response['model'] ?? null,
             ]);
 
-            $urls = is_array($related_content) ? array_column($related_content, 'url') : [];
-            $sources = array_filter(array_map(
-                static function ($u) {
-                    return esc_url_raw((string) $u, ['http', 'https']);
-                },
-                $urls
-            ));
+            // Get source URLs (filter by display mode)
+            $sources_mode = $settings['sources_display_mode'] ?? 'matched';
+            $sources = [];
+            if ($sources_mode !== 'none' && is_array($related_content)) {
+                foreach ($related_content as $rc) {
+                    if (empty($rc['url'])) {
+                        continue;
+                    }
+                    if ($sources_mode === 'matched' && (float) ($rc['score'] ?? 0) <= 0) {
+                        continue;
+                    }
+                    $url = esc_url_raw((string) $rc['url'], ['http', 'https']);
+                    if ($url) {
+                        $sources[] = $url;
+                    }
+                }
+                $sources = array_values(array_unique($sources));
+            }
 
             $regen_response_data = [
                 'message_id'  => $new_message['id'],
                 'content'     => $response['content'],
                 'tokens_used' => $response['tokens_used'],
-                'sources'     => array_values($sources),
+                'sources'     => $sources,
                 'session_id'  => $session_id,
             ];
 
             // Build content cards for regen path
-            if (is_array($related_content) && !empty($related_content)) {
+            if ($sources_mode !== 'none' && is_array($related_content) && !empty($related_content)) {
                 $regen_cards = [];
                 foreach ($related_content as $item) {
                     if (($item['type'] ?? '') !== 'index') {

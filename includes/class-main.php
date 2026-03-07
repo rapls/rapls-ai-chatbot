@@ -416,7 +416,7 @@ class WPAIC_Main {
      */
     public function maybe_upgrade_database() {
         $db_version = get_option('wpaic_db_version', '0');
-        $current_version = '1.3.1';
+        $current_version = '1.3.3';
 
         if (version_compare($db_version, $current_version, '<')) {
             $this->upgrade_database();
