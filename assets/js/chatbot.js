@@ -1854,17 +1854,38 @@
          */
         setupImageUpload: function() {
             var self = this;
+            var imageEnabled = this.config.multimodal_enabled;
+            var fileEnabled = this.config.file_upload_enabled;
 
-            // マルチモーダルが無効の場合は何もしない
-            if (!this.config.multimodal_enabled) {
+            // どちらも無効の場合は何もしない
+            if (!imageEnabled && !fileEnabled) {
                 return;
             }
 
-            // 画像ボタンを表示
+            // accept属性を構築
+            if (this.imageInput) {
+                var acceptTypes = [];
+                if (imageEnabled) {
+                    acceptTypes.push('image/jpeg', 'image/png', 'image/gif', 'image/webp');
+                }
+                if (fileEnabled) {
+                    var extMap = {
+                        pdf: '.pdf', doc: '.doc', docx: '.docx',
+                        txt: '.txt', csv: '.csv', xls: '.xls',
+                        xlsx: '.xlsx', pptx: '.pptx', rtf: '.rtf', json: '.json'
+                    };
+                    var types = this.config.file_upload_types || [];
+                    for (var i = 0; i < types.length; i++) {
+                        if (extMap[types[i]]) acceptTypes.push(extMap[types[i]]);
+                    }
+                }
+                this.imageInput.setAttribute('accept', acceptTypes.join(','));
+            }
+
+            // アップロードボタンを表示
             if (this.imageBtn) {
                 this.imageBtn.hidden = false;
 
-                // 画像ボタンクリックでファイル選択を開く
                 this.imageBtn.addEventListener('click', function() {
                     self.imageInput.click();
                 });
@@ -1893,32 +1914,63 @@
          */
         handleImageSelect: function(file) {
             var self = this;
-            var maxSize = (this.config.multimodal_max_size || 2048) * 1024; // KB to bytes
+            var isImage = file.type.indexOf('image/') === 0;
+            var maxSizeKB = isImage
+                ? (this.config.multimodal_max_size || 2048)
+                : (this.config.file_upload_max_size || 5120);
+            var maxSize = maxSizeKB * 1024;
 
             // ファイルサイズチェック
             if (file.size > maxSize) {
-                var imgMsg = (this.config.strings && this.config.strings.image_too_large) || 'Image is too large. Please select an image under %sKB.';
-                alert(imgMsg.replace('%s', (maxSize / 1024)));
+                alert('File is too large. Maximum size: ' + maxSizeKB + 'KB');
                 this.imageInput.value = '';
                 return;
             }
 
-            // 画像タイプチェック
-            var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (allowedTypes.indexOf(file.type) === -1) {
-                alert((this.config.strings && this.config.strings.image_invalid_format) || 'Unsupported image format. Please select JPEG, PNG, GIF, or WebP.');
-                this.imageInput.value = '';
-                return;
+            if (isImage) {
+                // 画像タイプチェック
+                var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (allowedTypes.indexOf(file.type) === -1) {
+                    alert((this.config.strings && this.config.strings.image_invalid_format) || 'Unsupported image format. Please select JPEG, PNG, GIF, or WebP.');
+                    this.imageInput.value = '';
+                    return;
+                }
             }
 
-            // 画像をBase64に変換
+            // ファイルをBase64に変換
             var reader = new FileReader();
             reader.onload = function(e) {
                 self.selectedImage = file;
                 self.selectedImageData = e.target.result;
-                self.showImagePreview(e.target.result);
+                if (isImage) {
+                    self.showImagePreview(e.target.result);
+                } else {
+                    self.showFilePreview(file.name);
+                }
             };
             reader.readAsDataURL(file);
+        },
+
+        /**
+         * ファイルプレビューを表示（非画像）
+         */
+        showFilePreview: function(fileName) {
+            if (this.imagePreview) {
+                if (this.imagePreviewImg) {
+                    this.imagePreviewImg.style.display = 'none';
+                }
+                // ファイル名を表示
+                var nameEl = this.imagePreview.querySelector('.file-preview-name');
+                if (!nameEl) {
+                    nameEl = document.createElement('span');
+                    nameEl.className = 'file-preview-name';
+                    nameEl.style.cssText = 'padding:8px 12px;font-size:13px;color:#333;display:flex;align-items:center;gap:6px;';
+                    this.imagePreview.insertBefore(nameEl, this.imagePreview.firstChild);
+                }
+                nameEl.textContent = '📄 ' + fileName;
+                nameEl.style.display = 'flex';
+                this.imagePreview.hidden = false;
+            }
         },
 
         /**
@@ -1942,9 +1994,12 @@
             }
             if (this.imagePreview) {
                 this.imagePreview.hidden = true;
+                var nameEl = this.imagePreview.querySelector('.file-preview-name');
+                if (nameEl) nameEl.style.display = 'none';
             }
             if (this.imagePreviewImg) {
                 this.imagePreviewImg.src = '';
+                this.imagePreviewImg.style.display = '';
             }
         },
 
