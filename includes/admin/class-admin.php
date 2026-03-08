@@ -201,6 +201,45 @@ class WPAIC_Admin {
     }
 
     /**
+     * Show admin notice when handoff requests are pending
+     */
+    public function handoff_pending_notice(): void {
+        $settings = get_option('wpaic_settings', []);
+        $pro_settings = $settings['pro_features'] ?? [];
+        if (empty($pro_settings['human_handoff_enabled'])) {
+            return;
+        }
+
+        $count = WPAIC_Conversation::get_handoff_count();
+        if ($count <= 0) {
+            return;
+        }
+
+        $conversations_url = admin_url('admin.php?page=wpaic-conversations');
+        ?>
+        <div class="notice notice-warning" style="border-left-color: #e65100;">
+            <p>
+                <strong style="color: #e65100;">&#x1f6a8; <?php esc_html_e('AI Chatbot — Handoff:', 'rapls-ai-chatbot'); ?></strong>
+                <?php
+                printf(
+                    /* translators: %1$d: number of pending handoff conversations, %2$s: link open tag, %3$s: link close tag */
+                    esc_html(_n(
+                        '%1$d conversation is waiting for support. %2$sView conversations%3$s',
+                        '%1$d conversations are waiting for support. %2$sView conversations%3$s',
+                        $count,
+                        'rapls-ai-chatbot'
+                    )),
+                    $count,
+                    '<a href="' . esc_url($conversations_url) . '">',
+                    '</a>'
+                );
+                ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    /**
      * Register settings
      */
     public function register_settings(): void {
@@ -1155,10 +1194,11 @@ class WPAIC_Admin {
 
         // Statistics
         $conv_stats = [
-            'total'  => WPAIC_Conversation::get_count(),
-            'active' => WPAIC_Conversation::get_count('active'),
-            'closed' => WPAIC_Conversation::get_count('closed'),
-            'today'  => WPAIC_Conversation::get_today_count(),
+            'total'    => WPAIC_Conversation::get_count(),
+            'active'   => WPAIC_Conversation::get_count('active'),
+            'closed'   => WPAIC_Conversation::get_count('closed'),
+            'today'    => WPAIC_Conversation::get_today_count(),
+            'handoff'  => WPAIC_Conversation::get_handoff_count(),
         ];
 
         include WPAIC_PLUGIN_DIR . 'templates/admin/conversations.php';
@@ -1997,6 +2037,27 @@ class WPAIC_Admin {
         WPAIC_Conversation::delete_all();
 
         wp_send_json_success(__('All conversation history deleted.', 'rapls-ai-chatbot'));
+    }
+
+    /**
+     * Reset handoff status AJAX
+     */
+    public function ajax_reset_handoff(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $conversation_id = isset($_POST['conversation_id']) ? absint(wp_unslash($_POST['conversation_id'])) : 0;
+        if (!$conversation_id) {
+            wp_send_json_error(__('Invalid conversation ID.', 'rapls-ai-chatbot'));
+        }
+
+        $pro = WPAIC_Pro_Features::get_instance();
+        $pro->cancel_handoff($conversation_id);
+
+        wp_send_json_success(__('Handoff status reset.', 'rapls-ai-chatbot'));
     }
 
     /**

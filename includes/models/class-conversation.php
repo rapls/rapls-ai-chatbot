@@ -263,6 +263,19 @@ class WPAIC_Conversation {
     }
 
     /**
+     * Get count of conversations with active handoff (pending or active)
+     */
+    public static function get_handoff_count(): int {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM `{$table}` WHERE handoff_status IN ('pending', 'active')"
+        );
+    }
+
+    /**
      * Update status
      */
     public static function update_status($id, $status) {

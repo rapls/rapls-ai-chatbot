@@ -2019,9 +2019,11 @@ textarea.wpaic-offline-input {
 
 /* ハンドオフステータスインジケーター */
 .chatbot-handoff-indicator {
-    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
     font-size: 12px;
-    text-align: center;
     transition: all 0.3s ease;
 }
 
@@ -2033,4 +2035,48 @@ textarea.wpaic-offline-input {
 .chatbot-handoff-indicator--active {
     background: #e8f5e9;
     color: #2e7d32;
+}
+
+.chatbot-handoff-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chatbot-handoff-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e65100;
+    animation: chatbot-handoff-pulse 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.chatbot-handoff-dot--active {
+    background: #2e7d32;
+}
+
+@keyframes chatbot-handoff-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.chatbot-handoff-cancel {
+    background: none;
+    border: 1px solid currentColor;
+    color: inherit;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+}
+
+.chatbot-handoff-cancel:hover {
+    opacity: 1;
+    background: rgba(0,0,0,0.05);
 }

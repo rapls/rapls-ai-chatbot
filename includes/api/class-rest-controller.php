@@ -529,6 +529,20 @@ class WPAIC_REST_Controller {
                     ],
                 ],
             ]);
+
+            // Handoff cancel (visitor returns to AI chat)
+            register_rest_route($this->namespace, '/handoff-cancel', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'cancel_handoff'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                ],
+            ]);
         }
     }
 
@@ -884,14 +898,18 @@ class WPAIC_REST_Controller {
         }
 
         // Check rate limit (Pro enhanced or basic)
-        $rate_limit_result = $this->check_rate_limit();
-        if ($rate_limit_result !== true) {
-            $rate_limit_msg = is_string($rate_limit_result) ? $rate_limit_result : __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $rate_limit_msg,
-                'error_code' => 'rate_limited',
-            ], 429);
+        // Bypass rate limit for handoff keyword messages so users can always reach support
+        $is_handoff = WPAIC_Pro_Features::get_instance()->is_handoff_keyword($message);
+        if (!$is_handoff) {
+            $rate_limit_result = $this->check_rate_limit();
+            if ($rate_limit_result !== true) {
+                $rate_limit_msg = is_string($rate_limit_result) ? $rate_limit_result : __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+                return new WP_REST_Response([
+                    'success'    => false,
+                    'error'      => $rate_limit_msg,
+                    'error_code' => 'rate_limited',
+                ], 429);
+            }
         }
 
         // Check monthly message limit
@@ -1055,6 +1073,15 @@ class WPAIC_REST_Controller {
                         'limit_reached'      => true,
                     ],
                 ], 200);
+            }
+
+            // Check if conversation is in handoff or message triggers handoff — skip AI call
+            $handoff_response = apply_filters('wpaic_pre_ai_handoff_check', null, $conversation_id ?? 0, $session_id, $message);
+            if (is_array($handoff_response)) {
+                return $this->no_cache(new WP_REST_Response([
+                    'success' => true,
+                    'data'    => $handoff_response,
+                ], 200));
             }
 
             // Get AI provider (bot config may override provider/model)
@@ -4082,6 +4109,29 @@ class WPAIC_REST_Controller {
                 'handoff_status' => $status,
                 'messages'       => $messages,
             ],
+        ]);
+    }
+
+    /**
+     * Cancel handoff and return to AI chat (visitor action)
+     */
+    public function cancel_handoff(WP_REST_Request $request): WP_REST_Response {
+        $session_id = sanitize_text_field($request->get_param('session_id'));
+
+        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        if (!$conversation) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('Conversation not found.', 'rapls-ai-chatbot'),
+            ], 404);
+        }
+
+        $pro = WPAIC_Pro_Features::get_instance();
+        $pro->cancel_handoff((int) $conversation['id']);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data'    => ['handoff_status' => null],
         ]);
     }
 

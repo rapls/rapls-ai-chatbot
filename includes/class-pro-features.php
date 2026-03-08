@@ -752,6 +752,14 @@ class WPAIC_Pro_Features {
     }
 
     /**
+     * Stub: Check if message contains a handoff keyword (no DB lookup).
+     * Used to bypass rate limiting for handoff requests.
+     */
+    public function is_handoff_keyword(string $message): bool {
+        return false;
+    }
+
+    /**
      * Stub: Check if message triggers handoff to human operator
      */
     public function check_handoff_trigger(string $message, int $conversation_id): bool {
@@ -763,6 +771,12 @@ class WPAIC_Pro_Features {
      */
     public function get_handoff_status(int $conversation_id): ?string {
         return null;
+    }
+
+    /**
+     * Stub: Cancel handoff for a conversation
+     */
+    public function cancel_handoff(int $conversation_id): void {
     }
 
     /**

@@ -1062,15 +1062,23 @@ if (!defined('ABSPATH')) {
                             $badge_icon_emoji = $badge_pro_settings['badge_icon_emoji'] ?? '';
                             ?>
                             <div class="wpaic-badge-icon-preview" style="display: flex; align-items: center; gap: 15px;">
-                                <div style="width: 50px; height: 50px; border-radius: 50%; background: <?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
+                                <div style="width: 60px; height: 60px; border-radius: 50%; background: <?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0; cursor: pointer;">
                                     <?php if ($badge_icon_type === 'preset' && !empty($badge_icon_preset)) : ?>
-                                        <span style="width: 24px; height: 24px;"><?php echo wp_kses(wpaic_get_badge_preset_svg($badge_icon_preset), wpaic_get_svg_allowed_tags()); ?></span>
+                                        <?php
+                                        // Force SVG to 28x28 by adding width/height attributes
+                                        $preview_svg = wpaic_get_badge_preset_svg($badge_icon_preset);
+                                        $preview_svg = str_replace('<svg ', '<svg width="28" height="28" ', $preview_svg);
+                                        $svg_tags = wpaic_get_svg_allowed_tags();
+                                        $svg_tags['svg']['width'] = true;
+                                        $svg_tags['svg']['height'] = true;
+                                        echo wp_kses($preview_svg, $svg_tags);
+                                        ?>
                                     <?php elseif ($badge_icon_type === 'image' && !empty($badge_icon_image)) : ?>
-                                        <img src="<?php echo esc_url($badge_icon_image); ?>" alt="" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">
+                                        <img src="<?php echo esc_url($badge_icon_image); ?>" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
                                     <?php elseif ($badge_icon_type === 'emoji' && !empty($badge_icon_emoji)) : ?>
-                                        <span style="font-size: 22px; line-height: 1;"><?php echo esc_html($badge_icon_emoji); ?></span>
+                                        <span style="font-size: 28px; line-height: 1;"><?php echo esc_html($badge_icon_emoji); ?></span>
                                     <?php else : ?>
-                                        <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.5"/><circle cx="12" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/></svg>
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/><circle cx="8" cy="10" r="1.5"/><circle cx="12" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/></svg>
                                     <?php endif; ?>
                                 </div>
                                 <div>

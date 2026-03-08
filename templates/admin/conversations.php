@@ -11,6 +11,40 @@ $total_pages = ceil($total / 20);
 $is_pro_active = get_option('wpaic_pro_active');
 $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date_from ?? '') !== '' || ($date_to ?? '') !== '';
 ?>
+<style>
+.wpaic-handoff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.wpaic-handoff-badge--pending {
+    background: #fff3e0;
+    color: #e65100;
+}
+.wpaic-handoff-badge--active {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+.wpaic-handoff-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e65100;
+    animation: wpaic-pulse 1.5s ease-in-out infinite;
+}
+.wpaic-handoff-dot--active {
+    background: #2e7d32;
+}
+@keyframes wpaic-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+</style>
 <div class="wrap wpaic-admin">
     <h1><?php esc_html_e('AI Chatbot - Conversations', 'rapls-ai-chatbot'); ?></h1>
 
@@ -32,6 +66,12 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
             <div class="stat-value"><?php echo esc_html(number_format($conv_stats['today'])); ?></div>
             <div class="stat-label"><?php esc_html_e('Today', 'rapls-ai-chatbot'); ?></div>
         </div>
+        <?php if ($conv_stats['handoff'] > 0): ?>
+        <div class="wpaic-list-stat-card" style="border-left: 3px solid #e65100;">
+            <div class="stat-value" style="color: #e65100;"><?php echo esc_html(number_format($conv_stats['handoff'])); ?></div>
+            <div class="stat-label"><?php esc_html_e('Handoff', 'rapls-ai-chatbot'); ?></div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Search & Filter -->
@@ -103,6 +143,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                     <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
                     <th><?php esc_html_e('Start Page', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 100px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 100px;"><?php esc_html_e('Handoff', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('created_at', __('Started', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('updated_at', __('Last Updated', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 120px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
@@ -158,6 +199,30 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                                 echo esc_html($status_labels[$conv['status']] ?? $conv['status']);
                                 ?>
                             </span>
+                        </td>
+                        <td>
+                            <?php
+                            $handoff = $conv['handoff_status'] ?? null;
+                            if ($handoff === 'pending'):
+                            ?>
+                                <span class="wpaic-handoff-badge wpaic-handoff-badge--pending">
+                                    <span class="wpaic-handoff-dot"></span>
+                                    <?php esc_html_e('Pending', 'rapls-ai-chatbot'); ?>
+                                </span>
+                                <button type="button" class="button button-small wpaic-reset-handoff" data-id="<?php echo esc_attr($conv['id']); ?>" title="<?php esc_attr_e('Reset handoff status', 'rapls-ai-chatbot'); ?>" style="margin-top: 4px; font-size: 11px;">
+                                    <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
+                                </button>
+                            <?php elseif ($handoff === 'active'): ?>
+                                <span class="wpaic-handoff-badge wpaic-handoff-badge--active">
+                                    <span class="wpaic-handoff-dot wpaic-handoff-dot--active"></span>
+                                    <?php esc_html_e('Active', 'rapls-ai-chatbot'); ?>
+                                </span>
+                                <button type="button" class="button button-small wpaic-reset-handoff" data-id="<?php echo esc_attr($conv['id']); ?>" title="<?php esc_attr_e('Reset handoff status', 'rapls-ai-chatbot'); ?>" style="margin-top: 4px; font-size: 11px;">
+                                    <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
+                                </button>
+                            <?php else: ?>
+                                <em style="color: #999;">—</em>
+                            <?php endif; ?>
                         </td>
                         <td><?php echo esc_html(mysql2date('Y/m/d H:i', $conv['created_at'])); ?></td>
                         <td><?php echo esc_html(mysql2date('Y/m/d H:i', $conv['updated_at'])); ?></td>
@@ -575,6 +640,38 @@ jQuery(document).ready(function($) {
             error: function() {
                 alert(i18n.error || '<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Reset All User Sessions', 'rapls-ai-chatbot')); ?>');
+            }
+        });
+    });
+
+    // Handoff reset
+    $(document).on('click', '.wpaic-reset-handoff', function() {
+        var $btn = $(this);
+        var convId = $btn.data('id');
+        if (!confirm('<?php echo esc_js(__('Reset handoff status for this conversation?', 'rapls-ai-chatbot')); ?>')) {
+            return;
+        }
+        $btn.prop('disabled', true).text('...');
+        $.ajax({
+            url: ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'wpaic_reset_handoff',
+                conversation_id: convId,
+                nonce: wpaicAdmin.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    var $td = $btn.closest('td');
+                    $td.html('<em style="color:#999;">—</em>');
+                } else {
+                    alert(response.data || '<?php echo esc_js(__('Failed to reset handoff.', 'rapls-ai-chatbot')); ?>');
+                    $btn.prop('disabled', false).text('<?php echo esc_js(__('Reset', 'rapls-ai-chatbot')); ?>');
+                }
+            },
+            error: function() {
+                alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false).text('<?php echo esc_js(__('Reset', 'rapls-ai-chatbot')); ?>');
             }
         });
     });

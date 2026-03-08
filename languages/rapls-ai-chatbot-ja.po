@@ -1394,7 +1394,36 @@ msgid "UI"
 msgstr "UI"
 
 msgid "Handoff"
-msgstr "引き継ぎ"
+msgstr "ハンドオフ"
+
+#: templates/admin/conversations.php
+msgid "Pending"
+msgstr "待機中"
+
+#: templates/admin/conversations.php
+msgid "Reset handoff status"
+msgstr "ハンドオフ状態をリセット"
+
+#: templates/admin/conversations.php
+msgid "Reset handoff status for this conversation?"
+msgstr "この会話のハンドオフ状態をリセットしますか？"
+
+#: includes/admin/class-admin.php
+msgid "Handoff status reset."
+msgstr "ハンドオフ状態をリセットしました。"
+
+#: includes/admin/class-admin.php
+msgid "AI Chatbot — Handoff:"
+msgstr "AI チャットボット — ハンドオフ:"
+
+#: includes/admin/class-admin.php
+msgid "%1$d conversation is waiting for support. %2$sView conversations%3$s"
+msgid_plural "%1$d conversations are waiting for support. %2$sView conversations%3$s"
+msgstr[0] "%1$d 件の会話がサポート対応を待っています。%2$s会話を確認%3$s"
+
+#: templates/admin/conversations.php
+msgid "Failed to reset handoff."
+msgstr "ハンドオフのリセットに失敗しました。"
 
 msgid "AI Forms"
 msgstr "AI フォーム"
@@ -5249,6 +5278,14 @@ msgstr "サポートに接続しました"
 #: includes/frontend/class-chatbot-widget.php
 msgid "Support session ended. You are now chatting with AI again."
 msgstr "サポートセッションが終了しました。AI チャットに戻ります。"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Back to AI"
+msgstr "AI に戻る"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Returned to AI chat."
+msgstr "AI チャットに戻りました。"
 
 #: includes/frontend/class-chatbot-widget.php
 msgid "Support"

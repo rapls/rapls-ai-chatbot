@@ -748,7 +748,8 @@
                     var _s = self.config.strings || {};
                     var ecMap = _s.error_code_messages || {};
                     var ec = error.errorCode || '';
-                    var errorMessage = ecMap[ec]; // wpaic-i18n-ok
+                    // For rate_limited, prefer server message (supports custom rate limit message)
+                    var errorMessage = (ec === 'rate_limited' && error.message) ? error.message : ecMap[ec]; // wpaic-i18n-ok
                     // Dev aid: warn when server sends error_code not in the PHP map.
                     // Uses is_plugin_admin (no WP_DEBUG requirement) so production admins also see it.
                     if (ec && !errorMessage && self.config.is_plugin_admin) {
@@ -1039,13 +1040,65 @@
                 }
             }
 
+            var self = this;
             var s = this.config.strings || {};
             indicator.className = 'chatbot-handoff-indicator chatbot-handoff-indicator--' + status;
+            indicator.innerHTML = '';
+
+            // Status icon + text
+            var statusText = document.createElement('span');
+            statusText.className = 'chatbot-handoff-text';
             if (status === 'pending') {
-                indicator.textContent = s.handoff_waiting || 'Waiting for support representative...';
+                statusText.innerHTML = '<span class="chatbot-handoff-dot"></span>' + (s.handoff_waiting || 'Waiting for support representative...');
             } else if (status === 'active') {
-                indicator.textContent = s.handoff_active || 'Connected with support';
+                statusText.innerHTML = '<span class="chatbot-handoff-dot chatbot-handoff-dot--active"></span>' + (s.handoff_active || 'Connected with support');
             }
+            indicator.appendChild(statusText);
+
+            // Cancel / back-to-AI button
+            if (status === 'pending') {
+                var cancelBtn = document.createElement('button');
+                cancelBtn.className = 'chatbot-handoff-cancel';
+                cancelBtn.type = 'button';
+                cancelBtn.textContent = s.handoff_cancel || 'Back to AI';
+                cancelBtn.addEventListener('click', function() {
+                    self.cancelHandoff();
+                });
+                indicator.appendChild(cancelBtn);
+            }
+        },
+
+        /**
+         * Cancel handoff and return to AI chat
+         */
+        cancelHandoff: function() {
+            var self = this;
+            var s = this.config.strings || {};
+
+            this.stopHandoffPolling();
+
+            // Call server to reset handoff
+            if (!this.sessionId) return;
+
+            fetch(this.config.api_base + '/handoff-cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': this.config.nonce
+                },
+                body: JSON.stringify({ session_id: this.sessionId })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(result) {
+                self.handoffStatus = null;
+                self.showHandoffIndicator(null);
+                self.addSystemMessage(s.handoff_cancelled || 'Returned to AI chat.');
+            })
+            .catch(function() {
+                self.handoffStatus = null;
+                self.showHandoffIndicator(null);
+                self.addSystemMessage(s.handoff_cancelled || 'Returned to AI chat.');
+            });
         },
 
         /**
@@ -2153,7 +2206,8 @@
                             var errorMsg = json.error || json.message || 'API error: ' + response.status;
 
                             // Auto-retry: 429 rate limited → wait and retry with exponential backoff (up to 2 retries)
-                            if (response.status === 429 && _retryCount < 2) {
+                            // Skip retry if error_code is rate_limited (intentional block with custom message)
+                            if (response.status === 429 && _retryCount < 2 && errorCode !== 'rate_limited') {
                                 var retryDelay = (Math.pow(2, _retryCount) * 2000) + Math.floor(Math.random() * 1000);
                                 return new Promise(function(resolve) {
                                     setTimeout(resolve, retryDelay);

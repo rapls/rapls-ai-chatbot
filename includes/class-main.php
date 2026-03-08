@@ -156,6 +156,7 @@ class WPAIC_Main {
         $this->loader->add_action('admin_notices', $admin, 'message_limit_notice');
         $this->loader->add_action('admin_notices', $admin, 'api_key_decryption_notice');
         $this->loader->add_action('admin_notices', $admin, 'security_settings_notice');
+        $this->loader->add_action('admin_notices', $admin, 'handoff_pending_notice');
         $this->loader->add_action('admin_init', $admin, 'register_settings');
         $this->loader->add_action('admin_init', $this, 'add_privacy_policy_content');
         $this->loader->add_action('admin_init', $this, 'maybe_upgrade_database');
@@ -174,6 +175,7 @@ class WPAIC_Main {
         $this->loader->add_action('wp_ajax_wpaic_delete_conversation', $admin, 'ajax_delete_conversation');
         $this->loader->add_action('wp_ajax_wpaic_delete_conversations_bulk', $admin, 'ajax_delete_conversations_bulk');
         $this->loader->add_action('wp_ajax_wpaic_delete_all_conversations', $admin, 'ajax_delete_all_conversations');
+        $this->loader->add_action('wp_ajax_wpaic_reset_handoff', $admin, 'ajax_reset_handoff');
 
         // Knowledge AJAX
         $this->loader->add_action('wp_ajax_wpaic_add_knowledge', $admin, 'ajax_add_knowledge');
