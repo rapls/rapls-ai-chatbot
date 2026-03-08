@@ -3784,8 +3784,11 @@ class WPAIC_REST_Controller {
                 $context .= ($msg['role'] === 'user' ? 'Q: ' : 'A: ') . $content . "\n";
             }
 
-            // Generate suggestions
-            $suggestion_prompt = __('Based on the following conversation, suggest 3 short follow-up questions the user might want to ask. Return only the questions, one per line, without numbering:', 'rapls-ai-chatbot');
+            // Generate suggestions (use custom prompt from Pro settings if available)
+            $pro_settings = $settings['pro_features'] ?? [];
+            $suggestion_prompt = !empty($pro_settings['suggestions_prompt'])
+                ? $pro_settings['suggestions_prompt']
+                : __('Based on the following conversation, suggest 3 short follow-up questions the user might want to ask. Return only the questions, one per line, without numbering:', 'rapls-ai-chatbot');
 
             // Use higher token limit for reasoning models (o1, o3, etc.)
             $response = $provider->send_message([
