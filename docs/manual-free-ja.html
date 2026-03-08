@@ -1,0 +1,804 @@
+<!-- Rapls AI Chatbot - Free Edition Manual (Japanese) -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+.breadcrumb.breadcrumb-page.pbp-main-top,
+.article-header.entry-header { display: none !important; }
+* { box-sizing: border-box; }
+
+:root {
+    --primary: #667eea;
+    --primary-dark: #764ba2;
+    --text: #1a1a2e;
+    --text-light: #555;
+    --border: #e5e7eb;
+    --bg-light: #f8f9ff;
+    --bg-code: #f1f3f5;
+    --pro-gold: #d4a017;
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); line-height: 1.7; }
+
+.wpaic-manual-wrap {
+    display: flex;
+    max-width: 1280px;
+    margin: 0 auto;
+    gap: 0;
+}
+
+/* Sidebar */
+.wpaic-sidebar {
+    width: 280px;
+    min-width: 280px;
+    border-right: 1px solid var(--border);
+    padding: 30px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: #fff;
+}
+.wpaic-sidebar h2 {
+    font-size: 16px;
+    color: var(--primary);
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary);
+}
+.wpaic-sidebar-section { margin-bottom: 8px; }
+.wpaic-sidebar-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 0;
+    color: var(--text);
+    list-style: none;
+}
+.wpaic-sidebar-section summary::before {
+    content: '\f105';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-right: 8px;
+    transition: transform 0.2s;
+    display: inline-block;
+    font-size: 12px;
+}
+.wpaic-sidebar-section[open] summary::before { transform: rotate(90deg); }
+.wpaic-sidebar-section ul {
+    list-style: none;
+    padding: 0 0 0 20px;
+    margin: 4px 0 8px;
+}
+.wpaic-sidebar-section ul li { margin: 2px 0; }
+.wpaic-sidebar-section ul li a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 3px 0;
+    display: block;
+    transition: color 0.2s;
+}
+.wpaic-sidebar-section ul li a:hover { color: var(--primary); }
+
+/* Main content */
+.wpaic-content {
+    flex: 1;
+    padding: 40px 50px;
+    max-width: 900px;
+}
+.wpaic-content h1 {
+    font-size: 32px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+.wpaic-content .wpaic-subtitle {
+    color: var(--text-light);
+    font-size: 16px;
+    margin-bottom: 40px;
+}
+.wpaic-content h2 {
+    font-size: 24px;
+    color: var(--text);
+    margin: 50px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+}
+.wpaic-content h2 .fa-solid { color: var(--primary); margin-right: 10px; }
+.wpaic-content h3 {
+    font-size: 18px;
+    color: var(--text);
+    margin: 30px 0 12px;
+    padding-left: 12px;
+    border-left: 3px solid var(--primary);
+}
+.wpaic-content p { margin: 8px 0 16px; color: var(--text-light); }
+.wpaic-content ul, .wpaic-content ol {
+    margin: 8px 0 16px;
+    padding-left: 24px;
+    color: var(--text-light);
+}
+.wpaic-content li { margin: 4px 0; }
+
+/* Tables */
+.wpaic-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 14px;
+}
+.wpaic-table th, .wpaic-table td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+}
+.wpaic-table th {
+    background: var(--bg-light);
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+.wpaic-table td { color: var(--text-light); }
+
+/* Badges */
+.wpaic-default {
+    display: inline-block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.wpaic-pro-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0c674, #d4a017);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+.wpaic-required {
+    display: inline-block;
+    background: #ffebee;
+    color: #c62828;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* Info/Tip/Warning boxes */
+.wpaic-box {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-size: 14px;
+}
+.wpaic-box-info {
+    background: #e3f2fd;
+    border-left: 4px solid #1976d2;
+    color: #0d47a1;
+}
+.wpaic-box-tip {
+    background: #e8f5e9;
+    border-left: 4px solid #388e3c;
+    color: #1b5e20;
+}
+.wpaic-box-warn {
+    background: #fff3e0;
+    border-left: 4px solid #f57c00;
+    color: #e65100;
+}
+
+code {
+    background: var(--bg-code);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #c7254e;
+}
+pre {
+    background: var(--bg-code);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Footer */
+.wpaic-footer {
+    margin-top: 60px;
+    padding: 30px 0;
+    border-top: 2px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 14px;
+}
+.wpaic-footer a { color: var(--primary); text-decoration: none; }
+.wpaic-footer a:hover { text-decoration: underline; }
+
+/* Language switcher */
+.wpaic-lang-switch {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.wpaic-lang-switch a {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text-light);
+    transition: all 0.2s;
+}
+.wpaic-lang-switch a.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .wpaic-manual-wrap { flex-direction: column; }
+    .wpaic-sidebar {
+        width: 100%; min-width: auto;
+        position: relative; height: auto;
+        border-right: none; border-bottom: 1px solid var(--border);
+    }
+    .wpaic-content { padding: 20px; }
+}
+</style>
+
+<div class="wpaic-manual-wrap">
+
+<!-- Sidebar Navigation -->
+<nav class="wpaic-sidebar">
+    <h2><i class="fa-solid fa-book"></i> Free版 マニュアル</h2>
+
+    <div class="wpaic-lang-switch">
+        <a href="/rapls-ai-chatbot-free-manual-ja/" class="active">日本語</a>
+        <a href="/rapls-ai-chatbot-free-manual-en/">English</a>
+    </div>
+
+    <details class="wpaic-sidebar-section" open>
+        <summary><i class="fa-solid fa-microchip"></i> AI 設定</summary>
+        <ul>
+            <li><a href="#ai-provider">AI プロバイダー</a></li>
+            <li><a href="#openai">OpenAI 設定</a></li>
+            <li><a href="#claude">Claude 設定</a></li>
+            <li><a href="#gemini">Gemini 設定</a></li>
+            <li><a href="#openrouter">OpenRouter 設定</a></li>
+            <li><a href="#embedding">ベクトル埋め込み (RAG)</a></li>
+            <li><a href="#mcp">MCP サーバー</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-comments"></i> チャット設定</summary>
+        <ul>
+            <li><a href="#bot-name">ボット名</a></li>
+            <li><a href="#bot-avatar">ボットアバター</a></li>
+            <li><a href="#welcome-message">ウェルカムメッセージ</a></li>
+            <li><a href="#response-language">応答言語</a></li>
+            <li><a href="#system-prompt">システムプロンプト</a></li>
+            <li><a href="#context-prompts">コンテキストプロンプト</a></li>
+            <li><a href="#feature-prompts">機能プロンプト</a></li>
+            <li><a href="#message-history">メッセージ履歴数</a></li>
+            <li><a href="#max-tokens">最大トークン数</a></li>
+            <li><a href="#temperature">Temperature</a></li>
+            <li><a href="#feedback-buttons">フィードバックボタン</a></li>
+            <li><a href="#web-search">Web 検索</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-palette"></i> 表示設定</summary>
+        <ul>
+            <li><a href="#theme">テーマ</a></li>
+            <li><a href="#primary-color">メインカラー</a></li>
+            <li><a href="#badge-position">バッジ位置</a></li>
+            <li><a href="#badge-margin">バッジマージン</a></li>
+            <li><a href="#markdown">Markdown</a></li>
+            <li><a href="#mobile">モバイル表示</a></li>
+            <li><a href="#page-visibility">ページ表示設定</a></li>
+            <li><a href="#embed">外部サイト埋め込み</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-shield-halved"></i> reCAPTCHA</summary>
+        <ul>
+            <li><a href="#recaptcha-enable">reCAPTCHA 有効化</a></li>
+            <li><a href="#recaptcha-keys">サイトキー / シークレットキー</a></li>
+            <li><a href="#recaptcha-threshold">スコア閾値</a></li>
+            <li><a href="#recaptcha-fail">失敗時モード</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-sliders"></i> 詳細設定</summary>
+        <ul>
+            <li><a href="#save-history">会話履歴保存</a></li>
+            <li><a href="#retention">データ保持期間</a></li>
+            <li><a href="#delete-uninstall">アンインストール時削除</a></li>
+            <li><a href="#consent">WP Consent API</a></li>
+            <li><a href="#rate-limit">レート制限</a></li>
+            <li><a href="#proxy">プロキシ設定</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-spider"></i> サイト学習</summary>
+        <ul>
+            <li><a href="#crawler-enable">クローラー有効化</a></li>
+            <li><a href="#crawler-types">投稿タイプ</a></li>
+            <li><a href="#crawler-interval">クロール間隔</a></li>
+            <li><a href="#crawler-chunk">チャンクサイズ</a></li>
+            <li><a href="#crawler-results">最大結果数</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-database"></i> ナレッジベース</summary>
+        <ul>
+            <li><a href="#kb-overview">概要</a></li>
+            <li><a href="#kb-add">Q&A 追加</a></li>
+            <li><a href="#kb-import">CSV インポート</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-clock-rotate-left"></i> 会話履歴</summary>
+        <ul>
+            <li><a href="#conv-list">会話一覧</a></li>
+            <li><a href="#conv-detail">メッセージ表示</a></li>
+        </ul>
+    </details>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="/rapls-ai-chatbot-manual-pro-ja/" style="display: block; padding: 10px 16px; background: linear-gradient(135deg, #f0c674, #d4a017); color: #fff; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px;">
+            Pro版マニュアルを見る &rarr;
+        </a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="wpaic-content">
+
+<h1>Rapls AI Chatbot マニュアル（Free版）</h1>
+<p class="wpaic-subtitle">WordPress 用 AI チャットボットプラグインの全設定を詳しく解説します。<br>バージョン: 1.5.0 | PHP 7.4+ | WordPress 5.8+</p>
+
+<!-- ============================================================ -->
+<h2 id="ai-settings"><i class="fa-solid fa-microchip"></i> AI 設定</h2>
+<!-- ============================================================ -->
+
+<h3 id="ai-provider">AI プロバイダー</h3>
+<p>チャットボットが使用する AI サービスを選択します。各プロバイダーごとに API キーの取得とモデルの選択が必要です。</p>
+<table class="wpaic-table">
+    <tr><th>選択肢</th><th>説明</th></tr>
+    <tr><td><strong>OpenAI</strong> <span class="wpaic-default">デフォルト</span></td><td>GPT-4o、GPT-4 Turbo、GPT-3.5 Turbo など。最も広く利用されている AI プロバイダーです。</td></tr>
+    <tr><td><strong>Claude (Anthropic)</strong></td><td>Claude Opus、Sonnet、Haiku モデル。長文の理解と安全性に優れています。</td></tr>
+    <tr><td><strong>Gemini (Google)</strong></td><td>Gemini 2.0 Flash、1.5 Pro など。マルチモーダル対応に強みがあります。</td></tr>
+    <tr><td><strong>OpenRouter</strong></td><td>100以上のモデルに統一 API でアクセスできるゲートウェイサービスです。</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> プロバイダーを変更しても過去の会話履歴は保持されます。ただし、モデルが異なるため応答のスタイルが変わる場合があります。
+</div>
+
+<h3 id="openai">OpenAI 設定</h3>
+<p>OpenAI の API キーとモデルを設定します。API キーは <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI ダッシュボード</a>から取得できます。</p>
+
+<p><strong>API キー:</strong> <code>sk-</code> で始まるキーを入力してください。保存時に暗号化されます。「接続テスト」ボタンでキーの有効性を確認できます。</p>
+
+<p><strong>モデル選択:</strong></p>
+<table class="wpaic-table">
+    <tr><th>モデル</th><th>特徴</th><th>推奨用途</th></tr>
+    <tr><td><strong>gpt-4o-mini</strong> <span class="wpaic-default">デフォルト</span></td><td>高速・低コスト。GPT-4o の軽量版</td><td>一般的なカスタマーサポート</td></tr>
+    <tr><td><strong>gpt-4o</strong></td><td>高性能マルチモーダル。画像理解対応</td><td>画像を扱う高品質な応答が必要な場合</td></tr>
+    <tr><td><strong>gpt-4-turbo</strong></td><td>GPT-4 の高速版。128K コンテキスト</td><td>長い会話や大量の知識ベースがある場合</td></tr>
+    <tr><td><strong>gpt-3.5-turbo</strong></td><td>最も低コスト</td><td>コスト重視の場合</td></tr>
+    <tr><td><strong>o1 / o1-mini</strong></td><td>推論特化モデル。思考プロセスを表示</td><td>複雑な問題解決</td></tr>
+    <tr><td><strong>o3-mini</strong></td><td>最新の推論モデル</td><td>高度な推論タスク</td></tr>
+    <tr><td><strong>gpt-4.5-preview</strong></td><td>GPT-4.5 プレビュー版</td><td>最新機能の試用</td></tr>
+    <tr><td><strong>gpt-5</strong></td><td>最新世代。トークン自動乗算機能あり</td><td>最高品質の応答</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-info">
+    <strong>GPT-5 トークン乗算:</strong> GPT-5 モデル使用時は、設定した最大トークン数に自動的に乗算係数（デフォルト: 4倍）が適用されます。これは GPT-5 の推論トークン消費に対応するためです。
+</div>
+
+<h3 id="claude">Claude (Anthropic) 設定</h3>
+<p>Anthropic の API キーとモデルを設定します。API キーは <a href="https://console.anthropic.com/" target="_blank">Anthropic コンソール</a>から取得できます。</p>
+
+<p><strong>モデル選択:</strong></p>
+<table class="wpaic-table">
+    <tr><th>モデル</th><th>特徴</th></tr>
+    <tr><td><strong>claude-sonnet-4-20250514</strong> <span class="wpaic-default">デフォルト</span></td><td>最新の Sonnet。速度と品質のバランスが優秀</td></tr>
+    <tr><td><strong>claude-opus-4-20250514</strong></td><td>最高性能。複雑なタスクや長文に最適</td></tr>
+    <tr><td><strong>claude-haiku-4-20250514</strong></td><td>最速・最低コスト。簡単な応答に最適</td></tr>
+    <tr><td><strong>claude-3-5-sonnet</strong></td><td>Claude 3.5 世代の Sonnet</td></tr>
+    <tr><td><strong>claude-3-opus</strong></td><td>Claude 3 世代の最高性能モデル</td></tr>
+    <tr><td><strong>claude-3-haiku</strong></td><td>Claude 3 世代の軽量モデル</td></tr>
+</table>
+
+<h3 id="gemini">Gemini (Google) 設定</h3>
+<p>Google AI の API キーとモデルを設定します。API キーは <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a> から取得できます。</p>
+
+<p><strong>モデル選択:</strong></p>
+<table class="wpaic-table">
+    <tr><th>モデル</th><th>特徴</th></tr>
+    <tr><td><strong>gemini-2.0-flash-exp</strong> <span class="wpaic-default">デフォルト</span></td><td>最新の高速モデル。マルチモーダル対応</td></tr>
+    <tr><td><strong>gemini-1.5-pro</strong></td><td>100万トークンコンテキスト。長文分析に最適</td></tr>
+    <tr><td><strong>gemini-1.5-flash</strong></td><td>高速・低コスト版</td></tr>
+    <tr><td><strong>gemini-2.0-flash-thinking-exp</strong></td><td>思考プロセス付きの実験的モデル</td></tr>
+</table>
+
+<h3 id="openrouter">OpenRouter 設定</h3>
+<p>OpenRouter は複数の AI プロバイダーのモデルに統一 API でアクセスできるサービスです。API キーは <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a> から取得できます。</p>
+<p><strong>デフォルトモデル:</strong> <code>openrouter/auto</code> - リクエスト内容に応じて最適なモデルを自動選択します。100以上のモデルからドロップダウンで選択することもできます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> OpenRouter を使うと、1つの API キーで OpenAI、Claude、Gemini、Llama、Mistral など様々なモデルを試すことができます。
+</div>
+
+<h3 id="embedding">ベクトル埋め込み (RAG)</h3>
+<p>ナレッジベースやサイト学習データからの検索精度を向上させるベクトル埋め込み検索を有効にします。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>説明</th></tr>
+    <tr><td><strong>ベクトル埋め込み有効化</strong></td><td><strong>有効:</strong> AI の埋め込みモデルを使って意味的な検索を行います。キーワード一致ではなく、意味の類似性で検索するため精度が向上します。<br><strong>無効:</strong> 従来の FULLTEXT 検索を使用します。</td></tr>
+    <tr><td><strong>プロバイダー</strong></td><td><strong>自動</strong> <span class="wpaic-default">デフォルト</span> - 選択中の AI プロバイダーの埋め込みモデルを使用<br><strong>OpenAI</strong> - OpenAI の text-embedding モデルを使用<br><strong>Gemini</strong> - Google の embedding モデルを使用</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>注意:</strong> ベクトル埋め込みを有効にすると、チャットメッセージごとに追加の API 呼び出しが発生します。少量の追加コストが発生する場合があります。
+</div>
+
+<h3 id="mcp">MCP (Model Context Protocol) サーバー</h3>
+<p>MCP サーバーを有効にすると、Claude Desktop、Cursor、その他の MCP 対応ツールからプラグインのナレッジベースにアクセスできるようになります。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>説明</th></tr>
+    <tr><td><strong>MCP 有効化</strong></td><td><strong>有効:</strong> REST API エンドポイントを公開し、外部の AI ツールからナレッジベースの検索やサイト情報の取得が可能になります。<br><strong>無効:</strong> MCP エンドポイントを無効にします。</td></tr>
+    <tr><td><strong>API キー</strong></td><td>「生成」ボタンで新しい API キーを作成します。このキーは一度だけ表示されます。外部ツールの Bearer トークン認証に使用してください。</td></tr>
+    <tr><td><strong>エンドポイント URL</strong></td><td>自動生成される REST API URL。外部ツールの MCP 設定に入力してください。</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="chat-settings"><i class="fa-solid fa-comments"></i> チャット設定</h2>
+<!-- ============================================================ -->
+
+<h3 id="bot-name">ボット名</h3>
+<p>チャットウィンドウのヘッダーとメッセージに表示されるアシスタントの名前です。</p>
+<p><strong>デフォルト:</strong> <code>Assistant</code></p>
+<p>サイトのブランドに合わせて自由に変更できます。例:「サポート AI」「カスタマーアシスタント」など。</p>
+
+<h3 id="bot-avatar">ボットアバター</h3>
+<p>チャットメッセージの横に表示されるアイコンです。</p>
+<p><strong>デフォルト:</strong> ロボットの絵文字</p>
+<p>絵文字を直接入力するか、「画像をアップロード」ボタンでメディアライブラリから画像を選択できます。画像は自動的にリサイズされます。</p>
+
+<h3 id="welcome-message">ウェルカムメッセージ</h3>
+<p>チャットボットを開いた時に最初に表示されるメッセージです。</p>
+<p><strong>デフォルト:</strong> <code>Hello! How can I help you today?</code></p>
+<p>サイトの目的や訪問者に合わせたメッセージに変更することを推奨します。応答言語を「自動検出」に設定している場合は、言語別のウェルカムメッセージを個別に設定できます。</p>
+
+<h3 id="response-language">応答言語</h3>
+<p>AI が応答する言語を制御します。</p>
+<table class="wpaic-table">
+    <tr><th>選択肢</th><th>説明</th></tr>
+    <tr><td><strong>サイト言語</strong> <span class="wpaic-default">デフォルト</span></td><td>WordPress の言語設定に従います</td></tr>
+    <tr><td><strong>自動検出</strong></td><td>ユーザーの入力言語を検出し、同じ言語で応答します。多言語サイトに最適です。言語別ウェルカムメッセージの設定が追加表示されます。</td></tr>
+    <tr><td><strong>個別言語 (en, ja, zh, ko, es, fr, de, pt)</strong></td><td>常に指定した言語で応答します</td></tr>
+</table>
+
+<p><strong>言語別ウェルカムメッセージ</strong>（自動検出モード時のみ表示）:</p>
+<p>応答言語を「自動検出」に設定すると、13言語（英語、日本語、中国語、韓国語、スペイン語、フランス語、ドイツ語、ポルトガル語、イタリア語、ロシア語、アラビア語、タイ語、ベトナム語）ごとに個別のウェルカムメッセージを設定できます。ユーザーのブラウザ言語を検出して適切なメッセージを表示します。</p>
+
+<h3 id="system-prompt">システムプロンプト</h3>
+<p>AI の振る舞い、性格、制約事項を定義する指示文です。すべての会話の裏側で AI に送信されます。</p>
+<p><strong>デフォルト:</strong> 正確さ、誠実さ、情報の捏造禁止などの基本ルールが設定されています。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> システムプロンプトには、会社名、サービス内容、回答してはいけないトピック、応答のトーンなどを含めると効果的です。「デフォルトにリセット」ボタンで初期値に戻せます。
+</div>
+
+<h3 id="context-prompts">コンテキストプロンプト（詳細設定）</h3>
+<p>ナレッジベースやサイト学習データを AI に渡す際の指示文をカスタマイズできます。通常はデフォルトのまま使用することを推奨します。</p>
+<table class="wpaic-table">
+    <tr><th>プロンプト</th><th>説明</th></tr>
+    <tr><td><strong>ナレッジベース完全一致プロンプト</strong></td><td>ナレッジベースに完全一致する質問があった場合の指示。登録済みの回答をそのまま返すよう指示します。</td></tr>
+    <tr><td><strong>ナレッジベース Q&A プロンプト</strong></td><td>ナレッジベースの Q&A 形式データを参照する際の指示。</td></tr>
+    <tr><td><strong>サイトコンテキストプロンプト</strong></td><td>サイト学習（クローラー）で取得したコンテンツを参照する際の指示。</td></tr>
+</table>
+<p>各プロンプトには「デフォルトにリセット」ボタンがあります。</p>
+
+<h3 id="feature-prompts">機能プロンプト（詳細設定）</h3>
+<p>再生成、フィードバック、要約機能の動作をカスタマイズするプロンプトです。</p>
+<table class="wpaic-table">
+    <tr><th>プロンプト</th><th>説明</th></tr>
+    <tr><td><strong>再生成プロンプト</strong></td><td>応答の再生成時に使用される指示文。プレースホルダー: <code>{variation_number}</code>（再生成回数）、<code>{forbidden_start}</code>（前回と異なる開始を指示）、<code>{style}</code>（応答スタイル指定）。</td></tr>
+    <tr><td><strong>フィードバック良好ヘッダー</strong></td><td>ユーザーが「良い」と評価した応答例を AI に示すヘッダー。</td></tr>
+    <tr><td><strong>フィードバック不良ヘッダー</strong></td><td>ユーザーが「悪い」と評価した応答例を AI に示すヘッダー。</td></tr>
+    <tr><td><strong>要約プロンプト</strong></td><td>会話要約を生成する際の指示文。</td></tr>
+</table>
+
+<h3 id="message-history">メッセージ履歴数</h3>
+<p>AI に送信する過去のメッセージ数です。この数が多いほど AI は会話の文脈をよく理解しますが、API コストが増加します。</p>
+<p><strong>デフォルト:</strong> <code>10</code> | <strong>範囲:</strong> 1 ~ 50</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>推奨:</strong> 一般的なサポートチャットでは 10 ~ 15 が適切です。コスト削減には 5 程度に下げることも可能ですが、AI が前の質問を忘れやすくなります。
+</div>
+
+<h3 id="max-tokens">最大トークン数</h3>
+<p>AI の応答1回あたりの最大出力トークン数です。1トークンは日本語で約1文字、英語で約4文字に相当します。</p>
+<p><strong>デフォルト:</strong> <code>1000</code> | <strong>範囲:</strong> 100 ~ 4000</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>GPT-5 自動乗算:</strong> GPT-5 モデルでは推論に多くのトークンを消費するため、設定値に自動的に乗算係数（デフォルト: 4倍）が適用されます。例: 1000 と設定すると実際には 4000 トークンが上限になります。
+</div>
+
+<h3 id="temperature">Temperature（創造性）</h3>
+<p>AI の応答のランダム性を制御します。低い値ほど一貫した応答になり、高い値ほど多様な応答になります。</p>
+<p><strong>デフォルト:</strong> <code>0.7</code> | <strong>範囲:</strong> 0 ~ 2（0.1刻み）</p>
+<table class="wpaic-table">
+    <tr><th>値</th><th>特徴</th><th>推奨用途</th></tr>
+    <tr><td><strong>0 ~ 0.3</strong></td><td>非常に一貫性が高い。同じ質問に同じ回答</td><td>FAQ、事実ベースの回答</td></tr>
+    <tr><td><strong>0.5 ~ 0.8</strong></td><td>バランスの良い応答</td><td>一般的なカスタマーサポート</td></tr>
+    <tr><td><strong>0.9 ~ 1.5</strong></td><td>創造的で多様な応答</td><td>クリエイティブなコンテンツ</td></tr>
+    <tr><td><strong>1.5 ~ 2.0</strong></td><td>非常にランダム。予測困難</td><td>通常は非推奨</td></tr>
+</table>
+
+<h3 id="feedback-buttons">フィードバックボタン</h3>
+<p>AI の各応答メッセージの下に「いいね」「よくないね」のボタンを表示します。</p>
+<p><strong>有効:</strong> ユーザーが応答を評価でき、管理者は会話履歴でフィードバックを確認できます。応答品質の改善に役立ちます。</p>
+<p><strong>無効:</strong> フィードバックボタンを非表示にします。</p>
+
+<h3 id="quota-error">API 制限超過メッセージ</h3>
+<p>AI プロバイダーの API クォータを超過した場合にユーザーに表示されるメッセージです。</p>
+<p><strong>デフォルト:</strong> <code>Currently recharging. Please try again later.</code></p>
+
+<h3 id="web-search">Web 検索</h3>
+<p>ナレッジベースやサイト学習データで十分な回答が得られない場合に、Web 検索結果を AI の参考情報として利用します。</p>
+<p><strong>有効:</strong> ナレッジベースに該当する情報がない場合、自動的に Web 検索を実行して回答の参考にします。</p>
+<p><strong>無効:</strong> ナレッジベースとサイト学習データのみで応答します。</p>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>注意:</strong> Web 検索を有効にすると、追加の API 呼び出しが発生し、コストが増加する場合があります。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="display-settings"><i class="fa-solid fa-palette"></i> 表示設定</h2>
+<!-- ============================================================ -->
+
+<h3 id="theme">テーマ</h3>
+<p>チャットウィジェットの外観テーマを選択します。Free版では6種類のテーマが利用可能です。</p>
+<table class="wpaic-table">
+    <tr><th>テーマ</th><th>説明</th></tr>
+    <tr><td><strong>Default</strong> <span class="wpaic-default">デフォルト</span></td><td>標準的なモダンデザイン。丸みを帯びたカード型</td></tr>
+    <tr><td><strong>Simple</strong></td><td>シンプルでミニマルなデザイン</td></tr>
+    <tr><td><strong>Classic</strong></td><td>クラシックなチャット UI</td></tr>
+    <tr><td><strong>Light</strong></td><td>明るくクリーンなデザイン</td></tr>
+    <tr><td><strong>Minimal</strong></td><td>装飾を最小限にしたデザイン</td></tr>
+    <tr><td><strong>Flat</strong></td><td>フラットデザイン。影やグラデーションなし</td></tr>
+</table>
+<p>Pro版では追加で10種類のテーマ（Modern、Gradient、Dark、Glass、Rounded、Ocean、Sunset、Forest、Neon、Elegant）とダークモードが利用可能です。<span class="wpaic-pro-badge">PRO</span></p>
+
+<h3 id="primary-color">メインカラー</h3>
+<p>チャットウィジェットのヘッダー、ボタン、バッジなどの主要色です。</p>
+<p><strong>デフォルト:</strong> <code>#007bff</code>（青）</p>
+<p>カラーピッカーで任意の色を選択できます。テーマを選択すると自動的にそのテーマに合った色に変更されます。</p>
+
+<h3 id="badge-position">バッジ位置</h3>
+<p>チャットを開くバッジ（フローティングボタン）の画面上の位置です。</p>
+<table class="wpaic-table">
+    <tr><th>選択肢</th><th>説明</th></tr>
+    <tr><td><strong>右下</strong> <span class="wpaic-default">デフォルト</span></td><td>最も一般的な配置。ほとんどのサイトに適しています</td></tr>
+    <tr><td><strong>左下</strong></td><td>右下に他の要素がある場合に適しています</td></tr>
+    <tr><td><strong>右上</strong></td><td>あまり一般的ではありませんが、レイアウトに応じて使用可能</td></tr>
+    <tr><td><strong>左上</strong></td><td>特殊なレイアウト用</td></tr>
+</table>
+
+<h3 id="badge-margin">バッジマージン</h3>
+<p>バッジの画面端からの距離をピクセル単位で設定します。</p>
+<p><strong>右マージン デフォルト:</strong> <code>20</code>px | <strong>下マージン デフォルト:</strong> <code>20</code>px</p>
+<p>サイトの他のフローティング要素（Cookie バナーなど）との重なりを避けるために調整してください。</p>
+
+<h3 id="markdown">Markdown レンダリング</h3>
+<p>AI の応答メッセージ内の Markdown 記法をリッチテキストに変換して表示します。</p>
+<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: <code>**太字**</code>、<code>*斜体*</code>、リスト、コードブロック、リンクなどが整形されて表示されます。</p>
+<p><strong>無効:</strong> Markdown 記号がそのまま表示されます。</p>
+
+<h3 id="mobile">モバイル表示</h3>
+<p>モバイルデバイス（スマートフォン、タブレット）でチャットウィジェットを表示するかどうかを制御します。</p>
+<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: すべてのデバイスでチャットボットが表示されます。</p>
+<p><strong>無効:</strong> デスクトップのみでチャットボットが表示されます。モバイルサイトのパフォーマンスを優先する場合に使用します。</p>
+
+<h3 id="page-visibility">ページ表示設定</h3>
+<p>チャットボットを表示するページを細かく制御できます。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>ホームページ</strong></td><td>有効</td><td>サイトのトップページに表示</td></tr>
+    <tr><td><strong>投稿</strong></td><td>有効</td><td>ブログ記事などの投稿ページに表示</td></tr>
+    <tr><td><strong>固定ページ</strong></td><td>有効</td><td>固定ページに表示</td></tr>
+    <tr><td><strong>アーカイブ</strong></td><td>有効</td><td>カテゴリー、タグ、月別アーカイブに表示</td></tr>
+    <tr><td><strong>特定ページID（含む）</strong></td><td>空</td><td>カンマ区切りの投稿/ページ ID。設定すると、このリストのページのみに表示されます（ホワイトリストモード）</td></tr>
+    <tr><td><strong>特定ページID（除外）</strong></td><td>空</td><td>カンマ区切りの投稿/ページ ID。このリストのページでは非表示になります</td></tr>
+    <tr><td><strong>除外ページ選択</strong></td><td>空</td><td>ドロップダウンからページを選択して除外</td></tr>
+</table>
+
+<h3 id="embed">外部サイト埋め込み</h3>
+<p>WordPress 以外のサイトにチャットボットを埋め込むためのコードを提供します。</p>
+<p><strong>スクリプト埋め込み:</strong> フローティングバッジとして表示されます。<code>&lt;script&gt;</code> タグをサイトの <code>&lt;/body&gt;</code> 前に挿入してください。</p>
+<p><strong>iframe 埋め込み:</strong> 固定サイズのチャットウィンドウとして表示されます。任意の場所に <code>&lt;iframe&gt;</code> タグを挿入してください。</p>
+
+<!-- ============================================================ -->
+<h2 id="recaptcha-settings"><i class="fa-solid fa-shield-halved"></i> reCAPTCHA 設定</h2>
+<!-- ============================================================ -->
+
+<h3 id="recaptcha-enable">reCAPTCHA v3 有効化</h3>
+<p>Google reCAPTCHA v3 によるボット対策を有効にします。v3 はユーザーに操作を求めず、バックグラウンドでスコアリングします。</p>
+<p><strong>有効:</strong> チャットメッセージ送信時に reCAPTCHA スコアを検証し、ボットからのメッセージをブロックします。</p>
+<p><strong>無効:</strong> reCAPTCHA 検証を行いません。</p>
+
+<h3 id="recaptcha-keys">サイトキー / シークレットキー</h3>
+<p><a href="https://www.google.com/recaptcha/admin" target="_blank">Google reCAPTCHA 管理コンソール</a>で取得したキーを入力します。</p>
+<p><strong>サイトキー:</strong> フロントエンドで使用される公開キー。</p>
+<p><strong>シークレットキー:</strong> サーバーサイドで検証に使用される秘密キー。保存後は暗号化されてマスク表示されます。</p>
+
+<h3 id="recaptcha-threshold">スコア閾値</h3>
+<p>reCAPTCHA v3 のスコア閾値です。このスコア未満のリクエストはブロックされます。</p>
+<p><strong>デフォルト:</strong> <code>0.5</code> | <strong>範囲:</strong> 0.0 ~ 1.0</p>
+<ul>
+    <li><strong>0.1 ~ 0.3:</strong> 緩い判定。ほとんどのリクエストを通過させます</li>
+    <li><strong>0.5:</strong> 標準的な判定。推奨値</li>
+    <li><strong>0.7 ~ 0.9:</strong> 厳しい判定。正規ユーザーもブロックされる可能性があります</li>
+</ul>
+
+<h3 id="recaptcha-existing">既存 reCAPTCHA の使用</h3>
+<p>サイトに既に reCAPTCHA が読み込まれている場合（他のプラグインなど）、二重読み込みを防ぐために有効にします。</p>
+
+<h3 id="recaptcha-fail">失敗時モード</h3>
+<p>reCAPTCHA の検証自体が失敗した場合（ネットワークエラーなど）の動作を制御します。</p>
+<table class="wpaic-table">
+    <tr><th>選択肢</th><th>説明</th></tr>
+    <tr><td><strong>Open（許可）</strong> <span class="wpaic-default">デフォルト</span></td><td>検証失敗時もチャットを許可します。可用性を優先する場合に適しています</td></tr>
+    <tr><td><strong>Closed（ブロック）</strong></td><td>検証失敗時はチャットをブロックします。セキュリティを最優先する場合に適しています</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="advanced-settings"><i class="fa-solid fa-sliders"></i> 詳細設定</h2>
+<!-- ============================================================ -->
+
+<h3 id="save-history">会話履歴保存</h3>
+<p>会話の内容をデータベースに保存するかどうかを制御します。</p>
+<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: 会話がデータベースに永続化され、管理画面の「会話」ページで確認・分析できます。ユーザーがページを再読み込みした際に会話を復元することもできます。</p>
+<p><strong>無効:</strong> 会話はセッション中のみ一時的に保持され、ページを離れると失われます。プライバシー重視の場合や、データベースの容量を節約したい場合に使用します。</p>
+
+<h3 id="retention">データ保持期間</h3>
+<p>会話履歴をデータベースに保持する日数です。期間を過ぎた会話は自動的に削除されます。</p>
+<p><strong>デフォルト:</strong> <code>90</code>日 | <code>0</code> で無期限保持</p>
+
+<h3 id="delete-uninstall">アンインストール時データ削除</h3>
+<p>プラグインをアンインストールした際に、すべてのプラグインデータ（設定、会話履歴、ナレッジベース、インデックスなど）を削除するかどうかを制御します。</p>
+<p><strong>有効:</strong> アンインストール時にすべてのデータを完全に削除します。</p>
+<p><strong>無効</strong> <span class="wpaic-default">デフォルト</span>: データを保持します。再インストール時にデータを引き継ぎたい場合はこの設定を使用します。</p>
+
+<h3 id="consent">WP Consent API 厳格モード</h3>
+<p>WP Consent API プラグインと連携して、GDPR 対応のクッキー同意を要求します。</p>
+<p><strong>有効:</strong> WP Consent API プラグインが有効で、ユーザーが同意していない場合、localStorage を使用しません。セッション ID やチャット履歴がブラウザに保存されなくなります。</p>
+<p><strong>無効</strong> <span class="wpaic-default">デフォルト</span>: 同意確認なしに localStorage を使用します。</p>
+
+<h3 id="rate-limit">レート制限</h3>
+<p>ユーザーあたりのメッセージ送信頻度を制限して、API コストの急増やスパムを防止します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>最大リクエスト数</strong></td><td><code>20</code></td><td>指定時間内に許可する最大メッセージ数。0 で無制限。</td></tr>
+    <tr><td><strong>時間ウィンドウ</strong></td><td><code>1時間</code></td><td>レート制限の時間枠。選択肢: 1分、5分、10分、30分、1時間、3時間、6時間、12時間、1日</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> Pro版では分単位と時間単位の2段階レート制限（バースト制限 + 持続制限）が利用可能です。
+</div>
+
+<h3 id="proxy">プロキシ設定</h3>
+<p>Cloudflare やロードバランサーを使用している場合の IP アドレス検出を設定します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>説明</th></tr>
+    <tr><td><strong>Cloudflare IP を信頼</strong></td><td><strong>有効:</strong> <code>CF-Connecting-IP</code> ヘッダーから実際のクライアント IP を取得します。Cloudflare を使用している場合に有効にしてください。</td></tr>
+    <tr><td><strong>プロキシ IP を信頼</strong></td><td><strong>有効:</strong> <code>X-Forwarded-For</code> ヘッダーから実際のクライアント IP を取得します。リバースプロキシを使用している場合に有効にしてください。</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>注意:</strong> これらの設定を不適切に有効にすると、IP スプーフィングのリスクがあります。使用しているインフラに合わせて設定してください。
+</div>
+
+<!-- ============================================================ -->
+<h2 id="crawler-settings"><i class="fa-solid fa-spider"></i> サイト学習（クローラー）</h2>
+<!-- ============================================================ -->
+
+<h3 id="crawler-enable">クローラー有効化</h3>
+<p>WordPress サイトのコンテンツを自動的にクロールし、AI の参考知識としてインデックスに登録します。</p>
+<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: 指定した投稿タイプのコンテンツを定期的にクロールし、チャンクに分割してインデックスに保存します。ユーザーの質問に関連するコンテンツが自動的に AI の回答に反映されます。</p>
+<p><strong>無効:</strong> クロールを実行しません。ナレッジベースの手動登録のみで運用する場合に使用します。</p>
+
+<h3 id="crawler-types">投稿タイプ</h3>
+<p>クロール対象の WordPress 投稿タイプを選択します。</p>
+<p><strong>デフォルト:</strong> <code>すべて</code></p>
+<p>「すべて」を選択するとサイト内の全投稿タイプ（投稿、固定ページ、カスタム投稿タイプ）がクロールされます。特定の投稿タイプのみを選択することもできます。</p>
+
+<h3 id="crawler-interval">クロール間隔</h3>
+<p>自動クロールの実行間隔です。</p>
+<table class="wpaic-table">
+    <tr><th>選択肢</th><th>説明</th></tr>
+    <tr><td><strong>毎日</strong> <span class="wpaic-default">デフォルト</span></td><td>1日1回クロールを実行。コンテンツの更新が頻繁なサイトに適しています</td></tr>
+    <tr><td><strong>毎週</strong></td><td>週1回クロールを実行。コンテンツの更新が少ないサイトに適しています</td></tr>
+</table>
+<p>手動でクロールを実行することもできます。ダッシュボードの「サイト学習」セクションから「今すぐクロール」ボタンをクリックしてください。</p>
+
+<h3 id="crawler-chunk">チャンクサイズ</h3>
+<p>コンテンツを分割するチャンク（断片）1つあたりの文字数です。</p>
+<p><strong>デフォルト:</strong> <code>1000</code>文字</p>
+<ul>
+    <li><strong>小さい値（500 ~ 800）:</strong> より精密な検索が可能ですが、インデックスサイズが増加します</li>
+    <li><strong>大きい値（1500 ~ 2000）:</strong> より広い文脈を保持しますが、検索の精度が低下する場合があります</li>
+</ul>
+
+<h3 id="crawler-results">最大結果数</h3>
+<p>ユーザーの質問に対して AI に渡すコンテキスト（参考情報）チャンクの最大数です。</p>
+<p><strong>デフォルト:</strong> <code>3</code></p>
+<ul>
+    <li><strong>少ない値（1 ~ 2）:</strong> API コストを節約しますが、関連情報が不足する場合があります</li>
+    <li><strong>多い値（5 ~ 10）:</strong> より多くの参考情報を AI に渡しますが、API コストが増加します</li>
+</ul>
+
+<h3 id="crawler-exclude">除外 ID</h3>
+<p>クロールから除外する投稿/ページの ID を指定します。プライバシーポリシーや利用規約など、チャットの参考にしたくないコンテンツを除外する際に使用します。</p>
+
+<!-- ============================================================ -->
+<h2 id="knowledge-base"><i class="fa-solid fa-database"></i> ナレッジベース</h2>
+<!-- ============================================================ -->
+
+<h3 id="kb-overview">概要</h3>
+<p>ナレッジベースは、AI が回答に使用する Q&A データのコレクションです。サイト学習（クローラー）とは異なり、手動で登録した正確な回答を優先的に使用します。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>Free版の制限:</strong> ナレッジベースには最大20件まで登録できます。Pro版では無制限に登録可能です。
+</div>
+
+<h3 id="kb-add">Q&A の追加</h3>
+<p>管理画面の「ナレッジ」ページから、質問と回答のペアを手動で追加できます。</p>
+<ul>
+    <li><strong>質問:</strong> ユーザーが問い合わせる可能性のある質問文</li>
+    <li><strong>回答:</strong> AI が返すべき正確な回答文</li>
+    <li><strong>カテゴリー:</strong> 整理用のラベル（オプション）</li>
+</ul>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> よくある質問を登録しておくと、AI が正確な回答を返せるようになります。質問は複数パターン登録すると認識精度が向上します。
+</div>
+
+<h3 id="kb-import">CSV インポート</h3>
+<p>CSV ファイルからナレッジベースを一括インポートできます。CSV フォーマット:</p>
+<pre>質問,回答,カテゴリー
+"料金はいくらですか？","月額1000円からご利用いただけます。","料金"
+"営業時間は？","平日9時から18時まで営業しています。","営業"</pre>
+
+<!-- ============================================================ -->
+<h2 id="conversations"><i class="fa-solid fa-clock-rotate-left"></i> 会話履歴</h2>
+<!-- ============================================================ -->
+
+<h3 id="conv-list">会話一覧</h3>
+<p>管理画面の「会話」ページで、すべてのチャット会話を一覧表示できます。各会話のセッション ID、開始日時、メッセージ数、ステータスが表示されます。</p>
+
+<h3 id="conv-detail">メッセージ表示</h3>
+<p>会話をクリックすると、ユーザーと AI のメッセージのやり取りを時系列で確認できます。フィードバック（いいね/よくないね）の評価も表示されます。</p>
+<p>CSV/JSON エクスポート機能は Pro版で利用可能です。<span class="wpaic-pro-badge">PRO</span></p>
+
+<!-- Footer -->
+<div class="wpaic-footer">
+    <p>
+        <a href="/rapls-ai-chatbot-manual-pro-ja/">Pro版マニュアル</a> |
+        <a href="/rapls-ai-chatbot-free-manual-en/">English Version</a> |
+        <a href="/rapls-ai-chatbot-manual-pro-en/">Pro Manual (English)</a>
+    </p>
+    <p>&copy; 2025-2026 HASH Inc. All rights reserved.</p>
+</div>
+
+</main>
+</div>

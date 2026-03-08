@@ -1,0 +1,761 @@
+<!-- Rapls AI Chatbot - Free Edition Manual (English) -->
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+.breadcrumb.breadcrumb-page.pbp-main-top,
+.article-header.entry-header { display: none !important; }
+* { box-sizing: border-box; }
+
+:root {
+    --primary: #667eea;
+    --primary-dark: #764ba2;
+    --text: #1a1a2e;
+    --text-light: #555;
+    --border: #e5e7eb;
+    --bg-light: #f8f9ff;
+    --bg-code: #f1f3f5;
+    --pro-gold: #d4a017;
+}
+
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); line-height: 1.7; }
+
+.wpaic-manual-wrap {
+    display: flex;
+    max-width: 1280px;
+    margin: 0 auto;
+    gap: 0;
+}
+
+.wpaic-sidebar {
+    width: 280px;
+    min-width: 280px;
+    border-right: 1px solid var(--border);
+    padding: 30px 20px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: #fff;
+}
+.wpaic-sidebar h2 {
+    font-size: 16px;
+    color: var(--primary);
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary);
+}
+.wpaic-sidebar-section { margin-bottom: 8px; }
+.wpaic-sidebar-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 0;
+    color: var(--text);
+    list-style: none;
+}
+.wpaic-sidebar-section summary::before {
+    content: '\f105';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-right: 8px;
+    transition: transform 0.2s;
+    display: inline-block;
+    font-size: 12px;
+}
+.wpaic-sidebar-section[open] summary::before { transform: rotate(90deg); }
+.wpaic-sidebar-section ul {
+    list-style: none;
+    padding: 0 0 0 20px;
+    margin: 4px 0 8px;
+}
+.wpaic-sidebar-section ul li { margin: 2px 0; }
+.wpaic-sidebar-section ul li a {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 3px 0;
+    display: block;
+    transition: color 0.2s;
+}
+.wpaic-sidebar-section ul li a:hover { color: var(--primary); }
+
+.wpaic-content {
+    flex: 1;
+    padding: 40px 50px;
+    max-width: 900px;
+}
+.wpaic-content h1 {
+    font-size: 32px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+.wpaic-content .wpaic-subtitle {
+    color: var(--text-light);
+    font-size: 16px;
+    margin-bottom: 40px;
+}
+.wpaic-content h2 {
+    font-size: 24px;
+    color: var(--text);
+    margin: 50px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+}
+.wpaic-content h2 .fa-solid { color: var(--primary); margin-right: 10px; }
+.wpaic-content h3 {
+    font-size: 18px;
+    color: var(--text);
+    margin: 30px 0 12px;
+    padding-left: 12px;
+    border-left: 3px solid var(--primary);
+}
+.wpaic-content p { margin: 8px 0 16px; color: var(--text-light); }
+.wpaic-content ul, .wpaic-content ol {
+    margin: 8px 0 16px;
+    padding-left: 24px;
+    color: var(--text-light);
+}
+.wpaic-content li { margin: 4px 0; }
+
+.wpaic-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 20px;
+    font-size: 14px;
+}
+.wpaic-table th, .wpaic-table td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    text-align: left;
+}
+.wpaic-table th {
+    background: var(--bg-light);
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+.wpaic-table td { color: var(--text-light); }
+
+.wpaic-default {
+    display: inline-block;
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.wpaic-pro-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0c674, #d4a017);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.wpaic-box {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-size: 14px;
+}
+.wpaic-box-info {
+    background: #e3f2fd;
+    border-left: 4px solid #1976d2;
+    color: #0d47a1;
+}
+.wpaic-box-tip {
+    background: #e8f5e9;
+    border-left: 4px solid #388e3c;
+    color: #1b5e20;
+}
+.wpaic-box-warn {
+    background: #fff3e0;
+    border-left: 4px solid #f57c00;
+    color: #e65100;
+}
+
+code {
+    background: var(--bg-code);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #c7254e;
+}
+pre {
+    background: var(--bg-code);
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.wpaic-footer {
+    margin-top: 60px;
+    padding: 30px 0;
+    border-top: 2px solid var(--border);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 14px;
+}
+.wpaic-footer a { color: var(--primary); text-decoration: none; }
+.wpaic-footer a:hover { text-decoration: underline; }
+
+.wpaic-lang-switch {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.wpaic-lang-switch a {
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text-light);
+    transition: all 0.2s;
+}
+.wpaic-lang-switch a.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+@media (max-width: 900px) {
+    .wpaic-manual-wrap { flex-direction: column; }
+    .wpaic-sidebar {
+        width: 100%; min-width: auto;
+        position: relative; height: auto;
+        border-right: none; border-bottom: 1px solid var(--border);
+    }
+    .wpaic-content { padding: 20px; }
+}
+</style>
+
+<div class="wpaic-manual-wrap">
+
+<nav class="wpaic-sidebar">
+    <h2><i class="fa-solid fa-book"></i> Free Manual</h2>
+
+    <div class="wpaic-lang-switch">
+        <a href="/rapls-ai-chatbot-free-manual-ja/">日本語</a>
+        <a href="/rapls-ai-chatbot-free-manual-en/" class="active">English</a>
+    </div>
+
+    <details class="wpaic-sidebar-section" open>
+        <summary><i class="fa-solid fa-microchip"></i> AI Settings</summary>
+        <ul>
+            <li><a href="#ai-provider">AI Provider</a></li>
+            <li><a href="#openai">OpenAI</a></li>
+            <li><a href="#claude">Claude</a></li>
+            <li><a href="#gemini">Gemini</a></li>
+            <li><a href="#openrouter">OpenRouter</a></li>
+            <li><a href="#embedding">Vector Embedding (RAG)</a></li>
+            <li><a href="#mcp">MCP Server</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-comments"></i> Chat Settings</summary>
+        <ul>
+            <li><a href="#bot-name">Bot Name</a></li>
+            <li><a href="#bot-avatar">Bot Avatar</a></li>
+            <li><a href="#welcome-message">Welcome Message</a></li>
+            <li><a href="#response-language">Response Language</a></li>
+            <li><a href="#system-prompt">System Prompt</a></li>
+            <li><a href="#context-prompts">Context Prompts</a></li>
+            <li><a href="#feature-prompts">Feature Prompts</a></li>
+            <li><a href="#message-history">Message History</a></li>
+            <li><a href="#max-tokens">Max Tokens</a></li>
+            <li><a href="#temperature">Temperature</a></li>
+            <li><a href="#feedback-buttons">Feedback Buttons</a></li>
+            <li><a href="#web-search">Web Search</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-palette"></i> Display Settings</summary>
+        <ul>
+            <li><a href="#theme">Theme</a></li>
+            <li><a href="#primary-color">Primary Color</a></li>
+            <li><a href="#badge-position">Badge Position</a></li>
+            <li><a href="#badge-margin">Badge Margins</a></li>
+            <li><a href="#markdown">Markdown</a></li>
+            <li><a href="#mobile">Mobile Display</a></li>
+            <li><a href="#page-visibility">Page Visibility</a></li>
+            <li><a href="#embed">Cross-Site Embed</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-shield-halved"></i> reCAPTCHA</summary>
+        <ul>
+            <li><a href="#recaptcha-enable">Enable reCAPTCHA</a></li>
+            <li><a href="#recaptcha-keys">Site Key / Secret Key</a></li>
+            <li><a href="#recaptcha-threshold">Score Threshold</a></li>
+            <li><a href="#recaptcha-fail">Fail Mode</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-sliders"></i> Advanced Settings</summary>
+        <ul>
+            <li><a href="#save-history">Save History</a></li>
+            <li><a href="#retention">Retention Period</a></li>
+            <li><a href="#delete-uninstall">Delete on Uninstall</a></li>
+            <li><a href="#consent">WP Consent API</a></li>
+            <li><a href="#rate-limit">Rate Limiting</a></li>
+            <li><a href="#proxy">Proxy Settings</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-spider"></i> Site Learning</summary>
+        <ul>
+            <li><a href="#crawler-enable">Enable Crawler</a></li>
+            <li><a href="#crawler-types">Post Types</a></li>
+            <li><a href="#crawler-interval">Crawl Interval</a></li>
+            <li><a href="#crawler-chunk">Chunk Size</a></li>
+            <li><a href="#crawler-results">Max Results</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-database"></i> Knowledge Base</summary>
+        <ul>
+            <li><a href="#kb-overview">Overview</a></li>
+            <li><a href="#kb-add">Add Q&A</a></li>
+            <li><a href="#kb-import">CSV Import</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-clock-rotate-left"></i> Conversations</summary>
+        <ul>
+            <li><a href="#conv-list">Conversation List</a></li>
+            <li><a href="#conv-detail">Message View</a></li>
+        </ul>
+    </details>
+
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="/rapls-ai-chatbot-manual-pro-en/" style="display: block; padding: 10px 16px; background: linear-gradient(135deg, #f0c674, #d4a017); color: #fff; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px;">
+            View Pro Manual &rarr;
+        </a>
+    </div>
+</nav>
+
+<main class="wpaic-content">
+
+<h1>Rapls AI Chatbot Manual (Free Edition)</h1>
+<p class="wpaic-subtitle">Complete documentation for every setting in the WordPress AI Chatbot plugin.<br>Version: 1.5.0 | PHP 7.4+ | WordPress 5.8+</p>
+
+<!-- ============================================================ -->
+<h2 id="ai-settings"><i class="fa-solid fa-microchip"></i> AI Settings</h2>
+<!-- ============================================================ -->
+
+<h3 id="ai-provider">AI Provider</h3>
+<p>Select the AI service your chatbot will use. Each provider requires its own API key and model selection.</p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td><strong>OpenAI</strong> <span class="wpaic-default">Default</span></td><td>GPT-4o, GPT-4 Turbo, GPT-3.5 Turbo, and more. The most widely used AI provider.</td></tr>
+    <tr><td><strong>Claude (Anthropic)</strong></td><td>Claude Opus, Sonnet, Haiku models. Excels at long-form understanding and safety.</td></tr>
+    <tr><td><strong>Gemini (Google)</strong></td><td>Gemini 2.0 Flash, 1.5 Pro, and more. Strong multimodal capabilities.</td></tr>
+    <tr><td><strong>OpenRouter</strong></td><td>Gateway service providing unified API access to 100+ models from multiple providers.</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Switching providers preserves your conversation history, but response style may vary between different models.
+</div>
+
+<h3 id="openai">OpenAI Settings</h3>
+<p>Configure your OpenAI API key and model. Get your API key from the <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Dashboard</a>.</p>
+
+<p><strong>API Key:</strong> Enter a key starting with <code>sk-</code>. It will be encrypted on save. Use the "Test Connection" button to verify.</p>
+
+<p><strong>Model Selection:</strong></p>
+<table class="wpaic-table">
+    <tr><th>Model</th><th>Features</th><th>Best For</th></tr>
+    <tr><td><strong>gpt-4o-mini</strong> <span class="wpaic-default">Default</span></td><td>Fast, low-cost. Lightweight GPT-4o variant</td><td>General customer support</td></tr>
+    <tr><td><strong>gpt-4o</strong></td><td>High-performance multimodal. Image understanding</td><td>Quality responses with image support</td></tr>
+    <tr><td><strong>gpt-4-turbo</strong></td><td>Fast GPT-4 with 128K context</td><td>Long conversations or large knowledge bases</td></tr>
+    <tr><td><strong>gpt-3.5-turbo</strong></td><td>Lowest cost</td><td>Budget-conscious deployments</td></tr>
+    <tr><td><strong>o1 / o1-mini</strong></td><td>Reasoning-focused models</td><td>Complex problem solving</td></tr>
+    <tr><td><strong>o3-mini</strong></td><td>Latest reasoning model</td><td>Advanced reasoning tasks</td></tr>
+    <tr><td><strong>gpt-4.5-preview</strong></td><td>GPT-4.5 preview release</td><td>Testing latest capabilities</td></tr>
+    <tr><td><strong>gpt-5</strong></td><td>Latest generation with auto token multiplication</td><td>Highest quality responses</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-info">
+    <strong>GPT-5 Token Multiplier:</strong> When using GPT-5, the configured max tokens is automatically multiplied (default: 4x) to account for GPT-5's reasoning token consumption.
+</div>
+
+<h3 id="claude">Claude (Anthropic) Settings</h3>
+<p>Configure your Anthropic API key and model. Get your key from the <a href="https://console.anthropic.com/" target="_blank">Anthropic Console</a>.</p>
+<table class="wpaic-table">
+    <tr><th>Model</th><th>Features</th></tr>
+    <tr><td><strong>claude-sonnet-4-20250514</strong> <span class="wpaic-default">Default</span></td><td>Latest Sonnet. Excellent speed-quality balance</td></tr>
+    <tr><td><strong>claude-opus-4-20250514</strong></td><td>Highest performance. Best for complex tasks and long content</td></tr>
+    <tr><td><strong>claude-haiku-4-20250514</strong></td><td>Fastest, lowest cost. Best for simple responses</td></tr>
+    <tr><td><strong>claude-3-5-sonnet</strong></td><td>Claude 3.5 generation Sonnet</td></tr>
+    <tr><td><strong>claude-3-opus</strong></td><td>Claude 3 generation top model</td></tr>
+    <tr><td><strong>claude-3-haiku</strong></td><td>Claude 3 generation lightweight model</td></tr>
+</table>
+
+<h3 id="gemini">Gemini (Google) Settings</h3>
+<p>Configure your Google AI API key and model. Get your key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>.</p>
+<table class="wpaic-table">
+    <tr><th>Model</th><th>Features</th></tr>
+    <tr><td><strong>gemini-2.0-flash-exp</strong> <span class="wpaic-default">Default</span></td><td>Latest fast model. Multimodal capable</td></tr>
+    <tr><td><strong>gemini-1.5-pro</strong></td><td>1M token context. Best for long document analysis</td></tr>
+    <tr><td><strong>gemini-1.5-flash</strong></td><td>Fast, low-cost variant</td></tr>
+    <tr><td><strong>gemini-2.0-flash-thinking-exp</strong></td><td>Experimental model with visible reasoning</td></tr>
+</table>
+
+<h3 id="openrouter">OpenRouter Settings</h3>
+<p>OpenRouter provides unified API access to 100+ models from multiple providers. Get your key from <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a>.</p>
+<p><strong>Default Model:</strong> <code>openrouter/auto</code> - Automatically selects the best model for each request. You can also choose specific models from the dropdown.</p>
+
+<h3 id="embedding">Vector Embedding (RAG)</h3>
+<p>Enables semantic search using AI embeddings to improve knowledge base retrieval accuracy.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Enable Vector Embedding</strong></td><td><strong>Enabled:</strong> Uses AI embedding models for semantic search. Finds results by meaning similarity rather than keyword matching.<br><strong>Disabled:</strong> Uses traditional FULLTEXT search.</td></tr>
+    <tr><td><strong>Provider</strong></td><td><strong>Auto</strong> <span class="wpaic-default">Default</span> - Uses the selected AI provider's embedding model<br><strong>OpenAI</strong> - Uses OpenAI text-embedding models<br><strong>Gemini</strong> - Uses Google embedding models</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>Note:</strong> Enabling vector embedding adds an extra API call per chat message, which may incur small additional costs.
+</div>
+
+<h3 id="mcp">MCP (Model Context Protocol) Server</h3>
+<p>Enables external AI tools like Claude Desktop, Cursor, and other MCP-compatible clients to access your knowledge base.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Enable MCP</strong></td><td><strong>Enabled:</strong> Exposes a REST API endpoint for external AI tools to search your knowledge base and retrieve site info.<br><strong>Disabled:</strong> MCP endpoint is not accessible.</td></tr>
+    <tr><td><strong>API Key</strong></td><td>Click "Generate" to create a new API key. Displayed only once. Use as Bearer token in external tools.</td></tr>
+    <tr><td><strong>Endpoint URL</strong></td><td>Auto-generated REST API URL. Enter this in your MCP client configuration.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="chat-settings"><i class="fa-solid fa-comments"></i> Chat Settings</h2>
+<!-- ============================================================ -->
+
+<h3 id="bot-name">Bot Name</h3>
+<p>The assistant's name displayed in the chat window header and messages.</p>
+<p><strong>Default:</strong> <code>Assistant</code></p>
+<p>Customize to match your brand, e.g., "Support AI", "Customer Assistant", etc.</p>
+
+<h3 id="bot-avatar">Bot Avatar</h3>
+<p>The icon displayed next to chat messages from the bot.</p>
+<p><strong>Default:</strong> Robot emoji</p>
+<p>Enter an emoji directly or click "Upload Image" to select from the media library. Images are automatically resized.</p>
+
+<h3 id="welcome-message">Welcome Message</h3>
+<p>The first message displayed when a user opens the chatbot.</p>
+<p><strong>Default:</strong> <code>Hello! How can I help you today?</code></p>
+<p>Customize to match your site's purpose. When Response Language is set to "Auto-detect", you can configure per-language welcome messages.</p>
+
+<h3 id="response-language">Response Language</h3>
+<p>Controls which language the AI responds in.</p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td><strong>Site Language</strong> <span class="wpaic-default">Default</span></td><td>Follows WordPress language settings</td></tr>
+    <tr><td><strong>Auto-detect</strong></td><td>Detects user input language and responds in the same language. Ideal for multilingual sites. Reveals per-language welcome message settings.</td></tr>
+    <tr><td><strong>Specific Language</strong></td><td>Always responds in the selected language (en, ja, zh, ko, es, fr, de, pt)</td></tr>
+</table>
+
+<p><strong>Per-Language Welcome Messages</strong> (Auto-detect mode only):</p>
+<p>Set individual welcome messages for 13 languages: English, Japanese, Chinese, Korean, Spanish, French, German, Portuguese, Italian, Russian, Arabic, Thai, Vietnamese. The appropriate message displays based on browser language detection.</p>
+
+<h3 id="system-prompt">System Prompt</h3>
+<p>Instructions that define the AI's behavior, personality, and constraints. Sent with every conversation behind the scenes.</p>
+<p><strong>Default:</strong> Pre-configured with rules about accuracy, honesty, and avoiding fabrication.</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Include your company name, services, topics to avoid, and desired tone. Use the "Reset to Default" button to restore the original prompt.
+</div>
+
+<h3 id="context-prompts">Context Prompts (Advanced)</h3>
+<p>Customize how knowledge base and site learning data is presented to the AI. The defaults work well for most use cases.</p>
+<table class="wpaic-table">
+    <tr><th>Prompt</th><th>Description</th></tr>
+    <tr><td><strong>Knowledge Exact Match</strong></td><td>Instructions when an exact Q&A match is found. Directs AI to return the registered answer directly.</td></tr>
+    <tr><td><strong>Knowledge Q&A</strong></td><td>Instructions for referencing Q&A-format knowledge base entries.</td></tr>
+    <tr><td><strong>Site Context</strong></td><td>Instructions for referencing crawler-indexed content.</td></tr>
+</table>
+
+<h3 id="feature-prompts">Feature Prompts (Advanced)</h3>
+<p>Customize the behavior of regeneration, feedback, and summary features.</p>
+<table class="wpaic-table">
+    <tr><th>Prompt</th><th>Description</th></tr>
+    <tr><td><strong>Regenerate Prompt</strong></td><td>Instructions for regenerating responses. Placeholders: <code>{variation_number}</code>, <code>{forbidden_start}</code>, <code>{style}</code>.</td></tr>
+    <tr><td><strong>Feedback Good/Bad Headers</strong></td><td>Headers for showing the AI examples of positively/negatively rated responses.</td></tr>
+    <tr><td><strong>Summary Prompt</strong></td><td>Instructions for generating conversation summaries.</td></tr>
+</table>
+
+<h3 id="message-history">Message History Count</h3>
+<p>Number of previous messages sent to the AI as context. More messages = better context understanding but higher API costs.</p>
+<p><strong>Default:</strong> <code>10</code> | <strong>Range:</strong> 1 - 50</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>Recommended:</strong> 10-15 for general support. Reduce to 5 for cost savings, but the AI may lose track of earlier questions.
+</div>
+
+<h3 id="max-tokens">Max Tokens</h3>
+<p>Maximum output tokens per AI response. One token is approximately 4 English characters or 1 Japanese character.</p>
+<p><strong>Default:</strong> <code>1000</code> | <strong>Range:</strong> 100 - 4000</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>GPT-5 Auto-Multiplier:</strong> GPT-5 models consume more tokens for reasoning, so the configured value is automatically multiplied (default: 4x). Setting 1000 results in an effective limit of 4000 tokens.
+</div>
+
+<h3 id="temperature">Temperature (Creativity)</h3>
+<p>Controls response randomness. Lower values produce consistent responses; higher values produce diverse responses.</p>
+<p><strong>Default:</strong> <code>0.7</code> | <strong>Range:</strong> 0 - 2 (step 0.1)</p>
+<table class="wpaic-table">
+    <tr><th>Range</th><th>Behavior</th><th>Best For</th></tr>
+    <tr><td><strong>0 - 0.3</strong></td><td>Highly consistent. Same question yields same answer</td><td>FAQ, factual responses</td></tr>
+    <tr><td><strong>0.5 - 0.8</strong></td><td>Balanced responses</td><td>General customer support</td></tr>
+    <tr><td><strong>0.9 - 1.5</strong></td><td>Creative, diverse responses</td><td>Creative content</td></tr>
+    <tr><td><strong>1.5 - 2.0</strong></td><td>Highly random, unpredictable</td><td>Usually not recommended</td></tr>
+</table>
+
+<h3 id="feedback-buttons">Feedback Buttons</h3>
+<p>Displays thumbs-up/thumbs-down buttons below each AI response.</p>
+<p><strong>Enabled:</strong> Users can rate responses. Admins can review feedback in the conversations panel for quality improvement.</p>
+<p><strong>Disabled:</strong> Hides feedback buttons.</p>
+
+<h3 id="web-search">Web Search</h3>
+<p>When the knowledge base doesn't have sufficient information, falls back to web search results as AI reference.</p>
+<p><strong>Enabled:</strong> Automatically performs web searches when knowledge base lacks relevant content.</p>
+<p><strong>Disabled:</strong> Responds using only knowledge base and site learning data.</p>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>Note:</strong> Enabling web search adds extra API calls and may increase costs.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="display-settings"><i class="fa-solid fa-palette"></i> Display Settings</h2>
+<!-- ============================================================ -->
+
+<h3 id="theme">Theme</h3>
+<p>Select the chat widget's visual theme. Six themes are available in the Free edition.</p>
+<table class="wpaic-table">
+    <tr><th>Theme</th><th>Description</th></tr>
+    <tr><td><strong>Default</strong> <span class="wpaic-default">Default</span></td><td>Modern design with rounded cards</td></tr>
+    <tr><td><strong>Simple</strong></td><td>Clean, minimal design</td></tr>
+    <tr><td><strong>Classic</strong></td><td>Traditional chat UI style</td></tr>
+    <tr><td><strong>Light</strong></td><td>Bright, clean design</td></tr>
+    <tr><td><strong>Minimal</strong></td><td>Minimally decorated design</td></tr>
+    <tr><td><strong>Flat</strong></td><td>Flat design without shadows or gradients</td></tr>
+</table>
+<p>Pro edition adds 10 more themes (Modern, Gradient, Dark, Glass, Rounded, Ocean, Sunset, Forest, Neon, Elegant) plus dark mode. <span class="wpaic-pro-badge">PRO</span></p>
+
+<h3 id="primary-color">Primary Color</h3>
+<p>The main color used for the chat header, buttons, and badge.</p>
+<p><strong>Default:</strong> <code>#007bff</code> (blue)</p>
+<p>Use the color picker to select any color. Selecting a theme automatically sets a matching color.</p>
+
+<h3 id="badge-position">Badge Position</h3>
+<p>Screen position of the floating chat badge button.</p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td><strong>Bottom-Right</strong> <span class="wpaic-default">Default</span></td><td>Most common placement. Suitable for most sites</td></tr>
+    <tr><td><strong>Bottom-Left</strong></td><td>When other elements occupy the bottom-right</td></tr>
+    <tr><td><strong>Top-Right</strong></td><td>Less common, available for specific layouts</td></tr>
+    <tr><td><strong>Top-Left</strong></td><td>For specialized layouts</td></tr>
+</table>
+
+<h3 id="badge-margin">Badge Margins</h3>
+<p>Distance from screen edges in pixels.</p>
+<p><strong>Right Margin Default:</strong> <code>20</code>px | <strong>Bottom Margin Default:</strong> <code>20</code>px</p>
+<p>Adjust to avoid overlapping with other floating elements like cookie banners.</p>
+
+<h3 id="markdown">Markdown Rendering</h3>
+<p>Converts Markdown syntax in AI responses to rich text.</p>
+<p><strong>Enabled</strong> <span class="wpaic-default">Default</span>: <code>**bold**</code>, <code>*italic*</code>, lists, code blocks, and links render as formatted text.</p>
+<p><strong>Disabled:</strong> Markdown symbols display as plain text.</p>
+
+<h3 id="mobile">Mobile Display</h3>
+<p>Controls whether the chat widget appears on mobile devices.</p>
+<p><strong>Enabled</strong> <span class="wpaic-default">Default</span>: Chatbot visible on all devices.</p>
+<p><strong>Disabled:</strong> Chatbot visible on desktop only. Use when prioritizing mobile performance.</p>
+
+<h3 id="page-visibility">Page Visibility</h3>
+<p>Fine-grained control over which pages display the chatbot.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Homepage</strong></td><td>Enabled</td><td>Show on front page</td></tr>
+    <tr><td><strong>Single Posts</strong></td><td>Enabled</td><td>Show on blog posts</td></tr>
+    <tr><td><strong>Pages</strong></td><td>Enabled</td><td>Show on static pages</td></tr>
+    <tr><td><strong>Archives</strong></td><td>Enabled</td><td>Show on category/tag/date archives</td></tr>
+    <tr><td><strong>Include IDs</strong></td><td>Empty</td><td>Comma-separated post/page IDs. If set, chatbot appears ONLY on these pages (whitelist mode)</td></tr>
+    <tr><td><strong>Exclude IDs</strong></td><td>Empty</td><td>Comma-separated post/page IDs to exclude</td></tr>
+</table>
+
+<h3 id="embed">Cross-Site Embed</h3>
+<p>Embed the chatbot on non-WordPress sites using provided code snippets.</p>
+<p><strong>Script Embed:</strong> Floating badge. Insert the <code>&lt;script&gt;</code> tag before <code>&lt;/body&gt;</code>.</p>
+<p><strong>iframe Embed:</strong> Fixed-size chat window. Place the <code>&lt;iframe&gt;</code> tag anywhere on your page.</p>
+
+<!-- ============================================================ -->
+<h2 id="recaptcha-settings"><i class="fa-solid fa-shield-halved"></i> reCAPTCHA Settings</h2>
+<!-- ============================================================ -->
+
+<h3 id="recaptcha-enable">Enable reCAPTCHA v3</h3>
+<p>Enables Google reCAPTCHA v3 bot protection. Version 3 scores requests in the background without user interaction.</p>
+<p><strong>Enabled:</strong> Validates reCAPTCHA scores on message submission, blocking automated bot messages.</p>
+<p><strong>Disabled:</strong> No reCAPTCHA validation.</p>
+
+<h3 id="recaptcha-keys">Site Key / Secret Key</h3>
+<p>Obtain these from the <a href="https://www.google.com/recaptcha/admin" target="_blank">Google reCAPTCHA Admin Console</a>.</p>
+<p><strong>Site Key:</strong> Public key used on the frontend.</p>
+<p><strong>Secret Key:</strong> Server-side verification key. Encrypted and masked after saving.</p>
+
+<h3 id="recaptcha-threshold">Score Threshold</h3>
+<p>Requests scoring below this threshold are blocked.</p>
+<p><strong>Default:</strong> <code>0.5</code> | <strong>Range:</strong> 0.0 - 1.0</p>
+<ul>
+    <li><strong>0.1 - 0.3:</strong> Lenient. Allows most requests</li>
+    <li><strong>0.5:</strong> Standard. Recommended</li>
+    <li><strong>0.7 - 0.9:</strong> Strict. May block legitimate users</li>
+</ul>
+
+<h3 id="recaptcha-fail">Fail Mode</h3>
+<p>Behavior when reCAPTCHA verification itself fails (e.g., network errors).</p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td><strong>Open (Allow)</strong> <span class="wpaic-default">Default</span></td><td>Allows chat when verification fails. Prioritizes availability</td></tr>
+    <tr><td><strong>Closed (Block)</strong></td><td>Blocks chat when verification fails. Prioritizes security</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="advanced-settings"><i class="fa-solid fa-sliders"></i> Advanced Settings</h2>
+<!-- ============================================================ -->
+
+<h3 id="save-history">Save Conversation History</h3>
+<p><strong>Enabled</strong> <span class="wpaic-default">Default</span>: Conversations are persisted to the database. Viewable in the admin "Conversations" page. Conversations restore on page reload.</p>
+<p><strong>Disabled:</strong> Conversations exist only during the session and are lost when the user navigates away. Use for privacy-first deployments.</p>
+
+<h3 id="retention">Retention Period</h3>
+<p>Days to keep conversation history. Older conversations are automatically deleted.</p>
+<p><strong>Default:</strong> <code>90</code> days | Set to <code>0</code> for unlimited retention</p>
+
+<h3 id="delete-uninstall">Delete Data on Uninstall</h3>
+<p><strong>Enabled:</strong> Removes all plugin data (settings, conversations, knowledge base, indexes) when uninstalled.</p>
+<p><strong>Disabled</strong> <span class="wpaic-default">Default</span>: Preserves data for potential reinstallation.</p>
+
+<h3 id="consent">WP Consent API Strict Mode</h3>
+<p>Integrates with the WP Consent API plugin for GDPR cookie consent.</p>
+<p><strong>Enabled:</strong> Requires active consent before using localStorage. Session IDs and chat history are not stored in the browser without consent.</p>
+<p><strong>Disabled</strong> <span class="wpaic-default">Default</span>: Uses localStorage without consent verification.</p>
+
+<h3 id="rate-limit">Rate Limiting</h3>
+<p>Limits message frequency per user to prevent API cost spikes and spam.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Max Requests</strong></td><td><code>20</code></td><td>Maximum messages allowed within the time window. Set to 0 for unlimited.</td></tr>
+    <tr><td><strong>Time Window</strong></td><td><code>1 hour</code></td><td>Rate limit period. Options: 1min, 5min, 10min, 30min, 1hr, 3hr, 6hr, 12hr, 1 day</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Pro edition offers two-tier rate limiting (burst + sustained) with per-minute and per-hour limits.
+</div>
+
+<h3 id="proxy">Proxy Settings</h3>
+<p>Configure IP detection when using Cloudflare or load balancers.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Trust Cloudflare IP</strong></td><td>Uses the <code>CF-Connecting-IP</code> header for real client IP. Enable if using Cloudflare.</td></tr>
+    <tr><td><strong>Trust Proxy IP</strong></td><td>Uses the <code>X-Forwarded-For</code> header for real client IP. Enable if using a reverse proxy.</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>Warning:</strong> Enabling these settings inappropriately may create IP spoofing risks. Configure according to your infrastructure.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="crawler-settings"><i class="fa-solid fa-spider"></i> Site Learning (Crawler)</h2>
+<!-- ============================================================ -->
+
+<h3 id="crawler-enable">Enable Crawler</h3>
+<p>Automatically crawls your WordPress content and indexes it as AI reference knowledge.</p>
+<p><strong>Enabled</strong> <span class="wpaic-default">Default</span>: Periodically crawls specified post types, splits content into chunks, and stores in the search index. Relevant content is automatically included in AI responses.</p>
+<p><strong>Disabled:</strong> No crawling. Use only manually registered knowledge base entries.</p>
+
+<h3 id="crawler-types">Post Types</h3>
+<p>Which WordPress post types to crawl.</p>
+<p><strong>Default:</strong> <code>All</code> - Crawls all post types (posts, pages, custom post types). Can select specific types.</p>
+
+<h3 id="crawler-interval">Crawl Interval</h3>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td><strong>Daily</strong> <span class="wpaic-default">Default</span></td><td>Crawls once per day. Best for frequently updated sites</td></tr>
+    <tr><td><strong>Weekly</strong></td><td>Crawls once per week. Best for stable content sites</td></tr>
+</table>
+<p>Manual crawl is also available from the Dashboard's "Site Learning" section.</p>
+
+<h3 id="crawler-chunk">Chunk Size</h3>
+<p>Characters per content chunk when splitting crawled content.</p>
+<p><strong>Default:</strong> <code>1000</code> characters</p>
+<ul>
+    <li><strong>Smaller (500-800):</strong> More precise search, but larger index</li>
+    <li><strong>Larger (1500-2000):</strong> Broader context per chunk, but potentially less precise results</li>
+</ul>
+
+<h3 id="crawler-results">Max Results</h3>
+<p>Maximum number of context chunks sent to the AI per user query.</p>
+<p><strong>Default:</strong> <code>3</code></p>
+<ul>
+    <li><strong>Fewer (1-2):</strong> Saves API costs but may miss relevant information</li>
+    <li><strong>More (5-10):</strong> Better context coverage but higher API costs</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="knowledge-base"><i class="fa-solid fa-database"></i> Knowledge Base</h2>
+<!-- ============================================================ -->
+
+<h3 id="kb-overview">Overview</h3>
+<p>The knowledge base is a collection of Q&A data the AI uses to provide accurate answers. Unlike site learning (crawler), manually registered answers are prioritized.</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>Free Edition Limit:</strong> Up to 20 knowledge base entries. Pro edition supports unlimited entries.
+</div>
+
+<h3 id="kb-add">Add Q&A</h3>
+<p>Add question-answer pairs manually from the admin "Knowledge" page.</p>
+<ul>
+    <li><strong>Question:</strong> The question users might ask</li>
+    <li><strong>Answer:</strong> The exact answer the AI should provide</li>
+    <li><strong>Category:</strong> Optional label for organization</li>
+</ul>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Register multiple phrasings of the same question to improve recognition accuracy.
+</div>
+
+<h3 id="kb-import">CSV Import</h3>
+<p>Bulk import knowledge base entries from a CSV file. Format:</p>
+<pre>question,answer,category
+"What are your prices?","Plans start at $10/month.","Pricing"
+"Business hours?","Monday to Friday, 9 AM to 6 PM.","Hours"</pre>
+
+<!-- ============================================================ -->
+<h2 id="conversations"><i class="fa-solid fa-clock-rotate-left"></i> Conversations</h2>
+<!-- ============================================================ -->
+
+<h3 id="conv-list">Conversation List</h3>
+<p>View all chat conversations in the admin "Conversations" page. Shows session ID, start time, message count, and status for each conversation.</p>
+
+<h3 id="conv-detail">Message View</h3>
+<p>Click a conversation to view the chronological exchange between user and AI. Feedback ratings (thumbs up/down) are also displayed.</p>
+<p>CSV/JSON export is available in the Pro edition. <span class="wpaic-pro-badge">PRO</span></p>
+
+<!-- Footer -->
+<div class="wpaic-footer">
+    <p>
+        <a href="/rapls-ai-chatbot-manual-pro-en/">Pro Manual</a> |
+        <a href="/rapls-ai-chatbot-free-manual-ja/">Japanese Version</a> |
+        <a href="/rapls-ai-chatbot-manual-pro-ja/">Pro Manual (Japanese)</a>
+    </p>
+    <p>&copy; 2025-2026 HASH Inc. All rights reserved.</p>
+</div>
+
+</main>
+</div>

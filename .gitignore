@@ -2,7 +2,9 @@
 .claude/
 .serena/
 CLAUDE.md
-docs/
+docs/assets/
+docs/rpls-license-*
+docs/*.zip
 
 # OS files
 .DS_Store
