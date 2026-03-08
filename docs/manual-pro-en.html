@@ -1,1562 +1,733 @@
-<!-- Rapls AI Chatbot - Pro Manual (English) -->
+<!-- Rapls AI Chatbot - Pro Edition Manual (English) -->
 
-<!-- Font Awesome CDN -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<!-- Hide unnecessary elements + Custom styles -->
 <style>
 .breadcrumb.breadcrumb-page.pbp-main-top,
-.article-header.entry-header {
-    display: none !important;
-}
-
-/* Base styles */
+.article-header.entry-header { display: none !important; }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
 
-/* Manual layout */
-.wpaic-manual-wrapper {
-    display: flex;
-    max-width: 1280px;
-    margin: 0 auto;
-    gap: 40px;
-    padding: 0 20px;
+:root {
+    --primary: #667eea;
+    --primary-dark: #764ba2;
+    --gold: #d4a017;
+    --gold-light: #f0c674;
+    --text: #1a1a2e;
+    --text-light: #555;
+    --border: #e5e7eb;
+    --bg-light: #f8f9ff;
+    --bg-code: #f1f3f5;
+    --bg-gold: #fffdf5;
 }
 
-/* Sidebar */
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); line-height: 1.7; }
+
+.wpaic-manual-wrap { display: flex; max-width: 1280px; margin: 0 auto; gap: 0; }
+
 .wpaic-sidebar {
-    width: 280px;
-    min-width: 280px;
-    position: sticky;
-    top: 40px;
-    height: calc(100vh - 80px);
-    overflow-y: auto;
-    padding: 20px 0;
-    font-size: 0.88em;
-    scrollbar-width: thin;
-    scrollbar-color: #d4a01740 transparent;
+    width: 280px; min-width: 280px;
+    border-right: 1px solid var(--border);
+    padding: 30px 20px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto; background: #fff;
 }
-.wpaic-sidebar::-webkit-scrollbar {
-    width: 4px;
-}
-.wpaic-sidebar::-webkit-scrollbar-thumb {
-    background: #d4a01740;
-    border-radius: 4px;
-}
-.wpaic-sidebar-title {
-    font-size: 0.75em;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #d4a017;
-    margin: 20px 0 8px 0;
-    padding-left: 12px;
-}
-.wpaic-sidebar-title:first-child {
-    margin-top: 0;
-}
-.wpaic-sidebar a {
-    display: block;
-    color: #555;
-    text-decoration: none;
-    padding: 5px 12px;
-    border-radius: 6px;
-    transition: all 0.2s;
-    line-height: 1.5;
-}
-.wpaic-sidebar a:hover {
-    background: #d4a01710;
-    color: #d4a017;
-}
-.wpaic-sidebar a.active {
-    background: #d4a01715;
-    color: #d4a017;
-    font-weight: 600;
-}
-
-/* Main content */
-.wpaic-main-content {
-    flex: 1;
-    min-width: 0;
-    padding: 20px 0 80px;
-}
-
-/* Section styles */
-.wpaic-section {
-    max-width: 100%;
-    margin: 0;
-    padding: 0;
-}
-.wpaic-section-gap {
-    margin-bottom: 60px;
-}
-
-/* Typography */
-.wpaic-manual-h2 {
-    font-size: 1.8em;
-    font-weight: 700;
-    color: #1a1a2e;
-    margin: 60px 0 10px 0;
+.wpaic-sidebar h2 {
+    font-size: 16px;
+    color: var(--gold);
+    margin: 0 0 20px 0;
     padding-bottom: 12px;
-    border-bottom: 3px solid;
-    border-image: linear-gradient(135deg, #d4a017, #f0c674) 1;
+    border-bottom: 2px solid var(--gold);
 }
-.wpaic-manual-h2:first-child {
-    margin-top: 0;
+.wpaic-sidebar-section { margin-bottom: 8px; }
+.wpaic-sidebar-section summary {
+    cursor: pointer; font-weight: 600; font-size: 14px; padding: 8px 0; color: var(--text); list-style: none;
 }
-.wpaic-manual-h3 {
-    font-size: 1.25em;
-    font-weight: 600;
-    color: #333;
-    margin: 40px 0 12px 0;
-    padding: 10px 16px;
-    background: linear-gradient(135deg, #d4a01708, #f0c67408);
-    border-left: 4px solid #d4a017;
-    border-radius: 0 8px 8px 0;
+.wpaic-sidebar-section summary::before {
+    content: '\f105'; font-family: 'Font Awesome 6 Free'; font-weight: 900; margin-right: 8px;
+    transition: transform 0.2s; display: inline-block; font-size: 12px;
 }
-.wpaic-manual-h4 {
-    font-size: 1.05em;
-    font-weight: 600;
-    color: #444;
-    margin: 24px 0 8px 0;
+.wpaic-sidebar-section[open] summary::before { transform: rotate(90deg); }
+.wpaic-sidebar-section ul { list-style: none; padding: 0 0 0 20px; margin: 4px 0 8px; }
+.wpaic-sidebar-section ul li { margin: 2px 0; }
+.wpaic-sidebar-section ul li a {
+    color: var(--text-light); text-decoration: none; font-size: 13px; padding: 3px 0; display: block; transition: color 0.2s;
 }
+.wpaic-sidebar-section ul li a:hover { color: var(--gold); }
 
-/* Description text */
-.wpaic-desc {
-    color: #555;
-    line-height: 1.8;
-    margin: 8px 0 16px 0;
+.wpaic-content { flex: 1; padding: 40px 50px; max-width: 900px; }
+.wpaic-content h1 {
+    font-size: 32px;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
 }
+.wpaic-content .wpaic-subtitle { color: var(--text-light); font-size: 16px; margin-bottom: 40px; }
+.wpaic-content h2 {
+    font-size: 24px; color: var(--text); margin: 50px 0 20px; padding-bottom: 10px; border-bottom: 2px solid var(--border);
+}
+.wpaic-content h2 .fa-solid { color: var(--gold); margin-right: 10px; }
+.wpaic-content h3 {
+    font-size: 18px; color: var(--text); margin: 30px 0 12px; padding-left: 12px; border-left: 3px solid var(--gold);
+}
+.wpaic-content p { margin: 8px 0 16px; color: var(--text-light); }
+.wpaic-content ul, .wpaic-content ol { margin: 8px 0 16px; padding-left: 24px; color: var(--text-light); }
+.wpaic-content li { margin: 4px 0; }
 
-/* Settings table */
-.wpaic-settings-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.92em;
-    margin: 12px 0 20px 0;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #e5e7eb;
-}
-.wpaic-settings-table th {
-    background: #faf6ed;
-    padding: 10px 14px;
-    text-align: left;
-    font-weight: 600;
-    color: #333;
-    border-bottom: 2px solid #f0c67440;
-    white-space: nowrap;
-}
-.wpaic-settings-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #555;
-    vertical-align: top;
-}
-.wpaic-settings-table tr:last-child td {
-    border-bottom: none;
-}
-.wpaic-settings-table tr:hover td {
-    background: #faf6ed40;
-}
+.wpaic-table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+.wpaic-table th, .wpaic-table td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+.wpaic-table th { background: var(--bg-light); font-weight: 600; color: var(--text); white-space: nowrap; }
+.wpaic-table td { color: var(--text-light); }
 
-/* Default value badge */
-.wpaic-default {
-    display: inline-block;
-    background: #f0c67420;
-    color: #b8860b;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.85em;
-    font-weight: 500;
-    font-family: 'SF Mono', 'Consolas', monospace;
-}
+.wpaic-default { display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.wpaic-pro-badge { display: inline-block; background: linear-gradient(135deg, #f0c674, #d4a017); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-left: 6px; }
 
-/* Tip box */
-.wpaic-tip {
-    background: linear-gradient(135deg, #d4a01708, #f0c67412);
-    border: 1px solid #f0c67440;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin: 12px 0 20px 0;
-    font-size: 0.92em;
-    color: #555;
-    line-height: 1.7;
-}
-.wpaic-tip strong {
-    color: #d4a017;
-}
+.wpaic-box { padding: 16px 20px; border-radius: 8px; margin: 16px 0; font-size: 14px; }
+.wpaic-box-info { background: #e3f2fd; border-left: 4px solid #1976d2; color: #0d47a1; }
+.wpaic-box-tip { background: #e8f5e9; border-left: 4px solid #388e3c; color: #1b5e20; }
+.wpaic-box-warn { background: #fff3e0; border-left: 4px solid #f57c00; color: #e65100; }
+.wpaic-box-gold { background: var(--bg-gold); border-left: 4px solid var(--gold); color: #6b4f00; }
 
-/* Note/warning box */
-.wpaic-note {
-    background: #667eea08;
-    border: 1px solid #667eea30;
-    border-radius: 10px;
-    padding: 14px 18px;
-    margin: 12px 0 20px 0;
-    font-size: 0.92em;
-    color: #555;
-    line-height: 1.7;
-}
-.wpaic-note strong {
-    color: #667eea;
-}
+code { background: var(--bg-code); padding: 2px 6px; border-radius: 3px; font-size: 13px; color: #c7254e; }
+pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
 
-/* Code inline */
-.wpaic-code {
-    background: #f1f5f9;
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-size: 0.88em;
-    font-family: 'SF Mono', 'Consolas', monospace;
-    color: #d4a017;
-}
+.wpaic-footer { margin-top: 60px; padding: 30px 0; border-top: 2px solid var(--border); text-align: center; color: var(--text-light); font-size: 14px; }
+.wpaic-footer a { color: var(--gold); text-decoration: none; }
+.wpaic-footer a:hover { text-decoration: underline; }
 
-/* Badge */
-.wpaic-badge-pro {
-    display: inline-block;
-    background: linear-gradient(135deg, #f0c674, #d4a017);
-    color: #1a1a2e;
-    padding: 3px 10px;
-    border-radius: 9999px;
-    font-size: 0.65em;
-    font-weight: 700;
-    vertical-align: middle;
-    margin-left: 8px;
-}
+.wpaic-lang-switch { display: flex; gap: 8px; margin-bottom: 20px; }
+.wpaic-lang-switch a { padding: 6px 16px; border-radius: 6px; font-size: 13px; text-decoration: none; border: 1px solid var(--border); color: var(--text-light); transition: all 0.2s; }
+.wpaic-lang-switch a.active { background: var(--gold); color: #fff; border-color: var(--gold); }
 
-/* Buttons */
-.wpaic-btn-gold {
-    display: inline-block;
-    background: linear-gradient(135deg, #f0c674 0%, #d4a017 100%);
-    color: #1a1a2e;
-    padding: 12px 30px;
-    border-radius: 9999px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 1em;
-    box-shadow: 0 4px 20px rgba(240, 198, 116, 0.4);
-    transition: all 0.3s ease;
-    margin: 8px;
-}
-.wpaic-btn-gold:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(240, 198, 116, 0.5);
-}
-.wpaic-btn-primary {
-    display: inline-block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 30px;
-    border-radius: 9999px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 1em;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
-    transition: all 0.3s ease;
-    margin: 8px;
-}
-.wpaic-btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
-}
-
-/* Cards */
-.wpaic-feature-card {
-    background: white;
-    border: 1px solid #f0c67430;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 12px 0;
-    transition: all 0.3s ease;
-}
-.wpaic-feature-card:hover {
-    box-shadow: 0 6px 24px rgba(240, 198, 116, 0.15);
-    border-color: #f0c67460;
-}
-
-/* Responsive */
 @media (max-width: 900px) {
-    .wpaic-manual-wrapper {
-        flex-direction: column;
-    }
-    .wpaic-sidebar {
-        position: static;
-        width: 100%;
-        min-width: unset;
-        height: auto;
-        max-height: 300px;
-        border: 1px solid #f0c67440;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 20px;
-    }
-    .wpaic-manual-h2 { font-size: 1.4em; }
-    .wpaic-manual-h3 { font-size: 1.1em; }
-}
-
-/* Icon prefix for sidebar groups */
-.wpaic-sidebar-title i {
-    margin-right: 6px;
-    width: 16px;
-    text-align: center;
-}
-
-/* Option list */
-.wpaic-option-list {
-    list-style: none;
-    padding: 0;
-    margin: 8px 0 16px 0;
-}
-.wpaic-option-list li {
-    padding: 4px 0 4px 20px;
-    position: relative;
-    color: #555;
-    line-height: 1.7;
-}
-.wpaic-option-list li::before {
-    content: '\f00c';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    position: absolute;
-    left: 0;
-    color: #d4a017;
-    font-size: 0.75em;
-    top: 8px;
-}
-
-/* Subgroup */
-.wpaic-sub-sidebar a {
-    padding-left: 24px;
-    font-size: 0.95em;
+    .wpaic-manual-wrap { flex-direction: column; }
+    .wpaic-sidebar { width: 100%; min-width: auto; position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    .wpaic-content { padding: 20px; }
 }
 </style>
 
-<!-- Language Switcher -->
-<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;">
-    <a href="/rapls-ai-chatbot-manual-pro-ja/" style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">JA</a>
-    <a href="/rapls-ai-chatbot-manual-pro-en/" style="color: #d4a017; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #d4a017; border-radius: 4px;">EN</a>
-</div>
+<div class="wpaic-manual-wrap">
 
-<!-- Top Navigation -->
-<div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; padding: 10px;">
-    <a href="/rapls-ai-chatbot-en/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border-radius: 9999px; font-size: 0.9em; font-weight: 500; border: 1px solid transparent; transition: all 0.2s;"><i class="fas fa-home" style="margin-right: 5px;"></i>Home</a>
-    <a href="/rapls-ai-chatbot-free-manual-en/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border-radius: 9999px; font-size: 0.9em; font-weight: 500; border: 1px solid #667eea40; background: #667eea08; transition: all 0.2s;"><i class="fas fa-book-open" style="margin-right: 5px;"></i>Free Manual</a>
-    <a href="/rapls-ai-chatbot-manual-pro-en/" style="color: #d4a017; text-decoration: none; padding: 8px 16px; border-radius: 9999px; font-size: 0.9em; font-weight: 600; border: 1px solid #f0c67480; background: linear-gradient(135deg, #f0c67415, #d4a01715); transition: all 0.2s;"><i class="fas fa-crown" style="margin-right: 5px;"></i>Pro Manual</a>
-</div>
-
-<!-- Hero Banner -->
-<div style="background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 60%, #44337a 100%); color: white; padding: 60px 30px 50px; text-align: center; border-radius: 20px; margin-bottom: 40px; position: relative; overflow: hidden;">
-    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(circle at 30% 50%, rgba(212,160,23,0.12) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(240,198,116,0.08) 0%, transparent 50%); pointer-events: none;"></div>
-    <div style="position: relative; z-index: 1;">
-        <div style="margin-bottom: 20px;">
-            <i class="fas fa-crown" style="font-size: 3em; color: #f0c674;"></i>
-        </div>
-        <h1 style="font-size: 2.4em; margin: 0 0 10px 0; font-weight: 800; letter-spacing: -0.02em;">Rapls AI Chatbot Manual</h1>
-        <p style="font-size: 1.3em; margin: 0 0 10px 0; opacity: 0.9; font-weight: 400; color: #f0c674;">Pro Edition</p>
-        <p style="font-size: 1em; margin: 0; opacity: 0.7; max-width: 600px; margin-left: auto; margin-right: auto;">Complete reference for all Pro-only features and settings</p>
+<nav class="wpaic-sidebar">
+    <h2><i class="fa-solid fa-crown"></i> Pro Manual</h2>
+    <div class="wpaic-lang-switch">
+        <a href="/rapls-ai-chatbot-manual-pro-ja/">日本語</a>
+        <a href="/rapls-ai-chatbot-manual-pro-en/" class="active">English</a>
     </div>
-</div>
 
-<!-- Intro note -->
-<div class="wpaic-note" style="max-width: 900px; margin: 0 auto 40px;">
-    <strong><i class="fas fa-info-circle" style="margin-right: 6px;"></i>Note:</strong> The Pro edition includes all Free features plus the advanced capabilities documented below. For settings available in the Free version, please refer to the <a href="/rapls-ai-chatbot-free-manual-en/" style="color: #667eea; text-decoration: underline;">Free Manual</a>.
-</div>
-
-<!-- Main Layout: Sidebar + Content -->
-<div class="wpaic-manual-wrapper">
-
-    <!-- Sidebar Navigation -->
-    <nav class="wpaic-sidebar">
-        <div style="font-weight: 700; font-size: 1.05em; color: #1a1a2e; margin-bottom: 16px; padding-left: 12px;">
-            <i class="fas fa-crown" style="color: #d4a017; margin-right: 6px;"></i>Pro Manual
-        </div>
-
-        <div class="wpaic-sidebar-title"><i class="fas fa-users"></i> Customer</div>
-        <div class="wpaic-sub-sidebar">
-            <a href="#lead-capture">Lead Capture</a>
-            <a href="#offline-messages">Offline Messages</a>
-            <a href="#conversion-tracking">Conversion Tracking</a>
-            <a href="#ui-customization">UI Customization</a>
-            <a href="#white-label">White Label &amp; Footer</a>
-        </div>
-
-        <div class="wpaic-sidebar-title"><i class="fas fa-brain"></i> AI</div>
-        <div class="wpaic-sub-sidebar">
-            <a href="#ai-enhancement">AI Enhancement</a>
-            <a href="#sentiment-analysis">Sentiment Analysis</a>
-            <a href="#context-memory">Context Memory</a>
-            <a href="#quick-replies">Quick Replies</a>
-            <a href="#multimodal">Multimodal</a>
-            <a href="#response-cache">Response Cache</a>
-            <a href="#woocommerce">WooCommerce</a>
-            <a href="#ai-prompts">AI Prompts</a>
-            <a href="#content-filters">Content Filters</a>
-        </div>
-
-        <div class="wpaic-sidebar-title"><i class="fas fa-cogs"></i> Operations</div>
-        <div class="wpaic-sub-sidebar">
-            <a href="#business-hours">Business Hours</a>
-            <a href="#handoff">Handoff (Human)</a>
-            <a href="#ai-forms">AI Forms</a>
-            <a href="#badge-icon">Badge Icon</a>
-            <a href="#actions">Actions (Intent)</a>
-            <a href="#scenarios">Scenarios</a>
-            <a href="#multi-bot">Multi-Bot</a>
-            <a href="#screen-sharing">Screen Sharing</a>
-        </div>
-
-        <div class="wpaic-sidebar-title"><i class="fas fa-plug"></i> Integrations</div>
-        <div class="wpaic-sub-sidebar">
-            <a href="#webhook">Webhook</a>
-            <a href="#line">LINE Messaging</a>
-            <a href="#slack">Slack</a>
-            <a href="#google-sheets">Google Sheets</a>
-            <a href="#booking">Booking</a>
-        </div>
-
-        <div class="wpaic-sidebar-title"><i class="fas fa-shield-alt"></i> Management</div>
-        <div class="wpaic-sub-sidebar">
-            <a href="#usage-budget">Usage &amp; Budget</a>
-            <a href="#reports">Reports</a>
-            <a href="#backup">Backup &amp; Maintenance</a>
-            <a href="#change-history">Change History</a>
-            <a href="#security">Security</a>
-            <a href="#license">License</a>
-        </div>
-
-        <div class="wpaic-sidebar-title"><i class="fas fa-chart-bar"></i> Additional</div>
-        <div class="wpaic-sub-sidebar">
-            <a href="#analytics">Analytics Dashboard</a>
-            <a href="#dynamic-variables">Dynamic Variables</a>
-            <a href="#voice">Voice &amp; TTS</a>
-            <a href="#ai-tools">AI Admin Tools</a>
-            <a href="#chat-features">Chat Features</a>
-            <a href="#performance">Performance</a>
-            <a href="#testing">Testing &amp; Staging</a>
-            <a href="#multisite">Multisite Support</a>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="wpaic-main-content">
-
-        <!-- ============================================================ -->
-        <!-- CUSTOMER GROUP -->
-        <!-- ============================================================ -->
-
-        <h2 class="wpaic-manual-h2" id="lead-capture"><i class="fas fa-address-card" style="margin-right: 10px; color: #d4a017;"></i>Lead Capture</h2>
-
-        <p class="wpaic-desc">Collect visitor information before or during a chat session. Lead data is stored in the database and can be exported as CSV or JSON. Optional email notification sends captured leads to your team in real time.</p>
-
-        <h3 class="wpaic-manual-h3" id="lead-capture-enabled">Lead Capture Enabled</h3>
-        <p class="wpaic-desc">Master toggle to activate the lead capture form. When enabled, a form is displayed to the visitor based on the "Lead Form Required" setting below.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Option</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Show the lead form to visitors</td></tr>
-            <tr><td>Disabled</td><td>No lead form is shown; visitors chat immediately</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="lead-form-required">Lead Form Required</h3>
-        <p class="wpaic-desc">Controls whether the visitor must complete the lead form before chatting.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Option</th><th>Description</th></tr>
-            <tr><td>Required</td><td>The visitor cannot send a message until the form is submitted</td></tr>
-            <tr><td>Optional</td><td>The form is shown but the visitor may skip it and begin chatting</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Required</span></p>
-
-        <h3 class="wpaic-manual-h3" id="lead-form-title">Form Title</h3>
-        <p class="wpaic-desc">The heading displayed at the top of the lead capture form. Keep it concise and welcoming.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Before we start</span></p>
-
-        <h3 class="wpaic-manual-h3" id="lead-form-description">Form Description</h3>
-        <p class="wpaic-desc">Supporting text shown below the form title. Use this to explain why you are asking for the visitor's information and how it will be used.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Please enter your information</span></p>
-
-        <h3 class="wpaic-manual-h3" id="lead-standard-fields">Standard Fields</h3>
-        <p class="wpaic-desc">Four built-in fields are available. Each field can be independently enabled or disabled, and marked as required or optional.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Field</th><th>Default Enabled</th><th>Default Required</th><th>Notes</th></tr>
-            <tr><td>Name</td><td>Yes</td><td>Yes</td><td>Visitor's full name</td></tr>
-            <tr><td>Email</td><td>Yes</td><td>Yes</td><td>Validated as a proper email address</td></tr>
-            <tr><td>Phone</td><td>Yes</td><td>No</td><td>Free-form telephone input</td></tr>
-            <tr><td>Company</td><td>Yes</td><td>No</td><td>Company or organization name</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="lead-custom-fields">Custom Fields</h3>
-        <p class="wpaic-desc">Add unlimited custom fields to the lead form. Each field supports the following properties:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>Label</td><td>The field label displayed to the visitor</td></tr>
-            <tr><td>Type</td><td>Input type: <span class="wpaic-code">text</span>, <span class="wpaic-code">email</span>, <span class="wpaic-code">tel</span>, <span class="wpaic-code">textarea</span>, or <span class="wpaic-code">select</span></td></tr>
-            <tr><td>Required</td><td>Whether the field must be filled before submission</td></tr>
-            <tr><td>Options</td><td>For <span class="wpaic-code">select</span> fields only: comma-separated list of choices</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Use the <span class="wpaic-code">select</span> type for fields like "Department" or "Inquiry Type" to keep responses consistent and make CSV exports easier to analyze.</div>
-
-        <h3 class="wpaic-manual-h3" id="lead-email-notification">Email Notification</h3>
-        <p class="wpaic-desc">Sends an email to your team whenever a new lead is captured. The email contains all submitted field values.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Turn email notifications on or off</td></tr>
-            <tr><td>Recipient Email</td><td>The email address that receives notifications. Uses the site admin email if left blank.</td></tr>
-        </table>
-
-        <!-- OFFLINE MESSAGES -->
-        <h2 class="wpaic-manual-h2" id="offline-messages"><i class="fas fa-moon" style="margin-right: 10px; color: #d4a017;"></i>Offline Messages</h2>
-
-        <p class="wpaic-desc">When business hours are configured and the current time falls outside those hours, visitors see an offline form instead of the chat widget. This lets you collect messages while your team is away.</p>
-
-        <h3 class="wpaic-manual-h3" id="offline-enabled">Offline Message Enabled</h3>
-        <p class="wpaic-desc">Master toggle. When enabled and outside business hours, the offline form replaces the chat interface.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="offline-form-title">Form Title</h3>
-        <p class="wpaic-desc">The heading shown on the offline message form.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">We are currently offline</span></p>
-
-        <h3 class="wpaic-manual-h3" id="offline-form-description">Form Description</h3>
-        <p class="wpaic-desc">Supporting text below the title. Use this to set expectations for when the visitor will receive a response.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">(empty)</span></p>
-
-        <h3 class="wpaic-manual-h3" id="offline-email-notification">Email Notification</h3>
-        <p class="wpaic-desc">Sends an email when a visitor submits an offline message.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Turn email notifications on or off for offline messages</td></tr>
-            <tr><td>Recipient Email</td><td>The address that receives offline messages. Uses the site admin email if left blank.</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Pair Offline Messages with the Business Hours feature. When business hours are not enabled, the offline form will not appear automatically. You can use offline messages as a standalone feature by enabling it even without business hours -- visitors will see the offline form whenever AI is unavailable.</div>
-
-        <!-- CONVERSION TRACKING -->
-        <h2 class="wpaic-manual-h2" id="conversion-tracking"><i class="fas fa-bullseye" style="margin-right: 10px; color: #d4a017;"></i>Conversion Tracking</h2>
-
-        <p class="wpaic-desc">Track when chat conversations lead to desired outcomes by monitoring page visits after a chat session. When a visitor navigates to a URL matching one of your goal patterns, the conversion is recorded and linked to their conversation.</p>
-
-        <h3 class="wpaic-manual-h3" id="conversion-enabled">Conversion Tracking Enabled</h3>
-        <p class="wpaic-desc">Master toggle to activate conversion tracking for all chat sessions.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="conversion-goals">Goal Definitions</h3>
-        <p class="wpaic-desc">Define one or more conversion goals. Each goal consists of three properties:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>URL Pattern</td><td>A string to match against page URLs. Supports partial matching (e.g., <span class="wpaic-code">/thank-you</span> matches any URL containing that path). You can use <span class="wpaic-code">*</span> as a wildcard.</td></tr>
-            <tr><td>Goal Name</td><td>A descriptive label for this conversion (e.g., "Purchase Complete", "Contact Form Sent")</td></tr>
-            <tr><td>Goal Value</td><td>An optional numeric value representing the monetary worth of this conversion (e.g., <span class="wpaic-code">50</span> for a $50 purchase)</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Conversion data appears in the Analytics dashboard. Use Goal Value to calculate ROI and measure the chatbot's business impact.</div>
-
-        <!-- UI CUSTOMIZATION -->
-        <h2 class="wpaic-manual-h2" id="ui-customization"><i class="fas fa-palette" style="margin-right: 10px; color: #d4a017;"></i>UI Customization</h2>
-
-        <p class="wpaic-desc">Fine-tune the chatbot's visual appearance and user experience beyond the basic theme settings available in the Free version.</p>
-
-        <h3 class="wpaic-manual-h3" id="fullscreen-mode">Fullscreen Mode</h3>
-        <p class="wpaic-desc">When enabled, the chatbot expands to fill the entire browser viewport instead of appearing as a floating widget. Ideal for dedicated support pages.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="welcome-screen">Welcome Screen</h3>
-        <p class="wpaic-desc">Display a branded welcome screen when the chatbot opens, before the visitor sends their first message.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Show or hide the welcome screen</td></tr>
-            <tr><td>Title</td><td>Main heading on the welcome screen</td></tr>
-            <tr><td>Message</td><td>Body text with a greeting or instructions</td></tr>
-            <tr><td>Buttons</td><td>Optional quick-start buttons that send a predefined message when clicked</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="response-delay">Response Delay</h3>
-        <p class="wpaic-desc">Adds an artificial delay before the AI response is displayed, simulating a more natural typing cadence. A "typing" indicator is shown during the delay.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle the response delay on or off</td></tr>
-            <tr><td>Milliseconds</td><td>Duration of the delay in milliseconds</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Enabled, 500ms</span></p>
-        <div class="wpaic-tip"><strong>Tip:</strong> A delay between 300ms and 800ms feels natural. Values above 1500ms may frustrate visitors.</div>
-
-        <h3 class="wpaic-manual-h3" id="notification-sound">Notification Sound</h3>
-        <p class="wpaic-desc">Plays a subtle audio notification when the AI responds, drawing the visitor's attention if they have switched tabs.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="tooltips">Tooltips</h3>
-        <p class="wpaic-desc">When enabled, hovering over interface elements displays helpful tooltip descriptions.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Enabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="custom-font">Custom Font</h3>
-        <p class="wpaic-desc">Load a custom web font for the chatbot widget. Provide the full URL to a Google Fonts or self-hosted CSS file. The font is applied to all text inside the chatbot container.</p>
-        <p class="wpaic-desc">Example: <span class="wpaic-code">https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap</span></p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">(empty -- uses theme font)</span></p>
-
-        <h3 class="wpaic-manual-h3" id="seasonal-theme">Seasonal Theme</h3>
-        <p class="wpaic-desc">Apply a seasonal visual overlay to the chatbot widget. The seasonal theme adds decorative elements (e.g., snowflakes for winter, cherry blossoms for spring) without affecting readability.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">None</span></p>
-
-        <!-- WHITE LABEL & FOOTER -->
-        <h2 class="wpaic-manual-h2" id="white-label"><i class="fas fa-tag" style="margin-right: 10px; color: #d4a017;"></i>White Label &amp; Footer</h2>
-
-        <p class="wpaic-desc">Remove or replace plugin branding to match your organization's identity.</p>
-
-        <h3 class="wpaic-manual-h3" id="hide-branding">Hide Branding</h3>
-        <p class="wpaic-desc">Removes the "Powered by Rapls AI Chatbot" text from the widget footer.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="custom-footer">Custom Footer HTML</h3>
-        <p class="wpaic-desc">Replace the default footer with your own HTML. Useful for displaying your company name, a privacy link, or terms of service. Basic HTML tags are allowed (links, spans, bold, italic).</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">(empty)</span></p>
-
-        <h3 class="wpaic-manual-h3" id="custom-css">Custom CSS</h3>
-        <p class="wpaic-desc">Inject custom CSS rules that apply only to the chatbot widget. This lets you override any visual property without modifying theme files. The CSS is scoped to the chatbot container.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">(empty)</span></p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Use your browser's developer tools to inspect element class names inside the chatbot widget, then target them in Custom CSS for precise adjustments.</div>
-
-
-        <!-- ============================================================ -->
-        <!-- AI GROUP -->
-        <!-- ============================================================ -->
-
-        <h2 class="wpaic-manual-h2" id="ai-enhancement"><i class="fas fa-lightbulb" style="margin-right: 10px; color: #d4a017;"></i>AI Enhancement</h2>
-
-        <p class="wpaic-desc">Improve the quality and interactivity of AI responses with suggestions, autocomplete, prompt templates, and response regeneration.</p>
-
-        <h3 class="wpaic-manual-h3" id="related-suggestions">Related Suggestions</h3>
-        <p class="wpaic-desc">After each AI response, display a set of related follow-up questions the visitor can click. The AI generates these suggestions based on the current conversation context.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Related suggestions increase engagement by guiding visitors to deeper topics. They work especially well on FAQ-heavy sites.</div>
-
-        <h3 class="wpaic-manual-h3" id="autocomplete">Autocomplete</h3>
-        <p class="wpaic-desc">As the visitor types, the chatbot suggests completions based on common queries and the knowledge base. The visitor can accept a suggestion by pressing Tab or clicking it.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="prompt-templates">Prompt Templates</h3>
-        <p class="wpaic-desc">Load a pre-built system prompt optimized for a specific industry or use case. Templates provide the AI with domain-specific instructions, tone, and vocabulary.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Enabled</th><td colspan="2">Toggle prompt templates on or off. Default: <span class="wpaic-default">Disabled</span></td></tr>
-        </table>
-        <p class="wpaic-desc" style="margin-top: 12px;">Available industry templates:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Template ID</th><th>Industry</th><th>Description</th></tr>
-            <tr><td><span class="wpaic-code">customer_support</span></td><td>Customer Support</td><td>General helpdesk with escalation awareness and empathetic tone</td></tr>
-            <tr><td><span class="wpaic-code">ecommerce</span></td><td>E-commerce</td><td>Product inquiries, order status, returns, and recommendations</td></tr>
-            <tr><td><span class="wpaic-code">educational</span></td><td>Education</td><td>Course information, enrollment, and student guidance</td></tr>
-            <tr><td><span class="wpaic-code">faq</span></td><td>FAQ</td><td>Concise answers drawn from a knowledge base</td></tr>
-            <tr><td><span class="wpaic-code">appointment</span></td><td>Appointments</td><td>Scheduling, availability checks, and booking confirmations</td></tr>
-            <tr><td><span class="wpaic-code">restaurant</span></td><td>Restaurant</td><td>Menu inquiries, reservations, hours, and dietary information</td></tr>
-            <tr><td><span class="wpaic-code">real_estate</span></td><td>Real Estate</td><td>Property listings, viewings, mortgage basics</td></tr>
-            <tr><td><span class="wpaic-code">saas_tech</span></td><td>SaaS / Tech</td><td>Feature explanations, pricing tiers, technical troubleshooting</td></tr>
-            <tr><td><span class="wpaic-code">healthcare</span></td><td>Healthcare</td><td>Appointment booking, general health info (not medical advice)</td></tr>
-            <tr><td><span class="wpaic-code">business_consulting</span></td><td>Business Consulting</td><td>Service descriptions, case studies, engagement process</td></tr>
-            <tr><td><span class="wpaic-code">legal_consulting</span></td><td>Legal Consulting</td><td>Practice areas, consultation booking (not legal advice)</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Selecting a template pre-fills the system prompt. You can further customize the text after loading a template. The template provides a starting point -- your edits take precedence.</div>
-
-        <h3 class="wpaic-manual-h3" id="regenerate-button">Regenerate Button</h3>
-        <p class="wpaic-desc">Shows a "Regenerate" button below each AI response, allowing the visitor to request a new answer to the same question. Useful when the first response is unsatisfactory.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Enabled</span></p>
-
-        <!-- SENTIMENT ANALYSIS -->
-        <h2 class="wpaic-manual-h2" id="sentiment-analysis"><i class="fas fa-heart" style="margin-right: 10px; color: #d4a017;"></i>Sentiment Analysis</h2>
-
-        <p class="wpaic-desc">Detect the visitor's emotional state during a conversation and adjust the AI's tone in real time. The AI analyzes each message for sentiment and modifies its response style accordingly.</p>
-
-        <h3 class="wpaic-manual-h3" id="sentiment-enabled">Sentiment Analysis Enabled</h3>
-        <p class="wpaic-desc">Master toggle. When enabled, every visitor message is evaluated for emotional tone before generating a response.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="sentiment-detection-prompt">Sentiment Detection Prompt</h3>
-        <p class="wpaic-desc">The prompt used internally to classify the visitor's sentiment. You can customize this to recognize industry-specific emotional cues. The prompt should instruct the AI to return one of the recognized sentiment categories.</p>
-
-        <h3 class="wpaic-manual-h3" id="sentiment-tone-adjustments">Tone Adjustments</h3>
-        <p class="wpaic-desc">Define how the AI adjusts its response when each sentiment is detected. Each adjustment is a prompt fragment appended to the system prompt for that turn.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Sentiment</th><th>Purpose</th></tr>
-            <tr><td>Frustrated</td><td>Prompt the AI to be more patient, acknowledge the frustration, and offer clear next steps</td></tr>
-            <tr><td>Confused</td><td>Prompt the AI to simplify language, provide step-by-step explanations, and ask clarifying questions</td></tr>
-            <tr><td>Urgent</td><td>Prompt the AI to prioritize speed, provide direct answers, and escalate if necessary</td></tr>
-            <tr><td>Positive</td><td>Prompt the AI to match the upbeat tone, reinforce satisfaction, and suggest additional resources</td></tr>
-            <tr><td>Negative</td><td>Prompt the AI to be empathetic, avoid defensive language, and offer resolution paths</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Sentiment analysis adds an extra AI call per message. If response speed is critical, consider disabling it and using a well-crafted system prompt to handle tone instead.</div>
-
-        <!-- CONTEXT MEMORY -->
-        <h2 class="wpaic-manual-h2" id="context-memory"><i class="fas fa-database" style="margin-right: 10px; color: #d4a017;"></i>Context Memory</h2>
-
-        <p class="wpaic-desc">Remember key information about returning visitors across separate chat sessions. Context memory extracts facts like the visitor's name, preferences, and past issues, then injects them into future conversations for a personalized experience.</p>
-
-        <h3 class="wpaic-manual-h3" id="context-memory-enabled">Context Memory Enabled</h3>
-        <p class="wpaic-desc">Master toggle. When enabled, the plugin stores extracted context in the <span class="wpaic-code">wp_aichat_user_context</span> database table.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="context-retention-days">Retention Days</h3>
-        <p class="wpaic-desc">Number of days to retain stored context. After this period, old context entries are automatically purged by the cleanup cron job.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">30</span></p>
-
-        <h3 class="wpaic-manual-h3" id="context-extraction-prompt">Context Extraction Prompt</h3>
-        <p class="wpaic-desc">The prompt used at the end of each conversation to extract memorable facts. The AI reads the conversation history and returns structured context (name, preferences, issues mentioned, etc.).</p>
-
-        <h3 class="wpaic-manual-h3" id="context-injection-prompt">Context Injection Prompt</h3>
-        <p class="wpaic-desc">The prompt template used to inject stored context into new conversations. Placeholders in this template are replaced with the visitor's stored context before being prepended to the system prompt.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Context memory is especially valuable for membership sites or SaaS products where users return frequently. Combine with lead capture to link context to a known identity.</div>
-
-        <!-- QUICK REPLIES -->
-        <h2 class="wpaic-manual-h2" id="quick-replies"><i class="fas fa-reply" style="margin-right: 10px; color: #d4a017;"></i>Quick Replies</h2>
-
-        <p class="wpaic-desc">Display clickable quick-reply buttons below the chat input. Visitors can tap a button to instantly send a predefined message without typing. Useful for common questions or menu-style navigation.</p>
-
-        <h3 class="wpaic-manual-h3" id="quick-replies-enabled">Quick Replies Enabled</h3>
-        <p class="wpaic-desc">Master toggle to show or hide quick-reply buttons.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="quick-reply-definitions">Reply Definitions</h3>
-        <p class="wpaic-desc">Define each quick-reply button with the following properties:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>Text</td><td>The label displayed on the button</td></tr>
-            <tr><td>Action</td><td>The message sent to the AI when the button is clicked. If blank, the button text is sent as-is.</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Use quick replies as a navigation menu: "Pricing", "Support Hours", "Book a Demo". The action can be a longer, more specific prompt that produces better AI responses than the short button text alone.</div>
-
-        <!-- MULTIMODAL -->
-        <h2 class="wpaic-manual-h2" id="multimodal"><i class="fas fa-image" style="margin-right: 10px; color: #d4a017;"></i>Multimodal (Image Upload)</h2>
-
-        <p class="wpaic-desc">Allow visitors to upload images alongside their messages. The AI can analyze the image content and respond accordingly. Requires an AI provider that supports vision capabilities (OpenAI GPT-4o, Claude, Gemini).</p>
-
-        <h3 class="wpaic-manual-h3" id="image-upload-enabled">Image Upload Enabled</h3>
-        <p class="wpaic-desc">Master toggle. Shows an image upload button in the chat input area.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="image-max-size">Max Size</h3>
-        <p class="wpaic-desc">Maximum file size for uploaded images in kilobytes.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">2048 KB (2 MB)</span></p>
-
-        <h3 class="wpaic-manual-h3" id="image-formats">Allowed Formats</h3>
-        <p class="wpaic-desc">File formats accepted for upload.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">jpg, png, gif, webp</span></p>
-        <div class="wpaic-note"><strong>Note:</strong> Image analysis consumes more tokens than text-only messages. Monitor your API usage when enabling this feature.</div>
-
-        <!-- RESPONSE CACHE -->
-        <h2 class="wpaic-manual-h2" id="response-cache"><i class="fas fa-bolt" style="margin-right: 10px; color: #d4a017;"></i>Response Cache</h2>
-
-        <p class="wpaic-desc">Cache AI responses to reduce API costs and improve response times. When a visitor asks a question that matches a previously cached response (based on SHA-256 hashing), the cached response is served instantly without calling the AI provider.</p>
-
-        <h3 class="wpaic-manual-h3" id="cache-enabled">Cache Enabled</h3>
-        <p class="wpaic-desc">Master toggle for response caching.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="cache-ttl">TTL (Time to Live)</h3>
-        <p class="wpaic-desc">Number of days a cached response remains valid. After expiration, the next identical question triggers a fresh API call.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">7 days</span></p>
-
-        <h3 class="wpaic-manual-h3" id="cache-statistics">Cache Statistics</h3>
-        <p class="wpaic-desc">The admin panel displays cache hit rate, total cached responses, and storage size. Use this to evaluate the effectiveness of caching on your site.</p>
-
-        <h3 class="wpaic-manual-h3" id="cache-clear">Clear Cache</h3>
-        <p class="wpaic-desc">A button in the admin panel to manually purge all cached responses. Use this after making significant changes to the system prompt or knowledge base.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Response caching is most effective on FAQ-heavy sites where many visitors ask similar questions. Sites with highly personalized conversations may see lower hit rates.</div>
-
-        <!-- WOOCOMMERCE -->
-        <h2 class="wpaic-manual-h2" id="woocommerce"><i class="fas fa-shopping-cart" style="margin-right: 10px; color: #d4a017;"></i>WooCommerce Integration</h2>
-
-        <p class="wpaic-desc">Automatically index WooCommerce product data so the AI can answer product-related questions and display rich product cards in chat responses.</p>
-
-        <h3 class="wpaic-manual-h3" id="product-cards-enabled">Product Cards Enabled</h3>
-        <p class="wpaic-desc">When enabled, the AI displays product information as visual cards (image, title, price, link) directly in chat responses when discussing specific products.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Enabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="auto-crawl-products">Auto-Crawl Product Data</h3>
-        <p class="wpaic-desc">Automatically includes WooCommerce product data (title, description, price, categories, attributes) in the site learning crawler. Products are indexed alongside your regular page content.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Make sure to run a site crawl after enabling WooCommerce integration to index your existing products. New products are picked up on subsequent scheduled crawls.</div>
-
-        <!-- AI PROMPTS -->
-        <h2 class="wpaic-manual-h2" id="ai-prompts"><i class="fas fa-edit" style="margin-right: 10px; color: #d4a017;"></i>AI Prompts (Pro)</h2>
-
-        <p class="wpaic-desc">Customize the prompts used by Pro-specific AI features.</p>
-
-        <h3 class="wpaic-manual-h3" id="suggestions-prompt">Suggestions Prompt</h3>
-        <p class="wpaic-desc">The prompt used to generate related follow-up questions after each AI response. Customize this to control the style, number, and relevance of suggestions.</p>
-
-        <h3 class="wpaic-manual-h3" id="summary-prompt">Summary Prompt</h3>
-        <p class="wpaic-desc">The prompt used to generate conversation summaries. Summaries are available via the REST API and in the admin conversation viewer. Customize this to focus on particular aspects (action items, key topics, sentiment).</p>
-
-        <!-- CONTENT FILTERS -->
-        <h2 class="wpaic-manual-h2" id="content-filters"><i class="fas fa-filter" style="margin-right: 10px; color: #d4a017;"></i>Content Filters</h2>
-
-        <p class="wpaic-desc">Protect your chatbot from abuse with word filtering, IP blocking, and enhanced rate limiting.</p>
-
-        <h3 class="wpaic-manual-h3" id="banned-words">Banned Words</h3>
-        <p class="wpaic-desc">Block messages containing specific words or phrases.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle the banned words filter on or off</td></tr>
-            <tr><td>Word List</td><td>One word or phrase per line. Matching is case-insensitive.</td></tr>
-            <tr><td>Message</td><td>The response shown to the visitor when their message is blocked</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="ip-block">IP Block</h3>
-        <p class="wpaic-desc">Block access to the chatbot from specific IP addresses or ranges.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle IP blocking on or off</td></tr>
-            <tr><td>IP List</td><td>One IP address per line. Supports individual IPs and CIDR notation (e.g., <span class="wpaic-code">192.168.1.0/24</span>)</td></tr>
-            <tr><td>Message</td><td>The response shown to blocked visitors</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="enhanced-rate-limit">Enhanced Rate Limit</h3>
-        <p class="wpaic-desc">Adds per-minute and per-hour rate limits in addition to the Free version's basic daily limit. This provides burst protection against automated abuse.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle enhanced rate limiting on or off</td></tr>
-            <tr><td>Per Minute</td><td>Maximum messages allowed per minute per visitor</td></tr>
-            <tr><td>Per Hour</td><td>Maximum messages allowed per hour per visitor</td></tr>
-            <tr><td>Message</td><td>The response shown when the rate limit is exceeded</td></tr>
-        </table>
-        <p class="wpaic-desc">Defaults: <span class="wpaic-default">Disabled; 5/min, 30/hour</span></p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Start with the default values and adjust based on your analytics. Most legitimate visitors send fewer than 3 messages per minute.</div>
-
-
-        <!-- ============================================================ -->
-        <!-- OPERATIONS GROUP -->
-        <!-- ============================================================ -->
-
-        <h2 class="wpaic-manual-h2" id="business-hours"><i class="fas fa-clock" style="margin-right: 10px; color: #d4a017;"></i>Business Hours</h2>
-
-        <p class="wpaic-desc">Define when your chatbot operates in "online" mode. Outside business hours, you can show an offline message, disable the chatbot, or continue with AI-only responses. Business hours also feed into the <span class="wpaic-code">{business_hours}</span> dynamic variable.</p>
-
-        <h3 class="wpaic-manual-h3" id="business-hours-enabled">Business Hours Enabled</h3>
-        <p class="wpaic-desc">Master toggle. When disabled, the chatbot operates 24/7 with no time-based restrictions.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="timezone">Timezone</h3>
-        <p class="wpaic-desc">The timezone used to evaluate business hours. Select your local timezone to ensure hours match your real-world schedule.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Asia/Tokyo</span></p>
-
-        <h3 class="wpaic-manual-h3" id="daily-schedule">Per-Day Settings</h3>
-        <p class="wpaic-desc">Configure each day of the week independently. For each day, you can set:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled/Disabled</td><td>Whether the chatbot is "online" on that day</td></tr>
-            <tr><td>Start Time</td><td>The time the chatbot goes online (24-hour format)</td></tr>
-            <tr><td>End Time</td><td>The time the chatbot goes offline (24-hour format)</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="outside-hours-message">Outside Hours Message</h3>
-        <p class="wpaic-desc">The message displayed to visitors who open the chatbot outside business hours. If offline messages are enabled, this text appears above the offline form.</p>
-
-        <h3 class="wpaic-manual-h3" id="holidays">Holidays</h3>
-        <p class="wpaic-desc">Override business hours on specific dates.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle holiday overrides on or off</td></tr>
-            <tr><td>Date List</td><td>One date per line in <span class="wpaic-code">YYYY-MM-DD</span> format. The chatbot is treated as offline all day on these dates.</td></tr>
-            <tr><td>Message</td><td>A special message shown on holiday dates (e.g., "Happy holidays! We'll be back on January 4th.")</td></tr>
-        </table>
-
-        <!-- HANDOFF -->
-        <h2 class="wpaic-manual-h2" id="handoff"><i class="fas fa-headset" style="margin-right: 10px; color: #d4a017;"></i>Handoff (Human Escalation)</h2>
-
-        <p class="wpaic-desc">Transfer a conversation from the AI to a human operator. Handoff can be triggered automatically by keyword detection or manually by the visitor. When triggered, the system sends a notification and the operator can take over the conversation in real time.</p>
-
-        <h3 class="wpaic-manual-h3" id="handoff-enabled">Handoff Enabled</h3>
-        <p class="wpaic-desc">Master toggle for the human handoff feature.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="handoff-auto-detect">Auto-Detect</h3>
-        <p class="wpaic-desc">Automatically trigger handoff when the visitor uses specific keywords indicating they want to speak to a human.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle auto-detection on or off</td></tr>
-            <tr><td>Keywords (EN)</td><td>English trigger phrases (e.g., "talk to a human", "speak to agent", "real person")</td></tr>
-            <tr><td>Keywords (JA)</td><td>Japanese trigger phrases (e.g., "人間", "オペレーター", "担当者")</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Enabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="handoff-notification">Notification Email</h3>
-        <p class="wpaic-desc">The email address notified when a handoff is triggered. Uses the site admin email if left blank.</p>
-
-        <h3 class="wpaic-manual-h3" id="handoff-message">Handoff Message</h3>
-        <p class="wpaic-desc">The message shown to the visitor when the handoff is initiated (e.g., "Connecting you to a team member. Please wait a moment.").</p>
-
-        <h3 class="wpaic-manual-h3" id="handoff-notification-method">Notification Method</h3>
-        <p class="wpaic-desc">How the operator is notified of a new handoff request.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Option</th><th>Description</th></tr>
-            <tr><td><span class="wpaic-code">email</span></td><td>Send an email notification only</td></tr>
-            <tr><td><span class="wpaic-code">slack</span></td><td>Send a Slack notification only (requires Slack webhook URL)</td></tr>
-            <tr><td><span class="wpaic-code">both</span></td><td>Send both email and Slack notifications</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="handoff-slack-url">Slack Webhook URL</h3>
-        <p class="wpaic-desc">The Slack incoming webhook URL used for handoff notifications. Required when the notification method includes Slack.</p>
-
-        <h3 class="wpaic-manual-h3" id="handoff-auto-close">Auto-Close</h3>
-        <p class="wpaic-desc">Automatically close the handoff request if no operator responds within the specified time. The visitor is informed that the handoff timed out and is returned to AI mode.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">30 minutes</span> (Range: 5-1440 minutes)</p>
-
-        <h3 class="wpaic-manual-h3" id="operator-mode">Operator Mode</h3>
-        <p class="wpaic-desc">When an operator takes over a conversation, the AI is paused and the operator can type responses directly. The operator sees the full conversation history and any context memory for the visitor.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle operator mode availability</td></tr>
-            <tr><td>Takeover Message</td><td>The message shown to the visitor when an operator takes over (e.g., "A team member has joined the conversation.")</td></tr>
-        </table>
-
-        <!-- AI FORMS -->
-        <h2 class="wpaic-manual-h2" id="ai-forms"><i class="fas fa-file-alt" style="margin-right: 10px; color: #d4a017;"></i>AI Forms</h2>
-
-        <p class="wpaic-desc">Create intelligent forms that use AI to process submissions. Unlike standard contact forms, AI Forms send the collected data to the AI along with a custom prompt, generating a personalized response for the visitor.</p>
-
-        <h3 class="wpaic-manual-h3" id="ai-forms-enabled">AI Forms Enabled</h3>
-        <p class="wpaic-desc">Master toggle for the AI Forms feature.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="ai-form-definitions">Form Definitions</h3>
-        <p class="wpaic-desc">Each form has the following properties:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>ID</td><td>Unique identifier used in the shortcode</td></tr>
-            <tr><td>Name</td><td>Display name for admin reference</td></tr>
-            <tr><td>Description</td><td>Text shown above the form fields</td></tr>
-            <tr><td>System Prompt</td><td>The system prompt used when processing this form's submissions</td></tr>
-            <tr><td>Prompt</td><td>The user-facing prompt template. Use <span class="wpaic-code">{field_key}</span> placeholders to inject field values.</td></tr>
-            <tr><td>Submit Label</td><td>Text on the submit button</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="ai-form-fields">Form Fields</h3>
-        <p class="wpaic-desc">Each form contains one or more fields:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>Label</td><td>The field label displayed to the visitor</td></tr>
-            <tr><td>Key</td><td>A unique key used in the prompt template placeholder</td></tr>
-            <tr><td>Type</td><td>Input type: text, email, tel, textarea, select</td></tr>
-            <tr><td>Required</td><td>Whether the field must be filled</td></tr>
-            <tr><td>Options</td><td>For select fields: comma-separated list of choices</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="ai-form-email">Email Notification</h3>
-        <p class="wpaic-desc">Optionally send an email when a form is submitted. The email includes all field values and the AI's response.</p>
-
-        <h3 class="wpaic-manual-h3" id="ai-form-shortcode">Shortcode</h3>
-        <p class="wpaic-desc">Embed an AI Form on any page or post using the shortcode:</p>
-        <p class="wpaic-desc"><span class="wpaic-code">[wpaic_form id="X"]</span></p>
-        <p class="wpaic-desc">Replace <span class="wpaic-code">X</span> with the form's ID.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> AI Forms are ideal for quote calculators, diagnostic tools, personalized recommendations, and interactive assessments. The AI processes all field data together to generate a contextual response.</div>
-
-        <!-- BADGE ICON -->
-        <h2 class="wpaic-manual-h2" id="badge-icon"><i class="fas fa-comment-dots" style="margin-right: 10px; color: #d4a017;"></i>Badge Icon</h2>
-
-        <p class="wpaic-desc">Customize the floating chat button (badge) that visitors click to open the chatbot.</p>
-
-        <h3 class="wpaic-manual-h3" id="icon-type">Icon Type</h3>
-        <p class="wpaic-desc">Choose how the badge icon is displayed:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Option</th><th>Description</th></tr>
-            <tr><td><span class="wpaic-code">default</span></td><td>The built-in chat bubble icon</td></tr>
-            <tr><td><span class="wpaic-code">preset</span></td><td>Choose from 25 preset icons (see list below)</td></tr>
-            <tr><td><span class="wpaic-code">image</span></td><td>Upload a custom image from the media library</td></tr>
-            <tr><td><span class="wpaic-code">emoji</span></td><td>Use a single emoji character as the icon</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="preset-icons">Preset Icons</h3>
-        <p class="wpaic-desc">25 professionally designed icons are available:</p>
-        <p class="wpaic-desc" style="line-height: 2;">
-            <span class="wpaic-code">headset</span>
-            <span class="wpaic-code">question</span>
-            <span class="wpaic-code">message</span>
-            <span class="wpaic-code">robot</span>
-            <span class="wpaic-code">sparkle</span>
-            <span class="wpaic-code">heart</span>
-            <span class="wpaic-code">lightning</span>
-            <span class="wpaic-code">help-circle</span>
-            <span class="wpaic-code">chat-smile</span>
-            <span class="wpaic-code">notification</span>
-            <span class="wpaic-code">mic</span>
-            <span class="wpaic-code">code</span>
-            <span class="wpaic-code">terminal</span>
-            <span class="wpaic-code">wifi</span>
-            <span class="wpaic-code">rocket</span>
-            <span class="wpaic-code">analytics</span>
-            <span class="wpaic-code">search</span>
-            <span class="wpaic-code">diamond</span>
-            <span class="wpaic-code">crown</span>
-            <span class="wpaic-code">fire</span>
-            <span class="wpaic-code">music</span>
-            <span class="wpaic-code">camera</span>
-            <span class="wpaic-code">palette</span>
-            <span class="wpaic-code">pets</span>
-            <span class="wpaic-code">fitness</span>
-        </p>
-
-        <h3 class="wpaic-manual-h3" id="custom-image-icon">Custom Image</h3>
-        <p class="wpaic-desc">When icon type is set to "image", click the upload button to select an image from the WordPress media library. Recommended size: 60x60 pixels or larger. PNG with transparency works best.</p>
-
-        <h3 class="wpaic-manual-h3" id="emoji-icon">Emoji</h3>
-        <p class="wpaic-desc">When icon type is set to "emoji", enter a single emoji character. The emoji is displayed at a large size in the badge button.</p>
-
-        <!-- ACTIONS -->
-        <h2 class="wpaic-manual-h2" id="actions"><i class="fas fa-bolt" style="margin-right: 10px; color: #d4a017;"></i>Actions (Intent Recognition)</h2>
-
-        <p class="wpaic-desc">Define automatic actions triggered when the AI recognizes a visitor's intent. Actions can open URLs, trigger forms, start scenarios, or initiate handoffs based on what the visitor is trying to accomplish.</p>
-
-        <h3 class="wpaic-manual-h3" id="actions-enabled">Actions Enabled</h3>
-        <p class="wpaic-desc">Master toggle for the actions feature.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="action-definitions">Action Definitions</h3>
-        <p class="wpaic-desc">Each action consists of:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>Intent</td><td>A keyword or phrase the AI uses to classify the visitor's intent (e.g., "pricing", "book appointment", "complaint")</td></tr>
-            <tr><td>Action Type</td><td>What happens when the intent is detected: open URL, trigger form, start scenario, initiate handoff</td></tr>
-            <tr><td>Target</td><td>The specific target for the action (URL, form ID, scenario ID, etc.)</td></tr>
-        </table>
-
-        <!-- SCENARIOS -->
-        <h2 class="wpaic-manual-h2" id="scenarios"><i class="fas fa-project-diagram" style="margin-right: 10px; color: #d4a017;"></i>Scenarios (Conversation Flows)</h2>
-
-        <p class="wpaic-desc">Build multi-step guided conversation flows. Scenarios let you create structured interactions with branching logic, conditions, and automated actions at each step. Useful for troubleshooting wizards, qualification flows, and onboarding sequences.</p>
-
-        <h3 class="wpaic-manual-h3" id="scenarios-enabled">Scenarios Enabled</h3>
-        <p class="wpaic-desc">Master toggle for conversation scenarios.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="scenario-definitions">Scenario Definitions</h3>
-        <p class="wpaic-desc">Each scenario includes:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>ID</td><td>Unique identifier for the scenario</td></tr>
-            <tr><td>Name</td><td>Display name shown in admin and optionally to visitors</td></tr>
-            <tr><td>Description</td><td>Internal description for admin reference</td></tr>
-            <tr><td>Trigger Type</td><td>How the scenario is activated: keyword match, intent detection, manual trigger, or page URL</td></tr>
-            <tr><td>Steps</td><td>An ordered list of steps, each with a message, input options, conditions, and a next-step mapping</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Start with a simple 3-5 step flow to test the feature. Each step can include quick-reply buttons that guide the visitor to the next step, creating a decision-tree experience.</div>
-
-        <!-- MULTI-BOT -->
-        <h2 class="wpaic-manual-h2" id="multi-bot"><i class="fas fa-robot" style="margin-right: 10px; color: #d4a017;"></i>Multi-Bot</h2>
-
-        <p class="wpaic-desc">Deploy multiple chatbot configurations on different pages or for different purposes. Each bot has its own system prompt and model setting, allowing specialized behavior per context (e.g., a sales bot on the pricing page and a support bot on the help center).</p>
-
-        <h3 class="wpaic-manual-h3" id="multi-bot-enabled">Multi-Bot Enabled</h3>
-        <p class="wpaic-desc">Master toggle for the multi-bot feature.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="bot-definitions">Bot Definitions</h3>
-        <p class="wpaic-desc">Each bot configuration includes:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Property</th><th>Description</th></tr>
-            <tr><td>ID</td><td>Unique identifier used for page assignment</td></tr>
-            <tr><td>Name</td><td>Display name for admin reference</td></tr>
-            <tr><td>System Prompt</td><td>The system prompt specific to this bot</td></tr>
-            <tr><td>Model</td><td>The AI model used by this bot (can differ from the global default)</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Multi-bot works with intent routing. The system can automatically direct conversations to the most appropriate bot based on the visitor's initial question.</div>
-
-        <!-- SCREEN SHARING -->
-        <h2 class="wpaic-manual-h2" id="screen-sharing"><i class="fas fa-desktop" style="margin-right: 10px; color: #d4a017;"></i>Screen Sharing</h2>
-
-        <p class="wpaic-desc">Allow visitors to capture and share screenshots of their screen within the chat. The screenshot is sent as an image attachment that the AI or operator can analyze.</p>
-
-        <h3 class="wpaic-manual-h3" id="screen-sharing-enabled">Screen Sharing Enabled</h3>
-        <p class="wpaic-desc">Master toggle. Adds a screenshot capture button to the chat input area.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="screen-sharing-provider">Provider</h3>
-        <p class="wpaic-desc">The method used for screen capture.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">screenshot</span> (uses the browser's native screen capture API)</p>
-        <div class="wpaic-note"><strong>Note:</strong> Screen capture requires browser permission from the visitor. Not all browsers support the Screen Capture API. The feature degrades gracefully on unsupported browsers.</div>
-
-
-        <!-- ============================================================ -->
-        <!-- INTEGRATIONS GROUP -->
-        <!-- ============================================================ -->
-
-        <h2 class="wpaic-manual-h2" id="webhook"><i class="fas fa-globe" style="margin-right: 10px; color: #d4a017;"></i>Webhook</h2>
-
-        <p class="wpaic-desc">Send real-time event notifications to an external URL. Webhooks let you connect the chatbot to CRMs, automation platforms (Zapier, Make, n8n), and custom backends.</p>
-
-        <h3 class="wpaic-manual-h3" id="webhook-enabled">Webhook Enabled</h3>
-        <p class="wpaic-desc">Master toggle for webhook delivery.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="webhook-url">Webhook URL</h3>
-        <p class="wpaic-desc">The endpoint that receives POST requests with event data in JSON format.</p>
-
-        <h3 class="wpaic-manual-h3" id="webhook-hmac">HMAC Signature Secret</h3>
-        <p class="wpaic-desc">An optional shared secret used to sign webhook payloads. When set, each request includes an <span class="wpaic-code">X-Signature</span> header containing an HMAC-SHA256 hash of the request body. Use this to verify that incoming webhooks are authentic.</p>
-
-        <h3 class="wpaic-manual-h3" id="webhook-events">Events</h3>
-        <p class="wpaic-desc">Select which events trigger a webhook delivery:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Event</th><th>Description</th></tr>
-            <tr><td><span class="wpaic-code">new_conversation</span></td><td>Fired when a new chat session is created</td></tr>
-            <tr><td><span class="wpaic-code">new_message</span></td><td>Fired when either the visitor or AI sends a message</td></tr>
-            <tr><td><span class="wpaic-code">lead_captured</span></td><td>Fired when a visitor submits the lead form</td></tr>
-            <tr><td><span class="wpaic-code">handoff_requested</span></td><td>Fired when a handoff to a human is triggered</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="webhook-test">Test Button</h3>
-        <p class="wpaic-desc">Click to send a test payload to your webhook URL. The test payload includes sample data for all selected events. Check your endpoint for a <span class="wpaic-code">200</span> response to confirm the connection works.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Use a service like <a href="https://webhook.site" target="_blank" rel="noopener" style="color: #d4a017;">webhook.site</a> to inspect payloads during development before connecting your production endpoint.</div>
-
-        <!-- LINE -->
-        <h2 class="wpaic-manual-h2" id="line"><i class="fab fa-line" style="margin-right: 10px; color: #d4a017;"></i>LINE Messaging API</h2>
-
-        <p class="wpaic-desc">Connect your chatbot to the LINE messaging platform. Visitors can chat with your AI through your LINE Official Account. Messages are processed by the same AI configuration and knowledge base as the web widget.</p>
-
-        <h3 class="wpaic-manual-h3" id="line-enabled">LINE Enabled</h3>
-        <p class="wpaic-desc">Master toggle for LINE integration.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="line-channel-secret">Channel Secret</h3>
-        <p class="wpaic-desc">Your LINE channel secret, found in the LINE Developers Console under your Messaging API channel settings. Used to validate incoming webhook signatures.</p>
-
-        <h3 class="wpaic-manual-h3" id="line-access-token">Channel Access Token</h3>
-        <p class="wpaic-desc">Your long-lived channel access token, issued from the LINE Developers Console. Used to send reply messages.</p>
-
-        <h3 class="wpaic-manual-h3" id="line-webhook-url">Webhook URL</h3>
-        <p class="wpaic-desc">The plugin displays the webhook URL you need to configure in the LINE Developers Console. Copy this URL and paste it into your LINE channel's webhook settings. Format:</p>
-        <p class="wpaic-desc"><span class="wpaic-code">https://yoursite.com/wp-json/wp-ai-chatbot/v1/line/webhook</span></p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Make sure to enable "Use webhook" in the LINE Developers Console after entering the URL. Test the connection using LINE's built-in verification button.</div>
-
-        <!-- SLACK -->
-        <h2 class="wpaic-manual-h2" id="slack"><i class="fab fa-slack" style="margin-right: 10px; color: #d4a017;"></i>Slack Integration</h2>
-
-        <p class="wpaic-desc">Send chatbot notifications to a Slack channel. Receive alerts for new conversations, leads, handoff requests, and other events directly in Slack.</p>
-
-        <h3 class="wpaic-manual-h3" id="slack-enabled">Slack Enabled</h3>
-        <p class="wpaic-desc">Master toggle for Slack notifications.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="slack-webhook-url">Slack Webhook URL</h3>
-        <p class="wpaic-desc">The incoming webhook URL for your Slack workspace. Create one in your Slack app settings under "Incoming Webhooks".</p>
-
-        <h3 class="wpaic-manual-h3" id="slack-events">Event Selection</h3>
-        <p class="wpaic-desc">Choose which chatbot events are sent to Slack. Available events mirror the webhook events: new conversations, messages, leads, and handoff requests.</p>
-
-        <!-- GOOGLE SHEETS -->
-        <h2 class="wpaic-manual-h2" id="google-sheets"><i class="fas fa-table" style="margin-right: 10px; color: #d4a017;"></i>Google Sheets</h2>
-
-        <p class="wpaic-desc">Automatically export chatbot data to a Google Sheet via a webhook endpoint. Use a service like Zapier, Make, or Google Apps Script to receive the webhook and append rows to your spreadsheet.</p>
-
-        <h3 class="wpaic-manual-h3" id="sheets-enabled">Google Sheets Enabled</h3>
-        <p class="wpaic-desc">Master toggle for Google Sheets export.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="sheets-webhook-url">Webhook URL</h3>
-        <p class="wpaic-desc">The endpoint URL that receives data and writes it to Google Sheets. This is typically a Google Apps Script web app URL or a Zapier/Make webhook URL.</p>
-
-        <!-- BOOKING -->
-        <h2 class="wpaic-manual-h2" id="booking"><i class="fas fa-calendar-check" style="margin-right: 10px; color: #d4a017;"></i>Booking</h2>
-
-        <p class="wpaic-desc">Integrate appointment booking directly into the chat experience. When the visitor expresses interest in booking, the chatbot displays the booking interface inline.</p>
-
-        <h3 class="wpaic-manual-h3" id="booking-enabled">Booking Enabled</h3>
-        <p class="wpaic-desc">Master toggle for the booking integration.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="booking-provider">Provider</h3>
-        <p class="wpaic-desc">Select your booking platform:</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Option</th><th>Description</th></tr>
-            <tr><td><span class="wpaic-code">Calendly</span></td><td>Embed a Calendly scheduling widget</td></tr>
-            <tr><td><span class="wpaic-code">Cal.com</span></td><td>Embed a Cal.com scheduling widget</td></tr>
-            <tr><td><span class="wpaic-code">URL</span></td><td>Link to any external booking page</td></tr>
-        </table>
-
-        <h3 class="wpaic-manual-h3" id="booking-keywords">Trigger Keywords</h3>
-        <p class="wpaic-desc">Keywords that trigger the booking interface when detected in the visitor's message (e.g., "book", "schedule", "appointment", "meeting").</p>
-
-        <h3 class="wpaic-manual-h3" id="booking-url">Booking URL</h3>
-        <p class="wpaic-desc">The URL for your booking page. For Calendly and Cal.com, this is your scheduling page URL. For the URL provider, this is the full URL to your booking system.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Combine booking with the Actions feature to trigger the booking widget when the AI detects booking intent, even without exact keyword matches.</div>
-
-
-        <!-- ============================================================ -->
-        <!-- MANAGEMENT GROUP -->
-        <!-- ============================================================ -->
-
-        <h2 class="wpaic-manual-h2" id="usage-budget"><i class="fas fa-dollar-sign" style="margin-right: 10px; color: #d4a017;"></i>Usage &amp; Budget</h2>
-
-        <p class="wpaic-desc">Monitor and control your AI API spending. Set alerts when costs approach a threshold and hard limits to prevent overspending.</p>
-
-        <h3 class="wpaic-manual-h3" id="budget-alert">Budget Alert</h3>
-        <p class="wpaic-desc">Receive an email notification when your estimated API costs reach a specified amount.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle budget alerts on or off</td></tr>
-            <tr><td>Email</td><td>Recipient email for budget alerts</td></tr>
-            <tr><td>Threshold</td><td>The dollar amount that triggers the alert</td></tr>
-        </table>
-        <p class="wpaic-desc">Default threshold: <span class="wpaic-default">$10</span></p>
-
-        <h3 class="wpaic-manual-h3" id="budget-limit">Budget Limit</h3>
-        <p class="wpaic-desc">Set a hard spending cap. When the limit is reached, the chatbot stops calling the AI API and displays a fallback message to visitors.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle the budget limit on or off</td></tr>
-            <tr><td>Amount</td><td>Maximum dollar amount for the billing period</td></tr>
-            <tr><td>Block Message</td><td>The message shown to visitors when the limit is reached</td></tr>
-        </table>
-        <p class="wpaic-desc">Default amount: <span class="wpaic-default">$50</span></p>
-        <div class="wpaic-note"><strong>Note:</strong> Budget tracking uses token count estimates and published per-token pricing. Actual invoiced amounts from your AI provider may differ slightly due to rounding and rate changes.</div>
-
-        <!-- REPORTS -->
-        <h2 class="wpaic-manual-h2" id="reports"><i class="fas fa-envelope" style="margin-right: 10px; color: #d4a017;"></i>Reports</h2>
-
-        <h3 class="wpaic-manual-h3" id="monthly-report">Monthly Report</h3>
-        <p class="wpaic-desc">Receive a monthly email summary with key metrics: total conversations, messages, satisfaction scores, top questions, and conversion data.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle monthly email reports on or off</td></tr>
-            <tr><td>Email</td><td>Recipient email for the monthly report</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="summary-report">Summary Report</h3>
-        <p class="wpaic-desc">Receive periodic summary reports with configurable frequency.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle summary reports on or off</td></tr>
-            <tr><td>Frequency</td><td><span class="wpaic-code">daily</span>, <span class="wpaic-code">weekly</span>, or <span class="wpaic-code">monthly</span></td></tr>
-            <tr><td>Email</td><td>Recipient email for the summary report</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <!-- BACKUP -->
-        <h2 class="wpaic-manual-h2" id="backup"><i class="fas fa-archive" style="margin-right: 10px; color: #d4a017;"></i>Backup &amp; Maintenance</h2>
-
-        <h3 class="wpaic-manual-h3" id="settings-export">Settings Export</h3>
-        <p class="wpaic-desc">Download all plugin settings as a JSON file. This backup includes all configuration options, custom prompts, form definitions, scenario definitions, and feature toggles. API keys are excluded for security.</p>
-        <div class="wpaic-tip"><strong>Tip:</strong> Export settings before making major changes. You can restore them by importing the JSON file.</div>
-
-        <h3 class="wpaic-manual-h3" id="settings-import">Settings Import</h3>
-        <p class="wpaic-desc">Upload a previously exported JSON file to restore settings. The import replaces all current settings with the values from the file. A confirmation dialog prevents accidental overwrites.</p>
-
-        <h3 class="wpaic-manual-h3" id="knowledge-export">Knowledge Export</h3>
-        <p class="wpaic-desc">Export your knowledge base entries as CSV or JSON. Useful for backups, migration to another site, or analysis in external tools.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Format</th><th>Description</th></tr>
-            <tr><td>CSV</td><td>Comma-separated values, compatible with Excel and Google Sheets</td></tr>
-            <tr><td>JSON</td><td>Structured data format, suitable for programmatic import</td></tr>
-        </table>
-
-        <!-- CHANGE HISTORY -->
-        <h2 class="wpaic-manual-h2" id="change-history"><i class="fas fa-history" style="margin-right: 10px; color: #d4a017;"></i>Change History</h2>
-
-        <p class="wpaic-desc">Track changes to plugin settings over time. Every time a setting is saved, the previous values are recorded so you can review and roll back if needed.</p>
-
-        <h3 class="wpaic-manual-h3" id="change-history-enabled">Change History Enabled</h3>
-        <p class="wpaic-desc">Master toggle for tracking setting changes.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="max-versions">Max Versions</h3>
-        <p class="wpaic-desc">Maximum number of historical versions to retain. Older versions are automatically purged when the limit is exceeded.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">50</span></p>
-
-        <!-- SECURITY -->
-        <h2 class="wpaic-manual-h2" id="security"><i class="fas fa-shield-alt" style="margin-right: 10px; color: #d4a017;"></i>Security</h2>
-
-        <p class="wpaic-desc">Comprehensive security features to protect visitor data and prevent abuse.</p>
-
-        <h3 class="wpaic-manual-h3" id="pii-masking">PII Masking</h3>
-        <p class="wpaic-desc">Automatically detect and mask personally identifiable information in stored messages. Masked data is replaced with placeholder tokens before being written to the database.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle PII masking on or off</td></tr>
-            <tr><td>Patterns</td><td>Select which PII types to detect: <span class="wpaic-code">email</span>, <span class="wpaic-code">phone</span>, <span class="wpaic-code">credit_card</span></td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="data-retention">Data Retention</h3>
-        <p class="wpaic-desc">Automatically delete conversation data after a specified number of days. Helps comply with privacy regulations like GDPR.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle automatic data retention on or off</td></tr>
-            <tr><td>Days</td><td>Number of days to retain conversation data before deletion</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled; 365 days</span></p>
-
-        <h3 class="wpaic-manual-h3" id="security-headers">Security Headers</h3>
-        <p class="wpaic-desc">Add security-related HTTP headers to chatbot REST API responses. Includes headers such as <span class="wpaic-code">X-Content-Type-Options</span>, <span class="wpaic-code">X-Frame-Options</span>, and <span class="wpaic-code">Referrer-Policy</span>.</p>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="encryption">Encryption at Rest</h3>
-        <p class="wpaic-desc">Encrypt sensitive data stored in the database using AES-256-GCM encryption. Encrypted data is decrypted on the fly when accessed by authorized admin users.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle encryption on or off</td></tr>
-            <tr><td>Fields</td><td>Select which data types to encrypt: <span class="wpaic-code">messages</span>, <span class="wpaic-code">leads</span></td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-        <div class="wpaic-note"><strong>Note:</strong> Enabling encryption on an existing database encrypts new records only. Existing records remain unencrypted. Disabling encryption does not decrypt previously encrypted records -- they remain readable through the admin panel.</div>
-
-        <h3 class="wpaic-manual-h3" id="spam-detection">Spam Detection</h3>
-        <p class="wpaic-desc">Score incoming messages for spam characteristics. Messages exceeding the threshold are blocked.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle spam detection on or off</td></tr>
-            <tr><td>Score Threshold</td><td>Minimum spam score to trigger blocking (lower = more aggressive filtering)</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled; threshold 3</span></p>
-
-        <h3 class="wpaic-manual-h3" id="country-block">Country Block</h3>
-        <p class="wpaic-desc">Block access to the chatbot from specific countries based on the visitor's IP geolocation.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle country blocking on or off</td></tr>
-            <tr><td>Country Codes</td><td>Comma-separated ISO 3166-1 alpha-2 country codes (e.g., <span class="wpaic-code">CN, RU, KP</span>)</td></tr>
-            <tr><td>Message</td><td>The message shown to blocked visitors</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="ip-whitelist">IP Whitelist</h3>
-        <p class="wpaic-desc">Allow only specific IP addresses to use the chatbot. When enabled, all IPs not on the whitelist are blocked. Useful for internal or staging environments.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle the IP whitelist on or off</td></tr>
-            <tr><td>IP List</td><td>One IP address per line. Supports individual IPs and CIDR notation.</td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <h3 class="wpaic-manual-h3" id="vulnerability-scan">Vulnerability Scan</h3>
-        <p class="wpaic-desc">Periodically audit your plugin settings for potential security issues. The scan checks for common misconfigurations such as missing rate limits, disabled security headers, and API keys stored insecurely.</p>
-        <table class="wpaic-settings-table">
-            <tr><th>Setting</th><th>Description</th></tr>
-            <tr><td>Enabled</td><td>Toggle vulnerability scanning on or off</td></tr>
-            <tr><td>Schedule</td><td><span class="wpaic-code">weekly</span> or <span class="wpaic-code">monthly</span></td></tr>
-        </table>
-        <p class="wpaic-desc">Default: <span class="wpaic-default">Disabled</span></p>
-
-        <!-- LICENSE -->
-        <h2 class="wpaic-manual-h2" id="license"><i class="fas fa-key" style="margin-right: 10px; color: #d4a017;"></i>License</h2>
-
-        <p class="wpaic-desc">Manage your Pro license to receive updates and access all features.</p>
-
-        <h3 class="wpaic-manual-h3" id="license-key">License Key</h3>
-        <p class="wpaic-desc">Enter the license key you received after purchasing the Pro edition. The key is validated against the licensing server.</p>
-
-        <h3 class="wpaic-manual-h3" id="license-activate">Activate / Deactivate</h3>
-        <p class="wpaic-desc">Click "Activate" to register your license on this site. Each license can be active on one site at a time. Use "Deactivate" to release the license before transferring to a different site.</p>
-
-        <h3 class="wpaic-manual-h3" id="license-status">Status Display</h3>
-        <p class="wpaic-desc">Shows the current license status: Active (with expiry date), Inactive, Expired, or Invalid. An active license is required to receive automatic plugin updates.</p>
-
-
-        <!-- ============================================================ -->
-        <!-- ADDITIONAL PRO FEATURES -->
-        <!-- ============================================================ -->
-
-        <h2 class="wpaic-manual-h2" id="analytics"><i class="fas fa-chart-bar" style="margin-right: 10px; color: #d4a017;"></i>Analytics Dashboard</h2>
-
-        <p class="wpaic-desc">A comprehensive analytics dashboard built with Chart.js, accessible from the Pro admin panel. Provides visual insights into chatbot performance and visitor behavior.</p>
-
-        <h3 class="wpaic-manual-h3" id="analytics-overview">Overview Metrics</h3>
-        <p class="wpaic-desc">The dashboard displays the following key performance indicators:</p>
-        <ul class="wpaic-option-list">
-            <li>Total visitors who interacted with the chatbot</li>
-            <li>Total conversations started</li>
-            <li>Total messages sent (visitor + AI)</li>
-            <li>Average satisfaction score (based on feedback buttons)</li>
-            <li>Conversion rate (if conversion tracking is enabled)</li>
+    <details class="wpaic-sidebar-section" open>
+        <summary><i class="fa-solid fa-users"></i> Customer</summary>
+        <ul>
+            <li><a href="#lead-capture">Lead Capture</a></li>
+            <li><a href="#offline-messages">Offline Messages</a></li>
+            <li><a href="#conversion-tracking">Conversion Tracking</a></li>
+            <li><a href="#ui-customization">UI Customization</a></li>
+            <li><a href="#white-label">Footer &amp; CSS</a></li>
         </ul>
+    </details>
 
-        <h3 class="wpaic-manual-h3" id="analytics-time">Time Analysis</h3>
-        <p class="wpaic-desc">Charts showing chatbot usage by hour of day and day of week. Identifies peak usage times so you can optimize staffing for handoff scenarios.</p>
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-brain"></i> AI Enhancement</summary>
+        <ul>
+            <li><a href="#suggestions">Related Suggestions</a></li>
+            <li><a href="#autocomplete">Autocomplete</a></li>
+            <li><a href="#templates">Prompt Templates</a></li>
+            <li><a href="#regenerate">Regenerate</a></li>
+            <li><a href="#sentiment">Sentiment Analysis</a></li>
+            <li><a href="#context-memory">Context Memory</a></li>
+            <li><a href="#quick-replies">Quick Replies</a></li>
+            <li><a href="#multimodal">Multimodal</a></li>
+            <li><a href="#cache">Response Cache</a></li>
+            <li><a href="#woocommerce">WooCommerce</a></li>
+            <li><a href="#content-filter">Content Filters</a></li>
+        </ul>
+    </details>
 
-        <h3 class="wpaic-manual-h3" id="analytics-device">Device Analysis</h3>
-        <p class="wpaic-desc">Breakdown of chatbot usage by device type (desktop, mobile, tablet) and browser. Helps ensure the chatbot experience is optimized for your audience's devices.</p>
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-gears"></i> Operations</summary>
+        <ul>
+            <li><a href="#business-hours">Business Hours</a></li>
+            <li><a href="#handoff">Handoff</a></li>
+            <li><a href="#ai-forms">AI Forms</a></li>
+            <li><a href="#badge-icon">Badge Icon</a></li>
+            <li><a href="#actions">Actions</a></li>
+            <li><a href="#scenarios">Scenarios</a></li>
+            <li><a href="#multi-bot">Multi-Bot</a></li>
+            <li><a href="#voice">Voice / TTS</a></li>
+            <li><a href="#screen-share">Screen Sharing</a></li>
+        </ul>
+    </details>
 
-        <h3 class="wpaic-manual-h3" id="analytics-page">Page Analysis</h3>
-        <p class="wpaic-desc">Shows which pages generate the most chatbot interactions. Use this to understand where visitors need the most help and to optimize content on high-interaction pages.</p>
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-plug"></i> Integrations</summary>
+        <ul>
+            <li><a href="#webhook">Webhook</a></li>
+            <li><a href="#line">LINE Messaging API</a></li>
+            <li><a href="#slack">Slack</a></li>
+            <li><a href="#google-sheets">Google Sheets</a></li>
+            <li><a href="#booking">Booking</a></li>
+        </ul>
+    </details>
 
-        <h3 class="wpaic-manual-h3" id="real-time-monitor">Real-Time Monitor</h3>
-        <p class="wpaic-desc">A live view of currently active conversations. See visitor messages and AI responses as they happen. Operators can intervene directly from this view if handoff mode is enabled.</p>
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-chart-line"></i> Analytics &amp; Management</summary>
+        <ul>
+            <li><a href="#analytics">Analytics Dashboard</a></li>
+            <li><a href="#budget">Usage &amp; Budget</a></li>
+            <li><a href="#reports">Reports</a></li>
+            <li><a href="#backup">Backup</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#audit-log">Audit Logs</a></li>
+            <li><a href="#change-history">Change History</a></li>
+            <li><a href="#license">License</a></li>
+        </ul>
+    </details>
 
-        <h3 class="wpaic-manual-h3" id="faq-ranking">FAQ Ranking</h3>
-        <p class="wpaic-desc">Automatically ranks the most frequently asked questions. Use this data to identify gaps in your knowledge base and prioritize content creation.</p>
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="/rapls-ai-chatbot-free-manual-en/" style="display: block; padding: 10px 16px; background: var(--primary); color: #fff; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px;">
+            View Free Manual &rarr;
+        </a>
+    </div>
+</nav>
 
-        <h3 class="wpaic-manual-h3" id="knowledge-gap">Knowledge Gap Detection</h3>
-        <p class="wpaic-desc">Identifies questions the AI could not answer satisfactorily (based on low satisfaction scores or "I don't know" responses). These gaps can be used to generate new knowledge base entries with the FAQ auto-generation feature.</p>
+<main class="wpaic-content">
 
-        <h3 class="wpaic-manual-h3" id="ai-quality-score">AI Quality Score</h3>
-        <p class="wpaic-desc">An aggregate score measuring the AI's response quality based on feedback ratings, resolution rates, and conversation length. Track this score over time as you refine your system prompt and knowledge base.</p>
+<h1>Rapls AI Chatbot Manual (Pro Edition)</h1>
+<p class="wpaic-subtitle">The Pro edition includes all Free features plus the advanced capabilities documented below.<br>For settings available in the Free version, please refer to the <a href="/rapls-ai-chatbot-free-manual-en/">Free Manual</a>.</p>
 
-        <h3 class="wpaic-manual-h3" id="churn-bounce">Churn / Bounce Analysis</h3>
-        <p class="wpaic-desc">Identifies conversations where visitors left without resolution. Analyze drop-off points to improve the chatbot's handling of specific topics.</p>
+<!-- ============================================================ -->
+<h2 id="customer"><i class="fa-solid fa-users"></i> Customer</h2>
+<!-- ============================================================ -->
 
-        <h3 class="wpaic-manual-h3" id="pdf-report">PDF / Print Report</h3>
-        <p class="wpaic-desc">Generate a printable PDF report of your analytics data using server-side rendering (Dompdf). The report includes all charts and metrics formatted for presentation or archival.</p>
+<h3 id="lead-capture">Lead Capture</h3>
+<p>Collect visitor information before or during a chat session. Lead data is stored in the database and can be exported as CSV or JSON. Optional email notification sends captured leads to your team in real time.</p>
 
-        <!-- DYNAMIC VARIABLES -->
-        <h2 class="wpaic-manual-h2" id="dynamic-variables"><i class="fas fa-code" style="margin-right: 10px; color: #d4a017;"></i>Dynamic Variables</h2>
+<p><strong>Lead Capture Enabled</strong></p>
+<p>Master toggle to activate the lead capture form. When enabled, a form is displayed to the visitor based on the "Lead Form Required" setting below.</p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td>Enabled</td><td>Show the lead form to visitors</td></tr>
+    <tr><td>Disabled</td><td>No lead form is shown; visitors chat immediately</td></tr>
+</table>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
 
-        <p class="wpaic-desc">Use dynamic variable placeholders in your system prompt, quick replies, and response templates. Variables are replaced with real-time values at the moment a message is processed.</p>
+<p><strong>Lead Form Required</strong></p>
+<p>Controls whether the visitor must complete the lead form before chatting.</p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Description</th></tr>
+    <tr><td>Required</td><td>The visitor cannot send a message until the form is submitted</td></tr>
+    <tr><td>Optional</td><td>The form is shown but the visitor may skip it and begin chatting</td></tr>
+</table>
+<p>Default: <span class="wpaic-default">Required</span></p>
 
-        <table class="wpaic-settings-table">
-            <tr><th>Variable</th><th>Description</th><th>Example Output</th></tr>
-            <tr><td><span class="wpaic-code">{site_name}</span></td><td>The WordPress site title</td><td>My Company</td></tr>
-            <tr><td><span class="wpaic-code">{current_date}</span></td><td>Today's date in the site's locale format</td><td>March 8, 2026</td></tr>
-            <tr><td><span class="wpaic-code">{current_time}</span></td><td>Current time in the configured timezone</td><td>14:30</td></tr>
-            <tr><td><span class="wpaic-code">{business_hours}</span></td><td>Formatted business hours schedule</td><td>Mon-Fri 9:00-18:00</td></tr>
-            <tr><td><span class="wpaic-code">{visitor_name}</span></td><td>The visitor's name (from lead form or context memory)</td><td>John</td></tr>
-            <tr><td><span class="wpaic-code">{page_url}</span></td><td>The URL of the page where the chat is happening</td><td>/products/widget-a</td></tr>
-            <tr><td><span class="wpaic-code">{page_title}</span></td><td>The title of the current page</td><td>Widget A - Our Products</td></tr>
-        </table>
-        <div class="wpaic-tip"><strong>Tip:</strong> Dynamic variables are especially useful in system prompts. For example: "You are a support agent for {site_name}. Our business hours are {business_hours}. Today is {current_date}."</div>
+<p><strong>Form Title</strong></p>
+<p>The heading displayed at the top of the lead capture form. Keep it concise and welcoming.</p>
+<p>Default: <span class="wpaic-default">Before we start</span></p>
 
-        <!-- VOICE -->
-        <h2 class="wpaic-manual-h2" id="voice"><i class="fas fa-microphone" style="margin-right: 10px; color: #d4a017;"></i>Voice Input (STT) &amp; Text-to-Speech (TTS)</h2>
+<p><strong>Form Description</strong></p>
+<p>Supporting text shown below the form title. Use this to explain why you are asking for the visitor's information and how it will be used.</p>
+<p>Default: <span class="wpaic-default">Please enter your information</span></p>
 
-        <p class="wpaic-desc">Add voice capabilities to the chatbot. Visitors can speak their questions using the browser's speech recognition API, and the AI's responses can be read aloud using text-to-speech.</p>
+<p><strong>Standard Fields:</strong></p>
+<p>Four built-in fields are available. Each field can be independently enabled or disabled, and marked as required or optional.</p>
+<table class="wpaic-table">
+    <tr><th>Field</th><th>Default Enabled</th><th>Default Required</th><th>Notes</th></tr>
+    <tr><td>Name</td><td>Yes</td><td>Yes</td><td>Visitor's full name</td></tr>
+    <tr><td>Email</td><td>Yes</td><td>Yes</td><td>Validated as a proper email address</td></tr>
+    <tr><td>Phone</td><td>Yes</td><td>No</td><td>Free-form telephone input</td></tr>
+    <tr><td>Company</td><td>Yes</td><td>No</td><td>Company or organization name</td></tr>
+</table>
 
-        <h3 class="wpaic-manual-h3" id="voice-stt">Voice Input (Speech-to-Text)</h3>
-        <p class="wpaic-desc">When enabled, a microphone button appears in the chat input area. Visitors click the button and speak; their speech is converted to text and entered into the message field. Uses the Web Speech API built into modern browsers.</p>
+<p><strong>Custom Fields:</strong></p>
+<p>Add unlimited custom fields to the lead form. Each field supports the following properties:</p>
+<table class="wpaic-table">
+    <tr><th>Property</th><th>Description</th></tr>
+    <tr><td>Label</td><td>The field label displayed to the visitor</td></tr>
+    <tr><td>Type</td><td>Input type: <code>text</code>, <code>email</code>, <code>tel</code>, <code>textarea</code>, or <code>select</code></td></tr>
+    <tr><td>Required</td><td>Whether the field must be filled before submission</td></tr>
+    <tr><td>Options</td><td>For <code>select</code> fields only: comma-separated list of choices</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Use the <code>select</code> type for fields like "Department" or "Inquiry Type" to keep responses consistent and make CSV exports easier to analyze.</div>
 
-        <h3 class="wpaic-manual-h3" id="voice-tts">Text-to-Speech</h3>
-        <p class="wpaic-desc">When enabled, a speaker button appears on each AI response. Clicking it reads the response text aloud using the browser's built-in speech synthesis engine. The voice, rate, and language are determined by the browser's settings.</p>
-        <div class="wpaic-note"><strong>Note:</strong> Voice features depend on browser support. The Web Speech API is available in Chrome, Edge, and Safari. Firefox has partial support. Mobile browsers generally support voice input but TTS availability varies.</div>
+<p><strong>Email Notification:</strong></p>
+<p>Sends an email to your team whenever a new lead is captured. The email contains all submitted field values.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td>Enabled</td><td>Turn email notifications on or off</td></tr>
+    <tr><td>Recipient Email</td><td>The email address that receives notifications. Uses the site admin email if left blank.</td></tr>
+</table>
 
-        <!-- AI ADMIN TOOLS -->
-        <h2 class="wpaic-manual-h2" id="ai-tools"><i class="fas fa-magic" style="margin-right: 10px; color: #d4a017;"></i>AI Admin Tools</h2>
+<h3 id="offline-messages">Offline Messages</h3>
+<p>When business hours are configured and the current time falls outside those hours, visitors see an offline form instead of the chat widget. This lets you collect messages while your team is away.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Offline Message Enabled</strong></td><td>Disabled</td><td>Master toggle. When enabled and outside business hours, the offline form replaces the chat interface.</td></tr>
+    <tr><td><strong>Form Title</strong></td><td><code>We are currently offline</code></td><td>The heading shown on the offline message form</td></tr>
+    <tr><td><strong>Form Description</strong></td><td>(empty)</td><td>Supporting text below the title. Use this to set expectations for when the visitor will receive a response.</td></tr>
+</table>
 
-        <h3 class="wpaic-manual-h3" id="content-editor">AI Content Editor Sidebar</h3>
-        <p class="wpaic-desc">A sidebar panel available in the WordPress post editor that uses AI to suggest improvements to your content. The AI analyzes your draft and offers suggestions for clarity, SEO, tone, and completeness based on your chatbot's knowledge base.</p>
+<p><strong>Email Notification:</strong></p>
+<p>Sends an email when a visitor submits an offline message.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td>Enabled</td><td>Turn email notifications on or off for offline messages</td></tr>
+    <tr><td>Recipient Email</td><td>The address that receives offline messages. Uses the site admin email if left blank.</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Pair Offline Messages with the Business Hours feature. When business hours are not enabled, the offline form will not appear automatically. You can use offline messages as a standalone feature by enabling it even without business hours -- visitors will see the offline form whenever AI is unavailable.</div>
 
-        <h3 class="wpaic-manual-h3" id="response-edit-suggestions">Response Edit Suggestions</h3>
-        <p class="wpaic-desc">When reviewing conversations in the admin panel, the AI can suggest improved responses for messages that received negative feedback. Accept a suggestion to add it to the knowledge base, improving future responses to similar questions.</p>
+<h3 id="conversion-tracking">Conversion Tracking</h3>
+<p>Track when chat conversations lead to desired outcomes by monitoring page visits after a chat session. When a visitor navigates to a URL matching one of your goal patterns, the conversion is recorded and linked to their conversation.</p>
 
-        <h3 class="wpaic-manual-h3" id="faq-auto-generation">FAQ Auto-Generation</h3>
-        <p class="wpaic-desc">Generate draft knowledge base entries from detected knowledge gaps. The AI creates question-and-answer pairs based on unresolved visitor questions. Drafts go through a review workflow before being published to the knowledge base.</p>
+<p><strong>Conversion Tracking Enabled</strong></p>
+<p>Master toggle to activate conversion tracking for all chat sessions.</p>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
 
-        <h3 class="wpaic-manual-h3" id="similar-question-merge">Similar Question Merge</h3>
-        <p class="wpaic-desc">Detects knowledge base entries with similar questions (using word similarity scoring) and suggests merging them. Reduces redundancy and improves the AI's ability to find relevant answers.</p>
+<p><strong>Goal Definitions:</strong></p>
+<p>Define one or more conversion goals. Each goal consists of three properties:</p>
+<table class="wpaic-table">
+    <tr><th>Property</th><th>Description</th></tr>
+    <tr><td>URL Pattern</td><td>A string to match against page URLs. Supports partial matching (e.g., <code>/thank-you</code> matches any URL containing that path). You can use <code>*</code> as a wildcard.</td></tr>
+    <tr><td>Goal Name</td><td>A descriptive label for this conversion (e.g., "Purchase Complete", "Contact Form Sent")</td></tr>
+    <tr><td>Goal Value</td><td>An optional numeric value representing the monetary worth of this conversion (e.g., <code>50</code> for a $50 purchase)</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Conversion data appears in the Analytics dashboard. Use Goal Value to calculate ROI and measure the chatbot's business impact.</div>
 
-        <!-- CHAT FEATURES -->
-        <h2 class="wpaic-manual-h2" id="chat-features"><i class="fas fa-comments" style="margin-right: 10px; color: #d4a017;"></i>Chat Features</h2>
+<h3 id="ui-customization">UI Customization</h3>
+<p>Fine-tune the chatbot's visual appearance and user experience beyond the basic theme settings available in the Free version.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Fullscreen Mode</strong></td><td>Disabled</td><td>When enabled, the chatbot expands to fill the entire browser viewport instead of appearing as a floating widget. Ideal for dedicated support pages.</td></tr>
+    <tr><td><strong>Welcome Screen</strong></td><td>Disabled</td><td>Display a branded welcome screen when the chatbot opens, before the visitor sends their first message. Configure title, message, and optional quick-start buttons.</td></tr>
+    <tr><td><strong>Response Delay</strong></td><td>500ms</td><td>Adds an artificial delay before the AI response is displayed, simulating a more natural typing cadence. A "typing" indicator is shown during the delay. A delay between 300ms and 800ms feels natural.</td></tr>
+    <tr><td><strong>Notification Sound</strong></td><td>Disabled</td><td>Plays a subtle audio notification when the AI responds, drawing the visitor's attention if they have switched tabs.</td></tr>
+    <tr><td><strong>Tooltips</strong></td><td>Enabled</td><td>When enabled, hovering over interface elements displays helpful tooltip descriptions.</td></tr>
+    <tr><td><strong>Custom Font</strong></td><td>(empty)</td><td>Load a custom web font for the chatbot widget. Provide the full URL to a Google Fonts or self-hosted CSS file.</td></tr>
+    <tr><td><strong>Seasonal Theme</strong></td><td>None</td><td>Apply a seasonal visual overlay to the chatbot widget. Adds decorative elements (e.g., snowflakes for winter, cherry blossoms for spring) without affecting readability.</td></tr>
+</table>
 
-        <h3 class="wpaic-manual-h3" id="file-upload">File Upload</h3>
-        <p class="wpaic-desc">Allow visitors to upload files (documents, PDFs, images) alongside their messages. Uploaded files are stored in the WordPress media library and linked to the conversation.</p>
+<h3 id="white-label">Footer &amp; CSS</h3>
+<p>Remove or replace plugin branding to match your organization's identity.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Hide Branding</strong></td><td>Removes the "Powered by Rapls AI Chatbot" text from the widget footer</td></tr>
+    <tr><td><strong>Custom Footer HTML</strong></td><td>Replace the default footer with your own HTML. Useful for displaying your company name, a privacy link, or terms of service. Basic HTML tags are allowed.</td></tr>
+    <tr><td><strong>Custom CSS</strong></td><td>Inject custom CSS rules that apply only to the chatbot widget. This lets you override any visual property without modifying theme files. The CSS is scoped to the chatbot container.</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Use your browser's developer tools to inspect element class names inside the chatbot widget, then target them in Custom CSS for precise adjustments.</div>
 
-        <h3 class="wpaic-manual-h3" id="bookmarks">Chat Bookmarks</h3>
-        <p class="wpaic-desc">Visitors can bookmark specific messages in a conversation for easy reference. Bookmarked messages are highlighted and accessible via a bookmarks panel.</p>
+<!-- ============================================================ -->
+<h2 id="ai-enhancement"><i class="fa-solid fa-brain"></i> AI Enhancement</h2>
+<!-- ============================================================ -->
 
-        <h3 class="wpaic-manual-h3" id="conversation-search">Conversation Search</h3>
-        <p class="wpaic-desc">Full-text search across all messages within a conversation. Available both to visitors in the chat widget and to admins in the conversation viewer.</p>
+<h3 id="suggestions">Related Suggestions</h3>
+<p>After each AI response, display a set of related follow-up questions the visitor can click. The AI generates these suggestions based on the current conversation context.</p>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
+<p><strong>Suggestions Prompt:</strong> Customize the prompt used to generate related follow-up questions. Control the style, number, and relevance of suggestions.</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Related suggestions increase engagement by guiding visitors to deeper topics. They work especially well on FAQ-heavy sites.</div>
 
-        <h3 class="wpaic-manual-h3" id="conversation-sharing">Conversation Sharing</h3>
-        <p class="wpaic-desc">Generate a shareable link for a conversation. The recipient can view the full conversation history in a read-only view without logging in. Useful for sharing support interactions with team members.</p>
+<h3 id="autocomplete">Autocomplete</h3>
+<p>As the visitor types, the chatbot suggests completions based on common queries and the knowledge base. The visitor can accept a suggestion by pressing Tab or clicking it.</p>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
 
-        <!-- PERFORMANCE -->
-        <h2 class="wpaic-manual-h2" id="performance"><i class="fas fa-tachometer-alt" style="margin-right: 10px; color: #d4a017;"></i>Performance</h2>
+<h3 id="templates">Prompt Templates</h3>
+<p>Load a pre-built system prompt optimized for a specific industry or use case. Templates provide the AI with domain-specific instructions, tone, and vocabulary.</p>
+<table class="wpaic-table">
+    <tr><th>Template</th><th>Use Case</th></tr>
+    <tr><td><strong>Customer Support</strong></td><td>General helpdesk with escalation awareness and empathetic tone</td></tr>
+    <tr><td><strong>E-commerce</strong></td><td>Product inquiries, order status, returns, and recommendations</td></tr>
+    <tr><td><strong>Education</strong></td><td>Course information, enrollment, and student guidance</td></tr>
+    <tr><td><strong>FAQ</strong></td><td>Concise answers drawn from a knowledge base</td></tr>
+    <tr><td><strong>Appointments</strong></td><td>Scheduling, availability checks, and booking confirmations</td></tr>
+    <tr><td><strong>Restaurant</strong></td><td>Menu inquiries, reservations, hours, and dietary information</td></tr>
+    <tr><td><strong>Real Estate</strong></td><td>Property listings, viewings, mortgage basics</td></tr>
+    <tr><td><strong>SaaS / Tech</strong></td><td>Feature explanations, pricing tiers, technical troubleshooting</td></tr>
+    <tr><td><strong>Healthcare</strong></td><td>Appointment booking, general health info (not medical advice)</td></tr>
+    <tr><td><strong>Business Consulting</strong></td><td>Service descriptions, case studies, engagement process</td></tr>
+    <tr><td><strong>Legal Consulting</strong></td><td>Practice areas, consultation booking (not legal advice)</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Selecting a template pre-fills the system prompt. You can further customize the text after loading a template. The template provides a starting point -- your edits take precedence.</div>
 
-        <h3 class="wpaic-manual-h3" id="similar-question-cache">Similar Question Cache</h3>
-        <p class="wpaic-desc">Extends the response cache by matching semantically similar questions (not just exact matches). Uses word-level similarity scoring to find cached responses for questions phrased differently but with the same meaning.</p>
+<h3 id="regenerate">Regenerate</h3>
+<p>Shows a "Regenerate" button below each AI response, allowing the visitor to request a new answer to the same question. Useful when the first response is unsatisfactory.</p>
+<p>Default: <span class="wpaic-default">Enabled</span></p>
+<p>The regeneration prompt can be customized to control the style and constraints of regenerated responses.</p>
 
-        <h3 class="wpaic-manual-h3" id="batch-processing">Batch Processing</h3>
-        <p class="wpaic-desc">Process multiple knowledge base operations (import, update, export) in batches to prevent timeout errors on large datasets.</p>
+<h3 id="sentiment">Sentiment Analysis</h3>
+<p>Detect the visitor's emotional state during a conversation and adjust the AI's tone in real time. The AI analyzes each message for sentiment and modifies its response style accordingly.</p>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
+<table class="wpaic-table">
+    <tr><th>Sentiment</th><th>AI Response</th></tr>
+    <tr><td><strong>Frustrated</strong></td><td>More patient tone, acknowledges frustration, offers clear next steps</td></tr>
+    <tr><td><strong>Confused</strong></td><td>Simplified language, step-by-step explanations, clarifying questions</td></tr>
+    <tr><td><strong>Urgent</strong></td><td>Prioritizes speed, provides direct answers, escalates if necessary</td></tr>
+    <tr><td><strong>Positive</strong></td><td>Matches upbeat tone, reinforces satisfaction, suggests additional resources</td></tr>
+    <tr><td><strong>Negative</strong></td><td>Empathetic response, avoids defensive language, offers resolution paths</td></tr>
+</table>
+<p><strong>Sentiment Detection Prompt:</strong> Customize the prompt used to classify the visitor's sentiment. You can adjust this to recognize industry-specific emotional cues.</p>
+<p><strong>Tone Adjustments:</strong> Define how the AI adjusts its response for each detected sentiment. Each adjustment is a prompt fragment appended to the system prompt for that turn.</p>
+<div class="wpaic-box wpaic-box-info"><strong>Note:</strong> Sentiment analysis adds an extra AI call per message. If response speed is critical, consider disabling it and using a well-crafted system prompt to handle tone instead.</div>
 
-        <h3 class="wpaic-manual-h3" id="performance-monitoring">Performance Monitoring</h3>
-        <p class="wpaic-desc">Track API response times, queue lengths, and error rates. The monitoring dashboard shows historical performance data so you can identify degradation early.</p>
+<h3 id="context-memory">Context Memory</h3>
+<p>Remember key information about returning visitors across separate chat sessions. Context memory extracts facts like the visitor's name, preferences, and past issues, then injects them into future conversations for a personalized experience.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Context Memory Enabled</strong></td><td>Disabled</td><td>Stores extracted context in the <code>wp_aichat_user_context</code> database table</td></tr>
+    <tr><td><strong>Retention Days</strong></td><td>30</td><td>Number of days to retain stored context. Old entries are automatically purged.</td></tr>
+</table>
+<p><strong>Context Extraction Prompt:</strong> The prompt used at the end of each conversation to extract memorable facts (name, preferences, issues mentioned, etc.).</p>
+<p><strong>Context Injection Prompt:</strong> The prompt template used to inject stored context into new conversations. Placeholders are replaced with the visitor's stored context before being prepended to the system prompt.</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Context memory is especially valuable for membership sites or SaaS products where users return frequently. Combine with lead capture to link context to a known identity.</div>
 
-        <h3 class="wpaic-manual-h3" id="queue-management">Queue Management</h3>
-        <p class="wpaic-desc">Control the number of concurrent API requests. When the chatbot receives more simultaneous requests than the limit, additional requests are queued and processed in order. This prevents API rate limiting from your AI provider.</p>
+<h3 id="quick-replies">Quick Replies</h3>
+<p>Display clickable quick-reply buttons below the chat input. Visitors can tap a button to instantly send a predefined message without typing. Useful for common questions or menu-style navigation.</p>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
+<p>Each reply is defined with a Text (button label) and an Action (the message sent to the AI when clicked; if blank, the button text is sent as-is).</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Use quick replies as a navigation menu: "Pricing", "Support Hours", "Book a Demo". The action can be a longer, more specific prompt that produces better AI responses than the short button text alone.</div>
 
-        <!-- TESTING & STAGING -->
-        <h2 class="wpaic-manual-h2" id="testing"><i class="fas fa-flask" style="margin-right: 10px; color: #d4a017;"></i>Testing &amp; Staging</h2>
+<h3 id="multimodal">Multimodal (Image Upload)</h3>
+<p>Allow visitors to upload images alongside their messages. The AI can analyze the image content and respond accordingly.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Image Upload Enabled</strong></td><td>Disabled</td><td>Shows an image upload button in the chat input area</td></tr>
+    <tr><td><strong>Max Size</strong></td><td>2048 KB</td><td>Maximum file size for uploaded images</td></tr>
+    <tr><td><strong>Allowed Formats</strong></td><td>jpg, png, gif, webp</td><td>File formats accepted for upload</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-info"><strong>Requirement:</strong> Requires an AI provider that supports vision capabilities (GPT-4o, Claude, Gemini). Image analysis consumes more tokens than text-only messages.</div>
 
-        <h3 class="wpaic-manual-h3" id="test-mode">Test Mode</h3>
-        <p class="wpaic-desc">Enable test mode to make the chatbot visible only to administrators. Visitors see no chatbot. Use this to test changes to system prompts, knowledge base entries, or feature configurations before going live.</p>
+<h3 id="cache">Response Cache</h3>
+<p>Cache AI responses to reduce API costs and improve response times. When a visitor asks a question that matches a previously cached response (based on SHA-256 hashing), the cached response is served instantly without calling the AI provider.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Cache Enabled</strong></td><td>Disabled</td><td>Master toggle for response caching</td></tr>
+    <tr><td><strong>TTL (Time to Live)</strong></td><td>7 days</td><td>Number of days a cached response remains valid</td></tr>
+</table>
+<p>The admin panel displays cache statistics (hit rate, total cached responses, storage size) and provides a button to manually clear all cached responses.</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Response caching is most effective on FAQ-heavy sites where many visitors ask similar questions. Sites with highly personalized conversations may see lower hit rates.</div>
 
-        <h3 class="wpaic-manual-h3" id="custom-metadata">Custom Metadata Fields</h3>
-        <p class="wpaic-desc">Attach custom key-value metadata to conversations. Metadata can be set via the REST API or through dynamic variables. Use it to tag conversations with campaign IDs, referral sources, or A/B test variants.</p>
+<h3 id="woocommerce">WooCommerce Integration</h3>
+<p>Automatically index WooCommerce product data so the AI can answer product-related questions and display rich product cards in chat responses.</p>
+<p><strong>Product Cards:</strong> <span class="wpaic-default">Default: Enabled</span> - When the AI discusses specific products, visual cards (image, title, price, link) are displayed directly in chat responses.</p>
+<p><strong>Auto-Crawl Product Data:</strong> Automatically includes WooCommerce product data (title, description, price, categories, attributes) in the site learning crawler. Products are indexed alongside your regular page content.</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Make sure to run a site crawl after enabling WooCommerce integration to index your existing products. New products are picked up on subsequent scheduled crawls.</div>
 
-        <h3 class="wpaic-manual-h3" id="staging-mode">Staging Mode</h3>
-        <p class="wpaic-desc">Creates a separate settings environment for testing. Changes made in staging mode do not affect the live chatbot until you publish them.</p>
+<h3 id="content-filter">Content Filters</h3>
+<p>Protect your chatbot from abuse with word filtering, IP blocking, and enhanced rate limiting.</p>
 
-        <h3 class="wpaic-manual-h3" id="approval-workflow">Approval Workflow</h3>
-        <p class="wpaic-desc">Require administrator approval before knowledge base changes or setting modifications go live. Useful for teams where multiple people manage the chatbot. Changes are queued for review and can be approved or rejected.</p>
+<p><strong>Banned Words:</strong></p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Banned Words Enabled</strong></td><td>Disabled</td><td>Block messages containing specific words or phrases</td></tr>
+    <tr><td><strong>Word List</strong></td><td>(empty)</td><td>One word or phrase per line. Matching is case-insensitive.</td></tr>
+    <tr><td><strong>Block Message</strong></td><td><code>Your message contains prohibited content.</code></td><td>The response shown when a message is blocked</td></tr>
+</table>
 
-        <!-- MULTISITE -->
-        <h2 class="wpaic-manual-h2" id="multisite"><i class="fas fa-network-wired" style="margin-right: 10px; color: #d4a017;"></i>Multisite Support</h2>
+<p><strong>IP Block:</strong></p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>IP Block Enabled</strong></td><td>Disabled</td><td>Block access from specific IP addresses</td></tr>
+    <tr><td><strong>IP List</strong></td><td>(empty)</td><td>One IP per line. Supports CIDR notation (e.g., <code>192.168.1.0/24</code>)</td></tr>
+    <tr><td><strong>Block Message</strong></td><td><code>Access denied.</code></td><td>The response shown to blocked visitors</td></tr>
+</table>
 
-        <p class="wpaic-desc">The Pro edition includes full WordPress multisite compatibility. Network administrators can configure global default settings that apply to all sites, while individual site administrators can override specific settings for their site.</p>
+<p><strong>Enhanced Rate Limit:</strong></p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Enhanced Rate Limit Enabled</strong></td><td>Disabled</td><td>Adds per-minute and per-hour limits in addition to the Free version's daily limit</td></tr>
+    <tr><td><strong>Per Minute</strong></td><td>5</td><td>Burst protection. Maximum messages per minute per visitor.</td></tr>
+    <tr><td><strong>Per Hour</strong></td><td>30</td><td>Sustained protection. Maximum messages per hour per visitor.</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Start with the default values and adjust based on your analytics. Most legitimate visitors send fewer than 3 messages per minute.</div>
 
-        <h3 class="wpaic-manual-h3" id="multisite-network">Network-Wide Settings</h3>
-        <p class="wpaic-desc">When network-activated, a "Network Settings" page appears in the network admin dashboard. Settings configured here serve as defaults for all sites in the network. Individual sites can override any setting.</p>
+<!-- ============================================================ -->
+<h2 id="operations"><i class="fa-solid fa-gears"></i> Operations</h2>
+<!-- ============================================================ -->
 
-        <h3 class="wpaic-manual-h3" id="multisite-per-site">Per-Site Overrides</h3>
-        <p class="wpaic-desc">Site administrators see all standard settings and can customize the chatbot for their specific site. A "Reset to Network Default" button is available for each setting to revert to the network-wide value.</p>
+<h3 id="business-hours">Business Hours</h3>
+<p>Define when your chatbot operates in "online" mode. Outside business hours, you can show an offline message, disable the chatbot, or continue with AI-only responses. Business hours also feed into the <code>{business_hours}</code> dynamic variable.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Business Hours Enabled</strong></td><td>Disabled</td><td>When disabled, the chatbot operates 24/7 with no time-based restrictions</td></tr>
+    <tr><td><strong>Timezone</strong></td><td>Asia/Tokyo</td><td>The timezone used to evaluate business hours</td></tr>
+    <tr><td><strong>Outside Hours Message</strong></td><td>--</td><td>The message displayed to visitors who open the chatbot outside business hours</td></tr>
+</table>
+<p><strong>Per-Day Settings:</strong> Configure each day of the week independently with enabled/disabled, start time, and end time (24-hour format). Default: Monday-Friday 9:00-18:00, Saturday/Sunday disabled.</p>
+<p><strong>Holidays:</strong> Override business hours on specific dates. Add dates in <code>YYYY-MM-DD</code> format, one per line. A special holiday message can be configured.</p>
 
-        <!-- AUDIT LOGS -->
-        <h2 class="wpaic-manual-h2" id="audit-logs"><i class="fas fa-clipboard-list" style="margin-right: 10px; color: #d4a017;"></i>Audit Logs</h2>
+<h3 id="handoff">Handoff (Human Escalation)</h3>
+<p>Transfer a conversation from the AI to a human operator. Handoff can be triggered automatically by keyword detection or manually by the visitor. When triggered, the system sends a notification and the operator can take over the conversation in real time.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Handoff Enabled</strong></td><td>Disabled</td><td>Master toggle for human handoff</td></tr>
+    <tr><td><strong>Auto-Detect</strong></td><td>Enabled</td><td>Automatically trigger handoff when the visitor uses specific keywords</td></tr>
+    <tr><td><strong>Keywords (EN)</strong></td><td>--</td><td>English trigger phrases (e.g., "talk to a human", "speak to agent", "real person")</td></tr>
+    <tr><td><strong>Keywords (JA)</strong></td><td><code>人間と話したい,オペレーター,サポートに繋いで,担当者</code></td><td>Japanese trigger phrases</td></tr>
+    <tr><td><strong>Notification Method</strong></td><td>email</td><td><strong>email:</strong> Email notification<br><strong>slack:</strong> Slack notification<br><strong>both:</strong> Both email and Slack</td></tr>
+    <tr><td><strong>Handoff Message</strong></td><td>--</td><td>Message shown to the visitor when handoff is initiated</td></tr>
+    <tr><td><strong>Auto-Close</strong></td><td>30 min</td><td>Automatically close handoff if no operator responds (5-1440 minutes)</td></tr>
+    <tr><td><strong>Operator Mode</strong></td><td>Disabled</td><td>Allows administrators to intervene in conversations in real time</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> When a handoff is active, AI API calls are automatically skipped, saving costs. The frontend displays a handoff indicator and a "Return to AI" button.</div>
 
-        <p class="wpaic-desc">Track all administrative actions performed on the chatbot. Every setting change, knowledge base edit, export, and configuration modification is recorded with a timestamp and the acting user.</p>
+<h3 id="ai-forms">AI Forms</h3>
+<p>Create intelligent forms that use AI to process submissions. Unlike standard contact forms, AI Forms send the collected data to the AI along with a custom prompt, generating a personalized response for the visitor.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Form Name</strong></td><td>Display name for admin reference</td></tr>
+    <tr><td><strong>Description</strong></td><td>Text shown above the form fields</td></tr>
+    <tr><td><strong>System Prompt</strong></td><td>The system prompt used when processing this form's submissions</td></tr>
+    <tr><td><strong>Prompt</strong></td><td>Template with <code>{field_key}</code> placeholders to inject field values</td></tr>
+    <tr><td><strong>Fields</strong></td><td>Each field: label, key, type (text, email, tel, textarea, select), required, options</td></tr>
+</table>
+<p><strong>Email Notification:</strong> Optionally send an email when a form is submitted, including all field values and the AI's response.</p>
+<p><strong>Shortcode:</strong> <code>[wpaic_form id="X"]</code> -- embed on any page or post.</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> AI Forms are ideal for quote calculators, diagnostic tools, personalized recommendations, and interactive assessments. The AI processes all field data together to generate a contextual response.</div>
 
-        <h3 class="wpaic-manual-h3" id="audit-viewing">Viewing Logs</h3>
-        <p class="wpaic-desc">Access the audit log from the Pro admin panel. Logs are displayed in reverse chronological order with filters for date range, user, and action type.</p>
+<h3 id="badge-icon">Badge Icon</h3>
+<p>Customize the floating chat button (badge) that visitors click to open the chatbot.</p>
+<table class="wpaic-table">
+    <tr><th>Type</th><th>Description</th></tr>
+    <tr><td><strong>Default</strong></td><td>The built-in chat bubble icon</td></tr>
+    <tr><td><strong>Preset</strong></td><td>Choose from 25 preset SVG icons (headset, robot, rocket, diamond, crown, etc.)</td></tr>
+    <tr><td><strong>Image</strong></td><td>Upload a custom image from the media library (recommended: 60x60px, PNG with transparency)</td></tr>
+    <tr><td><strong>Emoji</strong></td><td>Use a single emoji character as the icon</td></tr>
+</table>
 
-        <h3 class="wpaic-manual-h3" id="audit-export">CSV Export</h3>
-        <p class="wpaic-desc">Export audit log entries as a CSV file for external analysis or compliance record-keeping.</p>
+<h3 id="actions">Actions (Intent Recognition)</h3>
+<p>Define automatic actions triggered when the AI recognizes a visitor's intent. Actions can open URLs, trigger forms, start scenarios, or initiate handoffs based on what the visitor is trying to accomplish.</p>
+<p>Each action consists of an Intent (keyword/phrase), an Action Type (open URL, trigger form, start scenario, initiate handoff), and a Target (URL, form ID, scenario ID, etc.).</p>
 
-        <h3 class="wpaic-manual-h3" id="audit-retention">Retention Policy</h3>
-        <p class="wpaic-desc">Configure how long audit log entries are retained. Older entries are automatically purged. Set this based on your compliance requirements.</p>
+<h3 id="scenarios">Scenarios (Conversation Flows)</h3>
+<p>Build multi-step guided conversation flows with branching logic, conditions, and automated actions at each step. Useful for troubleshooting wizards, qualification flows, and onboarding sequences.</p>
+<table class="wpaic-table">
+    <tr><th>Property</th><th>Description</th></tr>
+    <tr><td>ID</td><td>Unique identifier for the scenario</td></tr>
+    <tr><td>Name</td><td>Display name shown in admin and optionally to visitors</td></tr>
+    <tr><td>Description</td><td>Internal description for admin reference</td></tr>
+    <tr><td>Trigger Type</td><td>How the scenario is activated: keyword match, intent detection, manual trigger, or page URL</td></tr>
+    <tr><td>Steps</td><td>An ordered list of steps, each with a message, input options, conditions, and a next-step mapping</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Start with a simple 3-5 step flow to test the feature. Each step can include quick-reply buttons that guide the visitor to the next step, creating a decision-tree experience.</div>
 
+<h3 id="multi-bot">Multi-Bot</h3>
+<p>Deploy multiple chatbot configurations on different pages or for different purposes. Each bot has its own system prompt and model setting, allowing specialized behavior per context (e.g., a sales bot on the pricing page and a support bot on the help center).</p>
+<table class="wpaic-table">
+    <tr><th>Property</th><th>Description</th></tr>
+    <tr><td>ID</td><td>Unique identifier used for page assignment</td></tr>
+    <tr><td>Name</td><td>Display name for admin reference</td></tr>
+    <tr><td>System Prompt</td><td>The system prompt specific to this bot</td></tr>
+    <tr><td>Model</td><td>The AI model used by this bot (can differ from the global default)</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Multi-bot works with intent routing. The system can automatically direct conversations to the most appropriate bot based on the visitor's initial question.</div>
 
-        <!-- ============================================================ -->
-        <!-- FOOTER -->
-        <!-- ============================================================ -->
+<h3 id="voice">Voice Input / Text-to-Speech</h3>
+<p><strong>Voice Input (STT):</strong> Visitors can speak their questions using the browser's speech recognition API. A microphone button appears in the chat input area. Uses the Web Speech API built into modern browsers.</p>
+<p><strong>Text-to-Speech (TTS):</strong> A speaker button appears on each AI response. Clicking it reads the response text aloud using the browser's built-in speech synthesis engine.</p>
+<div class="wpaic-box wpaic-box-info"><strong>Note:</strong> Voice features depend on browser support. The Web Speech API is available in Chrome, Edge, and Safari. Firefox has partial support. Mobile browsers generally support voice input but TTS availability varies.</div>
 
-        <div style="margin-top: 80px; padding: 40px 30px; background: linear-gradient(135deg, #1a1a2e, #2d1b4e); border-radius: 16px; text-align: center; color: white;">
-            <p style="font-size: 1.1em; font-weight: 600; margin: 0 0 20px 0;">
-                <i class="fas fa-crown" style="color: #f0c674; margin-right: 8px;"></i>Rapls AI Chatbot Pro Manual
-            </p>
-            <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
-                <a href="/rapls-ai-chatbot-free-manual-en/" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9em; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; transition: all 0.2s;">
-                    <i class="fas fa-book-open" style="margin-right: 6px;"></i>Free Manual (EN)
-                </a>
-                <a href="/rapls-ai-chatbot-manual-pro-ja/" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9em; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; transition: all 0.2s;">
-                    <i class="fas fa-crown" style="margin-right: 6px; color: #f0c674;"></i>Pro Manual (JA)
-                </a>
-                <a href="/rapls-ai-chatbot-en/" style="color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9em; padding: 8px 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; transition: all 0.2s;">
-                    <i class="fas fa-home" style="margin-right: 6px;"></i>Homepage (EN)
-                </a>
-            </div>
-            <p style="color: rgba(255,255,255,0.5); font-size: 0.8em; margin: 0;">© 2025-2026 Rapls Works. All rights reserved.</p>
-        </div>
+<h3 id="screen-share">Screen Sharing</h3>
+<p>Allow visitors to capture and share screenshots of their screen within the chat. The screenshot is sent as an image attachment that the AI or operator can analyze. Uses the browser's native screen capture API.</p>
+<p>Default: <span class="wpaic-default">Disabled</span></p>
+<div class="wpaic-box wpaic-box-info"><strong>Note:</strong> Screen capture requires browser permission from the visitor. Not all browsers support the Screen Capture API. The feature degrades gracefully on unsupported browsers.</div>
 
-    </main>
+<!-- ============================================================ -->
+<h2 id="integrations"><i class="fa-solid fa-plug"></i> Integrations</h2>
+<!-- ============================================================ -->
+
+<h3 id="webhook">Webhook</h3>
+<p>Send real-time event notifications to an external URL via HTTP POST. Connect the chatbot to CRMs, automation platforms (Zapier, Make, n8n), and custom backends.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Webhook URL</strong></td><td>The endpoint that receives POST requests with event data in JSON format</td></tr>
+    <tr><td><strong>HMAC Secret</strong></td><td>Optional shared secret for payload signature verification (<code>X-Signature</code> header with HMAC-SHA256)</td></tr>
+    <tr><td><strong>Events</strong></td><td>Select which events trigger delivery: new conversation, new message, lead captured, handoff requested</td></tr>
+</table>
+<p>A "Test" button is available to send a test payload and confirm the connection.</p>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Use a service like <a href="https://webhook.site" target="_blank" rel="noopener" style="color: var(--gold);">webhook.site</a> to inspect payloads during development before connecting your production endpoint.</div>
+
+<h3 id="line">LINE Messaging API</h3>
+<p>Connect your chatbot to the LINE messaging platform. Visitors can chat with your AI through your LINE Official Account. Messages are processed by the same AI configuration and knowledge base as the web widget.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>LINE Enabled</strong></td><td>Master toggle for LINE integration</td></tr>
+    <tr><td><strong>Channel Secret</strong></td><td>From LINE Developers Console, used to validate incoming webhook signatures</td></tr>
+    <tr><td><strong>Channel Access Token</strong></td><td>Long-lived access token from LINE Developers Console</td></tr>
+    <tr><td><strong>Webhook URL</strong></td><td>Auto-generated URL to configure in LINE Developers Console</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Make sure to enable "Use webhook" in the LINE Developers Console after entering the URL. Test the connection using LINE's built-in verification button.</div>
+
+<h3 id="slack">Slack Integration</h3>
+<p>Send chatbot event notifications to a Slack channel.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Description</th></tr>
+    <tr><td><strong>Slack Webhook URL</strong></td><td>Incoming Webhook URL from your Slack workspace</td></tr>
+    <tr><td><strong>Events</strong></td><td>Select which events to notify. Default: lead captured, handoff requested</td></tr>
+</table>
+
+<h3 id="google-sheets">Google Sheets Integration</h3>
+<p>Automatically export chatbot data to a Google Sheet. Use a Google Apps Script web app URL, Zapier, or Make webhook to receive data and append rows to your spreadsheet.</p>
+
+<h3 id="booking">Booking Integration</h3>
+<p>Integrate appointment booking directly into the chat experience. When the visitor expresses interest in booking, the chatbot displays the booking interface inline.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Booking Enabled</strong></td><td>Disabled</td><td>Master toggle for booking integration</td></tr>
+    <tr><td><strong>Provider</strong></td><td>--</td><td>Calendly, Cal.com, or custom URL</td></tr>
+    <tr><td><strong>Trigger Keywords</strong></td><td>--</td><td>Keywords that trigger the booking interface (e.g., "book", "schedule", "appointment")</td></tr>
+    <tr><td><strong>Booking URL</strong></td><td>--</td><td>URL for your booking/scheduling page</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Combine booking with the Actions feature to trigger the booking widget when the AI detects booking intent, even without exact keyword matches.</div>
+
+<!-- ============================================================ -->
+<h2 id="analytics-management"><i class="fa-solid fa-chart-line"></i> Analytics &amp; Management</h2>
+<!-- ============================================================ -->
+
+<h3 id="analytics">Analytics Dashboard</h3>
+<p>A comprehensive analytics dashboard built with Chart.js, accessible from the Pro admin panel. Provides visual insights into chatbot performance and visitor behavior.</p>
+<ul>
+    <li><strong>Overview:</strong> Total visitors, conversations, messages, satisfaction score, conversion rate</li>
+    <li><strong>Time Analysis:</strong> Usage by hour of day and day of week to identify peak times</li>
+    <li><strong>Device Analysis:</strong> Desktop/mobile/tablet usage breakdown</li>
+    <li><strong>Page Analysis:</strong> Pages generating the most chatbot interactions</li>
+    <li><strong>FAQ Ranking:</strong> Most frequently asked questions</li>
+    <li><strong>Unresolved Questions:</strong> Questions the AI could not answer satisfactorily</li>
+    <li><strong>Knowledge Gap Detection:</strong> Automatic detection of missing information in the knowledge base</li>
+    <li><strong>AI Quality Score:</strong> Aggregate score based on feedback ratings, resolution rates, and conversation length</li>
+    <li><strong>Churn/Bounce Analysis:</strong> Identifies conversations where visitors left without resolution</li>
+    <li><strong>Real-Time Monitor:</strong> Live view of currently active conversations with operator intervention capability</li>
+</ul>
+<p><strong>PDF/Print Report:</strong> Generate a printable PDF report using server-side rendering (Dompdf). Includes all charts and metrics formatted for presentation. Japanese font (Noto Sans JP) supported.</p>
+
+<h3 id="budget">Usage &amp; Budget</h3>
+<p>Monitor and control your AI API spending.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Budget Alert Enabled</strong></td><td>Disabled</td><td>Receive email notification when estimated costs reach a threshold</td></tr>
+    <tr><td><strong>Alert Threshold</strong></td><td>$10.00</td><td>Dollar amount that triggers the alert</td></tr>
+    <tr><td><strong>Budget Limit Enabled</strong></td><td>Disabled</td><td>Set a hard spending cap; AI responses stop when reached</td></tr>
+    <tr><td><strong>Limit Amount</strong></td><td>$50.00</td><td>Maximum monthly API spending</td></tr>
+    <tr><td><strong>Block Message</strong></td><td>--</td><td>Message shown to visitors when the budget limit is reached</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-info"><strong>Note:</strong> Budget tracking uses token count estimates and published per-token pricing. Actual invoiced amounts from your AI provider may differ slightly due to rounding and rate changes.</div>
+
+<h3 id="reports">Reports</h3>
+<p><strong>Monthly Report:</strong> Receive a monthly email summary with key metrics: total conversations, messages, satisfaction scores, top questions, and conversion data.</p>
+<p><strong>Summary Report:</strong> Receive periodic summary reports with configurable frequency (daily, weekly, or monthly).</p>
+
+<h3 id="backup">Backup &amp; Maintenance</h3>
+<ul>
+    <li><strong>Settings Export:</strong> Download all plugin settings as a JSON file. API keys are excluded for security.</li>
+    <li><strong>Settings Import:</strong> Upload a previously exported JSON file to restore settings. A confirmation dialog prevents accidental overwrites.</li>
+    <li><strong>Knowledge Export:</strong> Export the knowledge base as CSV or JSON for backups, migration, or external analysis.</li>
+</ul>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Export settings before making major changes. You can restore them by importing the JSON file.</div>
+
+<h3 id="security">Security</h3>
+<p>Comprehensive security features to protect visitor data and prevent abuse.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>PII Masking</strong></td><td>Disabled</td><td>Automatically detect and mask personally identifiable information (email, phone, credit card) in stored messages</td></tr>
+    <tr><td><strong>Data Retention</strong></td><td>365 days</td><td>Automatically delete conversation data after the specified period. Helps comply with GDPR.</td></tr>
+    <tr><td><strong>Security Headers</strong></td><td>Disabled</td><td>Add security-related HTTP headers (<code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>Referrer-Policy</code>) to REST API responses</td></tr>
+    <tr><td><strong>Encryption</strong></td><td>Disabled</td><td>Encrypt messages and lead data at rest using AES-256-GCM</td></tr>
+    <tr><td><strong>Spam Detection</strong></td><td>Disabled (threshold: 3)</td><td>Score incoming messages for spam characteristics; block above threshold</td></tr>
+    <tr><td><strong>Country Block</strong></td><td>Disabled</td><td>Block access by country using ISO 3166-1 alpha-2 codes</td></tr>
+    <tr><td><strong>IP Whitelist</strong></td><td>Disabled</td><td>Allow only specified IP addresses to use the chatbot</td></tr>
+    <tr><td><strong>Vulnerability Scan</strong></td><td>Disabled (weekly)</td><td>Periodically audit settings for security misconfigurations</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-info"><strong>Note:</strong> Enabling encryption on an existing database encrypts new records only. Existing records remain unencrypted. Disabling encryption does not decrypt previously encrypted records -- they remain readable through the admin panel.</div>
+
+<h3 id="audit-log">Audit Logs</h3>
+<p>Track all administrative actions performed on the chatbot. Every setting change, knowledge base edit, export, and configuration modification is recorded with a timestamp and the acting user.</p>
+<ul>
+    <li><strong>Viewing Logs:</strong> Access from the Pro admin panel. Displayed in reverse chronological order with filters for date range, user, and action type.</li>
+    <li><strong>CSV Export:</strong> Export audit log entries for external analysis or compliance record-keeping.</li>
+    <li><strong>Retention Policy:</strong> Configure how long audit log entries are retained. Older entries are automatically purged.</li>
+</ul>
+
+<h3 id="change-history">Change History</h3>
+<p>Track changes to plugin settings over time. Every time a setting is saved, the previous values are recorded so you can review and roll back if needed.</p>
+<table class="wpaic-table">
+    <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+    <tr><td><strong>Change History Enabled</strong></td><td>Disabled</td><td>Automatically record setting changes</td></tr>
+    <tr><td><strong>Max Versions</strong></td><td>50</td><td>Maximum number of historical versions to retain</td></tr>
+</table>
+
+<h3 id="license">License</h3>
+<p>Manage your Pro license to receive updates and access all features.</p>
+<ul>
+    <li><strong>License Key:</strong> Enter the key received after purchasing the Pro edition</li>
+    <li><strong>Activate:</strong> Register your license on this site. Each license can be active on one site at a time.</li>
+    <li><strong>Deactivate:</strong> Release the license before transferring to a different site</li>
+    <li><strong>Status:</strong> Shows current state: Active (with expiry date), Inactive, Expired, or Invalid</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="additional-features"><i class="fa-solid fa-star"></i> Additional Pro Features</h2>
+<!-- ============================================================ -->
+
+<h3>Dynamic Variables</h3>
+<p>Use dynamic variable placeholders in your system prompt, quick replies, and response templates. Variables are replaced with real-time values at the moment a message is processed.</p>
+<table class="wpaic-table">
+    <tr><th>Variable</th><th>Description</th><th>Example Output</th></tr>
+    <tr><td><code>{site_name}</code></td><td>The WordPress site title</td><td>My Company</td></tr>
+    <tr><td><code>{current_date}</code></td><td>Today's date in the site's locale format</td><td>March 8, 2026</td></tr>
+    <tr><td><code>{current_time}</code></td><td>Current time in the configured timezone</td><td>14:30</td></tr>
+    <tr><td><code>{business_hours}</code></td><td>Formatted business hours schedule</td><td>Mon-Fri 9:00-18:00</td></tr>
+    <tr><td><code>{visitor_name}</code></td><td>The visitor's name (from lead form or context memory)</td><td>John</td></tr>
+    <tr><td><code>{page_url}</code></td><td>The URL of the page where the chat is happening</td><td>/products/widget-a</td></tr>
+    <tr><td><code>{page_title}</code></td><td>The title of the current page</td><td>Widget A - Our Products</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip"><strong>Tip:</strong> Dynamic variables are especially useful in system prompts. For example: "You are a support agent for {site_name}. Our business hours are {business_hours}. Today is {current_date}."</div>
+
+<h3>Pro Themes &amp; Dark Mode</h3>
+<p>In addition to the 6 Free themes, 10 additional themes are available: Modern, Gradient, Dark, Glass, Rounded, Ocean, Sunset, Forest, Neon, Elegant. Dark mode overlay can be applied to any theme.</p>
+
+<h3>Test Mode</h3>
+<p>Make the chatbot visible only to administrators. Use this to test changes to system prompts, knowledge base entries, or feature configurations before going live.</p>
+
+<h3>Multisite Support</h3>
+<p>Full WordPress multisite compatibility. Network administrators can configure global default settings that apply to all sites, while individual site administrators can override specific settings. A "Reset to Network Default" button is available for each setting.</p>
+
+<h3>FAQ Auto-Generation</h3>
+<p>Generate draft knowledge base entries from detected knowledge gaps. The AI creates question-and-answer pairs based on unresolved visitor questions. Drafts go through a review workflow before being published to the knowledge base.</p>
+
+<h3>AI Admin Tools</h3>
+<ul>
+    <li><strong>AI Content Editor Sidebar:</strong> A sidebar panel in the WordPress post editor that uses AI to suggest content improvements based on your chatbot's knowledge base.</li>
+    <li><strong>Response Edit Suggestions:</strong> AI suggests improved responses for messages that received negative feedback. Accept a suggestion to add it to the knowledge base.</li>
+    <li><strong>Similar Question Merge:</strong> Detects knowledge base entries with similar questions and suggests merging them to reduce redundancy.</li>
+</ul>
+
+<h3>Chat Features</h3>
+<ul>
+    <li><strong>File Upload:</strong> Allow visitors to upload files (documents, PDFs, images) alongside messages.</li>
+    <li><strong>Chat Bookmarks:</strong> Visitors can bookmark specific messages for easy reference.</li>
+    <li><strong>Conversation Search:</strong> Full-text search across all messages within a conversation.</li>
+    <li><strong>Conversation Sharing:</strong> Generate shareable read-only links for conversations.</li>
+</ul>
+
+<h3>Performance</h3>
+<ul>
+    <li><strong>Similar Question Cache:</strong> Extends response cache by matching semantically similar questions using word-level similarity scoring.</li>
+    <li><strong>Batch Processing:</strong> Process multiple knowledge base operations in batches to prevent timeout errors.</li>
+    <li><strong>Performance Monitoring:</strong> Track API response times, queue lengths, and error rates.</li>
+    <li><strong>Queue Management:</strong> Control concurrent API requests to prevent provider rate limiting.</li>
+</ul>
+
+<h3>Testing &amp; Staging</h3>
+<ul>
+    <li><strong>Custom Metadata Fields:</strong> Attach custom key-value metadata to conversations via REST API or dynamic variables.</li>
+    <li><strong>Staging Mode:</strong> Creates a separate settings environment. Changes do not affect live chatbot until published.</li>
+    <li><strong>Approval Workflow:</strong> Require administrator approval before knowledge base or setting changes go live.</li>
+</ul>
+
+<!-- Footer -->
+<div class="wpaic-footer">
+    <p>
+        <a href="/rapls-ai-chatbot-free-manual-en/">Free Manual (EN)</a> |
+        <a href="/rapls-ai-chatbot-manual-pro-ja/">Japanese Version</a> |
+        <a href="/rapls-ai-chatbot-free-manual-ja/">Free Manual (JA)</a>
+    </p>
+    <p>&copy; 2025-2026 Rapls Works. All rights reserved.</p>
 </div>
 
-<!-- Sidebar scroll spy -->
-<script>
-(function() {
-    var sidebar = document.querySelector('.wpaic-sidebar');
-    if (!sidebar) return;
-    var links = sidebar.querySelectorAll('a[href^="#"]');
-    var sections = [];
-    links.forEach(function(link) {
-        var id = link.getAttribute('href').substring(1);
-        var el = document.getElementById(id);
-        if (el) sections.push({ el: el, link: link });
-    });
-    function onScroll() {
-        var scrollY = window.scrollY || window.pageYOffset;
-        var current = null;
-        for (var i = 0; i < sections.length; i++) {
-            if (sections[i].el.offsetTop <= scrollY + 120) {
-                current = sections[i];
-            }
-        }
-        links.forEach(function(l) { l.classList.remove('active'); });
-        if (current) current.link.classList.add('active');
-    }
-    window.addEventListener('scroll', onScroll);
-    onScroll();
-})();
-</script>
+</main>
+</div>

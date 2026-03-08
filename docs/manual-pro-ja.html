@@ -137,6 +137,7 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
             <li><a href="#multimodal">マルチモーダル</a></li>
             <li><a href="#cache">レスポンスキャッシュ</a></li>
             <li><a href="#woocommerce">WooCommerce 連携</a></li>
+            <li><a href="#ai-prompts">AI プロンプト</a></li>
             <li><a href="#content-filter">コンテンツフィルター</a></li>
         </ul>
     </details>
@@ -181,6 +182,19 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
         </ul>
     </details>
 
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-star"></i> その他</summary>
+        <ul>
+            <li><a href="#dynamic-variables">動的変数</a></li>
+            <li><a href="#voice-detail">音声 & TTS</a></li>
+            <li><a href="#ai-tools">AI 管理ツール</a></li>
+            <li><a href="#chat-features">チャット機能</a></li>
+            <li><a href="#performance">パフォーマンス</a></li>
+            <li><a href="#testing">テスト & ステージング</a></li>
+            <li><a href="#multisite">マルチサイト</a></li>
+        </ul>
+    </details>
+
     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
         <a href="/rapls-ai-chatbot-free-manual-ja/" style="display: block; padding: 10px 16px; background: var(--primary); color: #fff; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; font-size: 14px;">
             Free版マニュアルを見る &rarr;
@@ -198,74 +212,123 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
 <!-- ============================================================ -->
 
 <h3 id="lead-capture">リードキャプチャ</h3>
-<p>チャット開始前にユーザーの連絡先情報を収集するフォームを表示します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; リードキャプチャ</strong> タブで設定します。</p>
+<p>チャット開始前にユーザーの連絡先情報を収集するフォームを表示します。収集したリードデータはデータベースに保存され、CSV または JSON 形式でエクスポートできます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>リードキャプチャ有効化</strong></td><td>無効</td><td><strong>有効:</strong> チャット開始前にリードフォームを表示します。<br><strong>無効:</strong> フォームなしで直接チャットを開始します。</td></tr>
-    <tr><td><strong>フォーム必須</strong></td><td>無効</td><td><strong>有効:</strong> フォーム入力が完了するまでチャットできません。<br><strong>無効:</strong> 「スキップ」ボタンでフォームを飛ばせます。</td></tr>
-    <tr><td><strong>フォームタイトル</strong></td><td><code>Before we start</code></td><td>フォームの見出しテキスト</td></tr>
-    <tr><td><strong>フォーム説明文</strong></td><td><code>Please enter your information</code></td><td>フォーム下の説明テキスト</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>リードキャプチャ有効化</strong></td><td><code>lead_capture_enabled</code></td><td>無効</td><td><strong>有効:</strong> チャット開始前にリードフォームを表示します。<br><strong>無効:</strong> フォームなしで直接チャットを開始します。</td></tr>
+    <tr><td><strong>フォーム必須</strong></td><td><code>lead_capture_required</code></td><td>無効</td><td><strong>有効:</strong> フォーム入力が完了するまでチャットできません。<br><strong>無効:</strong> 「スキップ」ボタンでフォームを飛ばせます。</td></tr>
+    <tr><td><strong>フォームタイトル</strong></td><td><code>lead_form_title</code></td><td><code>Before we start</code></td><td>フォームの見出しテキスト</td></tr>
+    <tr><td><strong>フォーム説明文</strong></td><td><code>lead_form_description</code></td><td><code>Please enter your information</code></td><td>フォーム下の説明テキスト。情報収集の目的や用途を説明します。</td></tr>
 </table>
 
-<p><strong>標準フィールド:</strong></p>
+<p><strong>標準フィールド</strong> (<code>lead_fields</code>):</p>
 <table class="wpaic-table">
-    <tr><th>フィールド</th><th>デフォルト</th><th>必須</th></tr>
-    <tr><td>名前</td><td>有効</td><td>必須</td></tr>
-    <tr><td>メールアドレス</td><td>有効</td><td>必須</td></tr>
-    <tr><td>電話番号</td><td>無効</td><td>任意</td></tr>
-    <tr><td>会社名</td><td>無効</td><td>任意</td></tr>
+    <tr><th>フィールド</th><th>デフォルト</th><th>必須</th><th>備考</th></tr>
+    <tr><td>名前</td><td>有効</td><td>必須</td><td>訪問者のフルネーム</td></tr>
+    <tr><td>メールアドレス</td><td>有効</td><td>必須</td><td>メールアドレス形式のバリデーション付き</td></tr>
+    <tr><td>電話番号</td><td>有効</td><td>任意</td><td>自由入力</td></tr>
+    <tr><td>会社名</td><td>有効</td><td>任意</td><td>会社・組織名</td></tr>
 </table>
 
-<p><strong>カスタムフィールド:</strong> 任意のフィールドを追加できます。各フィールドにラベル、タイプ（テキスト、メール、電話、テキストエリア、セレクトボックス）、必須/任意を設定できます。</p>
+<p><strong>カスタムフィールド</strong> (<code>lead_custom_fields</code>): 任意のフィールドを追加できます。各フィールドにラベル、タイプ（<code>text</code>、<code>email</code>、<code>tel</code>、<code>textarea</code>、<code>select</code>）、必須/任意を設定できます。<code>select</code> タイプではカンマ区切りの選択肢を指定します。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 「部署」や「お問い合わせ種別」には <code>select</code> タイプを使用すると、回答が統一され CSV エクスポート時の分析が容易になります。
+</div>
 
-<p><strong>メール通知:</strong> 新しいリードが送信された際に指定メールアドレスに通知を送信します。</p>
+<p><strong>メール通知</strong> (<code>lead_notification_enabled</code> / <code>lead_notification_email</code>): 新しいリードが送信された際に指定メールアドレスに通知を送信します。送信先が未設定の場合はサイト管理者メールが使用されます。</p>
+
+<div class="wpaic-box wpaic-box-info">
+    <strong>データ活用:</strong> 収集したリードは管理画面のリード一覧で確認できるほか、Webhook 連携で CRM や Zapier、Make などの自動化プラットフォームへリアルタイムに送信できます。
+</div>
 
 <h3 id="offline-message">オフラインメッセージ</h3>
-<p>営業時間外にお問い合わせフォームを表示し、メッセージをリードとして保存します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; オフラインメッセージ</strong> タブで設定します。</p>
+<p>営業時間外にお問い合わせフォームを表示し、受信したメッセージをリードとして保存します。営業時間が設定されている場合、営業時間外に自動的にオフラインフォームがチャットインターフェースに代わって表示されます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>オフラインメッセージ有効化</strong></td><td>無効</td><td>営業時間外にフォームを表示</td></tr>
-    <tr><td><strong>フォームタイトル</strong></td><td><code>We are currently offline</code></td><td>フォーム見出し</td></tr>
-    <tr><td><strong>メール通知</strong></td><td>無効</td><td>オフラインメッセージ受信時に通知</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>オフラインメッセージ有効化</strong></td><td><code>offline_message_enabled</code></td><td>無効</td><td>営業時間外にフォームを表示</td></tr>
+    <tr><td><strong>フォームタイトル</strong></td><td><code>offline_form_title</code></td><td><code>We are currently offline</code></td><td>フォーム見出し</td></tr>
+    <tr><td><strong>メール通知</strong></td><td><code>offline_notification_enabled</code></td><td>無効</td><td>オフラインメッセージ受信時に指定メールアドレスに通知</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> オフラインメッセージは営業時間機能と組み合わせて使用すると効果的です。営業時間が設定されていない場合でもスタンドアロンで使用でき、AI が利用できないときに訪問者にフォームが表示されます。
+</div>
 
 <h3 id="conversion">コンバージョントラッキング</h3>
-<p>チャット後のユーザー行動を追跡し、チャットボットの効果を測定します。</p>
-<p><strong>コンバージョンゴール定義:</strong> URL パターン、ゴール名、ゴール値を設定します。ユーザーがチャット後に指定 URL にアクセスするとコンバージョンとして記録されます。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; コンバージョン</strong> タブで設定します。</p>
+<p>チャット後のユーザー行動を追跡し、チャットボットの効果を測定します。チャットセッション中に Cookie でセッション ID を記録し、訪問者がゴール URL にアクセスした際にコンバージョンとして会話に紐付けて記録します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>コンバージョントラッキング有効化</strong></td><td><code>conversion_tracking_enabled</code></td><td>無効</td><td>すべてのチャットセッションでコンバージョントラッキングを有効化</td></tr>
+</table>
+<p><strong>コンバージョンゴール定義</strong> (<code>conversion_goals</code>): 各ゴールは以下のプロパティで構成されます。</p>
+<table class="wpaic-table">
+    <tr><th>プロパティ</th><th>説明</th></tr>
+    <tr><td><strong>URL パターン</strong></td><td>部分一致で照合（例: <code>/thank-you</code>）。ワイルドカード <code>*</code> 対応</td></tr>
+    <tr><td><strong>ゴール名</strong></td><td>コンバージョンの名前（例: 「購入完了」「お問い合わせ送信」）</td></tr>
+    <tr><td><strong>ゴール値</strong></td><td>コンバージョンの金額価値（例: <code>50</code>）。ROI 計算に使用</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> コンバージョンデータはアナリティクスダッシュボードに表示されます。ゴール値を設定して ROI を計算し、チャットボットのビジネスインパクトを測定できます。
+</div>
 
 <h3 id="ui-customize">UI カスタマイズ</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; UI カスタマイズ</strong> タブで設定します。</p>
+<p>Free版の基本テーマ設定に加え、チャットボットの外観とユーザー体験を細かく調整できます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>フルスクリーンモード</strong></td><td>無効</td><td>チャットウィンドウをフルスクリーンに拡大するボタンを表示</td></tr>
-    <tr><td><strong>ウェルカムスクリーン</strong></td><td>無効</td><td>チャット開始前に専用のウェルカム画面を表示。タイトル、メッセージ、アクションボタンを設定可能</td></tr>
-    <tr><td><strong>応答遅延</strong></td><td>500ms</td><td>AI 応答前にタイピングアニメーションを表示する時間（ミリ秒）。自然な会話感を演出</td></tr>
-    <tr><td><strong>通知音</strong></td><td>無効</td><td>新しいメッセージ受信時にサウンドを再生</td></tr>
-    <tr><td><strong>ツールチップ</strong></td><td>無効</td><td>UI 要素にホバーツールチップを表示</td></tr>
-    <tr><td><strong>カスタムフォント</strong></td><td>空</td><td>Google Fonts などのフォント URL を指定</td></tr>
-    <tr><td><strong>季節テーマ</strong></td><td>なし</td><td>季節に合わせたテーマバリエーション</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>フルスクリーンモード</strong></td><td><code>fullscreen_mode</code></td><td>無効</td><td>チャットウィンドウをブラウザ全体に拡大表示。専用サポートページに最適</td></tr>
+    <tr><td><strong>ウェルカムスクリーン</strong></td><td><code>welcome_screen_enabled</code></td><td>無効</td><td>チャット開始前に専用のウェルカム画面を表示。タイトル、メッセージ、クイックスタートボタンを設定可能</td></tr>
+    <tr><td><strong>応答遅延有効化</strong></td><td><code>response_delay_enabled</code></td><td>有効</td><td>AI 応答前にタイピングアニメーションを表示</td></tr>
+    <tr><td><strong>応答遅延時間</strong></td><td><code>response_delay_ms</code></td><td>500ms</td><td>遅延時間（ミリ秒）。300～800ms が自然。1500ms 以上は避けてください</td></tr>
+    <tr><td><strong>通知音</strong></td><td><code>notification_sound_enabled</code></td><td>無効</td><td>新しいメッセージ受信時にサウンドを再生。タブを切り替えている訪問者の注意を引きます</td></tr>
+    <tr><td><strong>ツールチップ</strong></td><td><code>tooltips_enabled</code></td><td>有効</td><td>UI 要素にホバーツールチップを表示</td></tr>
+    <tr><td><strong>カスタムフォント</strong></td><td><code>custom_font</code></td><td>空</td><td>Google Fonts などのフォント CSS URL を指定。例: <code>https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap</code></td></tr>
+    <tr><td><strong>季節テーマ</strong></td><td><code>seasonal_theme</code></td><td>なし</td><td>季節に合わせた装飾オーバーレイ（冬の雪、春の桜など）。可読性に影響しません</td></tr>
 </table>
 
 <h3 id="white-label">フッター & CSS</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; フッター & CSS</strong> タブで設定します。</p>
+<p>プラグインのブランディングを削除または置換し、自社ブランドに統一します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>ブランディング非表示</strong></td><td>「Powered by Rapls AI Chatbot」フッターを非表示にします</td></tr>
-    <tr><td><strong>カスタムフッター HTML</strong></td><td>チャットウィンドウ下部に表示するカスタム HTML</td></tr>
-    <tr><td><strong>カスタム CSS</strong></td><td>チャットウィジェットに適用する追加 CSS ルール</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>説明</th></tr>
+    <tr><td><strong>ホワイトラベル有効化</strong></td><td><code>white_label_enabled</code></td><td>ホワイトラベル機能全体の有効/無効</td></tr>
+    <tr><td><strong>ブランディング非表示</strong></td><td><code>hide_powered_by</code></td><td>「Powered by Rapls AI Chatbot」フッターを非表示にします</td></tr>
+    <tr><td><strong>カスタムフッター HTML</strong></td><td><code>white_label_footer</code></td><td>チャットウィンドウ下部に表示するカスタム HTML。社名、プライバシーポリシーリンク、利用規約リンクなどに使用</td></tr>
+    <tr><td><strong>カスタム CSS</strong></td><td><code>custom_css</code></td><td>チャットウィジェットに適用する追加 CSS ルール。チャットボットコンテナにスコープされます</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> ブラウザの開発者ツールでチャットウィジェット内の要素のクラス名を確認し、カスタム CSS でピンポイントに調整できます。
+</div>
 
 <!-- ============================================================ -->
 <h2 id="ai-enhancement"><i class="fa-solid fa-brain"></i> AI 拡張</h2>
 <!-- ============================================================ -->
 
 <h3 id="suggestions">関連質問サジェスト</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; AI 拡張</strong> タブで設定します。</p>
 <p>AI の応答後に、関連する追加質問のサジェストボタンを表示します。ユーザーの探索を促進し、会話の深度を向上させます。</p>
-<p><strong>有効:</strong> 応答ごとに 2 ~ 3 個の関連質問ボタンが表示されます。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>サジェスト有効化</strong></td><td><code>related_suggestions_enabled</code></td><td>無効</td></tr>
+</table>
+<p><strong>有効:</strong> 応答ごとに 2 ~ 3 個の関連質問ボタンが表示されます。FAQ の多いサイトで特に効果的です。</p>
 <p><strong>サジェストプロンプト:</strong> AI が関連質問を生成する際の指示文をカスタマイズできます。</p>
 
 <h3 id="autocomplete">オートコンプリート</h3>
-<p>ユーザーが入力中に、ナレッジベースから候補を表示します。入力の手間を減らし、適切な質問へ誘導します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>オートコンプリート有効化</strong></td><td><code>autocomplete_enabled</code></td><td>無効</td></tr>
+</table>
+<p>ユーザーが入力中に、ナレッジベースからの候補を表示します。Tab キーまたはクリックで候補を選択できます。入力の手間を減らし、適切な質問へ誘導します。</p>
 
 <h3 id="templates">プロンプトテンプレート</h3>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>テンプレート有効化</strong></td><td><code>prompt_templates_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>アクティブテンプレート</strong></td><td><code>active_prompt_template</code></td><td>―</td></tr>
+</table>
 <p>業界別に最適化された11種類のシステムプロンプトテンプレートから選択できます。</p>
 <table class="wpaic-table">
     <tr><th>テンプレート</th><th>用途</th></tr>
@@ -284,238 +347,352 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
 <p>テンプレートを選択後、個別にプロンプトをカスタマイズすることも可能です。</p>
 
 <h3 id="regenerate">応答再生成</h3>
-<p>ユーザーが AI の応答を再生成できるボタンを表示します。</p>
-<p><strong>デフォルト:</strong> 有効</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>再生成ボタン表示</strong></td><td><code>show_regenerate_button</code></td><td>有効</td></tr>
+</table>
+<p>ユーザーが AI の応答を再生成できるボタンを各応答の下に表示します。最初の応答に満足できない場合に便利です。</p>
 <p>再生成のたびに異なるアプローチで回答を生成します。再生成プロンプトでスタイルや制約をカスタマイズ可能です。</p>
 
 <h3 id="sentiment">感情分析</h3>
-<p>ユーザーの感情状態を AI がリアルタイムで分析し、応答のトーンを自動調整します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; 感情分析</strong> タブで設定します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>感情分析有効化</strong></td><td><code>sentiment_analysis_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>感情検出プロンプト</strong></td><td><code>sentiment_prompt</code></td><td>―</td></tr>
+</table>
+<p>ユーザーの感情状態を AI がリアルタイムで分析し、応答のトーンを自動調整します。検出された感情は会話のメタデータとして保存され、アナリティクスダッシュボードで確認できます。</p>
 <table class="wpaic-table">
     <tr><th>感情状態</th><th>AI の対応</th></tr>
-    <tr><td><strong>フラストレーション</strong></td><td>共感的でより丁寧な応答に切り替え</td></tr>
-    <tr><td><strong>困惑</strong></td><td>より詳しい説明と段階的な案内を提供</td></tr>
-    <tr><td><strong>緊急</strong></td><td>迅速で要点を絞った応答</td></tr>
-    <tr><td><strong>ポジティブ</strong></td><td>フレンドリーで前向きなトーン</td></tr>
-    <tr><td><strong>ネガティブ</strong></td><td>慎重で共感的な対応</td></tr>
+    <tr><td><strong>フラストレーション</strong></td><td>共感的でより丁寧な応答に切り替え、明確な次のステップを提示</td></tr>
+    <tr><td><strong>困惑</strong></td><td>より詳しい説明と段階的な案内を提供、質問を簡素化</td></tr>
+    <tr><td><strong>緊急</strong></td><td>迅速で要点を絞った応答、必要に応じてエスカレーション</td></tr>
+    <tr><td><strong>ポジティブ</strong></td><td>フレンドリーで前向きなトーン、追加リソースの提案</td></tr>
+    <tr><td><strong>ネガティブ</strong></td><td>慎重で共感的な対応、解決策の提示</td></tr>
 </table>
 <p>各感情状態のトーン調整プロンプトを個別にカスタマイズできます。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> 感情分析はメッセージごとに追加の AI 呼び出しが発生します。応答速度が重要な場合は、感情分析を無効にし、代わりにシステムプロンプトでトーン対応を指示することを検討してください。
+</div>
 
 <h3 id="context-memory">コンテキストメモリ</h3>
-<p>ユーザーの情報や好みをセッション間で記憶し、パーソナライズされた応答を提供します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; コンテキストメモリ</strong> タブで設定します。</p>
+<p>ユーザーの情報や好みをセッション間で記憶し、パーソナライズされた応答を提供します。抽出されたコンテキストは <code>wp_aichat_user_context</code> テーブルに保存されます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>コンテキストメモリ有効化</strong></td><td>無効</td><td>ユーザーの過去の会話から情報を抽出・記憶</td></tr>
-    <tr><td><strong>保存期間</strong></td><td>30日</td><td>コンテキスト情報の保持日数</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>コンテキストメモリ有効化</strong></td><td><code>context_memory_enabled</code></td><td>無効</td><td>ユーザーの過去の会話から情報を抽出・記憶</td></tr>
+    <tr><td><strong>保存期間</strong></td><td><code>context_memory_days</code></td><td>30日</td><td>コンテキスト情報の保持日数。期限切れはクリーンアップ cron で自動削除</td></tr>
 </table>
-<p><strong>コンテキスト抽出プロンプト:</strong> 会話から記憶すべき情報を抽出する際の指示文。</p>
-<p><strong>コンテキスト注入プロンプト:</strong> 記憶した情報を次の会話に反映する際の指示文。</p>
+<p><strong>コンテキスト抽出プロンプト:</strong> 各会話の終了時に AI が会話履歴を読み、記憶すべき情報（名前、好み、過去の問題など）を構造化して抽出します。抽出プロンプトをカスタマイズして、業界固有の情報を記憶させることが可能です。</p>
+<p><strong>コンテキスト注入プロンプト:</strong> 新しい会話の開始時に、保存されたコンテキスト情報をシステムプロンプトに追加します。テンプレート内のプレースホルダーが訪問者のコンテキストに置換されます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> コンテキストメモリは会員サイトや SaaS プロダクトなど、ユーザーが頻繁に再訪するサイトで特に有効です。リードキャプチャと組み合わせると、既知のユーザー情報にコンテキストを紐付けできます。
+</div>
 
 <h3 id="quick-replies">クイックリプライ</h3>
-<p>チャット画面にプリセットの返信ボタンを表示します。よくある質問へのワンクリックアクセスを提供します。</p>
-<p>各リプライにテキストとアクション（メッセージ送信、URL 遷移など）を設定できます。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>クイックリプライ有効化</strong></td><td><code>quick_replies_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>リプライ定義</strong></td><td><code>quick_replies</code></td><td>―</td></tr>
+</table>
+<p>チャット入力欄の下にクリック可能なクイックリプライボタンを表示します。訪問者はボタンをタップするだけで定義済みのメッセージを送信できます。</p>
+<p>各リプライにテキスト（ボタンラベル）とアクション（AI に送信するメッセージ。空の場合はボタンテキストがそのまま送信）を設定できます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> クイックリプライをナビゲーションメニューとして使用できます（例: 「料金プラン」「サポート時間」「デモ予約」）。アクションにはボタンのテキストより詳細なプロンプトを設定すると、より良い AI 応答が得られます。
+</div>
 
 <h3 id="multimodal">マルチモーダル（画像アップロード）</h3>
-<p>ユーザーがチャットに画像をアップロードし、AI が画像を解析して応答できるようにします。</p>
+<p>ユーザーがチャットに画像をアップロードし、AI が画像を解析して応答できるようにします。ビジョン機能対応のプロバイダー（OpenAI GPT-4o、Claude、Gemini）が必要です。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>画像アップロード有効化</strong></td><td>無効</td><td>チャットに画像アップロードボタンを表示</td></tr>
-    <tr><td><strong>最大ファイルサイズ</strong></td><td>2048 KB</td><td>アップロード可能な最大ファイルサイズ</td></tr>
-    <tr><td><strong>許可フォーマット</strong></td><td>jpg, png, gif, webp</td><td>アップロードを許可する画像フォーマット</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>画像アップロード有効化</strong></td><td><code>multimodal_enabled</code></td><td>無効</td><td>チャットに画像アップロードボタンを表示</td></tr>
+    <tr><td><strong>最大ファイルサイズ</strong></td><td><code>multimodal_max_size</code></td><td>2048 KB</td><td>アップロード可能な最大ファイルサイズ（KB）</td></tr>
+    <tr><td><strong>許可フォーマット</strong></td><td><code>multimodal_formats</code></td><td>jpg, png, gif, webp</td><td>アップロードを許可する画像フォーマット</td></tr>
 </table>
 <div class="wpaic-box wpaic-box-info">
     <strong>必要条件:</strong> マルチモーダル対応のモデル（GPT-4o、Gemini 2.0 Flash など）を使用してください。非対応モデルでは画像を解析できません。
 </div>
 
 <h3 id="cache">レスポンスキャッシュ</h3>
-<p>同じ質問に対する AI の応答をキャッシュし、API コストを削減します。</p>
+<p>同じ質問に対する AI の応答をキャッシュし、API コストを削減しレスポンス時間を改善します。質問を SHA-256 ハッシュで照合し、一致する場合は AI プロバイダーを呼び出さずにキャッシュから即座に応答します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>キャッシュ有効化</strong></td><td>無効</td><td>SHA-256 ハッシュで質問を照合し、一致する場合はキャッシュから応答</td></tr>
-    <tr><td><strong>TTL（有効期間）</strong></td><td>7日</td><td>キャッシュの有効日数</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>キャッシュ有効化</strong></td><td><code>response_cache_enabled</code></td><td>無効</td><td>レスポンスキャッシュの有効/無効</td></tr>
+    <tr><td><strong>TTL（有効期間）</strong></td><td><code>cache_ttl_days</code></td><td>7日</td><td>キャッシュの有効日数。期限切れ後、同じ質問で新しい API 呼び出しが実行されます</td></tr>
 </table>
-<p>管理画面でキャッシュ統計（ヒット率、保存数）を確認でき、手動でクリアすることも可能です。</p>
+<p>管理画面でキャッシュ統計（ヒット率、キャッシュ数、ストレージサイズ）を確認でき、手動でクリアすることも可能です。システムプロンプトやナレッジベースを大幅に変更した後はキャッシュクリアを推奨します。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> レスポンスキャッシュは FAQ 中心のサイトで最も効果的です。パーソナライズされた会話が多いサイトではヒット率が低くなる可能性があります。
+</div>
 
 <h3 id="woocommerce">WooCommerce 連携</h3>
-<p>WooCommerce の商品データを自動クロールし、チャット応答内に商品カード（画像、価格、リンク）を表示します。</p>
-<p><strong>商品カード表示:</strong> <span class="wpaic-default">デフォルト: 有効</span> - AI が商品について言及する際、視覚的な商品カードを自動表示します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; WooCommerce</strong> タブで設定します。</p>
+<p>WooCommerce の商品データを自動クロールし、チャット応答内に商品カード（画像、価格、リンク）を表示します。クロール対象のデータには商品タイトル、説明、価格、カテゴリー、属性が含まれます。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>商品カード表示</strong></td><td><code>woocommerce_cards_enabled</code></td><td>有効</td></tr>
+</table>
+<p>AI が商品について言及する際、視覚的な商品カードを自動表示します。通常のページコンテンツと同様にサイトクロールでインデックスされます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> WooCommerce 連携を有効化した後、既存の商品をインデックスするためにサイトクロールを実行してください。新しい商品は次回のスケジュールクロールで自動的に取り込まれます。
+</div>
+
+<h3 id="ai-prompts">AI プロンプト（Pro）</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; AI プロンプト</strong> タブで設定します。</p>
+<p>Pro 固有の AI 機能で使用されるプロンプトをカスタマイズします。</p>
+
+<p><strong>サジェストプロンプト:</strong> 各 AI 応答の後に関連するフォローアップ質問を生成するためのプロンプトです。サジェストのスタイル、数、関連性を制御するためにカスタマイズできます。</p>
+
+<p><strong>サマリープロンプト:</strong> 会話のサマリーを生成するためのプロンプトです。サマリーは REST API および管理画面の会話ビューアーで利用可能です。特定の側面（アクションアイテム、主要トピック、感情）に焦点を当てるようカスタマイズできます。</p>
 
 <h3 id="content-filter">コンテンツフィルター</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; コンテンツフィルター</strong> タブで設定します。</p>
 <p>不適切なコンテンツやスパムを防止する機能群です。</p>
 
 <p><strong>禁止ワードフィルター:</strong></p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>禁止ワード有効化</strong></td><td>無効</td><td>指定したワードを含むメッセージをブロック</td></tr>
-    <tr><td><strong>ワードリスト</strong></td><td>空</td><td>1行に1ワード。部分一致で検出</td></tr>
-    <tr><td><strong>ブロックメッセージ</strong></td><td><code>Your message contains prohibited content.</code></td><td>禁止ワード検出時のメッセージ</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>禁止ワード有効化</strong></td><td><code>banned_words_enabled</code></td><td>無効</td><td>指定したワードを含むメッセージをブロック</td></tr>
+    <tr><td><strong>ワードリスト</strong></td><td><code>banned_words</code></td><td>空</td><td>1行に1ワード。大文字小文字を区別しない部分一致で検出</td></tr>
+    <tr><td><strong>ブロックメッセージ</strong></td><td><code>banned_words_message</code></td><td><code>Your message contains prohibited content.</code></td><td>禁止ワード検出時のメッセージ</td></tr>
 </table>
 
 <p><strong>IP ブロック:</strong></p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>IP ブロック有効化</strong></td><td>無効</td><td>指定 IP からのアクセスをブロック</td></tr>
-    <tr><td><strong>IP リスト</strong></td><td>空</td><td>1行に1つ。CIDR 記法対応（例: <code>192.168.1.0/24</code>）</td></tr>
-    <tr><td><strong>ブロックメッセージ</strong></td><td><code>Access denied.</code></td><td>ブロック時のメッセージ</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>IP ブロック有効化</strong></td><td><code>ip_block_enabled</code></td><td>無効</td><td>指定 IP からのアクセスをブロック</td></tr>
+    <tr><td><strong>IP リスト</strong></td><td><code>blocked_ips</code></td><td>空</td><td>1行に1つ。個別 IP および CIDR 記法対応（例: <code>192.168.1.0/24</code>）</td></tr>
+    <tr><td><strong>ブロックメッセージ</strong></td><td><code>ip_block_message</code></td><td><code>Access denied.</code></td><td>ブロック時のメッセージ</td></tr>
 </table>
 
 <p><strong>強化レート制限:</strong></p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>強化レート制限有効化</strong></td><td>無効</td><td>Free版のレート制限に加え、2段階制限を追加</td></tr>
-    <tr><td><strong>分あたり上限</strong></td><td>5</td><td>バースト制限。短時間の連続送信を防止</td></tr>
-    <tr><td><strong>時間あたり上限</strong></td><td>30</td><td>持続制限。長期的な過剰使用を防止</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>強化レート制限有効化</strong></td><td><code>enhanced_rate_limit_enabled</code></td><td>無効</td><td>Free版のレート制限に加え、2段階制限を追加。自動化された不正使用を防止</td></tr>
+    <tr><td><strong>分あたり上限</strong></td><td><code>rate_limit_per_minute</code></td><td>5</td><td>バースト制限。短時間の連続送信を防止</td></tr>
+    <tr><td><strong>時間あたり上限</strong></td><td><code>rate_limit_per_hour</code></td><td>30</td><td>持続制限。長期的な過剰使用を防止</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> デフォルト値で開始し、アナリティクスに基づいて調整してください。ほとんどの正当な訪問者は分あたり3メッセージ未満です。
+</div>
 
 <!-- ============================================================ -->
 <h2 id="operations"><i class="fa-solid fa-gears"></i> オペレーション</h2>
 <!-- ============================================================ -->
 
 <h3 id="business-hours">営業時間</h3>
-<p>営業時間を設定し、時間外には専用メッセージやオフラインフォームを表示します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; 営業時間</strong> タブで設定します。</p>
+<p>営業時間を設定し、時間外には専用メッセージやオフラインフォームを表示します。営業時間情報は動的変数 <code>{business_hours}</code> にも反映されます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>営業時間有効化</strong></td><td>無効</td><td>営業時間外に代替メッセージを表示</td></tr>
-    <tr><td><strong>タイムゾーン</strong></td><td>Asia/Tokyo</td><td>営業時間の基準タイムゾーン</td></tr>
-    <tr><td><strong>営業時間外メッセージ</strong></td><td>―</td><td>営業時間外に表示するメッセージ</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>営業時間有効化</strong></td><td><code>business_hours_enabled</code></td><td>無効</td><td>無効の場合、チャットボットは24時間稼働</td></tr>
+    <tr><td><strong>タイムゾーン</strong></td><td><code>business_hours_timezone</code></td><td>Asia/Tokyo</td><td>営業時間の基準タイムゾーン</td></tr>
+    <tr><td><strong>営業時間スケジュール</strong></td><td><code>business_hours</code></td><td>月～金 9:00-18:00</td><td>曜日別の有効/無効、開始時間、終了時間（24時間形式）</td></tr>
+    <tr><td><strong>営業時間外メッセージ</strong></td><td><code>outside_hours_message</code></td><td>―</td><td>営業時間外に表示するメッセージ。オフラインメッセージが有効な場合はフォームの上に表示</td></tr>
 </table>
 <p><strong>曜日別設定:</strong> 各曜日ごとに有効/無効、開始時間、終了時間を設定できます。デフォルトは月曜～金曜 9:00～18:00、土日は無効です。</p>
-<p><strong>祝日設定:</strong> 祝日を個別に登録し、祝日専用メッセージを設定できます。</p>
+<p><strong>祝日設定:</strong> 祝日を <code>YYYY-MM-DD</code> 形式で個別に登録し、祝日専用メッセージを設定できます。祝日は終日オフラインとして扱われます。</p>
 
 <h3 id="handoff">ハンドオフ（人間への引き継ぎ）</h3>
-<p>AI で対応しきれない場合に、有人サポートへ引き継ぐ機能です。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; ハンドオフ</strong> タブで設定します。</p>
+<p>AI で対応しきれない場合に、有人サポートへ引き継ぐ機能です。キーワード検出による自動トリガーまたは訪問者の手動リクエストで起動します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>ハンドオフ有効化</strong></td><td>無効</td><td>ハンドオフ機能全体の有効/無効</td></tr>
-    <tr><td><strong>自動検出</strong></td><td>有効</td><td>キーワードベースの自動ハンドオフ検出</td></tr>
-    <tr><td><strong>キーワード（英語）</strong></td><td>―</td><td>ハンドオフをトリガーする英語キーワード（カンマ区切り）</td></tr>
-    <tr><td><strong>キーワード（日本語）</strong></td><td><code>人間と話したい,オペレーター,サポートに繋いで,担当者</code></td><td>ハンドオフをトリガーする日本語キーワード</td></tr>
-    <tr><td><strong>通知方法</strong></td><td>email</td><td><strong>email:</strong> メールで通知<br><strong>slack:</strong> Slack で通知<br><strong>both:</strong> 両方</td></tr>
-    <tr><td><strong>ハンドオフメッセージ</strong></td><td>―</td><td>ハンドオフ時にユーザーに表示するメッセージ</td></tr>
-    <tr><td><strong>自動クローズ</strong></td><td>30分</td><td>応答がない場合に自動的にハンドオフを終了する時間（5～1440分）</td></tr>
-    <tr><td><strong>オペレーターモード</strong></td><td>無効</td><td>管理者がリアルタイムで会話に介入できるモード</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>ハンドオフ有効化</strong></td><td><code>human_handoff_enabled</code></td><td>無効</td><td>ハンドオフ機能全体の有効/無効</td></tr>
+    <tr><td><strong>自動検出</strong></td><td><code>handoff_auto_detect</code></td><td>有効</td><td>キーワードベースの自動ハンドオフ検出</td></tr>
+    <tr><td><strong>キーワード（英語）</strong></td><td><code>handoff_keywords</code></td><td>―</td><td>ハンドオフをトリガーする英語キーワード（例: "talk to a human", "real person"）</td></tr>
+    <tr><td><strong>キーワード（日本語）</strong></td><td><code>handoff_auto_keywords_ja</code></td><td><code>人間と話したい,オペレーター,サポートに繋いで,担当者</code></td><td>ハンドオフをトリガーする日本語キーワード</td></tr>
+    <tr><td><strong>通知方法</strong></td><td><code>handoff_notification_method</code></td><td>email</td><td><code>email</code>: メールのみ<br><code>slack</code>: Slack のみ（Webhook URL 必須）<br><code>both</code>: 両方</td></tr>
+    <tr><td><strong>Slack Webhook URL</strong></td><td><code>handoff_slack_webhook_url</code></td><td>―</td><td>Slack 通知用の Incoming Webhook URL。Slack Block Kit 形式で会話情報を含むリッチ通知が送信されます</td></tr>
+    <tr><td><strong>ハンドオフメッセージ</strong></td><td>―</td><td>―</td><td>ハンドオフ時にユーザーに表示するメッセージ（例: 「担当者におつなぎします。少々お待ちください。」）</td></tr>
+    <tr><td><strong>自動クローズ</strong></td><td><code>operator_auto_close_minutes</code></td><td>30分</td><td>応答がない場合に自動的にハンドオフを終了する時間（5～1440分）</td></tr>
+    <tr><td><strong>オペレーターモード</strong></td><td>―</td><td>無効</td><td>管理者がリアルタイムで会話に介入できるモード。会話履歴とコンテキストメモリを確認可能</td></tr>
 </table>
 <div class="wpaic-box wpaic-box-tip">
     <strong>ヒント:</strong> ハンドオフが発生すると、AI の API 呼び出しは自動的にスキップされ、コストが発生しません。フロントエンドにはハンドオフ状態のインジケーターと「AI に戻る」ボタンが表示されます。
 </div>
 
 <h3 id="ai-forms">AI フォーム</h3>
-<p>ショートコードで設置できる AI 搭載フォームです。ユーザーの入力を AI が処理して応答を生成します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; AI フォーム</strong> タブで設定します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>AI フォーム有効化</strong></td><td><code>ai_forms_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>フォーム定義</strong></td><td><code>ai_forms</code></td><td>―</td></tr>
+</table>
+<p>ショートコードで設置できる AI 搭載フォームです。通常のコンタクトフォームとは異なり、ユーザーの入力を AI がカスタムプロンプトとともに処理し、パーソナライズされた応答を生成します。</p>
+<p><strong>フォームプロパティ:</strong></p>
 <table class="wpaic-table">
     <tr><th>設定</th><th>説明</th></tr>
+    <tr><td><strong>ID</strong></td><td>ショートコードで使用する一意の識別子</td></tr>
     <tr><td><strong>フォーム名</strong></td><td>管理用の名前</td></tr>
-    <tr><td><strong>説明</strong></td><td>フォームの目的の説明</td></tr>
+    <tr><td><strong>説明</strong></td><td>フォームフィールドの上に表示されるテキスト</td></tr>
     <tr><td><strong>システムプロンプト</strong></td><td>AI がフォーム入力を処理する際の指示</td></tr>
-    <tr><td><strong>プロンプト</strong></td><td>フォーム入力を AI に渡す際のテンプレート。<code>{field_name}</code> プレースホルダー対応</td></tr>
-    <tr><td><strong>フィールド</strong></td><td>各フィールド: ラベル、キー、タイプ（テキスト、テキストエリア、セレクト等）、必須</td></tr>
+    <tr><td><strong>プロンプト</strong></td><td>フォーム入力を AI に渡す際のテンプレート。<code>{field_key}</code> プレースホルダー対応</td></tr>
+    <tr><td><strong>フィールド</strong></td><td>各フィールド: ラベル、キー、タイプ（<code>text</code>、<code>email</code>、<code>tel</code>、<code>textarea</code>、<code>select</code>）、必須</td></tr>
 </table>
-<p><strong>ショートコード:</strong> <code>[wpaic_form id="1"]</code> を任意のページに挿入して使用します。</p>
+<p><strong>メール通知:</strong> フォーム送信時にメール通知を送信できます（オプション）。メールにはすべてのフィールド値と AI の応答が含まれます。</p>
+<p><strong>ショートコード:</strong> <code>[wpaic_form id="1"]</code> を任意のページに挿入して使用します。<code>1</code> をフォームの ID に置き換えてください。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> AI フォームは見積もり計算、診断ツール、パーソナライズされた推奨、インタラクティブなアセスメントに最適です。AI がすべてのフィールドデータをまとめてコンテキストに応じた応答を生成します。
+</div>
 
 <h3 id="badge-icon">バッジアイコン</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; バッジアイコン</strong> タブで設定します。</p>
 <p>チャットバッジのアイコンをカスタマイズします。</p>
 <table class="wpaic-table">
-    <tr><th>タイプ</th><th>説明</th></tr>
-    <tr><td><strong>デフォルト</strong></td><td>標準のチャットアイコン</td></tr>
-    <tr><td><strong>プリセット</strong></td><td>25種類の SVG アイコンから選択（ヘッドセット、ロボット、ロケット、ダイヤモンドなど）</td></tr>
-    <tr><td><strong>画像</strong></td><td>メディアライブラリからカスタム画像を選択</td></tr>
-    <tr><td><strong>絵文字</strong></td><td>任意の絵文字1文字を設定</td></tr>
+    <tr><th>設定キー</th><th>タイプ</th><th>説明</th></tr>
+    <tr><td><code>badge_icon_type</code></td><td><code>default</code></td><td>標準のチャットバブルアイコン</td></tr>
+    <tr><td><code>badge_icon_preset</code></td><td><code>preset</code></td><td>25種類の SVG アイコンから選択（headset、robot、rocket、diamond、crown など）</td></tr>
+    <tr><td><code>badge_icon_image</code></td><td><code>image</code></td><td>メディアライブラリからカスタム画像を選択。推奨: 60x60px 以上の透過 PNG</td></tr>
+    <tr><td><code>badge_icon_emoji</code></td><td><code>emoji</code></td><td>任意の絵文字1文字を設定</td></tr>
 </table>
 
 <h3 id="actions">アクション（インテント認識）</h3>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>アクション有効化</strong></td><td><code>actions_enabled</code></td><td>無効</td></tr>
+</table>
 <p>会話中にユーザーの意図を検出し、URL 遷移、リンクボタン表示、メール通知、Webhook 送信などのアクションを自動実行します。</p>
-<p>各アクションにインテント（意図）のキーワードとアクションタイプを設定します。</p>
+<p>各アクションにインテント（意図）のキーワード、アクションタイプ（URL を開く、フォームをトリガー、シナリオを開始、ハンドオフを実行）、ターゲットを設定します。</p>
 
 <h3 id="scenarios">シナリオ（会話フロー）</h3>
-<p>ステップバイステップのガイド付き会話フローを定義します。条件分岐やアクション実行を含む複雑な対話を構築できます。</p>
-<p>トリガー条件（キーワード、URL、時間帯など）で自動起動し、各ステップで質問→応答→次のステップへ進行します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>シナリオ有効化</strong></td><td><code>scenarios_enabled</code></td><td>無効</td></tr>
+</table>
+<p>ステップバイステップのガイド付き会話フローを定義します。条件分岐やアクション実行を含む複雑な対話を構築できます。トラブルシューティングウィザード、資格確認フロー、オンボーディングシーケンスに最適です。</p>
+<p>トリガー条件（キーワード一致、インテント検出、手動トリガー、ページ URL）で自動起動し、各ステップで質問→応答→次のステップへ進行します。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> まずシンプルな 3～5 ステップのフローでテストしてください。各ステップにクイックリプライボタンを含めると、決定木のような体験を作成できます。
+</div>
 
 <h3 id="multi-bot">マルチボット</h3>
-<p>ページごとに異なるチャットボットを配置できます。各ボットに個別のシステムプロンプト、モデル、設定を割り当て可能です。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>マルチボット有効化</strong></td><td><code>multi_bot_enabled</code></td><td>無効</td></tr>
+</table>
+<p>ページごとに異なるチャットボットを配置できます。各ボットに個別のシステムプロンプト、モデル、設定を割り当て可能です（例: 料金ページにセールスボット、ヘルプセンターにサポートボット）。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> マルチボットはインテントルーティングと連携します。訪問者の最初の質問に基づいて、最も適切なボットに自動的に振り分けることが可能です。
+</div>
 
 <h3 id="voice">音声入力 / テキスト読み上げ</h3>
 <p><strong>音声入力（STT）:</strong> ブラウザのマイクを使って音声でメッセージを入力できます。Web Speech API を使用。</p>
 <p><strong>テキスト読み上げ（TTS）:</strong> AI の応答を音声で読み上げます。ユーザーがトグルボタンで有効/無効を切り替えられます。</p>
 
 <h3 id="screen-share">スクリーンシェア</h3>
-<p>ユーザーが画面のスクリーンショットをキャプチャしてチャットに送信できます。問題の報告や説明を視覚的に行えます。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>スクリーンシェア有効化</strong></td><td><code>screen_sharing_enabled</code></td><td>無効</td></tr>
+</table>
+<p>ユーザーが画面のスクリーンショットをキャプチャしてチャットに送信できます。問題の報告や説明を視覚的に行えます。ブラウザの Screen Capture API を使用します。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> スクリーンキャプチャにはブラウザの許可が必要です。すべてのブラウザが Screen Capture API をサポートしているわけではありません。非対応ブラウザでは機能が自動的に非表示になります。
+</div>
 
 <!-- ============================================================ -->
 <h2 id="integrations"><i class="fa-solid fa-plug"></i> インテグレーション</h2>
 <!-- ============================================================ -->
 
 <h3 id="webhook">Webhook</h3>
-<p>チャットイベントを外部サービスに HTTP POST で通知します。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; インテグレーション</strong> タブで設定します。</p>
+<p>チャットイベントを外部サービスに HTTP POST で通知します。CRM、自動化プラットフォーム（Zapier、Make、n8n）、カスタムバックエンドと連携できます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>Webhook URL</strong></td><td>イベント通知を送信する URL</td></tr>
-    <tr><td><strong>HMAC シークレット</strong></td><td>ペイロードの署名検証用シークレット（オプション）</td></tr>
-    <tr><td><strong>イベント</strong></td><td>通知するイベント: 新規会話、新規メッセージ、リード獲得、ハンドオフ要求</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>説明</th></tr>
+    <tr><td><strong>Webhook 有効化</strong></td><td><code>webhook_enabled</code></td><td>Webhook 配信の有効/無効</td></tr>
+    <tr><td><strong>Webhook URL</strong></td><td><code>webhook_url</code></td><td>イベントデータを JSON 形式で受信する POST エンドポイント</td></tr>
+    <tr><td><strong>HMAC シークレット</strong></td><td><code>webhook_secret</code></td><td>ペイロードの署名検証用シークレット（オプション）。設定すると <code>X-Signature</code> ヘッダーに HMAC-SHA256 ハッシュが付与されます</td></tr>
+    <tr><td><strong>イベント</strong></td><td><code>webhook_events</code></td><td><code>new_conversation</code>: 新規セッション作成<br><code>new_message</code>: メッセージ送信<br><code>lead_captured</code>: リードフォーム送信<br><code>handoff_requested</code>: ハンドオフ要求</td></tr>
 </table>
-<p>「テスト送信」ボタンで接続を確認できます。</p>
+<p>「テスト送信」ボタンで接続を確認できます。テストペイロードにはすべての選択イベントのサンプルデータが含まれます。</p>
 
 <h3 id="line">LINE Messaging API</h3>
-<p>LINE 公式アカウントと連携し、LINE からのメッセージに AI が自動応答します。</p>
+<p>LINE 公式アカウントと連携し、LINE からのメッセージに AI が自動応答します。Web ウィジェットと同じ AI 設定とナレッジベースで処理されます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>LINE 有効化</strong></td><td>LINE 連携の有効/無効</td></tr>
-    <tr><td><strong>チャネルシークレット</strong></td><td>LINE Developers コンソールから取得</td></tr>
-    <tr><td><strong>チャネルアクセストークン</strong></td><td>長期アクセストークン</td></tr>
-    <tr><td><strong>Webhook URL</strong></td><td>LINE Developers に設定する Webhook URL（自動生成）</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>説明</th></tr>
+    <tr><td><strong>LINE 有効化</strong></td><td><code>line_enabled</code></td><td>LINE 連携の有効/無効</td></tr>
+    <tr><td><strong>チャネルシークレット</strong></td><td><code>line_channel_secret</code></td><td>LINE Developers コンソールの Messaging API チャネル設定から取得。Webhook 署名の検証に使用</td></tr>
+    <tr><td><strong>チャネルアクセストークン</strong></td><td><code>line_channel_access_token</code></td><td>長期アクセストークン。返信メッセージの送信に使用</td></tr>
+    <tr><td><strong>Webhook URL</strong></td><td>―</td><td>LINE Developers に設定する Webhook URL（自動生成）。<br>形式: <code>https://yoursite.com/wp-json/wp-ai-chatbot/v1/line/webhook</code></td></tr>
 </table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> URL を入力後、LINE Developers コンソールで「Webhook を使用」を有効にしてください。LINE の組み込み検証ボタンで接続テストができます。
+</div>
 
 <h3 id="slack">Slack 連携</h3>
 <p>チャットイベントを Slack チャンネルに通知します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>Slack Webhook URL</strong></td><td>Slack Incoming Webhook URL</td></tr>
-    <tr><td><strong>イベント</strong></td><td>通知するイベントを選択。デフォルト: リード獲得、ハンドオフ要求</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>説明</th></tr>
+    <tr><td><strong>Slack 有効化</strong></td><td><code>slack_enabled</code></td><td>Slack 通知の有効/無効</td></tr>
+    <tr><td><strong>Slack Webhook URL</strong></td><td><code>slack_webhook_url</code></td><td>Slack アプリの「Incoming Webhooks」で作成した URL</td></tr>
+    <tr><td><strong>イベント</strong></td><td><code>slack_events</code></td><td>通知するイベントを選択。Webhook イベントと同じ種類が利用可能</td></tr>
 </table>
 
 <h3 id="google-sheets">Google Sheets 連携</h3>
-<p>チャットデータを Google スプレッドシートに自動エクスポートします。Google Apps Script の Web アプリ URL を設定します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>Google Sheets 有効化</strong></td><td><code>google_sheets_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>Webhook URL</strong></td><td><code>google_sheets_url</code></td><td>―</td></tr>
+</table>
+<p>チャットデータを Google スプレッドシートに自動エクスポートします。Google Apps Script の Web アプリ URL、または Zapier / Make の Webhook URL を設定します。</p>
 
 <h3 id="booking">ブッキング連携</h3>
 <p>チャット内から予約ページへの誘導を自動化します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>ブッキング有効化</strong></td><td>無効</td><td>予約連携の有効/無効</td></tr>
-    <tr><td><strong>プロバイダー</strong></td><td>―</td><td>Calendly、Cal.com、カスタム URL から選択</td></tr>
-    <tr><td><strong>トリガーキーワード</strong></td><td>―</td><td>予約ページへの誘導をトリガーするキーワード</td></tr>
-    <tr><td><strong>ブッキング URL</strong></td><td>―</td><td>予約ページの URL</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>ブッキング有効化</strong></td><td><code>booking_enabled</code></td><td>無効</td><td>予約連携の有効/無効</td></tr>
+    <tr><td><strong>プロバイダー</strong></td><td><code>booking_provider</code></td><td>―</td><td><code>Calendly</code>: Calendly ウィジェットを埋め込み<br><code>Cal.com</code>: Cal.com ウィジェットを埋め込み<br><code>URL</code>: 外部予約ページへのリンク</td></tr>
+    <tr><td><strong>トリガーキーワード</strong></td><td><code>booking_keywords</code></td><td>―</td><td>予約ページへの誘導をトリガーするキーワード（例: 「予約」「アポイント」「面談」）</td></tr>
+    <tr><td><strong>ブッキング URL</strong></td><td><code>booking_page_url</code></td><td>―</td><td>予約ページの URL</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> アクション機能と組み合わせると、キーワードの完全一致がなくても AI がブッキング意図を検出して予約ウィジェットをトリガーできます。
+</div>
 
 <!-- ============================================================ -->
 <h2 id="analytics-management"><i class="fa-solid fa-chart-line"></i> 分析 & 管理</h2>
 <!-- ============================================================ -->
 
 <h3 id="analytics">アナリティクスダッシュボード</h3>
+<p><strong>AI Chatbot &gt; アナリティクス</strong> メニューからアクセスします。</p>
 <p>Chart.js を使用したインタラクティブな分析ダッシュボードを提供します。</p>
 <ul>
-    <li><strong>概要:</strong> 訪問者数、会話数、メッセージ数、満足度スコア</li>
-    <li><strong>時間帯分析:</strong> 時間帯別のチャット利用傾向</li>
-    <li><strong>デバイス分析:</strong> デスクトップ/モバイル/タブレットの利用比率</li>
-    <li><strong>ページ分析:</strong> チャットが最も利用されているページ</li>
-    <li><strong>FAQ ランキング:</strong> よくある質問のランキング</li>
-    <li><strong>未解決質問:</strong> AI が回答できなかった質問の一覧</li>
-    <li><strong>ナレッジギャップ検出:</strong> ナレッジベースに不足している情報の自動検出</li>
-    <li><strong>AI クオリティスコア:</strong> AI 応答の品質スコア</li>
-    <li><strong>離脱/バウンス分析:</strong> ユーザーの離脱パターン</li>
-    <li><strong>リアルタイムモニター:</strong> 現在進行中の会話をリアルタイムで監視</li>
+    <li><strong>概要指標:</strong> チャットボットとやり取りした総訪問者数、開始された会話数、送信メッセージ数（訪問者 + AI）、平均満足度スコア（フィードバックボタンに基づく）、コンバージョン率</li>
+    <li><strong>時間帯分析:</strong> 時間帯別・曜日別のチャット利用傾向。ハンドオフシナリオのスタッフ配置最適化に活用</li>
+    <li><strong>デバイス分析:</strong> デバイスタイプ（デスクトップ/モバイル/タブレット）とブラウザ別の利用比率</li>
+    <li><strong>ページ分析:</strong> チャットインタラクションが最も多いページ。高インタラクションページのコンテンツ最適化に活用</li>
+    <li><strong>FAQ ランキング:</strong> よくある質問の頻度ランキング。ナレッジベースの優先順位付けに活用</li>
+    <li><strong>未解決質問:</strong> AI が回答できなかった質問の一覧（低満足度スコアまたは「わかりません」応答に基づく）</li>
+    <li><strong>ナレッジギャップ検出:</strong> ナレッジベースに不足している情報の自動検出。FAQ 自動生成機能と連携</li>
+    <li><strong>AI クオリティスコア:</strong> フィードバック評価、解決率、会話長に基づく AI 応答品質の総合スコア。時系列で追跡可能</li>
+    <li><strong>離脱/バウンス分析:</strong> 解決に至らなかった会話を特定し、ドロップオフポイントを分析</li>
+    <li><strong>リアルタイムモニター:</strong> 現在進行中の会話をリアルタイムで監視。ハンドオフモードが有効な場合はこのビューから直接介入可能</li>
 </ul>
-<p><strong>PDF/印刷レポート:</strong> Dompdf を使用したサーバーサイド PDF エクスポート機能。日本語フォント（Noto Sans JP）対応。</p>
+<p><strong>PDF/印刷レポート:</strong> Dompdf を使用したサーバーサイド PDF エクスポート機能。すべてのチャートと指標がプレゼンテーション/アーカイブ用にフォーマットされます。日本語フォント（Noto Sans JP）対応。</p>
 
 <h3 id="budget">利用量 & 予算管理</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; 利用量 & 予算</strong> タブで設定します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>予算アラート有効化</strong></td><td>無効</td><td>指定金額に達した時にメール通知</td></tr>
-    <tr><td><strong>アラート閾値</strong></td><td>$10.00</td><td>アラートを送信する金額</td></tr>
-    <tr><td><strong>予算上限有効化</strong></td><td>無効</td><td>指定金額に達した時に AI 応答を停止</td></tr>
-    <tr><td><strong>上限金額</strong></td><td>$50.00</td><td>月間の最大利用金額</td></tr>
-    <tr><td><strong>ブロックメッセージ</strong></td><td>―</td><td>予算上限に達した時のユーザーへのメッセージ</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>予算アラート有効化</strong></td><td><code>budget_alert_enabled</code></td><td>無効</td><td>指定金額に達した時にメール通知</td></tr>
+    <tr><td><strong>アラート閾値</strong></td><td><code>budget_alert_threshold</code></td><td>$10.00</td><td>アラートを送信する金額</td></tr>
+    <tr><td><strong>予算上限有効化</strong></td><td><code>budget_limit_enabled</code></td><td>無効</td><td>指定金額に達した時に AI 応答を停止</td></tr>
+    <tr><td><strong>上限金額</strong></td><td><code>budget_limit_amount</code></td><td>$50.00</td><td>月間の最大利用金額</td></tr>
+    <tr><td><strong>ブロックメッセージ</strong></td><td>―</td><td>―</td><td>予算上限に達した時のユーザーへのメッセージ</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> 予算追跡はトークン数の推定と公開されたトークン単価を使用します。AI プロバイダーから請求される実際の金額は、四捨五入やレート変更により若干異なる場合があります。
+</div>
 
 <h3 id="reports">月次レポート & サマリーレポート</h3>
-<p><strong>月次レポート:</strong> 月1回、指定メールアドレスに利用状況のサマリーレポートを送信します。</p>
-<p><strong>サマリーレポート:</strong> 日次、週次、または月次でカスタムサマリーレポートを送信します。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th></tr>
+    <tr><td><strong>月次レポート有効化</strong></td><td><code>monthly_report_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>サマリーレポート有効化</strong></td><td><code>summary_report_enabled</code></td><td>無効</td></tr>
+    <tr><td><strong>サマリーレポート頻度</strong></td><td><code>summary_report_frequency</code></td><td>―</td></tr>
+</table>
+<p><strong>月次レポート:</strong> 月1回、指定メールアドレスに主要指標（総会話数、メッセージ数、満足度スコア、よくある質問、コンバージョンデータ）のサマリーレポートを送信します。</p>
+<p><strong>サマリーレポート:</strong> <code>daily</code>（日次）、<code>weekly</code>（週次）、または <code>monthly</code>（月次）の頻度でカスタムサマリーレポートを送信します。</p>
 
 <h3 id="backup">バックアップ & メンテナンス</h3>
 <ul>
@@ -525,27 +702,39 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
 </ul>
 
 <h3 id="security">セキュリティ</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; セキュリティ</strong> タブで設定します。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>PII マスキング</strong></td><td>無効</td><td>個人情報（メール、電話、クレジットカード番号）をログでマスク</td></tr>
-    <tr><td><strong>データ保持ポリシー</strong></td><td>365日</td><td>指定期間後にデータを自動削除</td></tr>
-    <tr><td><strong>セキュリティヘッダー</strong></td><td>無効</td><td>セキュリティ関連の HTTP ヘッダーを追加</td></tr>
-    <tr><td><strong>暗号化</strong></td><td>無効</td><td>メッセージとリードデータを AES-256-GCM で暗号化</td></tr>
-    <tr><td><strong>スパム検知</strong></td><td>無効 (閾値: 3)</td><td>スパムスコアに基づくメッセージフィルタリング</td></tr>
-    <tr><td><strong>国別ブロック</strong></td><td>無効</td><td>国コード（ISO 3166-1）でアクセスをブロック</td></tr>
-    <tr><td><strong>IP ホワイトリスト</strong></td><td>無効</td><td>許可 IP のみアクセスを許可</td></tr>
-    <tr><td><strong>脆弱性スキャン</strong></td><td>無効 (weekly)</td><td>設定の脆弱性を定期的にスキャン</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>PII マスキング</strong></td><td><code>pii_masking_enabled</code></td><td>無効</td><td>個人情報（<code>email</code>、<code>phone</code>、<code>credit_card</code>）をデータベース保存前にプレースホルダートークンに置換</td></tr>
+    <tr><td><strong>データ保持ポリシー</strong></td><td><code>data_retention_enabled</code></td><td>無効 (365日)</td><td>指定期間後にデータを自動削除。GDPR 等のプライバシー規制への準拠に有用</td></tr>
+    <tr><td><strong>セキュリティヘッダー</strong></td><td><code>security_headers_enabled</code></td><td>無効</td><td>REST API レスポンスに <code>X-Content-Type-Options</code>、<code>X-Frame-Options</code>、<code>Referrer-Policy</code> 等のヘッダーを追加</td></tr>
+    <tr><td><strong>暗号化</strong></td><td><code>encryption_enabled</code></td><td>無効</td><td>メッセージとリードデータを AES-256-GCM で暗号化して保存。暗号化されたデータは管理者がアクセスする際にオンザフライで復号されます</td></tr>
+    <tr><td><strong>スパム検知</strong></td><td><code>spam_detection_enabled</code></td><td>無効 (閾値: 3)</td><td>スパムスコアに基づくメッセージフィルタリング。閾値が低いほどフィルタリングが積極的になります</td></tr>
+    <tr><td><strong>国別ブロック</strong></td><td><code>country_block_enabled</code></td><td>無効</td><td>IP ジオロケーションに基づき国コード（ISO 3166-1 alpha-2、例: <code>CN, RU, KP</code>）でアクセスをブロック</td></tr>
+    <tr><td><strong>IP ホワイトリスト</strong></td><td>―</td><td>無効</td><td>許可 IP のみアクセスを許可。個別 IP および CIDR 記法対応。内部環境やステージング環境に有用</td></tr>
+    <tr><td><strong>脆弱性スキャン</strong></td><td><code>vulnerability_scan_enabled</code></td><td>無効</td><td>設定の脆弱性を定期的にスキャン（<code>weekly</code> または <code>monthly</code>、<code>vulnerability_scan_schedule</code>）。レート制限の未設定、セキュリティヘッダーの無効化などを検出</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-info">
+    <strong>暗号化について:</strong> 既存のデータベースで暗号化を有効にすると、新しいレコードのみが暗号化されます。既存のレコードは暗号化されません。暗号化を無効にしても、暗号化済みレコードは管理画面を通じて引き続き読み取り可能です。
+</div>
 
 <h3 id="audit-log">監査ログ</h3>
-<p>管理者のすべての操作を記録します。設定変更、ナレッジ編集、データエクスポートなどの操作を追跡し、CSV エクスポートも可能です。保持期間を設定してログの自動削除も行えます。</p>
+<p><strong>AI Chatbot &gt; 監査ログ</strong> メニューからアクセスします。</p>
+<p>管理者のすべての操作を記録します。設定変更、ナレッジ編集、データエクスポート、設定の変更などの操作を、タイムスタンプと実行ユーザーとともに記録します。</p>
+
+<p><strong>ログの表示:</strong> Pro 管理画面から監査ログにアクセスできます。ログは新しい順に表示され、日付範囲、ユーザー、アクションタイプでフィルタリングできます。</p>
+
+<p><strong>CSV エクスポート:</strong> 監査ログエントリを CSV ファイルとしてエクスポートできます。外部分析やコンプライアンス記録の保持に活用できます。</p>
+
+<p><strong>保持ポリシー:</strong> 監査ログエントリの保持期間を設定できます。古いエントリは自動的に削除されます。コンプライアンス要件に基づいて期間を設定してください。</p>
 
 <h3 id="change-history">変更履歴</h3>
-<p>設定変更のバージョン管理を行います。過去の設定状態にロールバックすることが可能です。</p>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; 変更履歴</strong> タブで設定します。</p>
+<p>設定変更のバージョン管理を行います。設定が保存されるたびに以前の値が記録され、レビューおよびロールバックが可能です。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>変更履歴有効化</strong></td><td>無効</td><td>設定変更を自動的に記録</td></tr>
-    <tr><td><strong>最大バージョン数</strong></td><td>50</td><td>保持する変更履歴の最大数</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>変更履歴有効化</strong></td><td><code>change_history_enabled</code></td><td>無効</td><td>設定変更を自動的に記録</td></tr>
+    <tr><td><strong>最大バージョン数</strong></td><td><code>change_history_max</code></td><td>50</td><td>保持する変更履歴の最大数。上限を超えると古いバージョンから自動削除</td></tr>
 </table>
 
 <h3 id="license">ライセンス</h3>
@@ -590,7 +779,8 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
     <p>
         <a href="/rapls-ai-chatbot-free-manual-ja/">Free版マニュアル</a> |
         <a href="/rapls-ai-chatbot-manual-pro-en/">English Version</a> |
-        <a href="/rapls-ai-chatbot-free-manual-en/">Free Manual (English)</a>
+        <a href="/rapls-ai-chatbot-free-manual-en/">Free Manual (English)</a> |
+        <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" rel="noopener">WordPress.org</a>
     </p>
     <p>&copy; 2025-2026 Rapls Works. All rights reserved.</p>
 </div>

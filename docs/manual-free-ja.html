@@ -294,6 +294,7 @@ pre {
             <li><a href="#max-tokens">最大トークン数</a></li>
             <li><a href="#temperature">Temperature</a></li>
             <li><a href="#feedback-buttons">フィードバックボタン</a></li>
+            <li><a href="#quota-error">API 制限超過メッセージ</a></li>
             <li><a href="#web-search">Web 検索</a></li>
         </ul>
     </details>
@@ -303,11 +304,13 @@ pre {
         <ul>
             <li><a href="#theme">テーマ</a></li>
             <li><a href="#primary-color">メインカラー</a></li>
+            <li><a href="#dark-mode">ダークモード</a></li>
             <li><a href="#badge-position">バッジ位置</a></li>
-            <li><a href="#badge-margin">バッジマージン</a></li>
+            <li><a href="#badge-icon">バッジアイコン</a></li>
             <li><a href="#markdown">Markdown</a></li>
             <li><a href="#mobile">モバイル表示</a></li>
             <li><a href="#page-visibility">ページ表示設定</a></li>
+            <li><a href="#page-exclusion">ページ除外</a></li>
             <li><a href="#embed">外部サイト埋め込み</a></li>
         </ul>
     </details>
@@ -318,6 +321,7 @@ pre {
             <li><a href="#recaptcha-enable">reCAPTCHA 有効化</a></li>
             <li><a href="#recaptcha-keys">サイトキー / シークレットキー</a></li>
             <li><a href="#recaptcha-threshold">スコア閾値</a></li>
+            <li><a href="#recaptcha-existing">既存 reCAPTCHA</a></li>
             <li><a href="#recaptcha-fail">失敗時モード</a></li>
         </ul>
     </details>
@@ -331,12 +335,14 @@ pre {
             <li><a href="#consent">WP Consent API</a></li>
             <li><a href="#rate-limit">レート制限</a></li>
             <li><a href="#proxy">プロキシ設定</a></li>
+            <li><a href="#security-diag">セキュリティ診断</a></li>
         </ul>
     </details>
 
     <details class="wpaic-sidebar-section">
         <summary><i class="fa-solid fa-spider"></i> サイト学習</summary>
         <ul>
+            <li><a href="#crawler-overview">概要</a></li>
             <li><a href="#crawler-enable">クローラー有効化</a></li>
             <li><a href="#crawler-types">投稿タイプ</a></li>
             <li><a href="#crawler-interval">クロール間隔</a></li>
@@ -351,6 +357,7 @@ pre {
             <li><a href="#kb-overview">概要</a></li>
             <li><a href="#kb-add">Q&A 追加</a></li>
             <li><a href="#kb-import">CSV インポート</a></li>
+            <li><a href="#kb-limit">Free版の制限</a></li>
         </ul>
     </details>
 
@@ -359,6 +366,15 @@ pre {
         <ul>
             <li><a href="#conv-list">会話一覧</a></li>
             <li><a href="#conv-detail">メッセージ表示</a></li>
+        </ul>
+    </details>
+
+    <details class="wpaic-sidebar-section">
+        <summary><i class="fa-solid fa-code"></i> 開発者リファレンス</summary>
+        <ul>
+            <li><a href="#dev-filters">フィルター</a></li>
+            <li><a href="#dev-rest">REST API</a></li>
+            <li><a href="#dev-db">データベーステーブル</a></li>
         </ul>
     </details>
 
@@ -379,28 +395,30 @@ pre {
 <h2 id="ai-settings"><i class="fa-solid fa-microchip"></i> AI 設定</h2>
 <!-- ============================================================ -->
 
+<p>AI プロバイダー、API キー、モデル、ベクトル埋め込み、MCP サーバーを設定します。<strong>AI Chatbot &gt; 設定 &gt; AI 設定</strong> タブで設定します。</p>
+
 <h3 id="ai-provider">AI プロバイダー</h3>
 <p>チャットボットが使用する AI サービスを選択します。各プロバイダーごとに API キーの取得とモデルの選択が必要です。</p>
 <table class="wpaic-table">
     <tr><th>選択肢</th><th>説明</th></tr>
     <tr><td><strong>OpenAI</strong> <span class="wpaic-default">デフォルト</span></td><td>GPT-4o、GPT-4 Turbo、GPT-3.5 Turbo など。最も広く利用されている AI プロバイダーです。</td></tr>
     <tr><td><strong>Claude (Anthropic)</strong></td><td>Claude Opus、Sonnet、Haiku モデル。長文の理解と安全性に優れています。</td></tr>
-    <tr><td><strong>Gemini (Google)</strong></td><td>Gemini 2.0 Flash、1.5 Pro など。マルチモーダル対応に強みがあります。</td></tr>
+    <tr><td><strong>Gemini (Google)</strong></td><td>Gemini 2.0 Flash、1.5 Pro など。マルチモーダル対応に強みがあります。Google の無料枠が充実しています。</td></tr>
     <tr><td><strong>OpenRouter</strong></td><td>100以上のモデルに統一 API でアクセスできるゲートウェイサービスです。</td></tr>
 </table>
 <div class="wpaic-box wpaic-box-tip">
-    <strong>ヒント:</strong> プロバイダーを変更しても過去の会話履歴は保持されます。ただし、モデルが異なるため応答のスタイルが変わる場合があります。
+    <strong>ヒント:</strong> 複数のプロバイダーの API キーを同時に設定できます。選択中のプロバイダーのみが使用されますが、キーは個別に保存されるため切り替えは即座に行えます。
 </div>
 
 <h3 id="openai">OpenAI 設定</h3>
 <p>OpenAI の API キーとモデルを設定します。API キーは <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI ダッシュボード</a>から取得できます。</p>
 
-<p><strong>API キー:</strong> <code>sk-</code> で始まるキーを入力してください。保存時に暗号化されます。「接続テスト」ボタンでキーの有効性を確認できます。</p>
+<p><strong>API キー</strong>（<code>openai_api_key</code>）: <code>sk-</code> で始まるキーを入力してください。保存時に暗号化されます。<strong>接続テスト</strong>ボタンでキーの有効性を確認でき、<strong>削除</strong>ボタンで保存済みのキーを削除できます。</p>
 
-<p><strong>モデル選択:</strong></p>
+<p><strong>モデル選択</strong>（<code>openai_model</code>）:</p>
 <table class="wpaic-table">
     <tr><th>モデル</th><th>特徴</th><th>推奨用途</th></tr>
-    <tr><td><strong>gpt-4o-mini</strong> <span class="wpaic-default">デフォルト</span></td><td>高速・低コスト。GPT-4o の軽量版</td><td>一般的なカスタマーサポート</td></tr>
+    <tr><td><strong>gpt-4o-mini</strong> <span class="wpaic-default">デフォルト</span></td><td>高速・低コスト。GPT-4o の軽量版</td><td>一般的なカスタマーサポート、コスト重視のデプロイ</td></tr>
     <tr><td><strong>gpt-4o</strong></td><td>高性能マルチモーダル。画像理解対応</td><td>画像を扱う高品質な応答が必要な場合</td></tr>
     <tr><td><strong>gpt-4-turbo</strong></td><td>GPT-4 の高速版。128K コンテキスト</td><td>長い会話や大量の知識ベースがある場合</td></tr>
     <tr><td><strong>gpt-3.5-turbo</strong></td><td>最も低コスト</td><td>コスト重視の場合</td></tr>
@@ -410,83 +428,142 @@ pre {
     <tr><td><strong>gpt-5</strong></td><td>最新世代。トークン自動乗算機能あり</td><td>最高品質の応答</td></tr>
 </table>
 <div class="wpaic-box wpaic-box-info">
-    <strong>GPT-5 トークン乗算:</strong> GPT-5 モデル使用時は、設定した最大トークン数に自動的に乗算係数（デフォルト: 4倍）が適用されます。これは GPT-5 の推論トークン消費に対応するためです。
+    <strong>GPT-5 トークン乗算:</strong> GPT-5 や推論モデル（o1、o3-mini）使用時は、設定した最大トークン数に自動的に乗算係数（デフォルト: 4倍）が適用されます。例: 1000 と設定すると実際には約4000トークンが上限になります。<code>wpaic_gpt5_token_multiplier</code> フィルター（範囲: 1-8）で調整可能です。
+</div>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> モデルドロップダウン横の更新ボタン（丸い矢印アイコン）をクリックすると、OpenAI から最新の利用可能モデル一覧を取得できます。
 </div>
 
 <h3 id="claude">Claude (Anthropic) 設定</h3>
 <p>Anthropic の API キーとモデルを設定します。API キーは <a href="https://console.anthropic.com/" target="_blank">Anthropic コンソール</a>から取得できます。</p>
 
+<p><strong>API キー</strong>（<code>claude_api_key</code>）: <code>sk-ant-</code> で始まるキーを入力してください。保存時に暗号化されます。接続テスト・削除ボタンが利用可能です。</p>
+
 <p><strong>モデル選択:</strong></p>
 <table class="wpaic-table">
-    <tr><th>モデル</th><th>特徴</th></tr>
-    <tr><td><strong>claude-sonnet-4-20250514</strong> <span class="wpaic-default">デフォルト</span></td><td>最新の Sonnet。速度と品質のバランスが優秀</td></tr>
-    <tr><td><strong>claude-opus-4-20250514</strong></td><td>最高性能。複雑なタスクや長文に最適</td></tr>
-    <tr><td><strong>claude-haiku-4-20250514</strong></td><td>最速・最低コスト。簡単な応答に最適</td></tr>
-    <tr><td><strong>claude-3-5-sonnet</strong></td><td>Claude 3.5 世代の Sonnet</td></tr>
-    <tr><td><strong>claude-3-opus</strong></td><td>Claude 3 世代の最高性能モデル</td></tr>
-    <tr><td><strong>claude-3-haiku</strong></td><td>Claude 3 世代の軽量モデル</td></tr>
+    <tr><th>モデル</th><th>特徴</th><th>推奨用途</th></tr>
+    <tr><td><strong>claude-sonnet-4-20250514</strong> <span class="wpaic-default">デフォルト</span></td><td>最新の Sonnet。速度と品質のバランスが優秀。画像対応</td><td>汎用チャットボット</td></tr>
+    <tr><td><strong>claude-opus-4-20250514</strong></td><td>最高性能。画像対応。最高コスト</td><td>複雑なタスク、長文コンテンツ</td></tr>
+    <tr><td><strong>claude-haiku-4-20250514</strong></td><td>最速・最低コスト</td><td>シンプルで高速な応答</td></tr>
+    <tr><td><strong>claude-3-5-sonnet</strong></td><td>前世代の Sonnet。画像対応</td><td>総合的に高性能</td></tr>
+    <tr><td><strong>claude-3-opus</strong></td><td>前世代のフラッグシップ。画像対応</td><td>複雑な推論（前世代）</td></tr>
+    <tr><td><strong>claude-3-haiku</strong></td><td>前世代の軽量モデル</td><td>コスト重視のデプロイ（前世代）</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>注意:</strong> Claude と OpenRouter は埋め込み API を提供していません。ベクトル埋め込み（RAG）を使用する場合は、OpenAI または Gemini の API キーを別途設定する必要があります。
+</div>
 
 <h3 id="gemini">Gemini (Google) 設定</h3>
 <p>Google AI の API キーとモデルを設定します。API キーは <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a> から取得できます。</p>
 
+<p><strong>API キー</strong>（<code>gemini_api_key</code>）: Google AI Studio の API キーを入力してください。保存時に暗号化されます。</p>
+
 <p><strong>モデル選択:</strong></p>
 <table class="wpaic-table">
-    <tr><th>モデル</th><th>特徴</th></tr>
-    <tr><td><strong>gemini-2.0-flash-exp</strong> <span class="wpaic-default">デフォルト</span></td><td>最新の高速モデル。マルチモーダル対応</td></tr>
-    <tr><td><strong>gemini-1.5-pro</strong></td><td>100万トークンコンテキスト。長文分析に最適</td></tr>
-    <tr><td><strong>gemini-1.5-flash</strong></td><td>高速・低コスト版</td></tr>
-    <tr><td><strong>gemini-2.0-flash-thinking-exp</strong></td><td>思考プロセス付きの実験的モデル</td></tr>
+    <tr><th>モデル</th><th>特徴</th><th>推奨用途</th></tr>
+    <tr><td><strong>gemini-2.0-flash-exp</strong> <span class="wpaic-default">デフォルト</span></td><td>高速・高性能・コスト効率良好。画像対応</td><td>汎用、マルチモーダルタスク</td></tr>
+    <tr><td><strong>gemini-1.5-pro</strong></td><td>100万トークンコンテキスト。長文ドキュメントに最適</td><td>長文分析、大規模ナレッジベース</td></tr>
+    <tr><td><strong>gemini-1.5-flash</strong></td><td>速度と効率に最適化。画像対応</td><td>高速・低コストの応答</td></tr>
+    <tr><td><strong>gemini-2.0-flash-thinking-exp</strong></td><td>思考プロセス表示付きの強化推論。実験的</td><td>複雑な推論タスク</td></tr>
 </table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> Google は Gemini API に充実した無料枠を提供しており、テストや低トラフィックサイトに最適です。
+</div>
 
 <h3 id="openrouter">OpenRouter 設定</h3>
-<p>OpenRouter は複数の AI プロバイダーのモデルに統一 API でアクセスできるサービスです。API キーは <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a> から取得できます。</p>
-<p><strong>デフォルトモデル:</strong> <code>openrouter/auto</code> - リクエスト内容に応じて最適なモデルを自動選択します。100以上のモデルからドロップダウンで選択することもできます。</p>
+<p>OpenRouter は複数の AI プロバイダー（OpenAI、Anthropic、Google、Meta、Mistral など）のモデルに統一 API でアクセスできるサービスです。API キーは <a href="https://openrouter.ai/keys" target="_blank">OpenRouter</a> から取得できます。</p>
+<p><strong>API キー</strong>（<code>openrouter_api_key</code>）: <code>sk-or-</code> で始まるキーを入力してください。保存時に暗号化されます。</p>
+<p><strong>モデル</strong>（<code>openrouter_model</code>）: デフォルトは <code>openrouter/auto</code> で、リクエスト内容に応じて最適なモデルを自動選択します。更新ボタンをクリックすると、利用可能なモデルの完全なリストを取得できます。</p>
+<p><span class="wpaic-default">デフォルト: openrouter/auto</span></p>
 <div class="wpaic-box wpaic-box-tip">
-    <strong>ヒント:</strong> OpenRouter を使うと、1つの API キーで OpenAI、Claude、Gemini、Llama、Mistral など様々なモデルを試すことができます。
+    <strong>ヒント:</strong> OpenRouter を使うと、1つの API キーで様々なプロバイダーのモデルを試すことができます。更新ボタンで新しく追加されたモデルを検出できます。
 </div>
 
 <h3 id="embedding">ベクトル埋め込み (RAG)</h3>
-<p>ナレッジベースやサイト学習データからの検索精度を向上させるベクトル埋め込み検索を有効にします。</p>
+<p>AI の埋め込みモデルを使用したセマンティック検索を有効にし、ナレッジベースやサイトコンテンツの検索精度を向上させます。キーワード一致だけに頼るのではなく、クエリの意味を理解して検索します。</p>
 <table class="wpaic-table">
     <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>ベクトル埋め込み有効化</strong></td><td><strong>有効:</strong> AI の埋め込みモデルを使って意味的な検索を行います。キーワード一致ではなく、意味の類似性で検索するため精度が向上します。<br><strong>無効:</strong> 従来の FULLTEXT 検索を使用します。</td></tr>
-    <tr><td><strong>プロバイダー</strong></td><td><strong>自動</strong> <span class="wpaic-default">デフォルト</span> - 選択中の AI プロバイダーの埋め込みモデルを使用<br><strong>OpenAI</strong> - OpenAI の text-embedding モデルを使用<br><strong>Gemini</strong> - Google の embedding モデルを使用</td></tr>
+    <tr><td><strong>ベクトル検索</strong>（<code>embedding_enabled</code>）</td><td><strong>有効:</strong> AI の埋め込みモデルを使ってテキストをベクトルに変換します。意味的な類似性でマッチングを行います。日本語などの非英語言語での精度が大幅に向上します。<br><strong>無効:</strong> 従来の FULLTEXT キーワード検索のみを使用します。<span class="wpaic-default">デフォルト: 無効</span></td></tr>
+    <tr><td><strong>埋め込みプロバイダー</strong>（<code>embedding_provider</code>）</td><td><strong>自動</strong> <span class="wpaic-default">デフォルト</span> - 設定済みの API キーに基づいて最適なプロバイダーを自動選択（OpenAI を優先）<br><strong>OpenAI</strong> - OpenAI の text-embedding-ada-002 モデルを使用。OpenAI API キーが必要<br><strong>Gemini</strong> - Google の embedding モデルを使用。Gemini API キーが必要</td></tr>
+    <tr><td><strong>ステータス</strong>（読み取り専用）</td><td>設定が完了している場合、使用中のプロバイダー/モデルと、埋め込み済みのコンテンツチャンク数/総数が表示されます。設定に問題がある場合はエラーメッセージが表示されます。</td></tr>
 </table>
 <div class="wpaic-box wpaic-box-warn">
-    <strong>注意:</strong> ベクトル埋め込みを有効にすると、チャットメッセージごとに追加の API 呼び出しが発生します。少量の追加コストが発生する場合があります。
+    <strong>重要:</strong> Claude と OpenRouter は埋め込み API を提供していません。メインの AI プロバイダーが Claude または OpenRouter の場合、ベクトル埋め込みを使用するには OpenAI または Gemini の API キーを別途設定する必要があります。
+</div>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> ベクトル埋め込みを有効にした後、サイト学習（クローラー）を実行して既存コンテンツの埋め込みを生成してください。
 </div>
 
 <h3 id="mcp">MCP (Model Context Protocol) サーバー</h3>
-<p>MCP サーバーを有効にすると、Claude Desktop、Cursor、その他の MCP 対応ツールからプラグインのナレッジベースにアクセスできるようになります。</p>
+<p>MCP サーバーを有効にすると、Claude Desktop、Cursor、Windsurf、その他の MCP 対応クライアントからプラグインのナレッジベースや会話データにプログラム的にアクセスできるようになります。</p>
 <table class="wpaic-table">
     <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>MCP 有効化</strong></td><td><strong>有効:</strong> REST API エンドポイントを公開し、外部の AI ツールからナレッジベースの検索やサイト情報の取得が可能になります。<br><strong>無効:</strong> MCP エンドポイントを無効にします。</td></tr>
-    <tr><td><strong>API キー</strong></td><td>「生成」ボタンで新しい API キーを作成します。このキーは一度だけ表示されます。外部ツールの Bearer トークン認証に使用してください。</td></tr>
-    <tr><td><strong>エンドポイント URL</strong></td><td>自動生成される REST API URL。外部ツールの MCP 設定に入力してください。</td></tr>
+    <tr><td><strong>MCP サーバー</strong>（<code>mcp_enabled</code>）</td><td><strong>有効:</strong> REST API エンドポイントを公開し、外部の AI エージェントからナレッジベースの検索やサイト情報の取得が可能になります。<br><strong>無効:</strong> MCP エンドポイントにアクセスできません。<span class="wpaic-default">デフォルト: 無効</span></td></tr>
+    <tr><td><strong>MCP API キー</strong></td><td><strong>キーを生成</strong>ボタンで認証キーを作成します。キーは生成時に一度だけ表示されるため、安全に保管してください。<strong>キーを再生成</strong>で新しいキーを作成します（以前のキーは無効化されます）。</td></tr>
+    <tr><td><strong>MCP エンドポイント</strong></td><td>サイトに基づいて自動生成される REST API URL（例: <code>https://example.com/wp-json/wp-ai-chatbot/v1/mcp</code>）。<strong>コピー</strong>ボタンで MCP クライアント設定に使用してください。</td></tr>
 </table>
+
+<p><strong>Claude Desktop 設定例:</strong></p>
+<pre>{
+  "mcpServers": {
+    "your-site-name": {
+      "url": "https://example.com/wp-json/wp-ai-chatbot/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_API_KEY"
+      }
+    }
+  }
+}</pre>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> MCP を使うと強力なワークフローが可能になります。例えば、Claude Desktop でコンテンツを書きながらサイトのナレッジベースを検索したり、Cursor で開発中にチャットボットの FAQ データを参照したりできます。
+</div>
 
 <!-- ============================================================ -->
 <h2 id="chat-settings"><i class="fa-solid fa-comments"></i> チャット設定</h2>
 <!-- ============================================================ -->
 
+<p>チャットボットの動作、表示内容、会話処理方法を設定します。<strong>AI Chatbot &gt; 設定 &gt; チャット設定</strong> タブで設定します。</p>
+
 <h3 id="bot-name">ボット名</h3>
-<p>チャットウィンドウのヘッダーとメッセージに表示されるアシスタントの名前です。</p>
+<p>チャットウィジェットのヘッダーとボットメッセージの横に表示される名前です。</p>
+<p><strong>設定キー:</strong> <code>bot_name</code></p>
 <p><strong>デフォルト:</strong> <code>Assistant</code></p>
-<p>サイトのブランドに合わせて自由に変更できます。例:「サポート AI」「カスタマーアシスタント」など。</p>
+<p>リセットボタンでデフォルト値に戻すことができます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> ブランド名や「サポート Bot」「ヘルプデスク」のような親しみやすい名前を使用すると、チャットボットがサイトに統合された印象になります。
+</div>
 
 <h3 id="bot-avatar">ボットアバター</h3>
-<p>チャットメッセージの横に表示されるアイコンです。</p>
+<p>チャットウィジェットでボットメッセージの横に表示されるアバターアイコンです。</p>
+<p><strong>設定キー:</strong> <code>bot_avatar</code></p>
 <p><strong>デフォルト:</strong> ロボットの絵文字</p>
-<p>絵文字を直接入力するか、「画像をアップロード」ボタンでメディアライブラリから画像を選択できます。画像は自動的にリサイズされます。</p>
+<ul>
+    <li><strong>絵文字:</strong> テキストフィールドに任意の絵文字を直接入力できます。</li>
+    <li><strong>画像:</strong> <strong>画像を選択</strong>ボタンをクリックして WordPress メディアライブラリから画像を選択します。推奨サイズ: 96x96ピクセル以上、正方形。</li>
+</ul>
+<p><strong>絵文字にリセット</strong>ボタンでデフォルトの絵文字アバターに戻すことができます。</p>
 
 <h3 id="welcome-message">ウェルカムメッセージ</h3>
-<p>チャットボットを開いた時に最初に表示されるメッセージです。</p>
+<p>ユーザーがチャットウィジェットを開いた時に最初に表示されるメッセージです。これは静的な挨拶文で、AI には送信されません。</p>
+<p><strong>設定キー:</strong> <code>welcome_message</code></p>
 <p><strong>デフォルト:</strong> <code>Hello! How can I help you today?</code></p>
-<p>サイトの目的や訪問者に合わせたメッセージに変更することを推奨します。応答言語を「自動検出」に設定している場合は、言語別のウェルカムメッセージを個別に設定できます。</p>
+
+<p><strong>言語別ウェルカムメッセージ</strong>（<code>welcome_messages</code>）:</p>
+<p>応答言語を<strong>自動検出</strong>に設定すると、メインのウェルカムメッセージフィールドの下に折りたたみパネルが表示され、13言語（英語、日本語、中国語、韓国語、スペイン語、フランス語、ドイツ語、ポルトガル語、イタリア語、ロシア語、アラビア語、タイ語、ベトナム語）ごとに個別のウェルカムメッセージを設定できます。</p>
+
+<p><strong>優先順序:</strong></p>
+<ol>
+    <li><strong>言語別メッセージ</strong> -- 検出された言語に対して特定のメッセージが設定されている場合、それが使用されます。</li>
+    <li><strong>ウェルカムメッセージ</strong> -- 言語別メッセージが存在しない場合、メインのウェルカムメッセージが表示されます。</li>
+    <li><strong>組み込みデフォルト</strong> -- ウェルカムメッセージがデフォルトのままの場合、組み込みの翻訳が使用されます。</li>
+</ol>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 多言語サイトでは、応答言語を「自動検出」に設定し、言語別ウェルカムメッセージを設定して、訪問者をそれぞれの言語で迎えましょう。
+</div>
 
 <h3 id="response-language">応答言語</h3>
 <p>AI が応答する言語を制御します。</p>
+<p><strong>設定キー:</strong> <code>response_language</code></p>
 <table class="wpaic-table">
     <tr><th>選択肢</th><th>説明</th></tr>
     <tr><td><strong>サイト言語</strong> <span class="wpaic-default">デフォルト</span></td><td>WordPress の言語設定に従います</td></tr>
@@ -494,53 +571,77 @@ pre {
     <tr><td><strong>個別言語 (en, ja, zh, ko, es, fr, de, pt)</strong></td><td>常に指定した言語で応答します</td></tr>
 </table>
 
-<p><strong>言語別ウェルカムメッセージ</strong>（自動検出モード時のみ表示）:</p>
-<p>応答言語を「自動検出」に設定すると、13言語（英語、日本語、中国語、韓国語、スペイン語、フランス語、ドイツ語、ポルトガル語、イタリア語、ロシア語、アラビア語、タイ語、ベトナム語）ごとに個別のウェルカムメッセージを設定できます。ユーザーのブラウザ言語を検出して適切なメッセージを表示します。</p>
-
 <h3 id="system-prompt">システムプロンプト</h3>
-<p>AI の振る舞い、性格、制約事項を定義する指示文です。すべての会話の裏側で AI に送信されます。</p>
-<p><strong>デフォルト:</strong> 正確さ、誠実さ、情報の捏造禁止などの基本ルールが設定されています。</p>
+<p>AI の振る舞い、性格、制約事項を定義する指示文です。すべての会話で最初のメッセージとして AI に送信され、AI の「取扱説明書」として機能します。</p>
+<p><strong>設定キー:</strong> <code>system_prompt</code></p>
+<p><strong>デフォルト:</strong> 以下の6つのルールを含む包括的なプロンプトが設定されています:</p>
+<ol>
+    <li><strong>正確さ:</strong> 参考情報を主要な情報源として使用する</li>
+    <li><strong>誠実さ:</strong> 情報がない場合は明確にその旨を伝える</li>
+    <li><strong>捏造禁止:</strong> 事実、URL、価格、日付を決して捏造しない</li>
+    <li><strong>簡潔さ:</strong> 明確で焦点を絞った回答を提供する</li>
+    <li><strong>言語:</strong> ユーザーと同じ言語で応答する</li>
+    <li><strong>トーン:</strong> プロフェッショナルで親切、かつ役立つ態度</li>
+</ol>
+<p>このプロンプトは完全にカスタマイズ可能です。<strong>デフォルトにリセット</strong>ボタンで初期値に戻せます。</p>
 <div class="wpaic-box wpaic-box-tip">
-    <strong>ヒント:</strong> システムプロンプトには、会社名、サービス内容、回答してはいけないトピック、応答のトーンなどを含めると効果的です。「デフォルトにリセット」ボタンで初期値に戻せます。
+    <strong>ヒント:</strong> 会社名、製品の詳細、ハードルール（例:「競合製品を推奨しない」「必ずドキュメントページへのリンクを含める」）などを含めると効果的です。
 </div>
 
 <h3 id="context-prompts">コンテキストプロンプト（詳細設定）</h3>
-<p>ナレッジベースやサイト学習データを AI に渡す際の指示文をカスタマイズできます。通常はデフォルトのまま使用することを推奨します。</p>
+<p>ナレッジベースやサイト学習データを AI に渡す際の指示文をカスタマイズできます。関連データが見つかった場合にシステムプロンプトに追加されます。このセクションはデフォルトで折りたたまれています。チェックボックスをオンにすると展開されます。</p>
+<p>すべてのコンテキストプロンプトで <code>{context}</code> を実際のコンテンツのプレースホルダーとして使用できます。</p>
 <table class="wpaic-table">
-    <tr><th>プロンプト</th><th>説明</th></tr>
-    <tr><td><strong>ナレッジベース完全一致プロンプト</strong></td><td>ナレッジベースに完全一致する質問があった場合の指示。登録済みの回答をそのまま返すよう指示します。</td></tr>
-    <tr><td><strong>ナレッジベース Q&A プロンプト</strong></td><td>ナレッジベースの Q&A 形式データを参照する際の指示。</td></tr>
-    <tr><td><strong>サイトコンテキストプロンプト</strong></td><td>サイト学習（クローラー）で取得したコンテンツを参照する際の指示。</td></tr>
+    <tr><th>プロンプト</th><th>設定キー</th><th>説明</th></tr>
+    <tr><td><strong>ナレッジベース完全一致プロンプト</strong></td><td><code>knowledge_exact_prompt</code></td><td>ナレッジベースに完全一致する Q&A が見つかった場合に使用。一致した回答のみを使用し、外部情報を追加したりソースを組み合わせたりしないよう厳格に指示します。</td></tr>
+    <tr><td><strong>ナレッジベース Q&A プロンプト</strong></td><td><code>knowledge_qa_prompt</code></td><td>Q&A 形式のエントリが見つかった場合（完全一致ではない）に使用。AI に FAQ データベースから最適な Q&A ペアを探して対応する回答を使用するよう指示します。</td></tr>
+    <tr><td><strong>サイトコンテキストプロンプト</strong></td><td><code>site_context_prompt</code></td><td>クロールしたサイトコンテンツがコンテキストとして提供される場合に使用。AI に参考情報として扱い、完全なキーワード一致ではなく意味で照合するよう指示します。</td></tr>
 </table>
-<p>各プロンプトには「デフォルトにリセット」ボタンがあります。</p>
+<p>各プロンプトには<strong>デフォルトにリセット</strong>ボタンがあります。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> ほとんどのユーザーはこれらのプロンプトをデフォルトのままにしてください。AI がナレッジベースやサイト学習データを使用する際の特定の動作が必要な場合のみ変更してください。
+</div>
 
 <h3 id="feature-prompts">機能プロンプト（詳細設定）</h3>
-<p>再生成、フィードバック、要約機能の動作をカスタマイズするプロンプトです。</p>
+<p>再生成、フィードバック学習、要約機能の動作をカスタマイズするプロンプトです。このセクションはデフォルトで折りたたまれています。チェックボックスをオンにすると展開されます。</p>
 <table class="wpaic-table">
-    <tr><th>プロンプト</th><th>説明</th></tr>
-    <tr><td><strong>再生成プロンプト</strong></td><td>応答の再生成時に使用される指示文。プレースホルダー: <code>{variation_number}</code>（再生成回数）、<code>{forbidden_start}</code>（前回と異なる開始を指示）、<code>{style}</code>（応答スタイル指定）。</td></tr>
-    <tr><td><strong>フィードバック良好ヘッダー</strong></td><td>ユーザーが「良い」と評価した応答例を AI に示すヘッダー。</td></tr>
-    <tr><td><strong>フィードバック不良ヘッダー</strong></td><td>ユーザーが「悪い」と評価した応答例を AI に示すヘッダー。</td></tr>
-    <tr><td><strong>要約プロンプト</strong></td><td>会話要約を生成する際の指示文。</td></tr>
+    <tr><th>プロンプト</th><th>設定キー</th><th>説明</th></tr>
+    <tr><td><strong>再生成プロンプト</strong></td><td><code>regenerate_prompt</code></td><td>ユーザーが応答の再生成をリクエストした時に追加される指示文。AI にまったく異なる回答を生成するよう指示します。</td></tr>
+    <tr><td><strong>フィードバック良好ヘッダー</strong></td><td><code>feedback_good_header</code></td><td>肯定的に評価された応答例の前に付加されるヘッダーテキスト。AI の学習例として送信されます。</td></tr>
+    <tr><td><strong>フィードバック不良ヘッダー</strong></td><td><code>feedback_bad_header</code></td><td>否定的に評価された応答例の前に付加されるヘッダーテキスト。AI に同様のパターンを避けるよう指示します。</td></tr>
+    <tr><td><strong>要約プロンプト</strong></td><td><code>summary_prompt</code></td><td>会話要約を生成する際の指示文（主なトピックと結論を2-3文で要約）。</td></tr>
+</table>
+
+<p><strong>再生成プロンプトのプレースホルダー:</strong></p>
+<table class="wpaic-table">
+    <tr><th>プレースホルダー</th><th>説明</th></tr>
+    <tr><td><code>{variation_number}</code></td><td>毎回挿入されるランダムな数値（1-1000）。AI に一意の応答を強制的に生成させます。</td></tr>
+    <tr><td><code>{forbidden_start}</code></td><td>前回の応答の最初の50文字。AI に同じテキストで始めないよう指示します。</td></tr>
+    <tr><td><code>{style}</code></td><td>ランダムに選択されるスタイル指示（例:「カジュアルなトーンで」「別の角度から説明して」）。応答スタイルを変化させます。</td></tr>
 </table>
 
 <h3 id="message-history">メッセージ履歴数</h3>
-<p>AI に送信する過去のメッセージ数です。この数が多いほど AI は会話の文脈をよく理解しますが、API コストが増加します。</p>
+<p>AI にコンテキストとして送信する過去のメッセージ数です。メッセージが多いほど AI は会話の文脈をよく理解しますが、トークン使用量と API コストが増加します。</p>
+<p><strong>設定キー:</strong> <code>message_history_count</code></p>
 <p><strong>デフォルト:</strong> <code>10</code> | <strong>範囲:</strong> 1 ~ 50</p>
 <div class="wpaic-box wpaic-box-info">
     <strong>推奨:</strong> 一般的なサポートチャットでは 10 ~ 15 が適切です。コスト削減には 5 程度に下げることも可能ですが、AI が前の質問を忘れやすくなります。
 </div>
 
 <h3 id="max-tokens">最大トークン数</h3>
-<p>AI の応答1回あたりの最大出力トークン数です。1トークンは日本語で約1文字、英語で約4文字に相当します。</p>
+<p>AI の応答1回あたりの最大出力トークン数です。1トークンは英語で約4文字、日本語/中国語/韓国語で約1-2文字に相当します。</p>
+<p><strong>設定キー:</strong> <code>max_tokens</code></p>
 <p><strong>デフォルト:</strong> <code>1000</code> | <strong>範囲:</strong> 100 ~ 4000</p>
+<p>リセットボタンでデフォルト値に戻すことができます。</p>
 <div class="wpaic-box wpaic-box-info">
     <strong>GPT-5 自動乗算:</strong> GPT-5 モデルでは推論に多くのトークンを消費するため、設定値に自動的に乗算係数（デフォルト: 4倍）が適用されます。例: 1000 と設定すると実際には 4000 トークンが上限になります。
 </div>
 
 <h3 id="temperature">Temperature（創造性）</h3>
-<p>AI の応答のランダム性を制御します。低い値ほど一貫した応答になり、高い値ほど多様な応答になります。</p>
+<p>AI の応答のランダム性を制御します。低い値ほど一貫した決定論的な応答になり、高い値ほど創造的で多様な応答になります。</p>
+<p><strong>設定キー:</strong> <code>temperature</code></p>
 <p><strong>デフォルト:</strong> <code>0.7</code> | <strong>範囲:</strong> 0 ~ 2（0.1刻み）</p>
+<p>リセットボタンでデフォルト値に戻すことができます。</p>
 <table class="wpaic-table">
     <tr><th>値</th><th>特徴</th><th>推奨用途</th></tr>
     <tr><td><strong>0 ~ 0.3</strong></td><td>非常に一貫性が高い。同じ質問に同じ回答</td><td>FAQ、事実ベースの回答</td></tr>
@@ -551,17 +652,29 @@ pre {
 
 <h3 id="feedback-buttons">フィードバックボタン</h3>
 <p>AI の各応答メッセージの下に「いいね」「よくないね」のボタンを表示します。</p>
-<p><strong>有効:</strong> ユーザーが応答を評価でき、管理者は会話履歴でフィードバックを確認できます。応答品質の改善に役立ちます。</p>
-<p><strong>無効:</strong> フィードバックボタンを非表示にします。</p>
+<p><strong>設定キー:</strong> <code>show_feedback_buttons</code></p>
+<p><strong>有効:</strong> すべてのボットメッセージにフィードバックボタンが表示されます。肯定的・否定的なフィードバックはデータベースに保存され、将来のプロンプト（機能プロンプト参照）で応答品質の向上に使用されます。</p>
+<p><strong>無効:</strong> フィードバックボタンを非表示にします。ユーザーは応答を評価できません。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 品質データを収集するためにこの機能を有効にしてください。Pro版では、アナリティクスダッシュボードでフィードバック分析や満足度スコアを確認できます。
+</div>
 
 <h3 id="quota-error">API 制限超過メッセージ</h3>
-<p>AI プロバイダーの API クォータを超過した場合にユーザーに表示されるメッセージです。</p>
+<p>AI プロバイダーの API クォータを超過した場合や課金に問題が発生した場合（例: API クレジットが不足）にユーザーに表示されるメッセージです。</p>
+<p><strong>設定キー:</strong> <code>quota_error_message</code></p>
 <p><strong>デフォルト:</strong> <code>Currently recharging. Please try again later.</code></p>
+<p>リセットボタンでデフォルトのテキストに戻すことができます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> お問い合わせページへのリンクや、チャットボットが一時的に利用できない場合の代替手段を含むようにカスタマイズしてください。
+</div>
 
 <h3 id="web-search">Web 検索</h3>
-<p>ナレッジベースやサイト学習データで十分な回答が得られない場合に、Web 検索結果を AI の参考情報として利用します。</p>
-<p><strong>有効:</strong> ナレッジベースに該当する情報がない場合、自動的に Web 検索を実行して回答の参考にします。</p>
-<p><strong>無効:</strong> ナレッジベースとサイト学習データのみで応答します。</p>
+<p>ナレッジベースに十分な回答が含まれていない場合に、AI がリアルタイムで Web 検索を自動実行できるようにします。</p>
+<p><strong>設定キー:</strong> <code>web_search_enabled</code></p>
+<p><strong>有効:</strong> 必要に応じて AI が Web 検索を実行し、インターネットから最新の情報を提供します。</p>
+<p><strong>無効:</strong> AI はトレーニングデータとナレッジベース/サイト学習コンテンツのみで応答します。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
 <div class="wpaic-box wpaic-box-warn">
     <strong>注意:</strong> Web 検索を有効にすると、追加の API 呼び出しが発生し、コストが増加する場合があります。
 </div>
@@ -570,8 +683,12 @@ pre {
 <h2 id="display-settings"><i class="fa-solid fa-palette"></i> 表示設定</h2>
 <!-- ============================================================ -->
 
+<p>チャットウィジェットの外観と配置を制御します。<strong>AI Chatbot &gt; 設定 &gt; 表示設定</strong> タブで設定します。</p>
+
 <h3 id="theme">テーマ</h3>
-<p>チャットウィジェットの外観テーマを選択します。Free版では6種類のテーマが利用可能です。</p>
+<p>チャットウィジェットの外観テーマを選択します。各テーマはヘッダー、メッセージ、入力エリア、バッジボタンの統一されたカラースキームとビジュアルスタイルを設定します。</p>
+<p><strong>設定キー:</strong> <code>widget_theme</code></p>
+<p><strong>Free テーマ（6種類）:</strong></p>
 <table class="wpaic-table">
     <tr><th>テーマ</th><th>説明</th></tr>
     <tr><td><strong>Default</strong> <span class="wpaic-default">デフォルト</span></td><td>標準的なモダンデザイン。丸みを帯びたカード型</td></tr>
@@ -581,15 +698,29 @@ pre {
     <tr><td><strong>Minimal</strong></td><td>装飾を最小限にしたデザイン</td></tr>
     <tr><td><strong>Flat</strong></td><td>フラットデザイン。影やグラデーションなし</td></tr>
 </table>
-<p>Pro版では追加で10種類のテーマ（Modern、Gradient、Dark、Glass、Rounded、Ocean、Sunset、Forest、Neon、Elegant）とダークモードが利用可能です。<span class="wpaic-pro-badge">PRO</span></p>
+<p><strong>Pro テーマ（10種類）:</strong> <span class="wpaic-pro-badge">PRO</span></p>
+<p>Pro版では Modern、Gradient、Dark、Glass、Rounded、Ocean、Sunset、Forest、Neon、Elegant のテーマが追加されます。設定 UI ではロックアイコン付きで表示され、Pro プラグインなしでは選択できません。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> テーマを選択するとメインカラーが自動的に更新されます。その後、手動でカラーを調整することもできます。
+</div>
 
 <h3 id="primary-color">メインカラー</h3>
-<p>チャットウィジェットのヘッダー、ボタン、バッジなどの主要色です。</p>
+<p>チャットヘッダー、送信ボタン、バッジボタン、ユーザーメッセージバブルに使用されるメインのアクセントカラーです。カラーピッカーウィジェットが提供されます。</p>
+<p><strong>設定キー:</strong> <code>primary_color</code></p>
 <p><strong>デフォルト:</strong> <code>#007bff</code>（青）</p>
-<p>カラーピッカーで任意の色を選択できます。テーマを選択すると自動的にそのテーマに合った色に変更されます。</p>
+<p>リセットボタンでデフォルトカラーに戻すことができます。テーマを選択すると対応するカラーが自動設定されますが、その後に上書きすることもできます。</p>
+
+<h3 id="dark-mode">ダークモード <span class="wpaic-pro-badge">PRO</span></h3>
+<p>選択したテーマに関係なく、チャットウィジェットにダークカラースキームのオーバーレイを適用します。</p>
+<p><strong>設定キー:</strong> <code>dark_mode</code></p>
+<p><strong>有効:</strong> チャットウィジェットが暗い背景と明るいテキストで表示されます。任意のテーマのオーバーレイとして機能します。</p>
+<p><strong>無効:</strong> ウィジェットは選択したテーマの標準的なライトモードカラーを使用します。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+<p>この機能には Pro プラグインが必要です。Free版では設定は表示されますが無効化（ロック）されています。</p>
 
 <h3 id="badge-position">バッジ位置</h3>
-<p>チャットを開くバッジ（フローティングボタン）の画面上の位置です。</p>
+<p>フローティングチャットバッジボタンのページ上の位置を制御します。ビジュアルグリッドセレクターで4つの角から選択できます。</p>
+<p><strong>設定キー:</strong> <code>badge_position</code></p>
 <table class="wpaic-table">
     <tr><th>選択肢</th><th>説明</th></tr>
     <tr><td><strong>右下</strong> <span class="wpaic-default">デフォルト</span></td><td>最も一般的な配置。ほとんどのサイトに適しています</td></tr>
@@ -598,33 +729,70 @@ pre {
     <tr><td><strong>左上</strong></td><td>特殊なレイアウト用</td></tr>
 </table>
 
-<h3 id="badge-margin">バッジマージン</h3>
-<p>バッジの画面端からの距離をピクセル単位で設定します。</p>
-<p><strong>右マージン デフォルト:</strong> <code>20</code>px | <strong>下マージン デフォルト:</strong> <code>20</code>px</p>
-<p>サイトの他のフローティング要素（Cookie バナーなど）との重なりを避けるために調整してください。</p>
+<p><strong>バッジマージン</strong>（<code>badge_margin_right</code>、<code>badge_margin_bottom</code>）:</p>
+<p>ビューポート端からの距離を微調整します。マージンのラベルは選択した位置に応じて動的に変わります（例: 右下の場合は「右」と「下」、左上の場合は「左」と「上」）。</p>
+<table class="wpaic-table">
+    <tr><th>設定</th><th>範囲</th><th>デフォルト</th></tr>
+    <tr><td>水平マージン</td><td>0-200 px</td><td>20 px</td></tr>
+    <tr><td>垂直マージン</td><td>0-200 px</td><td>20 px</td></tr>
+</table>
+<p>リセットボタンで両方のマージンを 20px に戻すことができます。</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> Cookie バナーや他のサービスのライブチャットウィジェットなど、他のフローティング要素との重なりを避けるためにマージンを調整してください。
+</div>
+
+<h3 id="badge-icon">バッジアイコン <span class="wpaic-pro-badge">PRO</span></h3>
+<p>フローティングチャットバッジボタン内に表示されるアイコンをカスタマイズします。</p>
+<p>Free版ではデフォルトのチャットバブル SVG アイコンが表示されます。設定にはプレビューが表示されます。Pro版では4種類のアイコンタイプが利用可能です:</p>
+<ul>
+    <li><strong>デフォルト:</strong> 組み込みのチャットバブルアイコン（SVG）</li>
+    <li><strong>プリセット:</strong> プリセット SVG アイコンのライブラリから選択</li>
+    <li><strong>画像:</strong> メディアライブラリからカスタム画像をアップロード</li>
+    <li><strong>絵文字:</strong> 任意の絵文字を使用</li>
+</ul>
+<p>バッジアイコンのカスタマイズは、Pro プラグインが有効な場合に Pro 設定で行います。</p>
 
 <h3 id="markdown">Markdown レンダリング</h3>
-<p>AI の応答メッセージ内の Markdown 記法をリッチテキストに変換して表示します。</p>
-<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: <code>**太字**</code>、<code>*斜体*</code>、リスト、コードブロック、リンクなどが整形されて表示されます。</p>
-<p><strong>無効:</strong> Markdown 記号がそのまま表示されます。</p>
+<p>AI の応答を Markdown フォーマットでレンダリングするかどうかを制御します。プラグインには組み込みの Markdown パーサーが含まれています（外部ライブラリ不要）。</p>
+<p><strong>設定キー:</strong> <code>markdown_enabled</code></p>
+<p><strong>有効:</strong> 太字、斜体、コードブロック、インラインコード、順序付き/順序なしリスト、見出し、リンクがフォーマットされた HTML としてボットメッセージに表示されます。</p>
+<p><strong>無効:</strong> ボットメッセージがプレーンテキストとして表示されます。Markdown 構文文字がそのまま表示されます。</p>
+<p><span class="wpaic-default">デフォルト: 有効</span></p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> Markdown を有効にしておくことを推奨します。AI モデルは自然に Markdown フォーマット（特にコードスニペット、リスト、強調）を使用するため、レンダリングすると応答がはるかに読みやすくなります。
+</div>
 
 <h3 id="mobile">モバイル表示</h3>
-<p>モバイルデバイス（スマートフォン、タブレット）でチャットウィジェットを表示するかどうかを制御します。</p>
-<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: すべてのデバイスでチャットボットが表示されます。</p>
-<p><strong>無効:</strong> デスクトップのみでチャットボットが表示されます。モバイルサイトのパフォーマンスを優先する場合に使用します。</p>
+<p>モバイルデバイス（画面幅768px未満）でチャットウィジェットを表示するかどうかを制御します。</p>
+<p><strong>設定キー:</strong> <code>show_on_mobile</code></p>
+<p><strong>有効:</strong> モバイルデバイスでチャットウィジェットが表示されます。小さな画面ではチャットウィンドウがビューポート全体に拡張されます。</p>
+<p><strong>無効:</strong> モバイルデバイスではチャットウィジェット（バッジとウィンドウの両方）が完全に非表示になります。</p>
+<p><span class="wpaic-default">デフォルト: 有効</span></p>
 
 <h3 id="page-visibility">ページ表示設定</h3>
-<p>チャットボットを表示するページを細かく制御できます。</p>
+<p>チャットボットを表示するページタイプを細かく制御できます。</p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>ホームページ</strong></td><td>有効</td><td>サイトのトップページに表示</td></tr>
-    <tr><td><strong>投稿</strong></td><td>有効</td><td>ブログ記事などの投稿ページに表示</td></tr>
-    <tr><td><strong>固定ページ</strong></td><td>有効</td><td>固定ページに表示</td></tr>
-    <tr><td><strong>アーカイブ</strong></td><td>有効</td><td>カテゴリー、タグ、月別アーカイブに表示</td></tr>
-    <tr><td><strong>特定ページID（含む）</strong></td><td>空</td><td>カンマ区切りの投稿/ページ ID。設定すると、このリストのページのみに表示されます（ホワイトリストモード）</td></tr>
-    <tr><td><strong>特定ページID（除外）</strong></td><td>空</td><td>カンマ区切りの投稿/ページ ID。このリストのページでは非表示になります</td></tr>
-    <tr><td><strong>除外ページ選択</strong></td><td>空</td><td>ドロップダウンからページを選択して除外</td></tr>
+    <tr><th>設定</th><th>設定キー</th><th>デフォルト</th><th>説明</th></tr>
+    <tr><td><strong>ホームページ</strong></td><td><code>badge_show_on_home</code></td><td>有効</td><td>サイトのフロントページ（固定ページまたは最新の投稿）</td></tr>
+    <tr><td><strong>投稿</strong></td><td><code>badge_show_on_posts</code></td><td>有効</td><td>個別のブログ記事</td></tr>
+    <tr><td><strong>固定ページ</strong></td><td><code>badge_show_on_pages</code></td><td>有効</td><td>WordPress 固定ページ（会社概要、お問い合わせなど）</td></tr>
+    <tr><td><strong>アーカイブ</strong></td><td><code>badge_show_on_archives</code></td><td>有効</td><td>カテゴリー、タグ、日付、著者のアーカイブページ</td></tr>
 </table>
+
+<p><strong>特定ページ ID（含む）</strong>（<code>badge_include_ids</code>）:</p>
+<p>カンマ区切りの投稿/ページ ID。設定すると、これらの特定ページ<strong>のみ</strong>にチャットボットが表示され、上記のページタイプチェックボックスが上書きされます。空のままにするとページタイプ設定が使用されます。例: <code>10, 25, 142</code></p>
+
+<p><strong>除外 ID</strong>（<code>badge_exclude_ids</code>）:</p>
+<p>カンマ区切りの投稿/ページ ID。ページタイプが有効でも、これらのページではチャットボットが<strong>非表示</strong>になります。例: <code>5, 30, 200</code></p>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 「含む」を使用してチャットボットを特定のページ（例: 製品ページや料金ページ）に制限できます。「除外」を使用してログインページやチェックアウトページで非表示にできます。
+</div>
+
+<h3 id="page-exclusion">ページ除外（ドロップダウン）</h3>
+<p>ID ベースの除外の代わりに、ユーザーフレンドリーな方法でページを除外できます。ドロップダウンメニューから公開済みのページを選択して、ページ ID を調べることなくチャットボットを非表示にできます。</p>
+<p><strong>設定キー:</strong> <code>excluded_pages</code></p>
+<p>選択されたページはタグ状のチップとして表示され、削除ボタンが付いています。ドロップダウンからページを選択した後、<strong>追加</strong>をクリックしてください。投稿の除外には、上記の除外 ID フィールドを使用してください。</p>
 
 <h3 id="embed">外部サイト埋め込み</h3>
 <p>WordPress 以外のサイトにチャットボットを埋め込むためのコードを提供します。</p>
@@ -635,19 +803,32 @@ pre {
 <h2 id="recaptcha-settings"><i class="fa-solid fa-shield-halved"></i> reCAPTCHA 設定</h2>
 <!-- ============================================================ -->
 
+<p>Google reCAPTCHA v3 を使用してチャットボットをスパムや自動化された悪用から保護します。<strong>AI Chatbot &gt; 設定 &gt; reCAPTCHA</strong> タブで設定します。</p>
+
 <h3 id="recaptcha-enable">reCAPTCHA v3 有効化</h3>
-<p>Google reCAPTCHA v3 によるボット対策を有効にします。v3 はユーザーに操作を求めず、バックグラウンドでスコアリングします。</p>
-<p><strong>有効:</strong> チャットメッセージ送信時に reCAPTCHA スコアを検証し、ボットからのメッセージをブロックします。</p>
-<p><strong>無効:</strong> reCAPTCHA 検証を行いません。</p>
+<p>不可視の Google reCAPTCHA v3 ボット保護を有効にします。reCAPTCHA v3 はユーザーの操作なしにバックグラウンドで実行され、各リクエストに 0.0（ボットの可能性が高い）から 1.0（人間の可能性が高い）のスコアを割り当てます。</p>
+<p><strong>設定キー:</strong> <code>recaptcha_enabled</code></p>
+<p><strong>有効:</strong> 各チャットメッセージは AI に送信される前に reCAPTCHA で検証されます。閾値未満のスコアのリクエストはブロックされます。</p>
+<p><strong>無効:</strong> reCAPTCHA 検証を行いません。チャットボットは他のセキュリティ対策（レート制限、ボット検出）に依存します。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
 
 <h3 id="recaptcha-keys">サイトキー / シークレットキー</h3>
-<p><a href="https://www.google.com/recaptcha/admin" target="_blank">Google reCAPTCHA 管理コンソール</a>で取得したキーを入力します。</p>
-<p><strong>サイトキー:</strong> フロントエンドで使用される公開キー。</p>
-<p><strong>シークレットキー:</strong> サーバーサイドで検証に使用される秘密キー。保存後は暗号化されてマスク表示されます。</p>
+<p><a href="https://www.google.com/recaptcha/admin" target="_blank">Google reCAPTCHA 管理コンソール</a>から reCAPTCHA v3 キーを取得してください。キー作成時は <strong>reCAPTCHA v3</strong>（v2 ではなく）を選択してください。</p>
+
+<p><strong>サイトキー</strong>（<code>recaptcha_site_key</code>）:</p>
+<p>フロントエンドの JavaScript に埋め込まれる公開キーです。秘密ではなく、ページソースに表示されます。プレーンテキストで入力してください。</p>
+
+<p><strong>シークレットキー</strong>（<code>recaptcha_secret_key</code>）:</p>
+<p>サーバーサイドの検証に使用される秘密キーです。WordPress データベースに暗号化して保存されます。保存後はマスク表示されます。現在のキーを保持する場合は、フィールドを空のまま保存してください。</p>
+
+<div class="wpaic-box wpaic-box-warn">
+    <strong>重要:</strong> reCAPTCHA v3 キーのみを使用してください。reCAPTCHA v2 キー（チェックボックスまたは不可視バッジ）はこのプラグインでは動作しません。
+</div>
 
 <h3 id="recaptcha-threshold">スコア閾値</h3>
-<p>reCAPTCHA v3 のスコア閾値です。このスコア未満のリクエストはブロックされます。</p>
-<p><strong>デフォルト:</strong> <code>0.5</code> | <strong>範囲:</strong> 0.0 ~ 1.0</p>
+<p>チャットメッセージの通過を許可するために必要な最小 reCAPTCHA スコアです。</p>
+<p><strong>設定キー:</strong> <code>recaptcha_threshold</code></p>
+<p><strong>デフォルト:</strong> <code>0.5</code> | <strong>範囲:</strong> 0.0 ~ 1.0（0.1刻み）</p>
 <ul>
     <li><strong>0.1 ~ 0.3:</strong> 緩い判定。ほとんどのリクエストを通過させます</li>
     <li><strong>0.5:</strong> 標準的な判定。推奨値</li>
@@ -655,10 +836,18 @@ pre {
 </ul>
 
 <h3 id="recaptcha-existing">既存 reCAPTCHA の使用</h3>
-<p>サイトに既に reCAPTCHA が読み込まれている場合（他のプラグインなど）、二重読み込みを防ぐために有効にします。</p>
+<p>サイトの他のプラグイン（Contact Form 7、WPForms、Gravity Forms など）が既に reCAPTCHA v3 スクリプトを読み込んでいる場合、スクリプトの二重読み込みを防ぐために有効にします。</p>
+<p><strong>設定キー:</strong> <code>recaptcha_use_existing</code></p>
+<p><strong>有効:</strong> プラグインは独自の reCAPTCHA スクリプトを読み込みません。ページ上で既に利用可能な reCAPTCHA インスタンスを再利用します。</p>
+<p><strong>無効:</strong> プラグインはサイトキーを使用して独自の reCAPTCHA v3 スクリプトを読み込みます。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>注意:</strong> チャットボットが表示されるのと同じページで他のプラグインが reCAPTCHA v3 を読み込んでいる場合にのみ有効にしてください。スクリプトが存在しない場合、検証が失敗し、失敗時モードの設定に従って動作が決まります。
+</div>
 
 <h3 id="recaptcha-fail">失敗時モード</h3>
-<p>reCAPTCHA の検証自体が失敗した場合（ネットワークエラーなど）の動作を制御します。</p>
+<p>reCAPTCHA の検証自体が失敗した場合（例: Google のサーバーに到達できない、ネットワークエラー）の動作を制御します。この設定は<strong>詳細設定</strong>タブにあります。</p>
+<p><strong>設定キー:</strong> <code>recaptcha_fail_mode</code></p>
 <table class="wpaic-table">
     <tr><th>選択肢</th><th>説明</th></tr>
     <tr><td><strong>Open（許可）</strong> <span class="wpaic-default">デフォルト</span></td><td>検証失敗時もチャットを許可します。可用性を優先する場合に適しています</td></tr>
@@ -669,62 +858,136 @@ pre {
 <h2 id="advanced-settings"><i class="fa-solid fa-sliders"></i> 詳細設定</h2>
 <!-- ============================================================ -->
 
+<p>データ保持、プライバシー、レート制限、プロキシ設定を行い、セキュリティ診断を確認します。<strong>AI Chatbot &gt; 設定 &gt; 詳細設定</strong> タブで設定します。</p>
+
 <h3 id="save-history">会話履歴保存</h3>
-<p>会話の内容をデータベースに保存するかどうかを制御します。</p>
-<p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: 会話がデータベースに永続化され、管理画面の「会話」ページで確認・分析できます。ユーザーがページを再読み込みした際に会話を復元することもできます。</p>
-<p><strong>無効:</strong> 会話はセッション中のみ一時的に保持され、ページを離れると失われます。プライバシー重視の場合や、データベースの容量を節約したい場合に使用します。</p>
+<p>チャット会話を WordPress データベースに保存するかどうかを制御します。</p>
+<p><strong>設定キー:</strong> <code>save_history</code></p>
+<p><strong>有効:</strong> すべての会話とメッセージがデータベースに保存されます。会話履歴の表示、アナリティクス、フィードバック機能、ページ読み込み間のセッション永続化が可能になります。</p>
+<p><strong>無効:</strong> 会話はメモリ上でのみ処理され、永続化されません。ユーザーは前の会話を再開できず、アナリティクスデータも収集されません。</p>
+<p><span class="wpaic-default">デフォルト: 有効</span></p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 特別なプライバシー要件がない限り、有効にしておくことを推奨します。保存された履歴はフィードバック学習、アナリティクス、会話レビューに不可欠です。
+</div>
 
 <h3 id="retention">データ保持期間</h3>
-<p>会話履歴をデータベースに保持する日数です。期間を過ぎた会話は自動的に削除されます。</p>
-<p><strong>デフォルト:</strong> <code>90</code>日 | <code>0</code> で無期限保持</p>
+<p>自動削除前に会話履歴を保持する日数です。WordPress cron ジョブがこの閾値より古い会話を定期的にクリーンアップします。</p>
+<p><strong>設定キー:</strong> <code>retention_days</code></p>
+<p><strong>デフォルト:</strong> <code>90</code>日 | <code>0</code> で無期限保持（会話は自動削除されません）</p>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> GDPR 準拠のため、プライバシーポリシーに適した保持期間（例: 30日または90日）を設定してください。短い期間はデータベースのサイズ削減にも役立ちます。
+</div>
 
 <h3 id="delete-uninstall">アンインストール時データ削除</h3>
-<p>プラグインをアンインストールした際に、すべてのプラグインデータ（設定、会話履歴、ナレッジベース、インデックスなど）を削除するかどうかを制御します。</p>
-<p><strong>有効:</strong> アンインストール時にすべてのデータを完全に削除します。</p>
-<p><strong>無効</strong> <span class="wpaic-default">デフォルト</span>: データを保持します。再インストール時にデータを引き継ぎたい場合はこの設定を使用します。</p>
+<p>プラグインを WordPress からアンインストール（削除）した際に、プラグインデータを完全に削除するかどうかを制御します。</p>
+<p><strong>設定キー:</strong> <code>delete_data_on_uninstall</code></p>
+<p><strong>有効:</strong> アンインストール時にすべてのプラグインデータ（会話履歴、ナレッジベースエントリ、リードデータ、設定、データベーステーブル）が完全に削除されます。取り消し不可。</p>
+<p><strong>無効:</strong> プラグイン設定は削除されますが、データベーステーブル（会話、ナレッジベース、リード）は再インストールに備えて保持されます。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>警告:</strong> 有効にした場合、プラグインのアンインストールですべてのデータが完全に削除されます。元に戻すことはできません。アンインストール前に重要なデータをエクスポートしてください。
+</div>
 
 <h3 id="consent">WP Consent API 厳格モード</h3>
-<p>WP Consent API プラグインと連携して、GDPR 対応のクッキー同意を要求します。</p>
-<p><strong>有効:</strong> WP Consent API プラグインが有効で、ユーザーが同意していない場合、localStorage を使用しません。セッション ID やチャット履歴がブラウザに保存されなくなります。</p>
-<p><strong>無効</strong> <span class="wpaic-default">デフォルト</span>: 同意確認なしに localStorage を使用します。</p>
+<p>localStorage とコンバージョントラッキングに関する GDPR 準拠の動作のために WP Consent API と連携します。</p>
+<p><strong>設定キー:</strong> <code>consent_strict_mode</code></p>
+<p><strong>有効:</strong> WP Consent API 互換の同意管理プラグインが有効で、ユーザーが同意を付与していない限り、ユーザー ID の永続化（localStorage）とコンバージョントラッキングが無効になります。チャットボット自体は通常通り動作し、ストレージとトラッキング機能のみが影響を受けます。</p>
+<p><strong>無効:</strong> 同意ステータスに関係なく localStorage とコンバージョントラッキングが通常通り動作します。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+<div class="wpaic-box wpaic-box-warn">
+    <strong>注意:</strong> 厳格モードがオンで Consent API プラグインがインストールされていない場合、ウィンドウサイズの記憶、セッション永続化、コンバージョントラッキングが無効になります。互換性のある同意プラグイン（例: Complianz、CookieYes）をインストールしてユーザーの同意を管理してください。
+</div>
 
 <h3 id="rate-limit">レート制限</h3>
-<p>ユーザーあたりのメッセージ送信頻度を制限して、API コストの急増やスパムを防止します。</p>
+<p>単一の IP アドレスが時間ウィンドウ内に送信できるチャットメッセージ数を制限し、API 予算を悪用から保護します。</p>
+<p><strong>設定キー:</strong> <code>rate_limit</code>、<code>rate_limit_window</code></p>
+
+<p><strong>最大リクエスト数:</strong> 時間ウィンドウ内の IP あたりの最大許可メッセージ数。<code>0</code> で無制限。</p>
+<p><span class="wpaic-default">デフォルト: 20リクエスト</span></p>
+
+<p><strong>時間ウィンドウ:</strong></p>
 <table class="wpaic-table">
-    <tr><th>設定</th><th>デフォルト</th><th>説明</th></tr>
-    <tr><td><strong>最大リクエスト数</strong></td><td><code>20</code></td><td>指定時間内に許可する最大メッセージ数。0 で無制限。</td></tr>
-    <tr><td><strong>時間ウィンドウ</strong></td><td><code>1時間</code></td><td>レート制限の時間枠。選択肢: 1分、5分、10分、30分、1時間、3時間、6時間、12時間、1日</td></tr>
+    <tr><th>値（秒）</th><th>期間</th></tr>
+    <tr><td><code>60</code></td><td>1分</td></tr>
+    <tr><td><code>300</code></td><td>5分</td></tr>
+    <tr><td><code>600</code></td><td>10分</td></tr>
+    <tr><td><code>1800</code></td><td>30分</td></tr>
+    <tr><td><code>3600</code></td><td>1時間 <span class="wpaic-default">デフォルト</span></td></tr>
+    <tr><td><code>10800</code></td><td>3時間</td></tr>
+    <tr><td><code>21600</code></td><td>6時間</td></tr>
+    <tr><td><code>43200</code></td><td>12時間</td></tr>
+    <tr><td><code>86400</code></td><td>1日</td></tr>
 </table>
 <div class="wpaic-box wpaic-box-tip">
-    <strong>ヒント:</strong> Pro版では分単位と時間単位の2段階レート制限（バースト制限 + 持続制限）が利用可能です。
+    <strong>ヒント:</strong> ほとんどのサイトでは1時間あたり20リクエストが適切です。高トラフィックのサポートサイトでは 50-100 に増やしてください。Pro版では2段階レート制限（バースト + 持続制限）が利用可能です。
 </div>
 
 <h3 id="proxy">プロキシ設定</h3>
-<p>Cloudflare やロードバランサーを使用している場合の IP アドレス検出を設定します。</p>
-<table class="wpaic-table">
-    <tr><th>設定</th><th>説明</th></tr>
-    <tr><td><strong>Cloudflare IP を信頼</strong></td><td><strong>有効:</strong> <code>CF-Connecting-IP</code> ヘッダーから実際のクライアント IP を取得します。Cloudflare を使用している場合に有効にしてください。</td></tr>
-    <tr><td><strong>プロキシ IP を信頼</strong></td><td><strong>有効:</strong> <code>X-Forwarded-For</code> ヘッダーから実際のクライアント IP を取得します。リバースプロキシを使用している場合に有効にしてください。</td></tr>
-</table>
+<p>サイトが CDN またはリバースプロキシの背後にある場合に、プラグインが実際の訪問者 IP アドレスを検出する方法を設定します。正しい IP 検出はレート制限とボット検出に不可欠です。</p>
+
+<p><strong>Cloudflare CF-Connecting-IP を信頼</strong>（<code>trust_cloudflare_ip</code>）:</p>
+<p><strong>有効:</strong> Cloudflare の <code>CF-Connecting-IP</code> ヘッダーを使用して実際の訪問者 IP を検出します。サイトが Cloudflare の背後にある場合にのみ有効にしてください。</p>
+<p><strong>無効:</strong> CF-Connecting-IP ヘッダーを無視します。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+
+<p><strong>X-Forwarded-For を信頼</strong>（<code>trust_proxy_ip</code>）:</p>
+<p><strong>有効:</strong> <code>X-Forwarded-For</code> ヘッダーから最初のパブリック IP を使用します。サイトがリバースプロキシ（Nginx、AWS ALB など）の背後にある場合に有効にしてください。</p>
+<p><strong>無効:</strong> X-Forwarded-For ヘッダーを無視します。<code>REMOTE_ADDR</code> を直接使用します。</p>
+<p><span class="wpaic-default">デフォルト: 無効</span></p>
+
 <div class="wpaic-box wpaic-box-warn">
-    <strong>注意:</strong> これらの設定を不適切に有効にすると、IP スプーフィングのリスクがあります。使用しているインフラに合わせて設定してください。
+    <strong>セキュリティ警告:</strong> サーバーへのすべてのトラフィックがそれぞれのプロキシを経由する場合にのみこれらのオプションを有効にしてください。サーバーに直接アクセス可能な場合（プロキシをバイパス）、攻撃者がこれらのヘッダーを偽造してレート制限や IP ベースのセキュリティを回避できます。
 </div>
+
+<p><strong>セットアップチェックリスト:</strong></p>
+<ol>
+    <li>有効にする前に <code>REMOTE_ADDR</code> が（訪問者 IP ではなく）プロキシ IP を表示していることを確認</li>
+    <li>Cloudflare の場合:「Cloudflare を信頼」を有効化（CIDR 設定は不要）</li>
+    <li>他のプロキシの場合: <code>wpaic_trusted_proxies</code> フィルターで IP/CIDR を追加</li>
+    <li>セキュリティ診断でクライアント IP が正しく検出されていることを確認</li>
+</ol>
+
+<h3 id="security-diag">セキュリティ診断</h3>
+<p>詳細設定タブの下部にある読み取り専用のセクションで、現在のセキュリティ設定のステータスを表示します。すべてのフィールドは情報表示のみで編集できません。</p>
+
+<p><strong>許可されたオリジンホスト:</strong> Origin/Referer セキュリティチェックで受け入れられるホスト名のリストを表示します。<code>wpaic_allowed_origins</code> フィルターでカスタムホストを追加できます。</p>
+
+<p><strong>最近のボット検出（過去1時間）:</strong> 組み込みのボット検出システムによってブロックされたリクエストを表示します。検出方法:</p>
+<ul>
+    <li><strong>ハニーポット:</strong> ボットが入力するが実際のユーザーには見えない隠しフォームフィールド</li>
+    <li><strong>タイミング:</strong> 人間のタイピング速度より速く送信されたリクエスト</li>
+    <li><strong>未来の時刻:</strong> 未来のタイムスタンプを持つリクエスト（時刻操作）</li>
+</ul>
+<p>「(approx)」と表示されるカウントは10分の1のサンプリングで、推定合計（x10）として表示されます。検出はフォームタイプ別に分類されます: オフラインメッセージ、チャット、リードキャプチャー。</p>
+
+<p><strong>XFF 切り捨て（過去1時間）:</strong> 切り捨てられた超大サイズの X-Forwarded-For ヘッダーの数。高い数値は CDN/プロキシチェーンの問題または攻撃を示す場合があります。</p>
+
+<p><strong>IP 検出:</strong> 検出されたクライアント IP アドレスと使用された方法（REMOTE_ADDR、CF-Connecting-IP、または X-Forwarded-For）を表示します。プロキシ設定が正しく構成されているかの確認に便利です。</p>
 
 <!-- ============================================================ -->
 <h2 id="crawler-settings"><i class="fa-solid fa-spider"></i> サイト学習（クローラー）</h2>
 <!-- ============================================================ -->
 
-<h3 id="crawler-enable">クローラー有効化</h3>
+<p>サイト学習は WordPress コンテンツを自動的にクロールし、AI チャットボットのコンテキストとして利用可能にします。<strong>AI Chatbot &gt; サイト学習</strong> で設定します。</p>
+
+<h3 id="crawler-overview">概要</h3>
+<p>クローラーは WordPress の投稿、ページ、カスタム投稿タイプを読み取り、コンテンツをチャンクに分割し、FULLTEXT インデックス付きの <code>wp_aichat_index</code> データベーステーブルに保存します。ユーザーが質問すると、プラグインはこのインデックスから関連コンテンツを検索し、AI にコンテキストとして提供します。</p>
+<p>これにより、チャットボットはサイトのコンテンツ（ブログ記事、製品ページ、ドキュメントなど）に関する質問に、各トピックについて手動でナレッジベースエントリを作成することなく回答できるようになります。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> Free版では、サイト学習メニュー項目は表示されますが、Pro アップグレードページが表示されます。クローラー機能と以下のすべての設定には Pro版が必要です。
+</div>
+
+<h3 id="crawler-enable">クローラー有効化 <span class="wpaic-pro-badge">PRO</span></h3>
 <p>WordPress サイトのコンテンツを自動的にクロールし、AI の参考知識としてインデックスに登録します。</p>
 <p><strong>有効</strong> <span class="wpaic-default">デフォルト</span>: 指定した投稿タイプのコンテンツを定期的にクロールし、チャンクに分割してインデックスに保存します。ユーザーの質問に関連するコンテンツが自動的に AI の回答に反映されます。</p>
 <p><strong>無効:</strong> クロールを実行しません。ナレッジベースの手動登録のみで運用する場合に使用します。</p>
 
-<h3 id="crawler-types">投稿タイプ</h3>
+<h3 id="crawler-types">投稿タイプ <span class="wpaic-pro-badge">PRO</span></h3>
 <p>クロール対象の WordPress 投稿タイプを選択します。</p>
 <p><strong>デフォルト:</strong> <code>すべて</code></p>
 <p>「すべて」を選択するとサイト内の全投稿タイプ（投稿、固定ページ、カスタム投稿タイプ）がクロールされます。特定の投稿タイプのみを選択することもできます。</p>
 
-<h3 id="crawler-interval">クロール間隔</h3>
+<h3 id="crawler-interval">クロール間隔 <span class="wpaic-pro-badge">PRO</span></h3>
 <p>自動クロールの実行間隔です。</p>
 <table class="wpaic-table">
     <tr><th>選択肢</th><th>説明</th></tr>
@@ -733,7 +996,7 @@ pre {
 </table>
 <p>手動でクロールを実行することもできます。ダッシュボードの「サイト学習」セクションから「今すぐクロール」ボタンをクリックしてください。</p>
 
-<h3 id="crawler-chunk">チャンクサイズ</h3>
+<h3 id="crawler-chunk">チャンクサイズ <span class="wpaic-pro-badge">PRO</span></h3>
 <p>コンテンツを分割するチャンク（断片）1つあたりの文字数です。</p>
 <p><strong>デフォルト:</strong> <code>1000</code>文字</p>
 <ul>
@@ -741,13 +1004,17 @@ pre {
     <li><strong>大きい値（1500 ~ 2000）:</strong> より広い文脈を保持しますが、検索の精度が低下する場合があります</li>
 </ul>
 
-<h3 id="crawler-results">最大結果数</h3>
+<h3 id="crawler-results">最大結果数 <span class="wpaic-pro-badge">PRO</span></h3>
 <p>ユーザーの質問に対して AI に渡すコンテキスト（参考情報）チャンクの最大数です。</p>
 <p><strong>デフォルト:</strong> <code>3</code></p>
 <ul>
     <li><strong>少ない値（1 ~ 2）:</strong> API コストを節約しますが、関連情報が不足する場合があります</li>
     <li><strong>多い値（5 ~ 10）:</strong> より多くの参考情報を AI に渡しますが、API コストが増加します</li>
 </ul>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> ナレッジベース（Free版）は特定の FAQ スタイルの Q&A ペアに最適です。サイト学習（Pro版）はサイト全体のコンテンツを検索可能にするのに最適です。最良の結果を得るには両方を併用してください。
+</div>
 
 <h3 id="crawler-exclude">除外 ID</h3>
 <p>クロールから除外する投稿/ページの ID を指定します。プライバシーポリシーや利用規約など、チャットの参考にしたくないコンテンツを除外する際に使用します。</p>
@@ -756,11 +1023,18 @@ pre {
 <h2 id="knowledge-base"><i class="fa-solid fa-database"></i> ナレッジベース</h2>
 <!-- ============================================================ -->
 
+<p>ナレッジベースを使用して、チャットボットが一般的な AI 知識よりも優先する特定の Q&A ペアを提供できます。<strong>AI Chatbot &gt; ナレッジ</strong> で管理します。</p>
+
 <h3 id="kb-overview">概要</h3>
-<p>ナレッジベースは、AI が回答に使用する Q&A データのコレクションです。サイト学習（クローラー）とは異なり、手動で登録した正確な回答を優先的に使用します。</p>
-<div class="wpaic-box wpaic-box-info">
-    <strong>Free版の制限:</strong> ナレッジベースには最大20件まで登録できます。Pro版では無制限に登録可能です。
-</div>
+<p>ナレッジベースは、手動で作成する質問と回答のペアのコレクションです。ユーザーの質問がナレッジベースエントリと一致（または近い一致）した場合、AI は一般的なトレーニングデータから生成するのではなく、その特定の回答を使用するよう指示されます。</p>
+<p>これは、製品、サービス、ポリシーなど、ビジネスに固有のよくある質問に対して正確で一貫した回答を保証する最も効果的な方法です。</p>
+
+<p><strong>マッチングの仕組み:</strong></p>
+<ol>
+    <li><strong>完全一致:</strong> ユーザーの質問がナレッジベースの質問と完全に一致する場合、対応する回答が厳格な指示付きで使用されます（ナレッジベース完全一致コンテキストプロンプト参照）。</li>
+    <li><strong>類似一致:</strong> 類似の質問が見つかった場合（キーワードまたはベクトル検索による）、FAQ データベースとして AI に参照用に提供されます（ナレッジベース Q&A コンテキストプロンプト参照）。</li>
+    <li><strong>一致なし:</strong> 関連するエントリが見つからない場合、AI は一般的な知識とサイト学習コンテキストを使用して応答します。</li>
+</ol>
 
 <h3 id="kb-add">Q&A の追加</h3>
 <p>管理画面の「ナレッジ」ページから、質問と回答のペアを手動で追加できます。</p>
@@ -779,23 +1053,82 @@ pre {
 "料金はいくらですか？","月額1000円からご利用いただけます。","料金"
 "営業時間は？","平日9時から18時まで営業しています。","営業"</pre>
 
+<h3 id="kb-limit">Free版の制限</h3>
+<p>Free版では最大 <strong>20件のナレッジベースエントリ</strong> がサポートされます。サイトやビジネスに関する最もよくある質問をカバーするのに十分です。</p>
+<p>Pro版ではこの制限がなくなり、無制限のエントリが登録可能です。さらに、ドラフトステータス、バージョニング、使用頻度に基づく自動優先度、有効期限、関連リンク、インテント分類、ナレッジギャップからの AI による FAQ 自動生成などの機能が追加されます。</p>
+
 <!-- ============================================================ -->
 <h2 id="conversations"><i class="fa-solid fa-clock-rotate-left"></i> 会話履歴</h2>
 <!-- ============================================================ -->
 
-<h3 id="conv-list">会話一覧</h3>
-<p>管理画面の「会話」ページで、すべてのチャット会話を一覧表示できます。各会話のセッション ID、開始日時、メッセージ数、ステータスが表示されます。</p>
+<p>チャット会話履歴を表示・管理します。<strong>AI Chatbot &gt; 会話</strong> で確認します。</p>
 
-<h3 id="conv-detail">メッセージ表示</h3>
-<p>会話をクリックすると、ユーザーと AI のメッセージのやり取りを時系列で確認できます。フィードバック（いいね/よくないね）の評価も表示されます。</p>
-<p>CSV/JSON エクスポート機能は Pro版で利用可能です。<span class="wpaic-pro-badge">PRO</span></p>
+<h3 id="conv-list">会話一覧</h3>
+<p>会話ページでは、すべての保存済みチャットセッションの一覧が表示され、セッション ID、開始日時、メッセージ数、ユーザー情報（IP アドレス、ブラウザ）、会話ステータスなどの詳細が確認できます。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> Free版では、会話メニュー項目は表示されますが、Pro アップグレードページが表示されます。会話データは（履歴保存が有効な場合）データベースに保存されますが、Pro プラグインなしでは管理インターフェースから確認できません。
+</div>
+
+<h3 id="conv-detail">メッセージ表示 <span class="wpaic-pro-badge">PRO</span></h3>
+<p>会話をクリックすると、ユーザーと AI の間の完全な時系列のやり取りを確認できます。フィードバック評価（いいね/よくないね）がメッセージと共に表示されます。</p>
+<p>Pro版の機能: 完全な会話ビューアー、検索とフィルター、CSV/JSON エクスポート、会話タグ付け、要約生成、リアルタイムモニター。</p>
+
+<!-- ============================================================ -->
+<h2 id="developer-reference"><i class="fa-solid fa-code"></i> 開発者リファレンス</h2>
+<!-- ============================================================ -->
+
+<p>プラグインは WordPress フィルターと REST API を提供し、開発者がプログラム的に動作をカスタマイズできます。</p>
+
+<h3 id="dev-filters">WordPress フィルター</h3>
+<table class="wpaic-table">
+    <tr><th>フィルター</th><th>説明</th></tr>
+    <tr><td><code>wpaic_system_prompt</code></td><td>AI プロバイダーに送信されるシステムプロンプトを変更</td></tr>
+    <tr><td><code>wpaic_context</code></td><td>サイト学習から取得した RAG コンテキストを変更</td></tr>
+    <tr><td><code>wpaic_ai_response</code></td><td>ユーザーに表示される前の AI 応答をフィルタリング</td></tr>
+    <tr><td><code>wpaic_chatbot_enabled</code></td><td>ページごとにチャットボットの表示を制御（<code>false</code> を返すと非表示）</td></tr>
+    <tr><td><code>wpaic_allowed_origins</code></td><td>クロスサイト埋め込み用の許可オリジンホスト名を追加</td></tr>
+    <tr><td><code>wpaic_gpt5_token_multiplier</code></td><td>GPT-5 推論トークン乗算係数を調整（デフォルト: 4、範囲: 1-8）</td></tr>
+    <tr><td><code>wpaic_chat_response_data</code></td><td>クライアントに返される前のチャット応答データをフィルタリング</td></tr>
+    <tr><td><code>wpaic_manage_cap</code></td><td>プラグイン管理に必要な権限を変更（デフォルト: <code>manage_options</code>）</td></tr>
+    <tr><td><code>wpaic_trusted_proxies</code></td><td>X-Forwarded-For 解析用の信頼済みプロキシ IP/CIDR を追加</td></tr>
+</table>
+
+<h3 id="dev-rest">REST API エンドポイント</h3>
+<p>プラグインは <code>wp-ai-chatbot/v1</code> 名前空間で REST API を提供します:</p>
+<table class="wpaic-table">
+    <tr><th>メソッド</th><th>エンドポイント</th><th>目的</th></tr>
+    <tr><td>GET</td><td><code>/session</code></td><td>チャットセッションの取得または作成</td></tr>
+    <tr><td>POST</td><td><code>/chat</code></td><td>メッセージを送信して AI 応答を受信</td></tr>
+    <tr><td>GET</td><td><code>/history/{session_id}</code></td><td>会話履歴の取得</td></tr>
+    <tr><td>POST</td><td><code>/feedback</code></td><td>フィードバックの送信（いいね/よくないね）</td></tr>
+    <tr><td>POST</td><td><code>/regenerate</code></td><td>AI 応答の再生成</td></tr>
+    <tr><td>GET</td><td><code>/summary/{session_id}</code></td><td>会話要約の生成</td></tr>
+    <tr><td>GET</td><td><code>/message-limit</code></td><td>残りのメッセージクォータを確認</td></tr>
+    <tr><td>POST</td><td><code>/lead</code></td><td>リードキャプチャーフォームの送信</td></tr>
+    <tr><td>GET</td><td><code>/lead-config</code></td><td>リードフォーム設定の取得</td></tr>
+    <tr><td>POST</td><td><code>/suggestions</code></td><td>関連質問の提案を取得</td></tr>
+    <tr><td>POST</td><td><code>/autocomplete</code></td><td>入力オートコンプリートの提案を取得</td></tr>
+</table>
+
+<h3 id="dev-db">データベーステーブル</h3>
+<p>プラグインは以下のテーブルを作成します（WordPress テーブルプレフィックス + <code>aichat_</code> が付きます）:</p>
+<table class="wpaic-table">
+    <tr><th>テーブル</th><th>目的</th></tr>
+    <tr><td><code>wp_aichat_conversations</code></td><td>チャットセッションレコード（ID、タイムスタンプ、ユーザー情報、ステータス）</td></tr>
+    <tr><td><code>wp_aichat_messages</code></td><td>個別メッセージ（コンテンツ、ロール、フィードバック、キャッシュハッシュ/ヒット）</td></tr>
+    <tr><td><code>wp_aichat_index</code></td><td>RAG 用のクロール済みサイトコンテンツインデックス（チャンク、埋め込み、FULLTEXT）</td></tr>
+    <tr><td><code>wp_aichat_knowledge</code></td><td>ナレッジベース Q&A エントリ</td></tr>
+    <tr><td><code>wp_aichat_leads</code></td><td>リードキャプチャーフォーム送信（カスタムフィールドを含む）</td></tr>
+</table>
+<p>テーブルは有効化時にプラグインアクティベーターによって作成されます。Pro プラグインは同じテーブル（共有データベース）を使用し、追加のテーブルは作成しません。</p>
 
 <!-- Footer -->
 <div class="wpaic-footer">
     <p>
         <a href="/rapls-ai-chatbot-manual-pro-ja/">Pro版マニュアル</a> |
         <a href="/rapls-ai-chatbot-free-manual-en/">English Version</a> |
-        <a href="/rapls-ai-chatbot-manual-pro-en/">Pro Manual (English)</a>
+        <a href="/rapls-ai-chatbot-manual-pro-en/">Pro Manual (English)</a> |
+        <a href="https://wordpress.org/plugins/rapls-ai-chatbot/">WordPress.org</a>
     </p>
     <p>&copy; 2025-2026 Rapls Works. All rights reserved.</p>
 </div>
