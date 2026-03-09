@@ -91,7 +91,12 @@ class WPAIC_Conversation {
         $wpdb->insert($table, $insert_data, $formats);
         wpaic_log_db_error('Conversation::create');
 
-        return self::get_by_id($wpdb->insert_id);
+        $new_conversation = self::get_by_id($wpdb->insert_id);
+        if ($new_conversation) {
+            do_action('wpaic_new_conversation', $new_conversation, $session_id);
+        }
+
+        return $new_conversation;
     }
 
     /**

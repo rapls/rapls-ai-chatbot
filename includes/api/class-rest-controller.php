@@ -1482,6 +1482,11 @@ class WPAIC_REST_Controller {
                 $sources = array_values(array_unique($sources));
             }
 
+            // Notify extensions of new message (Slack, etc.)
+            if ($save_history && $conversation) {
+                do_action('wpaic_new_message', $conversation, $message, $response['content']);
+            }
+
             // Trigger webhook for new message (Pro feature)
             if ($save_history && $conversation && class_exists('WPAIC_Webhook')) {
                 try {
@@ -3126,6 +3131,9 @@ class WPAIC_REST_Controller {
                     'error'   => __('Failed to save lead information.', 'rapls-ai-chatbot'),
                 ], 500);
             }
+
+            // Notify extensions of lead capture (Slack, etc.)
+            do_action('wpaic_lead_captured', $lead, $conversation);
 
             // Trigger webhook for lead captured (Pro feature)
             if (class_exists('WPAIC_Webhook')) {
