@@ -115,6 +115,7 @@
             this.loadWindowSize();
             this.setupAutocomplete();
             this.setupImageUpload();
+            this.setupScreenshot();
             this.setupVoiceInput();
             this.initWelcomeScreen();
             this.initFullscreenMode();
@@ -191,6 +192,9 @@
             this.imagePreview = this.container.querySelector('.chatbot-image-preview');
             this.imagePreviewImg = this.imagePreview ? this.imagePreview.querySelector('img') : null;
             this.imagePreviewRemove = this.container.querySelector('.image-preview-remove');
+
+            // スクリーンショット関連
+            this.screenshotBtn = this.container.querySelector('.chatbot-screenshot-btn');
 
         },
 
@@ -858,6 +862,11 @@
                                 self.handleHandoffTriggered(response.data);
                             } else if (response.data && response.data.handoff_status) {
                                 self.showHandoffIndicator(response.data.handoff_status);
+                                // Start polling if operator is active (e.g. operator started from admin)
+                                if (!self.handoffPollTimer && (response.data.handoff_status === 'active' || response.data.handoff_status === 'pending')) {
+                                    self.handoffStatus = response.data.handoff_status;
+                                    self.startHandoffPolling();
+                                }
                             }
                         } else {
                             self.addMessage('bot', response.error || (self.config.strings && self.config.strings.error_occurred) || 'An error occurred.');
@@ -1135,6 +1144,42 @@
                     console.error('reCAPTCHA exception:', e);
                     resolve('');
                 }
+            });
+        },
+
+        /**
+         * Reload reCAPTCHA script to get a fresh instance (fixes stale token issue on long-lived pages)
+         */
+        _reloadRecaptcha: function() {
+            var self = this;
+            return new Promise(function(resolve) {
+                // Remove existing reCAPTCHA script tags
+                var scripts = document.querySelectorAll('script[src*="recaptcha"]');
+                scripts.forEach(function(s) { s.parentNode.removeChild(s); });
+
+                // Reset grecaptcha global
+                if (typeof grecaptcha !== 'undefined') {
+                    try { delete window.grecaptcha; } catch(e) { window.grecaptcha = undefined; }
+                }
+
+                // Load fresh script
+                var script = document.createElement('script');
+                script.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(self.config.recaptcha_site_key);
+                script.onload = function() {
+                    // Wait for grecaptcha.ready
+                    var checkReady = function(attempts) {
+                        if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {
+                            grecaptcha.ready(function() { resolve(); });
+                        } else if (attempts < 20) {
+                            setTimeout(function() { checkReady(attempts + 1); }, 100);
+                        } else {
+                            resolve(); // Give up waiting, let retry proceed
+                        }
+                    };
+                    checkReady(0);
+                };
+                script.onerror = function() { resolve(); };
+                document.head.appendChild(script);
             });
         },
 
@@ -2079,6 +2124,155 @@
         },
 
         /**
+         * スクリーンショット機能をセットアップ
+         */
+        setupScreenshot: function() {
+            if (!this.config.screenshot_enabled || !this.screenshotBtn) {
+                return;
+            }
+            var self = this;
+            this.screenshotBtn.hidden = false;
+
+            this.screenshotBtn.addEventListener('click', function() {
+                self.captureScreenshot();
+            });
+        },
+
+        /**
+         * スクリーンショットをキャプチャ
+         */
+        captureScreenshot: function() {
+            var self = this;
+            var btn = this.screenshotBtn;
+            btn.classList.add('capturing');
+            btn.disabled = true;
+
+            // html2canvas を動的に読み込み
+            this._loadHtml2Canvas(function() {
+                // ページ全体（チャットウィジェット含む）をキャプチャ
+                // eslint-disable-next-line no-undef
+                html2canvas(document.body, {
+                    useCORS: true,
+                    allowTaint: true,
+                    scale: 1,
+                    logging: false,
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    x: window.scrollX,
+                    y: window.scrollY
+                }).then(function(canvas) {
+                    btn.classList.remove('capturing');
+                    btn.disabled = false;
+
+                    // Canvas → Blob → File (JPEG for smaller size)
+                    canvas.toBlob(function(blob) {
+                        if (!blob) return;
+                        // 2MB制限チェック — 超えた場合は縮小
+                        if (blob.size > 1900000) {
+                            var img = new Image();
+                            img.onload = function() {
+                                var ratio = Math.sqrt(1900000 / blob.size);
+                                var c = document.createElement('canvas');
+                                c.width = Math.round(img.width * ratio);
+                                c.height = Math.round(img.height * ratio);
+                                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                                c.toBlob(function(smallBlob) {
+                                    if (!smallBlob) return;
+                                    var fn = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.jpg';
+                                    self.handleImageSelect(new File([smallBlob], fn, { type: 'image/jpeg' }));
+                                }, 'image/jpeg', 0.7);
+                                URL.revokeObjectURL(img.src);
+                            };
+                            img.src = URL.createObjectURL(blob);
+                            return;
+                        }
+                        var fileName = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.jpg';
+                        var file = new File([blob], fileName, { type: 'image/jpeg' });
+                        self.handleImageSelect(file);
+                    }, 'image/jpeg', 0.8);
+                }).catch(function() {
+                    btn.classList.remove('capturing');
+                    btn.disabled = false;
+                    // html2canvas 失敗時: getDisplayMedia フォールバック
+                    self._captureViaDisplayMedia();
+                });
+            });
+        },
+
+        /**
+         * html2canvas CDN を動的に読み込み
+         */
+        _loadHtml2Canvas: function(callback) {
+            if (typeof html2canvas !== 'undefined') {
+                callback();
+                return;
+            }
+            var self = this;
+            var script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = callback;
+            script.onerror = function() {
+                // CDN 失敗時: getDisplayMedia フォールバック
+                if (self.screenshotBtn) {
+                    self.screenshotBtn.classList.remove('capturing');
+                    self.screenshotBtn.disabled = false;
+                }
+                self._captureViaDisplayMedia();
+            };
+            document.head.appendChild(script);
+        },
+
+        /**
+         * getDisplayMedia フォールバック（画面キャプチャ API）
+         */
+        _captureViaDisplayMedia: function() {
+            var self = this;
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                return;
+            }
+            navigator.mediaDevices.getDisplayMedia({ video: true }).then(function(stream) {
+                var track = stream.getVideoTracks()[0];
+                // ImageCapture が使える場合
+                if (typeof ImageCapture !== 'undefined') {
+                    var capture = new ImageCapture(track);
+                    capture.grabFrame().then(function(bitmap) {
+                        track.stop();
+                        var canvas = document.createElement('canvas');
+                        canvas.width = bitmap.width;
+                        canvas.height = bitmap.height;
+                        canvas.getContext('2d').drawImage(bitmap, 0, 0);
+                        canvas.toBlob(function(blob) {
+                            if (!blob) return;
+                            var fileName = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png';
+                            var file = new File([blob], fileName, { type: 'image/png' });
+                            self.handleImageSelect(file);
+                        }, 'image/png');
+                    }).catch(function() { track.stop(); });
+                } else {
+                    // video element フォールバック
+                    var video = document.createElement('video');
+                    video.srcObject = stream;
+                    video.onloadedmetadata = function() {
+                        video.play();
+                        var canvas = document.createElement('canvas');
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        track.stop();
+                        canvas.toBlob(function(blob) {
+                            if (!blob) return;
+                            var fileName = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png';
+                            var file = new File([blob], fileName, { type: 'image/png' });
+                            self.handleImageSelect(file);
+                        }, 'image/png');
+                    };
+                }
+            }).catch(function() {
+                // ユーザーがキャンセル、またはAPI不可
+            });
+        },
+
+        /**
          * ローディング状態を切り替え
          */
         setLoading: function(loading) {
@@ -2212,6 +2406,19 @@
                                 return new Promise(function(resolve) {
                                     setTimeout(resolve, retryDelay);
                                 }).then(function() {
+                                    return self.apiRequest(method, endpoint, data, _retryCount + 1);
+                                });
+                            }
+
+                            // Auto-retry: recaptcha_failed → reload reCAPTCHA script and retry (once)
+                            if (errorCode === 'recaptcha_failed' && _retryCount < 1) {
+                                return self._reloadRecaptcha().then(function() {
+                                    // Re-acquire token with fresh reCAPTCHA instance
+                                    return self.getRecaptchaToken(data && data.recaptcha_action || 'chat');
+                                }).then(function(newToken) {
+                                    if (data) {
+                                        data.recaptcha_token = newToken;
+                                    }
                                     return self.apiRequest(method, endpoint, data, _retryCount + 1);
                                 });
                             }

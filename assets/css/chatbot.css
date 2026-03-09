@@ -885,7 +885,7 @@
 }
 
 .chatbot-footer-branding a:hover {
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 .chatbot-footer-powered {
@@ -904,8 +904,8 @@
 }
 
 .chatbot-footer-powered a:hover {
-    color: #999;
-    text-decoration: underline;
+    color: #bbb;
+    text-decoration: none;
 }
 
 .chatbot-input {
@@ -985,7 +985,8 @@
    画像アップロード（Pro: マルチモーダル）
 ============================================ */
 .chatbot-image-btn[hidden],
-.chatbot-mic-btn[hidden] {
+.chatbot-mic-btn[hidden],
+.chatbot-screenshot-btn[hidden] {
     display: none !important;
 }
 
@@ -1013,6 +1014,42 @@
     width: 20px;
     height: 20px;
     color: #666;
+}
+
+.chatbot-screenshot-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.chatbot-screenshot-btn:hover {
+    background: #e0e0e0;
+    transform: scale(1.05);
+}
+
+.chatbot-screenshot-btn svg {
+    width: 20px;
+    height: 20px;
+    color: #666;
+}
+
+.chatbot-screenshot-btn.capturing {
+    background: #fff3cd;
+    animation: pulse-capture 1s infinite;
+}
+
+@keyframes pulse-capture {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 .chatbot-image-preview {

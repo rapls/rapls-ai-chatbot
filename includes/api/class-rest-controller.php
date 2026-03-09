@@ -725,9 +725,12 @@ class WPAIC_REST_Controller {
         $file_name         = $request->get_param('file_name') ?? '';
 
         // Reject image if multimodal is not enabled (Pro feature)
+        // Allow if screenshot/screen sharing is enabled
         if (!empty($image)) {
             $pro_features_check = WPAIC_Pro_Features::get_instance();
-            if (!$pro_features_check->is_pro() || !method_exists($pro_features_check, 'is_multimodal_enabled') || !$pro_features_check->is_multimodal_enabled()) {
+            $pro_settings_check = get_option('wpaic_settings', [])['pro_features'] ?? [];
+            $screenshot_allowed = !empty($pro_settings_check['screen_sharing_enabled']) && $pro_features_check->is_pro();
+            if (!$screenshot_allowed && (!$pro_features_check->is_pro() || !method_exists($pro_features_check, 'is_multimodal_enabled') || !$pro_features_check->is_multimodal_enabled())) {
                 return new WP_REST_Response([
                     'success'    => false,
                     'error'      => __('Image upload is not available.', 'rapls-ai-chatbot'),
@@ -890,11 +893,16 @@ class WPAIC_REST_Controller {
         // Verify reCAPTCHA
         $recaptcha_result = $this->verify_recaptcha($recaptcha_token, 'chat');
         if (is_wp_error($recaptcha_result)) {
-            return new WP_REST_Response([
+            $response_data = [
                 'success'    => false,
                 'error'      => $recaptcha_result->get_error_message(),
                 'error_code' => $recaptcha_result->get_error_code(),
-            ], 403);
+            ];
+            $error_data = $recaptcha_result->get_error_data();
+            if (!empty($error_data['google_error_codes'])) {
+                $response_data['recaptcha_error_codes'] = $error_data['google_error_codes'];
+            }
+            return new WP_REST_Response($response_data, 403);
         }
 
         // Check rate limit (Pro enhanced or basic)
@@ -1005,11 +1013,21 @@ class WPAIC_REST_Controller {
                 }
                 $conversation_id = $conversation['id'];
 
-                // Save user message
+                // Save uploaded image to media library for admin review
+                $saved_image_url = '';
+                if (!empty($image)) {
+                    $saved_image_url = $this->save_image_to_media($image, $conversation_id);
+                }
+
+                // Save user message (with image URL marker if present)
+                $save_content = $message;
+                if ($saved_image_url) {
+                    $save_content .= "\n[image:" . $saved_image_url . ']';
+                }
                 WPAIC_Message::create([
                     'conversation_id' => $conversation_id,
                     'role'            => 'user',
-                    'content'         => $message,
+                    'content'         => $save_content,
                 ]);
             } else {
                 // save_history OFF — store context in transient only
@@ -1043,6 +1061,10 @@ class WPAIC_REST_Controller {
             // get_monthly_ai_response_count() includes no-history counter automatically
             if ($pro_features->is_limit_reached()) {
                 $search_engine = new WPAIC_Search_Engine();
+                // Apply bot-specific knowledge filter for FAQ fallback
+                if (!empty($bot_config['knowledge_categories'])) {
+                    $search_engine->set_bot_filters($bot_config['knowledge_categories'], false);
+                }
                 $faq_results = $search_engine->search_knowledge_only($message, 3);
                 $faq_answer = $this->extract_faq_answer($faq_results, $message);
 
@@ -1089,6 +1111,15 @@ class WPAIC_REST_Controller {
 
             // Search related content
             $search_engine = new WPAIC_Search_Engine();
+            // Apply bot-specific knowledge/crawl filters
+            if (!empty($bot_config['knowledge_categories'])) {
+                $search_engine->set_bot_filters(
+                    $bot_config['knowledge_categories'],
+                    $bot_config['use_site_crawl'] ?? true
+                );
+            } elseif (isset($bot_config['use_site_crawl']) && !$bot_config['use_site_crawl']) {
+                $search_engine->set_bot_filters([], false);
+            }
             $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
             $context = $search_engine->build_context($related_content, $this->get_max_context_chars(), $message);
 
@@ -1959,6 +1990,51 @@ class WPAIC_REST_Controller {
     /**
      * Extract text content from uploaded plain text file data URI
      *
+     * Save a base64-encoded image to the WordPress media library.
+     *
+     * @param string $base64_data Base64 data URI (data:image/...;base64,...)
+     * @param int    $conversation_id Conversation ID for filename context
+     * @return string Attachment URL or empty string on failure
+     */
+    private function save_image_to_media(string $base64_data, int $conversation_id): string {
+        if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $base64_data, $matches)) {
+            return '';
+        }
+        $ext = $matches[1] === 'jpg' ? 'jpeg' : $matches[1];
+        $comma_pos = strpos($base64_data, ',');
+        // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+        $decoded = base64_decode(substr($base64_data, $comma_pos + 1), true);
+        if (!$decoded || strlen($decoded) > 5 * 1024 * 1024) {
+            return '';
+        }
+
+        $upload_dir = wp_upload_dir();
+        $filename = 'chatbot-image-' . $conversation_id . '-' . time() . '.' . $ext;
+        $filepath = $upload_dir['path'] . '/' . $filename;
+
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+        if (file_put_contents($filepath, $decoded) === false) {
+            return '';
+        }
+
+        $attachment = [
+            'post_mime_type' => 'image/' . $ext,
+            'post_title'     => sanitize_file_name($filename),
+            'post_status'    => 'inherit',
+        ];
+        $attach_id = wp_insert_attachment($attachment, $filepath);
+        if (is_wp_error($attach_id) || !$attach_id) {
+            return '';
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        $attach_data = wp_generate_attachment_metadata($attach_id, $filepath);
+        wp_update_attachment_metadata($attach_id, $attach_data);
+
+        return wp_get_attachment_url($attach_id);
+    }
+
+    /**
      * @param string $data_uri Base64-encoded data URI
      * @return string Extracted text
      */
@@ -2803,11 +2879,16 @@ class WPAIC_REST_Controller {
             $recaptcha_token = sanitize_text_field($request->get_param('recaptcha_token') ?? '');
             $recaptcha_result = $this->verify_recaptcha($recaptcha_token, $captcha_action);
             if (is_wp_error($recaptcha_result)) {
-                return new WP_REST_Response([
+                $resp_data = [
                     'success'    => false,
                     'error'      => $recaptcha_result->get_error_message(),
                     'error_code' => $recaptcha_result->get_error_code(),
-                ], 403);
+                ];
+                $err_data = $recaptcha_result->get_error_data();
+                if (!empty($err_data['google_error_codes'])) {
+                    $resp_data['recaptcha_error_codes'] = $err_data['google_error_codes'];
+                }
+                return new WP_REST_Response($resp_data, 403);
             }
         }
 
@@ -2874,11 +2955,15 @@ class WPAIC_REST_Controller {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (empty($body['success'])) {
+            $error_codes = $body['error-codes'] ?? [];
             // Debug: log Google's error response for troubleshooting
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 error_log('[WPAIC reCAPTCHA] Verification failed. Google response: ' . wp_json_encode($body));
             }
-            return new WP_Error('recaptcha_failed', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
+            $error = new WP_Error('recaptcha_failed', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
+            // Attach Google error codes for client-side retry logic
+            $error->add_data(['google_error_codes' => $error_codes]);
+            return $error;
         }
 
         // Verify action matches expected (prevents token reuse across different forms)

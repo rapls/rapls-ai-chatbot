@@ -106,6 +106,16 @@ class WPAIC_Chatbot_Widget {
                         $theme_class = trim($theme_class);
                     }
                 }
+                // Bot-specific primary color override
+                if (!empty($sc_bot_config['primary_color'])) {
+                    $primary_color = sanitize_hex_color($sc_bot_config['primary_color']);
+                }
+                // Bot-specific badge override
+                if (!empty($sc_bot_config['badge_icon_type']) && $sc_bot_config['badge_icon_type'] !== 'default') {
+                    $settings['pro_features']['badge_icon_type'] = $sc_bot_config['badge_icon_type'];
+                    $settings['pro_features']['badge_icon_image'] = $sc_bot_config['badge_icon_image'] ?? '';
+                    $settings['pro_features']['badge_icon_emoji'] = $sc_bot_config['badge_icon_emoji'] ?? '';
+                }
                 // Set bot_id in JS config via inline script
                 wp_add_inline_script('wpaic-chatbot',
                     'if(window.wpAiChatbotConfig){wpAiChatbotConfig.bot_id=' . wp_json_encode($shortcode_bot_id) . ';' .
@@ -181,16 +191,9 @@ class WPAIC_Chatbot_Widget {
             }
         ";
 
-        // Hide "Powered by" footer (available in both Free and Pro)
+        // Powered by footer is now conditionally rendered in the template (not hidden via CSS)
         $pro_settings = $settings['pro_features'] ?? [];
         $pro = WPAIC_Pro_Features::get_instance();
-        if (!empty($pro_settings['hide_powered_by'])) {
-            $custom_css .= "
-            .chatbot-footer-powered {
-                display: none !important;
-            }
-            ";
-        }
 
         // White label: custom CSS (strip dangerous strings to prevent style breakout)
         if ($pro->is_pro() && !empty($pro_settings['custom_css'])) {
@@ -279,6 +282,7 @@ class WPAIC_Chatbot_Widget {
             'file_upload_enabled' => !empty($pro_features['file_upload_enabled']),
             'file_upload_max_size' => (int) ($pro_features['file_upload_max_size'] ?? 5120),
             'file_upload_types'   => $pro_features['file_upload_types'] ?? ['pdf', 'doc', 'docx', 'txt', 'csv'],
+            'screenshot_enabled'  => !empty($pro_features['screen_sharing_enabled']),
             'voice_input_enabled' => !empty($pro_features['voice_input_enabled']),
             'tts_enabled'         => !empty($pro_features['tts_enabled']),
             'fullscreen_mode'     => !empty($pro_features['fullscreen_mode']),
@@ -433,6 +437,16 @@ class WPAIC_Chatbot_Widget {
                             }
                             $theme_class = trim($theme_class);
                         }
+                    }
+                    // Bot-specific primary color override
+                    if (!empty($page_bot_config['primary_color'])) {
+                        $primary_color = sanitize_hex_color($page_bot_config['primary_color']);
+                    }
+                    // Bot-specific badge override
+                    if (!empty($page_bot_config['badge_icon_type']) && $page_bot_config['badge_icon_type'] !== 'default') {
+                        $settings['pro_features']['badge_icon_type'] = $page_bot_config['badge_icon_type'];
+                        $settings['pro_features']['badge_icon_image'] = $page_bot_config['badge_icon_image'] ?? '';
+                        $settings['pro_features']['badge_icon_emoji'] = $page_bot_config['badge_icon_emoji'] ?? '';
                     }
                     // Override JS config for page-rule bot
                     wp_add_inline_script('wpaic-chatbot',

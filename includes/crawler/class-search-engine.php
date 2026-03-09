@@ -20,6 +20,28 @@ class WPAIC_Search_Engine {
     private static ?bool $has_fulltext_index = null;
 
     /**
+     * Bot-specific knowledge category filter (empty = all categories)
+     * @var string[]
+     */
+    private array $knowledge_categories = [];
+
+    /**
+     * Whether to include site crawl index in search results
+     */
+    private bool $use_site_crawl = true;
+
+    /**
+     * Set bot-specific search filters.
+     *
+     * @param string[] $categories  Knowledge categories to include (empty = all).
+     * @param bool     $use_crawl   Whether to search the site crawl index.
+     */
+    public function set_bot_filters(array $categories = [], bool $use_crawl = true): void {
+        $this->knowledge_categories = array_filter(array_map('trim', $categories));
+        $this->use_site_crawl = $use_crawl;
+    }
+
+    /**
      * Table name
      */
     private function get_table_name(): string {
@@ -109,9 +131,9 @@ class WPAIC_Search_Engine {
             }
         }
 
-        // Search from index (keyword) — skip for greetings/chitchat
+        // Search from index (keyword) — skip for greetings/chitchat or when bot disables site crawl
         $index_results = [];
-        if (!$this->is_greeting($query)) {
+        if ($this->use_site_crawl && !$this->is_greeting($query)) {
             $index_results = $this->search_index($query, $limit);
             foreach ($index_results as &$ir) {
                 $ir['keyword_matched'] = true;
@@ -173,10 +195,18 @@ class WPAIC_Search_Engine {
         }
 
         $vector_search = new WPAIC_Vector_Search();
-        $vector_index = $vector_search->search_index($query_embedding, $limit * 3);
+        $vector_index = $this->use_site_crawl ? $vector_search->search_index($query_embedding, $limit * 3) : [];
         $vector_knowledge = $vector_search->search_knowledge($query_embedding, $limit);
 
-        return array_merge($vector_index, $vector_knowledge);
+        // Filter vector knowledge by category if bot filter is set
+        if (!empty($this->knowledge_categories)) {
+            $allowed = $this->knowledge_categories;
+            $vector_knowledge = array_filter($vector_knowledge, function($item) use ($allowed) {
+                return in_array($item['category'] ?? '', $allowed, true);
+            });
+        }
+
+        return array_merge($vector_index, array_values($vector_knowledge));
     }
 
     /**
@@ -306,7 +336,16 @@ class WPAIC_Search_Engine {
         $has_priority = $schema['has_priority'];
         $has_is_active = $schema['has_is_active'];
 
-        $active_condition = $has_is_active ? 'WHERE is_active = 1' : '';
+        $where_parts = [];
+        if ($has_is_active) {
+            $where_parts[] = 'is_active = 1';
+        }
+        // Bot-specific category filter
+        if (!empty($this->knowledge_categories)) {
+            $placeholders = implode(',', array_fill(0, count($this->knowledge_categories), '%s'));
+            $where_parts[] = $wpdb->prepare("category IN ({$placeholders})", ...$this->knowledge_categories); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        }
+        $where_clause = !empty($where_parts) ? 'WHERE ' . implode(' AND ', $where_parts) : '';
         $priority_column = $has_priority ? 'priority' : '0 as priority';
         $order_by = $has_priority ? 'ORDER BY priority DESC, created_at DESC' : 'ORDER BY created_at DESC';
 
@@ -315,7 +354,7 @@ class WPAIC_Search_Engine {
         $sql = $wpdb->prepare(
             "SELECT id, title, content, category, {$priority_column}
              FROM {$table}
-             {$active_condition}
+             {$where_clause}
              {$order_by}
              LIMIT %d",
             $limit
@@ -510,8 +549,17 @@ class WPAIC_Search_Engine {
         $has_priority = $schema['has_priority'];
         $has_is_active = $schema['has_is_active'];
 
-        // Add filter only if is_active column exists
-        $active_condition = $has_is_active ? 'is_active = 1 AND' : '';
+        // Build conditions
+        $pre_conditions = [];
+        if ($has_is_active) {
+            $pre_conditions[] = 'is_active = 1';
+        }
+        // Bot-specific category filter
+        if (!empty($this->knowledge_categories)) {
+            $placeholders = implode(',', array_fill(0, count($this->knowledge_categories), '%s'));
+            $pre_conditions[] = $wpdb->prepare("category IN ({$placeholders})", ...$this->knowledge_categories); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        }
+        $active_condition = !empty($pre_conditions) ? implode(' AND ', $pre_conditions) . ' AND' : '';
         $priority_column = $has_priority ? 'priority' : '0 as priority';
         $order_by = $has_priority ? 'ORDER BY priority DESC' : '';
 

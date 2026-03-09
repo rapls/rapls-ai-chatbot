@@ -117,6 +117,12 @@ if (!defined('ABSPATH')) {
                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
                 </svg>
             </button>
+            <button type="button" class="chatbot-screenshot-btn" aria-label="<?php esc_attr_e('Screenshot', 'rapls-ai-chatbot'); ?>" hidden>
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="3.2"/>
+                    <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                </svg>
+            </button>
             <button type="button" class="chatbot-mic-btn" aria-label="<?php esc_attr_e('Voice input', 'rapls-ai-chatbot'); ?>" hidden>
                 <svg class="chatbot-mic-icon" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5z"/>
@@ -156,7 +162,9 @@ if (!defined('ABSPATH')) {
         </div>
         <?php endif; ?>
 
+        <?php if (empty($settings['pro_features']['hide_powered_by'])) : ?>
         <div class="chatbot-footer-powered"><a href="https://raplsworks.com/rapls-ai-chatbot-guide/" target="_blank" rel="noopener noreferrer">Powered by Rapls Works</a></div>
+        <?php endif; ?>
 
     </div>
 </div>

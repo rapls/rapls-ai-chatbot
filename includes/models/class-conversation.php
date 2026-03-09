@@ -180,7 +180,7 @@ class WPAIC_Conversation {
         $params[] = $offset;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name, WHERE and ORDER BY are safe internal values
-        $sql = "SELECT c.*, (SELECT COUNT(*) FROM {$msg_table} m WHERE m.conversation_id = c.id) AS message_count FROM `{$table}` c WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
+        $sql = "SELECT c.*, (SELECT COUNT(*) FROM {$msg_table} m WHERE m.conversation_id = c.id) AS message_count, (SELECT COUNT(*) FROM {$msg_table} m2 WHERE m2.conversation_id = c.id AND m2.content LIKE '%[image:%') AS has_screenshot FROM `{$table}` c WHERE {$where} ORDER BY {$orderby} LIMIT %d OFFSET %d";
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare($sql, ...$params), ARRAY_A);

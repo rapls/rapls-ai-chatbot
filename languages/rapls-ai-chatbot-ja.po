@@ -7149,10 +7149,42 @@ msgid "Subscription assistant for membership sites, SaaS plans, and online commu
 msgstr "会員サイトや SaaS プラン、オンラインコミュニティ向けのサブスクリプションアシスタント。"
 
 #: templates/admin/settings.php
-msgid "Powered By"
-msgstr "Powered By"
+msgid "Footer"
+msgstr "フッター"
 
 #: templates/admin/settings.php
-msgid "Hide \"Powered by Rapls Works\" footer"
-msgstr "「Powered by Rapls Works」フッターを非表示"
+msgid "Hide footer"
+msgstr "フッターを非表示"
+
+#: templates/admin/conversations.php
+msgid "Start Operator Chat"
+msgstr "オペレーターチャットを開始"
+
+#: templates/admin/conversations.php
+msgid "End Operator Chat"
+msgstr "オペレーターチャットを終了"
+
+#: templates/admin/conversations.php
+msgid "Type a reply..."
+msgstr "返信を入力..."
+
+#: templates/admin/conversations.php
+msgid "Operator"
+msgstr "オペレーター"
+
+#: templates/admin/conversations.php
+msgid "Operator Active"
+msgstr "オペレーター対応中"
+
+#: templates/admin/conversations.php
+msgid "End operator chat and return to AI mode?"
+msgstr "オペレーターチャットを終了して AI モードに戻りますか？"
+
+#: templates/admin/conversations.php
+msgid "Failed to send message."
+msgstr "メッセージの送信に失敗しました。"
+
+#: templates/admin/conversations.php
+msgid "Contains screenshot"
+msgstr "スクリーンショットあり"
 

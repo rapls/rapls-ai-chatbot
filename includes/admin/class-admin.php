@@ -217,7 +217,7 @@ class WPAIC_Admin {
 
         $conversations_url = admin_url('admin.php?page=wpaic-conversations');
         ?>
-        <div class="notice notice-warning" style="border-left-color: #e65100;">
+        <div class="notice notice-warning is-dismissible" style="border-left-color: #e65100;">
             <p>
                 <strong style="color: #e65100;">&#x1f6a8; <?php esc_html_e('AI Chatbot — Handoff:', 'rapls-ai-chatbot'); ?></strong>
                 <?php
@@ -1021,9 +1021,11 @@ class WPAIC_Admin {
         );
 
         wp_localize_script('wpaic-admin', 'wpaicAdmin', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce'   => wp_create_nonce('wpaic_admin_nonce'),
-            'isPro'   => WPAIC_Pro_Features::get_instance()->is_pro(),
+            'ajaxUrl'   => admin_url('admin-ajax.php'),
+            'nonce'     => wp_create_nonce('wpaic_admin_nonce'),
+            'restUrl'   => esc_url_raw(rest_url()),
+            'restNonce' => wp_create_nonce('wp_rest'),
+            'isPro'     => WPAIC_Pro_Features::get_instance()->is_pro(),
             'defaults' => self::get_all_defaults(),
             'i18n'    => [
                 'confirmDelete' => __('Are you sure you want to delete?', 'rapls-ai-chatbot'),
@@ -1951,9 +1953,11 @@ class WPAIC_Admin {
         }
 
         $messages = WPAIC_Message::get_by_conversation($conversation_id);
+        $conversation = WPAIC_Conversation::get_by_id($conversation_id);
 
         $formatted = array_map(function($msg) {
             $data = [
+                'id'         => (int) $msg['id'],
                 'role'       => $msg['role'],
                 'content'    => $msg['content'],
                 'created_at' => mysql2date('Y/m/d H:i:s', $msg['created_at']),
@@ -1976,7 +1980,11 @@ class WPAIC_Admin {
             return $data;
         }, $messages);
 
-        wp_send_json_success($formatted);
+        wp_send_json_success([
+            'messages'       => $formatted,
+            'conversation_id' => $conversation_id,
+            'handoff_status' => $conversation['handoff_status'] ?? null,
+        ]);
     }
 
     /**

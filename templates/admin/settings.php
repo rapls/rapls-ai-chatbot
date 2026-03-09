@@ -1242,11 +1242,11 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e('Powered By', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('Footer', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="wpaic_settings[hide_powered_by]" value="1" <?php checked(!empty($pro_settings['hide_powered_by'])); ?>>
-                                <?php esc_html_e('Hide "Powered by Rapls Works" footer', 'rapls-ai-chatbot'); ?>
+                                <?php esc_html_e('Hide footer', 'rapls-ai-chatbot'); ?>
                             </label>
                         </td>
                     </tr>

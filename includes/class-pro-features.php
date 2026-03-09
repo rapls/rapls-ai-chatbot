@@ -466,7 +466,6 @@ class WPAIC_Pro_Features {
 
             // Screen Sharing
             'screen_sharing_enabled' => false,
-            'screen_sharing_provider' => 'screenshot',
 
             // Booking Integration
             'booking_enabled' => false,

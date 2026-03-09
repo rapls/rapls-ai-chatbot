@@ -44,6 +44,13 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
 }
+.wpaic-screenshot-badge {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 14px;
+    vertical-align: middle;
+    cursor: help;
+}
 </style>
 <div class="wrap wpaic-admin">
     <h1><?php esc_html_e('AI Chatbot - Conversations', 'rapls-ai-chatbot'); ?></h1>
@@ -161,7 +168,12 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                         <td>
                             <code><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
                         </td>
-                        <td style="text-align: center;"><?php echo esc_html(isset($conv['message_count']) ? number_format((int) $conv['message_count']) : '-'); ?></td>
+                        <td style="text-align: center;">
+                            <?php echo esc_html(isset($conv['message_count']) ? number_format((int) $conv['message_count']) : '-'); ?>
+                            <?php if (!empty($conv['has_screenshot'])): ?>
+                                <span class="wpaic-screenshot-badge" title="<?php esc_attr_e('Contains screenshot', 'rapls-ai-chatbot'); ?>">&#128247;</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
                             <?php if ($lead): ?>
                                 <div class="wpaic-lead-info">
@@ -291,10 +303,23 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
         <div class="wpaic-modal-content">
             <div class="wpaic-modal-header">
                 <h2><?php esc_html_e('Conversation Details', 'rapls-ai-chatbot'); ?></h2>
+                <div class="wpaic-modal-header-actions">
+                    <span id="wpaic-handoff-status-label" class="wpaic-handoff-badge" style="display:none;"></span>
+                    <button type="button" id="wpaic-operator-start" class="button button-small" style="display:none;">
+                        <?php esc_html_e('Start Operator Chat', 'rapls-ai-chatbot'); ?>
+                    </button>
+                    <button type="button" id="wpaic-operator-end" class="button button-small button-link-delete" style="display:none;">
+                        <?php esc_html_e('End Operator Chat', 'rapls-ai-chatbot'); ?>
+                    </button>
+                </div>
                 <button type="button" class="wpaic-modal-close">&times;</button>
             </div>
             <div class="wpaic-modal-body">
                 <div id="wpaic-conversation-messages"></div>
+            </div>
+            <div id="wpaic-operator-reply-form" class="wpaic-operator-reply" style="display:none;">
+                <textarea id="wpaic-operator-message" rows="2" placeholder="<?php esc_attr_e('Type a reply...', 'rapls-ai-chatbot'); ?>"></textarea>
+                <button type="button" id="wpaic-operator-send" class="button button-primary"><?php esc_html_e('Send', 'rapls-ai-chatbot'); ?></button>
             </div>
         </div>
     </div>
@@ -319,19 +344,280 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
     background: #dff0d8;
     color: #3c763d;
 }
+.wpaic-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.wpaic-modal-header h2 {
+    flex: 0 0 auto;
+}
+.wpaic-modal-header-actions {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.wpaic-modal-header .wpaic-modal-close {
+    flex: 0 0 auto;
+}
+.wpaic-operator-reply {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    background: #f9f9f9;
+    align-items: flex-end;
+}
+.wpaic-operator-reply textarea {
+    flex: 1;
+    resize: vertical;
+    min-height: 36px;
+    max-height: 120px;
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.wpaic-operator-reply .button {
+    flex: 0 0 auto;
+    height: 36px;
+}
+.wpaic-message.message-operator {
+    background: #e8f0fe !important;
+    border-left: 3px solid #1a73e8 !important;
+}
+.wpaic-operator-role-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    background: #1a73e8;
+    color: #fff;
+    margin-left: 6px;
+}
 </style>
 
 <script>
 jQuery(document).ready(function($) {
     var i18n = wpaicAdmin.i18n || {};
+    var _operatorPollTimer = null;
+    var _currentConvId = null;
+    var _lastMessageId = 0;
+    var _isPro = !!(wpaicAdmin.isPro);
+    var _apiBase = (wpaicAdmin.restUrl || '/wp-json/') + 'wp-ai-chatbot/v1';
+
+    // Build a single message DOM element
+    function buildMessageEl(msg, allMessages) {
+        var roleLabel;
+        var roleClass;
+        if (msg.role === 'user') {
+            roleLabel = '<?php echo esc_js(__('User', 'rapls-ai-chatbot')); ?>';
+            roleClass = 'user';
+        } else if (msg.role === 'operator') {
+            roleLabel = '<?php echo esc_js(__('Operator', 'rapls-ai-chatbot')); ?>';
+            roleClass = 'operator';
+        } else {
+            roleLabel = '<?php echo esc_js(__('AI', 'rapls-ai-chatbot')); ?>';
+            roleClass = 'assistant';
+        }
+
+        var wrap = document.createElement('div');
+        wrap.className = 'wpaic-message message-' + roleClass;
+        if (msg.id) wrap.dataset.messageId = msg.id;
+
+        var header = document.createElement('div');
+        var strong = document.createElement('strong');
+        strong.textContent = roleLabel;
+        header.appendChild(strong);
+
+        if (msg.role === 'operator') {
+            var roleBadge = document.createElement('span');
+            roleBadge.className = 'wpaic-operator-role-badge';
+            roleBadge.textContent = '<?php echo esc_js(__('Operator', 'rapls-ai-chatbot')); ?>';
+            header.appendChild(roleBadge);
+        }
+
+        header.appendChild(document.createTextNode(' '));
+        var small = document.createElement('small');
+        small.textContent = '(' + msg.created_at + ')';
+        header.appendChild(small);
+
+        // Feedback badge
+        if (msg.role === 'assistant' && typeof msg.feedback !== 'undefined') {
+            var badge = document.createElement('span');
+            if (msg.feedback === 1) {
+                badge.className = 'wpaic-feedback-badge wpaic-feedback-positive';
+                badge.title = '<?php echo esc_attr(__('Positive feedback', 'rapls-ai-chatbot')); ?>';
+                badge.textContent = '\uD83D\uDC4D';
+                header.appendChild(document.createTextNode(' '));
+                header.appendChild(badge);
+            } else if (msg.feedback === -1) {
+                badge.className = 'wpaic-feedback-badge wpaic-feedback-negative';
+                badge.title = '<?php echo esc_attr(__('Negative feedback', 'rapls-ai-chatbot')); ?>';
+                badge.textContent = '\uD83D\uDC4E';
+                header.appendChild(document.createTextNode(' '));
+                header.appendChild(badge);
+            }
+        }
+
+        // Extract [image:URL] markers
+        var textContent = msg.content || '';
+        var imageMatch = textContent.match(/\[image:(https?:\/\/[^\]]+)\]/);
+        if (imageMatch) {
+            textContent = textContent.replace(/\n?\[image:[^\]]+\]/, '').trim();
+        }
+
+        var p = document.createElement('p');
+        p.style.whiteSpace = 'pre-wrap';
+        p.textContent = textContent;
+
+        wrap.appendChild(header);
+        if (imageMatch) {
+            var imgWrap = document.createElement('div');
+            imgWrap.style.cssText = 'margin: 6px 0;';
+            var img = document.createElement('img');
+            img.src = imageMatch[1];
+            img.alt = 'Screenshot';
+            img.style.cssText = 'max-width: 300px; max-height: 200px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer;';
+            img.addEventListener('click', function() { window.open(this.src, '_blank'); });
+            imgWrap.appendChild(img);
+            wrap.appendChild(imgWrap);
+        }
+        wrap.appendChild(p);
+
+        // Suggest Improvement (Pro)
+        if (msg.role === 'assistant' && _isPro && allMessages) {
+            var suggestBtn = document.createElement('button');
+            suggestBtn.type = 'button';
+            suggestBtn.className = 'button button-small wpaic-suggest-edit';
+            suggestBtn.textContent = '<?php echo esc_js(__('Suggest Improvement', 'rapls-ai-chatbot')); ?>';
+            suggestBtn.style.cssText = 'margin-top: 6px; font-size: 11px;';
+            suggestBtn.dataset.content = msg.content;
+            var idx = allMessages.indexOf(msg);
+            suggestBtn.dataset.userMsg = (idx > 0 ? allMessages[idx - 1].content : '') || '';
+            wrap.appendChild(suggestBtn);
+        }
+
+        // AI metadata badges
+        if (msg.role === 'assistant' && (msg.ai_model || msg.tokens || msg.cache_hit)) {
+            var metaDiv = document.createElement('div');
+            metaDiv.className = 'wpaic-msg-meta';
+            if (msg.ai_model) {
+                var modelBadge = document.createElement('span');
+                modelBadge.className = 'wpaic-msg-meta-badge';
+                modelBadge.textContent = msg.ai_model;
+                metaDiv.appendChild(modelBadge);
+            }
+            if (msg.tokens) {
+                var tokenBadge = document.createElement('span');
+                tokenBadge.className = 'wpaic-msg-meta-badge';
+                tokenBadge.textContent = msg.tokens.toLocaleString() + ' <?php echo esc_js(__('tokens', 'rapls-ai-chatbot')); ?>';
+                metaDiv.appendChild(tokenBadge);
+            }
+            if (msg.cache_hit) {
+                var cacheBadge = document.createElement('span');
+                cacheBadge.className = 'wpaic-msg-meta-badge cached';
+                cacheBadge.textContent = '\u26A1 <?php echo esc_js(__('cached', 'rapls-ai-chatbot')); ?>';
+                metaDiv.appendChild(cacheBadge);
+            }
+            wrap.appendChild(metaDiv);
+        }
+
+        return wrap;
+    }
+
+    // Update operator UI state based on handoff status
+    function updateOperatorUI(handoffStatus) {
+        var $start = $('#wpaic-operator-start');
+        var $end = $('#wpaic-operator-end');
+        var $form = $('#wpaic-operator-reply-form');
+        var $label = $('#wpaic-handoff-status-label');
+
+        if (!_isPro) {
+            $start.hide(); $end.hide(); $form.hide(); $label.hide();
+            return;
+        }
+
+        if (handoffStatus === 'pending' || handoffStatus === 'active') {
+            $start.hide();
+            $end.show();
+            $form.show();
+            $label.show().text(handoffStatus === 'pending'
+                ? '<?php echo esc_js(__('Pending', 'rapls-ai-chatbot')); ?>'
+                : '<?php echo esc_js(__('Operator Active', 'rapls-ai-chatbot')); ?>'
+            ).attr('class', 'wpaic-handoff-badge ' + (handoffStatus === 'pending' ? 'wpaic-handoff-badge--pending' : 'wpaic-handoff-badge--active'));
+            startOperatorPolling();
+        } else {
+            $start.show();
+            $end.hide();
+            $form.hide();
+            $label.hide();
+            stopOperatorPolling();
+        }
+    }
+
+    // Polling for new messages
+    function startOperatorPolling() {
+        stopOperatorPolling();
+        _operatorPollTimer = setInterval(function() {
+            if (!_currentConvId) return;
+            $.ajax({
+                url: wpaicAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'wpaic_get_conversation_messages',
+                    nonce: wpaicAdmin.nonce,
+                    conversation_id: _currentConvId
+                },
+                success: function(response) {
+                    if (!response.success) return;
+                    var data = response.data;
+                    var messages = data.messages || data;
+                    if (!messages || !messages.length) return;
+
+                    // Find new messages
+                    var container = document.getElementById('wpaic-conversation-messages');
+                    var lastRendered = _lastMessageId;
+                    messages.forEach(function(msg) {
+                        if (msg.id && msg.id > lastRendered) {
+                            container.appendChild(buildMessageEl(msg, null));
+                            _lastMessageId = msg.id;
+                        }
+                    });
+
+                    // Update handoff status
+                    if (data.handoff_status !== undefined) {
+                        updateOperatorUI(data.handoff_status);
+                    }
+
+                    // Auto-scroll
+                    var modalBody = container.closest('.wpaic-modal-body');
+                    if (modalBody) modalBody.scrollTop = modalBody.scrollHeight;
+                }
+            });
+        }, 5000);
+    }
+
+    function stopOperatorPolling() {
+        if (_operatorPollTimer) {
+            clearInterval(_operatorPollTimer);
+            _operatorPollTimer = null;
+        }
+    }
 
     // View conversation details
     $('.wpaic-view-conversation').on('click', function() {
         var conversationId = $(this).data('id');
+        _currentConvId = conversationId;
+        _lastMessageId = 0;
         var modal = $('#wpaic-conversation-modal');
         var messagesContainer = $('#wpaic-conversation-messages');
 
         messagesContainer.html('<p>' + (i18n.processing || 'Loading...') + '</p>');
+        $('#wpaic-operator-reply-form').hide();
+        $('#wpaic-operator-start').hide();
+        $('#wpaic-operator-end').hide();
+        $('#wpaic-handoff-status-label').hide();
         modal.show();
 
         $.ajax({
@@ -343,95 +629,32 @@ jQuery(document).ready(function($) {
                 conversation_id: conversationId
             },
             success: function(response) {
-                if (response.success && response.data.length > 0) {
+                if (!response.success) {
+                    messagesContainer.html('<p>' + (i18n.error || 'Error occurred.') + '</p>');
+                    return;
+                }
+
+                var data = response.data;
+                // Support both old format (array) and new format ({messages, handoff_status})
+                var messages = Array.isArray(data) ? data : (data.messages || []);
+                var handoffStatus = data.handoff_status || null;
+
+                if (messages.length > 0) {
                     var container = document.createElement('div');
-                    response.data.forEach(function(msg) {
-                        var roleLabel = msg.role === 'user' ? '<?php echo esc_js(__('User', 'rapls-ai-chatbot')); ?>' : '<?php echo esc_js(__('AI', 'rapls-ai-chatbot')); ?>';
-
-                        var wrap = document.createElement('div');
-                        wrap.className = 'wpaic-message message-' + (msg.role === 'user' ? 'user' : 'assistant');
-
-                        var header = document.createElement('div');
-                        var strong = document.createElement('strong');
-                        strong.textContent = roleLabel;
-                        header.appendChild(strong);
-                        header.appendChild(document.createTextNode(' '));
-                        var small = document.createElement('small');
-                        small.textContent = '(' + msg.created_at + ')';
-                        header.appendChild(small);
-
-                        // Show feedback status for AI messages
-                        if (msg.role === 'assistant' && typeof msg.feedback !== 'undefined') {
-                            var badge = document.createElement('span');
-                            if (msg.feedback === 1) {
-                                badge.className = 'wpaic-feedback-badge wpaic-feedback-positive';
-                                badge.title = '<?php echo esc_attr(__('Positive feedback', 'rapls-ai-chatbot')); ?>';
-                                badge.textContent = '\uD83D\uDC4D';
-                                header.appendChild(document.createTextNode(' '));
-                                header.appendChild(badge);
-                            } else if (msg.feedback === -1) {
-                                badge.className = 'wpaic-feedback-badge wpaic-feedback-negative';
-                                badge.title = '<?php echo esc_attr(__('Negative feedback', 'rapls-ai-chatbot')); ?>';
-                                badge.textContent = '\uD83D\uDC4E';
-                                header.appendChild(document.createTextNode(' '));
-                                header.appendChild(badge);
-                            }
-                        }
-
-                        var p = document.createElement('p');
-                        p.style.whiteSpace = 'pre-wrap';
-                        p.textContent = msg.content;
-
-                        wrap.appendChild(header);
-                        wrap.appendChild(p);
-
-                        // Response edit suggestion button (Pro)
-                        if (msg.role === 'assistant' && wpaicAdmin.isPro) {
-                            var suggestBtn = document.createElement('button');
-                            suggestBtn.type = 'button';
-                            suggestBtn.className = 'button button-small wpaic-suggest-edit';
-                            suggestBtn.textContent = '<?php echo esc_js(__('Suggest Improvement', 'rapls-ai-chatbot')); ?>';
-                            suggestBtn.style.cssText = 'margin-top: 6px; font-size: 11px;';
-                            suggestBtn.dataset.content = msg.content;
-                            suggestBtn.dataset.userMsg = (response.data[response.data.indexOf(msg) - 1] || {}).content || '';
-                            wrap.appendChild(suggestBtn);
-                        }
-
-                        // Show AI metadata badges
-                        if (msg.role === 'assistant' && (msg.ai_model || msg.tokens || msg.cache_hit)) {
-                            var metaDiv = document.createElement('div');
-                            metaDiv.className = 'wpaic-msg-meta';
-
-                            if (msg.ai_model) {
-                                var modelBadge = document.createElement('span');
-                                modelBadge.className = 'wpaic-msg-meta-badge';
-                                modelBadge.textContent = msg.ai_model;
-                                metaDiv.appendChild(modelBadge);
-                            }
-                            if (msg.tokens) {
-                                var tokenBadge = document.createElement('span');
-                                tokenBadge.className = 'wpaic-msg-meta-badge';
-                                tokenBadge.textContent = msg.tokens.toLocaleString() + ' <?php echo esc_js(__('tokens', 'rapls-ai-chatbot')); ?>';
-                                metaDiv.appendChild(tokenBadge);
-                            }
-                            if (msg.cache_hit) {
-                                var cacheBadge = document.createElement('span');
-                                cacheBadge.className = 'wpaic-msg-meta-badge cached';
-                                cacheBadge.textContent = '\u26A1 <?php echo esc_js(__('cached', 'rapls-ai-chatbot')); ?>';
-                                metaDiv.appendChild(cacheBadge);
-                            }
-
-                            wrap.appendChild(metaDiv);
-                        }
-
-                        container.appendChild(wrap);
+                    messages.forEach(function(msg) {
+                        container.appendChild(buildMessageEl(msg, messages));
+                        if (msg.id && msg.id > _lastMessageId) _lastMessageId = msg.id;
                     });
                     messagesContainer.empty().append(container);
-                } else if (response.success) {
-                    messagesContainer.html('<p><?php echo esc_js(__('No messages.', 'rapls-ai-chatbot')); ?></p>');
+
+                    // Auto-scroll to bottom
+                    var modalBody = messagesContainer.closest('.wpaic-modal-body')[0];
+                    if (modalBody) modalBody.scrollTop = modalBody.scrollHeight;
                 } else {
-                    messagesContainer.html('<p>' + (i18n.error || 'Error occurred.') + '</p>');
+                    messagesContainer.html('<p><?php echo esc_js(__('No messages.', 'rapls-ai-chatbot')); ?></p>');
                 }
+
+                updateOperatorUI(handoffStatus);
             }
         });
     });
@@ -479,8 +702,110 @@ jQuery(document).ready(function($) {
     $('.wpaic-modal-close, .wpaic-modal').on('click', function(e) {
         if (e.target === this) {
             $('#wpaic-conversation-modal').hide();
+            stopOperatorPolling();
+            _currentConvId = null;
         }
     });
+
+    // Operator: Start chat (set handoff to pending)
+    $('#wpaic-operator-start').on('click', function() {
+        if (!_currentConvId || !_isPro) return;
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: _apiBase + '/handoff-action',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-WP-Nonce': wpaicAdmin.restNonce },
+            data: JSON.stringify({ conversation_id: _currentConvId, action: 'accept' }),
+            success: function(response) {
+                if (response.success) {
+                    updateOperatorUI('active');
+                } else {
+                    alert(response.error || 'Error');
+                }
+            },
+            error: function() { alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>'); },
+            complete: function() { $btn.prop('disabled', false); }
+        });
+    });
+
+    // Operator: End chat (resolve handoff)
+    $('#wpaic-operator-end').on('click', function() {
+        if (!_currentConvId || !_isPro) return;
+        if (!confirm('<?php echo esc_js(__('End operator chat and return to AI mode?', 'rapls-ai-chatbot')); ?>')) return;
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: _apiBase + '/handoff-action',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-WP-Nonce': wpaicAdmin.restNonce },
+            data: JSON.stringify({ conversation_id: _currentConvId, action: 'resolve' }),
+            success: function(response) {
+                if (response.success) {
+                    updateOperatorUI(null);
+                } else {
+                    alert(response.error || 'Error');
+                }
+            },
+            error: function() { alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>'); },
+            complete: function() { $btn.prop('disabled', false); }
+        });
+    });
+
+    // Operator: Send reply
+    $('#wpaic-operator-send').on('click', function() { sendOperatorReply(); });
+    $('#wpaic-operator-message').on('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendOperatorReply();
+        }
+    });
+
+    function sendOperatorReply() {
+        var $textarea = $('#wpaic-operator-message');
+        var message = $textarea.val().trim();
+        if (!message || !_currentConvId || !_isPro) return;
+
+        var $btn = $('#wpaic-operator-send');
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: _apiBase + '/operator-reply',
+            method: 'POST',
+            contentType: 'application/json',
+            headers: { 'X-WP-Nonce': wpaicAdmin.restNonce },
+            data: JSON.stringify({ conversation_id: _currentConvId, message: message }),
+            success: function(response) {
+                if (response.success) {
+                    $textarea.val('');
+                    // Add message to UI immediately
+                    var container = document.getElementById('wpaic-conversation-messages');
+                    var now = new Date();
+                    var msgEl = buildMessageEl({
+                        id: response.data.message_id,
+                        role: 'operator',
+                        content: message,
+                        created_at: now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0')
+                    }, null);
+                    container.appendChild(msgEl);
+                    if (response.data.message_id > _lastMessageId) {
+                        _lastMessageId = response.data.message_id;
+                    }
+                    // Auto-scroll
+                    var modalBody = container.closest('.wpaic-modal-body');
+                    if (modalBody) modalBody.scrollTop = modalBody.scrollHeight;
+                    // Update status
+                    updateOperatorUI('active');
+                } else {
+                    alert(response.error || '<?php echo esc_js(__('Failed to send message.', 'rapls-ai-chatbot')); ?>');
+                }
+            },
+            error: function() { alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>'); },
+            complete: function() { $btn.prop('disabled', false); $textarea.focus(); }
+        });
+    }
 
     // Select all checkbox
     $('#wpaic-select-all').on('change', function() {
