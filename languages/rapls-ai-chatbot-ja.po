@@ -7076,3 +7076,83 @@ msgstr "AI に送信する直近のメッセージ数。多いほど文脈を理
 msgid "Monthly"
 msgstr "月1回"
 
+#: includes/class-pro-features.php
+msgid "Landing Page"
+msgstr "ランディングページ"
+
+#: includes/class-pro-features.php
+msgid "Conversion-focused assistant for product/service landing pages."
+msgstr "商品・サービスのランディングページ向けコンバージョン重視アシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Corporate Site"
+msgstr "コーポレートサイト"
+
+#: includes/class-pro-features.php
+msgid "Professional assistant for corporate websites with company info and services."
+msgstr "企業情報やサービス案内を提供するコーポレートサイト向けアシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Blog / Media"
+msgstr "ブログ / メディア"
+
+#: includes/class-pro-features.php
+msgid "Content guide for blogs, news sites, and media platforms."
+msgstr "ブログやニュースサイト向けのコンテンツガイド。"
+
+#: includes/class-pro-features.php
+msgid "Recruitment"
+msgstr "採用・求人"
+
+#: includes/class-pro-features.php
+msgid "Hiring assistant for career pages and recruitment sites."
+msgstr "採用ページや求人サイト向けの採用アシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Travel / Hotel"
+msgstr "旅行 / ホテル"
+
+#: includes/class-pro-features.php
+msgid "Hospitality assistant for travel agencies, hotels, and tourism sites."
+msgstr "旅行会社やホテル、観光サイト向けのホスピタリティアシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Fitness / Wellness"
+msgstr "フィットネス / ウェルネス"
+
+#: includes/class-pro-features.php
+msgid "Wellness assistant for gyms, yoga studios, and health-related sites."
+msgstr "ジムやヨガスタジオなど健康関連サイト向けのウェルネスアシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Nonprofit / NGO"
+msgstr "NPO / NGO"
+
+#: includes/class-pro-features.php
+msgid "Mission-driven assistant for nonprofits, charities, and community organizations."
+msgstr "非営利団体やチャリティ、地域活動向けのミッション型アシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Event / Seminar"
+msgstr "イベント / セミナー"
+
+#: includes/class-pro-features.php
+msgid "Event assistant for conferences, seminars, and webinar registration sites."
+msgstr "カンファレンスやセミナー、ウェビナー登録サイト向けのイベントアシスタント。"
+
+#: includes/class-pro-features.php
+msgid "Membership / Subscription"
+msgstr "会員 / サブスクリプション"
+
+#: includes/class-pro-features.php
+msgid "Subscription assistant for membership sites, SaaS plans, and online communities."
+msgstr "会員サイトや SaaS プラン、オンラインコミュニティ向けのサブスクリプションアシスタント。"
+
+#: templates/admin/settings.php
+msgid "Powered By"
+msgstr "Powered By"
+
+#: templates/admin/settings.php
+msgid "Hide \"Powered by Rapls Works\" footer"
+msgstr "「Powered by Rapls Works」フッターを非表示"
+

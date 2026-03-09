@@ -1241,6 +1241,15 @@ if (!defined('ABSPATH')) {
                             <p class="description"><?php esc_html_e('Select specific pages to hide the chatbot (dropdown-based). For posts, use Exclude IDs above.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Powered By', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[hide_powered_by]" value="1" <?php checked(!empty($pro_settings['hide_powered_by'])); ?>>
+                                <?php esc_html_e('Hide "Powered by Rapls Works" footer', 'rapls-ai-chatbot'); ?>
+                            </label>
+                        </td>
+                    </tr>
                 </table>
 
                 <hr style="margin: 20px 0;">

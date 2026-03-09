@@ -89,7 +89,15 @@ class WPAIC_Lead {
             return false;
         }
 
+        // Re-fetch the full row to include DB-generated columns (created_at)
+        $lead = self::get_by_id((int) $wpdb->insert_id);
+        if ($lead) {
+            return $lead;
+        }
+
+        // Fallback if re-fetch fails
         $insert_data['id'] = $wpdb->insert_id;
+        $insert_data['created_at'] = current_time('mysql');
         if ($insert_data['custom_fields']) {
             $insert_data['custom_fields'] = json_decode($insert_data['custom_fields'], true);
         }

@@ -144,9 +144,19 @@ if (!defined('ABSPATH')) {
         <?php
         $wl_footer = $settings['pro_features']['white_label_footer'] ?? '';
         if ($wl_footer !== '' && WPAIC_Pro_Features::get_instance()->is_pro()) :
+            $wl_url = $settings['pro_features']['white_label_footer_url'] ?? '';
+            $wl_target = $settings['pro_features']['white_label_footer_target'] ?? '_blank';
         ?>
-        <div class="chatbot-footer-branding"><?php echo esc_html($wl_footer); ?></div>
+        <div class="chatbot-footer-branding">
+            <?php if ($wl_url !== '') : ?>
+                <a href="<?php echo esc_url($wl_url); ?>" target="<?php echo esc_attr($wl_target); ?>"<?php echo $wl_target === '_blank' ? ' rel="noopener noreferrer"' : ''; ?>><?php echo esc_html($wl_footer); ?></a>
+            <?php else : ?>
+                <?php echo esc_html($wl_footer); ?>
+            <?php endif; ?>
+        </div>
         <?php endif; ?>
+
+        <div class="chatbot-footer-powered"><a href="https://raplsworks.com/rapls-ai-chatbot-guide/" target="_blank" rel="noopener noreferrer">Powered by Rapls Works</a></div>
 
     </div>
 </div>

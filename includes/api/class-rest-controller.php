@@ -2874,6 +2874,10 @@ class WPAIC_REST_Controller {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (empty($body['success'])) {
+            // Debug: log Google's error response for troubleshooting
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('[WPAIC reCAPTCHA] Verification failed. Google response: ' . wp_json_encode($body));
+            }
             return new WP_Error('recaptcha_failed', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
         }
 
@@ -3220,10 +3224,11 @@ class WPAIC_REST_Controller {
         }
 
         $site_name = get_bloginfo('name');
+        $prefix = WPAIC_Pro_Features::get_email_subject_prefix();
         $subject = sprintf(
-            /* translators: %s: site name */
+            /* translators: %s: email subject prefix */
             __('[%s] New lead captured', 'rapls-ai-chatbot'),
-            $site_name
+            $prefix
         );
 
         // Build HTML message
@@ -4256,11 +4261,11 @@ class WPAIC_REST_Controller {
                 $to = get_option('admin_email');
             }
 
-            $site_name = get_bloginfo('name');
+            $prefix = WPAIC_Pro_Features::get_email_subject_prefix();
             $subject = sprintf(
-                /* translators: %s: site name */
+                /* translators: %s: email subject prefix */
                 __('[%s] New Offline Message', 'rapls-ai-chatbot'),
-                $site_name
+                $prefix
             );
 
             $body = sprintf(

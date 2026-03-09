@@ -660,6 +660,12 @@ class WPAIC_Admin {
             $sanitized['pro_features']['enhanced_content_extraction'] = !empty($input['enhanced_content_extraction']);
         }
 
+        // "Hide Powered By" checkbox (on Display Settings tab, outside pro_features form)
+        // Detect Display tab submission via widget_theme (always present on that tab)
+        if (array_key_exists('widget_theme', $input)) {
+            $sanitized['pro_features']['hide_powered_by'] = !empty($input['hide_powered_by']);
+        }
+
         return $sanitized;
     }
 
@@ -700,10 +706,14 @@ class WPAIC_Admin {
         $sanitized['lead_notification_enabled'] = !empty($input['lead_notification_enabled']);
         $sanitized['lead_notification_email'] = sanitize_email($input['lead_notification_email'] ?? ($existing['lead_notification_email'] ?? ''));
 
+        // Email subject prefix
+        $sanitized['email_subject_prefix'] = sanitize_text_field($input['email_subject_prefix'] ?? ($existing['email_subject_prefix'] ?? $defaults['email_subject_prefix']));
+
         // White label
         $sanitized['white_label_enabled'] = !empty($input['white_label_enabled']);
         $sanitized['hide_powered_by'] = !empty($input['hide_powered_by']);
         $sanitized['white_label_footer'] = sanitize_text_field($input['white_label_footer'] ?? ($existing['white_label_footer'] ?? ''));
+        $sanitized['white_label_footer_url'] = esc_url_raw($input['white_label_footer_url'] ?? ($existing['white_label_footer_url'] ?? ''));
         $raw_css = wp_strip_all_tags($input['custom_css'] ?? ($existing['custom_css'] ?? ''));
         // Remove CSS injection vectors
         $raw_css = str_replace('expression(', '', $raw_css);

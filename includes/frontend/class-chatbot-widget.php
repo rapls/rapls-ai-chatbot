@@ -181,10 +181,10 @@ class WPAIC_Chatbot_Widget {
             }
         ";
 
-        // White label: hide powered by
+        // Hide "Powered by" footer (available in both Free and Pro)
         $pro_settings = $settings['pro_features'] ?? [];
         $pro = WPAIC_Pro_Features::get_instance();
-        if ($pro->is_pro() && !empty($pro_settings['hide_powered_by'])) {
+        if (!empty($pro_settings['hide_powered_by'])) {
             $custom_css .= "
             .chatbot-footer-powered {
                 display: none !important;

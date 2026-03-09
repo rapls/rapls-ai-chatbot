@@ -675,5 +675,39 @@ jQuery(document).ready(function($) {
             }
         });
     });
+    // Auto-open conversation modal if conversation_id is in URL (e.g., from handoff email)
+    var urlParams = new URLSearchParams(window.location.search);
+    var autoOpenId = urlParams.get('conversation_id');
+    if (autoOpenId) {
+        var $target = $('.wpaic-view-conversation[data-id="' + autoOpenId + '"]');
+        if ($target.length) {
+            $target.trigger('click');
+        } else {
+            // Conversation may not be on current page — open modal directly
+            var modal = $('#wpaic-conversation-modal');
+            var messagesContainer = $('#wpaic-conversation-messages');
+            messagesContainer.html('<p>' + (i18n.processing || 'Loading...') + '</p>');
+            modal.show();
+            $.ajax({
+                url: wpaicAdmin.ajaxUrl,
+                method: 'POST',
+                data: {
+                    action: 'wpaic_view_messages',
+                    nonce: wpaicAdmin.nonce,
+                    conversation_id: autoOpenId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        messagesContainer.html(response.data.html);
+                    } else {
+                        messagesContainer.html('<p>' + (response.data || 'Error') + '</p>');
+                    }
+                },
+                error: function() {
+                    messagesContainer.html('<p>Error loading conversation.</p>');
+                }
+            });
+        }
+    }
 });
 </script>
