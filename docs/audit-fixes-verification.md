@@ -981,6 +981,71 @@ SELECT option_name FROM wp_options WHERE option_name LIKE 'wpaic_pro_license%';
 
 ---
 
+## 第8回監査 (5件)
+
+### 72. `on_save_post()` のクローラー post_types 展開修正
+
+**重要度**: High
+**ファイル**: Free `includes/crawler/class-site-crawler.php` — `on_save_post()`
+**修正内容**: `crawler_post_types` が `['all']` の場合に全公開投稿タイプに展開するロジックを追加
+
+**検証方法**:
+1. Settings > Crawler で Post Types を「All」（デフォルト）に設定
+2. 投稿を新規作成・公開
+3. クロールインデックスにその投稿が自動追加されること
+
+```sql
+SELECT url, title, updated_at FROM wp_aichat_index ORDER BY updated_at DESC LIMIT 5;
+-- 新規投稿のURLが含まれること
+```
+
+---
+
+### 73. CSS `.chatbot-send` セレクター修正 (6箇所)
+
+**重要度**: Medium
+**ファイル**: Free `assets/css/chatbot.css`
+**修正内容**: `.chatbot-send` → `.chatbot-input button[type="submit"]` に変更
+
+**検証方法**:
+1. Display Settings でテーマを順に切り替え (Simple, Classic, Light, Minimal, Flat)
+2. 各テーマで送信ボタンの色がテーマ固有色であること（デフォルト青でないこと）
+
+---
+
+### 74. CSS `.chatbot-header__title` / `.chatbot-input-container` セレクター修正
+
+**重要度**: Low
+**ファイル**: Free `assets/css/chatbot.css`
+**修正内容**: `.chatbot-header__title` → `.bot-name`、`.chatbot-input-container` → `.chatbot-input`
+
+---
+
+### 75. AI Form ダブルサブミット修正
+
+**重要度**: Medium
+**ファイル**: Pro `assets/js/ai-form.js`
+**修正内容**: 冗長な button click ハンドラーを削除（form submit ハンドラーのみ使用）
+
+**検証方法**:
+1. AI Form をフロントに設置
+2. フォーム送信ボタンをクリック
+3. Network タブで API リクエストが1回だけ送信されること（2回でないこと）
+
+---
+
+### 76. Pro 無効化時の cron クリーンアップ追加
+
+**重要度**: Low
+**ファイル**: Pro `rapls-ai-chatbot-pro.php`
+**修正内容**: `wpaic_summary_report`, `wpaic_scheduled_crawl_pro`, `wpaic_vulnerability_scan_cron` の `wp_clear_scheduled_hook()` 追加
+
+**検証方法**:
+1. Pro プラグインを無効化
+2. WP Crontrol で上記3つの cron イベントが登録されていないこと
+
+---
+
 ## SQL クエリ集
 
 ### 暗号化状態の確認

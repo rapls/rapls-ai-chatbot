@@ -361,10 +361,6 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
     }
 
     /**
-     * Build vision content array for Claude API.
-     * Converts text + image data URL to Claude's multimodal content format.
-     */
-    /**
      * Build document content array for Claude API (PDF support).
      */
     private function build_document_content($content, string $file_data, string $file_name): array {
@@ -390,6 +386,10 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         return $text;
     }
 
+    /**
+     * Build vision content array for Claude API.
+     * Converts text + image data URL to Claude's multimodal content format.
+     */
     private function build_vision_content(string $text, string $image_data): array {
         // Parse data URI: data:image/jpeg;base64,/9j/4AAQ...
         $media_type = 'image/jpeg';

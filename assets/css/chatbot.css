@@ -1394,7 +1394,7 @@
     border-bottom: 1px solid #e9ecef;
 }
 
-.wpaic-chatbot.theme-simple .chatbot-header__title {
+.wpaic-chatbot.theme-simple .bot-name {
     color: #333;
 }
 
@@ -1407,16 +1407,16 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
-.wpaic-chatbot.theme-simple .chatbot-input-container {
+.wpaic-chatbot.theme-simple .chatbot-input {
     border-top: 1px solid #e9ecef;
     background: #f8f9fa;
 }
 
-.wpaic-chatbot.theme-simple .chatbot-send {
+.wpaic-chatbot.theme-simple .chatbot-input button[type="submit"] {
     background: #6c757d;
 }
 
-.wpaic-chatbot.theme-simple .chatbot-send:hover {
+.wpaic-chatbot.theme-simple .chatbot-input button[type="submit"]:hover {
     background: #5a6268;
 }
 
@@ -1454,7 +1454,7 @@
     border-radius: 0;
 }
 
-.wpaic-chatbot.theme-classic .chatbot-send {
+.wpaic-chatbot.theme-classic .chatbot-input button[type="submit"] {
     background: #2c3e50;
     border-radius: 0;
 }
@@ -1482,7 +1482,7 @@
     border-bottom: 1px solid #e8e8e8;
 }
 
-.wpaic-chatbot.theme-light .chatbot-header__title {
+.wpaic-chatbot.theme-light .bot-name {
     color: #333;
 }
 
@@ -1503,12 +1503,12 @@
     background: #5c9eff;
 }
 
-.wpaic-chatbot.theme-light .chatbot-input-container {
+.wpaic-chatbot.theme-light .chatbot-input {
     background: #fff;
     border-top: 1px solid #e8e8e8;
 }
 
-.wpaic-chatbot.theme-light .chatbot-send {
+.wpaic-chatbot.theme-light .chatbot-input button[type="submit"] {
     background: #5c9eff;
 }
 
@@ -1547,7 +1547,7 @@
     border: 1px solid #ddd;
 }
 
-.wpaic-chatbot.theme-minimal .chatbot-send {
+.wpaic-chatbot.theme-minimal .chatbot-input button[type="submit"] {
     background: #333;
     border-radius: 0;
 }
@@ -1584,7 +1584,7 @@
     border-radius: 0;
 }
 
-.wpaic-chatbot.theme-flat .chatbot-send {
+.wpaic-chatbot.theme-flat .chatbot-input button[type="submit"] {
     background: #3498db;
     border-radius: 0;
 }

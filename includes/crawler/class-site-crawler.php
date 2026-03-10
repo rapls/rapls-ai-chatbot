@@ -384,6 +384,11 @@ class WPAIC_Site_Crawler {
 
         // Check if target post type
         $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
+        if (in_array('all', $post_types, true)) {
+            $post_types = get_post_types(['public' => true], 'names');
+            unset($post_types['attachment']);
+            $post_types = array_values($post_types);
+        }
         if (!in_array($post->post_type, $post_types, true)) {
             return;
         }
