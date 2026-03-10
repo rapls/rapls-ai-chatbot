@@ -712,6 +712,7 @@ class WPAIC_Admin {
         $sanitized['hide_powered_by'] = !empty($input['hide_powered_by']);
         $sanitized['white_label_footer'] = sanitize_text_field($input['white_label_footer'] ?? ($existing['white_label_footer'] ?? ''));
         $sanitized['white_label_footer_url'] = esc_url_raw($input['white_label_footer_url'] ?? ($existing['white_label_footer_url'] ?? ''));
+        $sanitized['white_label_footer_target'] = in_array($input['white_label_footer_target'] ?? '', ['_blank', '_self'], true) ? $input['white_label_footer_target'] : '_blank';
         $raw_css = wp_strip_all_tags($input['custom_css'] ?? ($existing['custom_css'] ?? ''));
         // Remove CSS injection vectors
         $raw_css = str_replace('expression(', '', $raw_css);
@@ -2621,49 +2622,8 @@ class WPAIC_Admin {
             return;
         }
 
-        // Default settings
-        $default_settings = [
-            'ai_provider'           => 'openai',
-            'openai_api_key'        => '',
-            'openai_model'          => 'gpt-4o-mini',
-            'claude_api_key'        => '',
-            'claude_model'          => 'claude-haiku-4-5-20251001',
-            'gemini_api_key'        => '',
-            'gemini_model'          => 'gemini-2.0-flash-exp',
-            'system_prompt'         => "You are a knowledgeable assistant for this website. Follow these rules:\n\n1. ACCURACY: When reference information is provided, treat it as the primary and most reliable source. Base your answers on this information first.\n2. HONESTY: If the provided information does not cover the user's question, clearly state that you don't have specific information about it, then offer general guidance if appropriate.\n3. NO FABRICATION: Never invent facts, URLs, prices, dates, or specific details that are not in the provided reference information.\n4. CONCISENESS: Provide clear, focused answers. Avoid unnecessary repetition or filler.\n5. LANGUAGE: Always respond in the same language the user writes in.\n6. TONE: Be professional, friendly, and helpful.",
-            'quota_error_message'   => 'Currently recharging. Please try again later.',
-            'max_tokens'            => 1000,
-            'temperature'           => 0.7,
-            'message_history_count' => 10,
-            'rate_limit'            => 20,
-            'rate_limit_window'     => 3600,
-            'crawler_enabled'       => false,
-            'crawler_post_types'    => ['post', 'page'],
-            'crawler_interval'      => 'daily',
-            'crawler_chunk_size'    => 1000,
-            'crawler_max_results'   => 3,
-            'bot_name'              => 'Assistant',
-            'bot_avatar'            => '🤖',
-            'welcome_message'       => 'Hello! How can I help you today?',
-            'knowledge_exact_prompt' => "=== STRICT INSTRUCTIONS ===\nAn EXACT MATCH has been found for the user's question.\nYou MUST:\n1. Use ONLY the Answer provided below\n2. DO NOT add any information not in this Answer\n3. DO NOT combine with other sources\n4. Respond naturally using this Answer's content\n\n=== ANSWER TO USE ===\n{context}\n=== END ===",
-            'knowledge_qa_prompt'   => "=== CRITICAL INSTRUCTIONS ===\nBelow is a FAQ database. When the user asks a question:\n1. FIRST, look for [BEST MATCH] - this is the most relevant Q&A for the user's question\n2. If [BEST MATCH] exists, use that Answer to respond\n3. If no [BEST MATCH], find the Question that matches or is similar to the user's question\n4. Return the corresponding Answer from the FAQ\n5. DO NOT make up answers - ONLY use the information provided below\n\nIMPORTANT: The Answer after [BEST MATCH] is your primary response source.\n\n=== FAQ DATABASE ===\n{context}\n=== END FAQ DATABASE ===",
-            'site_context_prompt'   => "[IMPORTANT: Reference Information]\nYou MUST use the following information as the primary source when answering. If the answer can be found in this information, use it directly.\nIf the reference information does NOT contain the answer, clearly state that you don't have specific information about it. Do NOT guess or fabricate details.\n\n{context}",
-            'regenerate_prompt'     => '[REGENERATION REQUEST #{variation_number}]: The user wants a DIFFERENT answer. FORBIDDEN: Do not start with "{forbidden_start}". {style}. Create a completely new response with different wording. IMPORTANT: Do NOT use headings, labels, or section markers like【】or brackets. Write in natural flowing paragraphs. Complete all sentences fully.',
-            'feedback_good_header'  => "[LEARNING FROM USER FEEDBACK - GOOD EXAMPLES]\nThe following responses received positive feedback. Use these as examples of good responses:",
-            'feedback_bad_header'   => "[LEARNING FROM USER FEEDBACK - AVOID THESE PATTERNS]\nThe following responses received negative feedback. AVOID responding in similar ways:",
-            'summary_prompt'        => 'Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:',
-            'badge_show_on_home'    => true,
-            'badge_show_on_posts'   => true,
-            'badge_show_on_pages'   => true,
-            'badge_show_on_archives' => true,
-            'badge_include_ids'     => '',
-            'badge_exclude_ids'     => '',
-            'badge_position'        => 'bottom-right',
-            'recaptcha_enabled'     => false,
-            'recaptcha_site_key'    => '',
-            'recaptcha_secret_key'  => '',
-            'recaptcha_threshold'   => 0.5,
-        ];
+        // Use canonical defaults to ensure all keys are included
+        $default_settings = self::get_all_defaults();
 
         update_option('wpaic_settings', $default_settings);
 
