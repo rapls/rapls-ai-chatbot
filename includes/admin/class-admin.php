@@ -2568,6 +2568,7 @@ class WPAIC_Admin {
             'summary_prompt'        => 'Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:',
 
             // Display Settings
+            'badge_position'        => 'bottom-right',
             'badge_margin_right'    => 20,
             'badge_margin_bottom'   => 20,
             'primary_color'         => '#007bff',
@@ -2575,6 +2576,8 @@ class WPAIC_Admin {
             'widget_theme'          => 'default',
             'dark_mode'             => false,
             'markdown_enabled'      => true,
+            'show_feedback_buttons' => true,
+            'sources_display_mode'  => 'matched',
 
             // Page Visibility
             'badge_show_on_home'    => true,
@@ -2583,13 +2586,30 @@ class WPAIC_Admin {
             'badge_show_on_archives' => true,
             'badge_include_ids'     => '',
             'badge_exclude_ids'     => '',
+            'excluded_pages'        => [],
 
             // History Settings
             'save_history'          => true,
             'retention_days'        => 90,
 
+            // Chatbot Language
+            'response_language'     => '',
+
             // Privacy / Consent
             'consent_strict_mode'   => false,
+            'delete_data_on_uninstall' => false,
+
+            // reCAPTCHA
+            'recaptcha_enabled'     => false,
+            'recaptcha_site_key'    => '',
+            'recaptcha_secret_key'  => '',
+            'recaptcha_threshold'   => 0.5,
+            'recaptcha_use_existing' => false,
+            'recaptcha_fail_mode'   => 'open',
+
+            // IP Trust
+            'trust_cloudflare_ip'   => false,
+            'trust_proxy_ip'        => false,
 
             // Rate Limiting
             'rate_limit'            => 20,
@@ -2602,6 +2622,15 @@ class WPAIC_Admin {
             'crawler_chunk_size'    => 1000,
             'crawler_max_results'   => 3,
             'crawler_exclude_ids'   => [],
+
+            // MCP
+            'mcp_enabled'           => false,
+            'mcp_api_key_hash'      => '',
+
+            // Web Search & Embedding
+            'web_search_enabled'    => false,
+            'embedding_enabled'     => false,
+            'embedding_provider'    => 'auto',
 
             // Pro Features
             'pro_features'          => WPAIC_Pro_Features::get_default_settings(),

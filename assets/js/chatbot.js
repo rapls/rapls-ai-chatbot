@@ -553,12 +553,15 @@
             wpaicLsRemove('wpaic_session_token');
 
             // すべてのリード送信済みフラグをクリア
-            var keys = Object.keys(sessionStorage);
-            keys.forEach(function(key) {
-                if (key.startsWith('wpaic_lead_submitted_')) {
-                    wpaicSsRemove(key);
-                }
-            });
+            try {
+                Object.keys(sessionStorage).forEach(function(key) {
+                    if (key.startsWith('wpaic_lead_submitted_')) {
+                        wpaicSsRemove(key);
+                    }
+                });
+            } catch (e) {
+                // sessionStorage unavailable (e.g., Safari private mode)
+            }
 
             this.sessionId = null;
             this.leadSubmitted = false;
@@ -1559,7 +1562,7 @@
                         bookmarkBtn.title = (self.config.strings && self.config.strings.bookmarked) || 'Bookmarked';
                     }
                     bookmarkBtn.onclick = function() {
-                        self.toggleBookmark(messageId, contentEl.querySelector('.chatbot-message__text'), this);
+                        self.toggleBookmark(messageId, contentEl.querySelector('.chatbot-message__content'), this);
                     };
                     actionsEl.appendChild(bookmarkBtn);
                 }
@@ -2879,7 +2882,8 @@
                     }
                     if (self.inputTextarea) {
                         self.inputTextarea.value = transcript;
-                        self.autoResize();
+                        self.inputTextarea.style.height = 'auto';
+                        self.inputTextarea.style.height = Math.min(self.inputTextarea.scrollHeight, 100) + 'px';
                     }
                 };
 
@@ -3177,13 +3181,13 @@
 
             var form = el('form', { id: 'wpaic-offline-form' }, [
                 el('div', { 'class': 'wpaic-offline-field' }, [
-                    el('input', { type: 'text', name: 'name', placeholder: 'Name', 'class': 'wpaic-offline-input' })
+                    el('input', { type: 'text', name: 'name', placeholder: (_s.offline_name || 'Name'), 'class': 'wpaic-offline-input' })
                 ]),
                 el('div', { 'class': 'wpaic-offline-field' }, [
-                    el('input', { type: 'email', name: 'email', placeholder: 'Email *', required: '', 'class': 'wpaic-offline-input' })
+                    el('input', { type: 'email', name: 'email', placeholder: (_s.offline_email || 'Email') + ' *', required: '', 'class': 'wpaic-offline-input' })
                 ]),
                 el('div', { 'class': 'wpaic-offline-field' }, [
-                    el('textarea', { name: 'message', placeholder: 'Message *', required: '', rows: '4', 'class': 'wpaic-offline-input' })
+                    el('textarea', { name: 'message', placeholder: (_s.offline_message || 'Message') + ' *', required: '', rows: '4', 'class': 'wpaic-offline-input' })
                 ]),
                 // Honeypot field: hidden from real users, bots auto-fill it
                 el('div', { style: 'position:absolute;left:-9999px;top:-9999px;', 'aria-hidden': 'true', tabindex: '-1' }, [
@@ -3191,7 +3195,7 @@
                 ]),
                 // Timing field: records when form was rendered
                 el('input', { type: 'hidden', name: '_ts', value: String(Math.floor(Date.now() / 1000)) }),
-                el('button', { type: 'submit', 'class': 'wpaic-offline-submit' }, ['Send Message']),
+                el('button', { type: 'submit', 'class': 'wpaic-offline-submit' }, [(_s.offline_send || 'Send Message')]),
                 el('div', { 'class': 'wpaic-offline-status' })
             ]);
 
@@ -3279,7 +3283,7 @@
             this.getRecaptchaToken('offline').then(function(token) {
                 if (token) {
                     requestBody.recaptcha_token = token;
-                } else if (config.recaptchaEnabled) {
+                } else if (config.recaptcha_enabled) {
                     // reCAPTCHA is configured but token is empty (script not loaded yet)
                     statusEl.textContent = _s.recaptcha_loading || 'Security verification loading. Please try again in a moment.';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-error';
@@ -3915,7 +3919,7 @@
                 for (var i = 0; i < messages.length; i++) {
                     var msg = messages[i];
                     var role = msg.classList.contains('chatbot-message--user') ? 'User' : 'AI';
-                    var contentEl = msg.querySelector('.chatbot-message__text');
+                    var contentEl = msg.querySelector('.chatbot-message__content');
                     if (contentEl) {
                         text += role + ': ' + contentEl.textContent.trim() + '\n\n';
                     }
