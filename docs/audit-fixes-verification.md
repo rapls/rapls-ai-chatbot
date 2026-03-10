@@ -1046,6 +1046,65 @@ SELECT url, title, updated_at FROM wp_aichat_index ORDER BY updated_at DESC LIMI
 
 ---
 
+## 第9回監査 (5件)
+
+### 77. 会話モーダル自動オープンの AJAX アクション名修正
+
+**重要度**: Medium
+**ファイル**: Free `templates/admin/conversations.php`
+**修正内容**: `wpaic_view_messages` → `wpaic_get_conversation_messages` に修正、レスポンス形式を `response.data.messages` に合わせる
+
+**検証方法**:
+1. ハンドオフ通知メールのリンクをクリック（`?conversation_id=X`）
+2. 該当会話が現在のページにない場合でもモーダルが正しく開くこと
+
+---
+
+### 78. 暗号化マイグレーションボタンの JS 変数名修正
+
+**重要度**: Medium
+**ファイル**: Pro `templates/admin/pro-settings.php`
+**修正内容**: `wpaic_admin.nonce` → `wpaicAdmin.nonce`
+
+**検証方法**:
+1. Pro Settings > Encryption > Migrate ボタンをクリック
+2. Console に ReferenceError がなく、マイグレーションが開始されること
+
+---
+
+### 79. Pro Settings タブ表示の CSS クラス修正 (4タブ)
+
+**重要度**: Medium
+**ファイル**: Pro `templates/admin/pro-settings.php`
+**修正内容**: `wpaic-tab-content` → `tab-content` に変更 (Chat Features, External Learning, Test Mode, Performance)
+
+**検証方法**:
+1. Pro Settings ページで各タブをクリック
+2. 4つのタブ (Chat Features, External Learning, Test Mode, Performance) が正しく表示されること
+
+---
+
+### 80. `parse_url()` → `wp_parse_url()` 修正
+
+**重要度**: Low
+**ファイル**: Free `includes/admin/class-admin.php` — `get_encryption_aad()`
+**修正内容**: WordPress コーディング規約準拠のため `wp_parse_url()` に変更
+
+---
+
+### 81. インポート sensitive_keys に `openrouter_api_key` 追加
+
+**重要度**: Low
+**ファイル**: Free `includes/admin/class-admin.php` — `ajax_import_settings()`
+**修正内容**: `$sensitive_keys` 配列に `'openrouter_api_key'` を追加
+
+**検証方法**:
+1. OpenRouter API キーを設定済みの状態
+2. キーを含まないバックアップ JSON をインポート
+3. OpenRouter API キーが消えずに保持されること
+
+---
+
 ## SQL クエリ集
 
 ### 暗号化状態の確認

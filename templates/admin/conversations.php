@@ -1099,13 +1099,16 @@ jQuery(document).ready(function($) {
                 url: wpaicAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wpaic_view_messages',
+                    action: 'wpaic_get_conversation_messages',
                     nonce: wpaicAdmin.nonce,
                     conversation_id: autoOpenId
                 },
                 success: function(response) {
-                    if (response.success) {
-                        messagesContainer.html(response.data.html);
+                    if (response.success && response.data && response.data.messages) {
+                        messagesContainer.empty();
+                        response.data.messages.forEach(function(msg) {
+                            messagesContainer.append(buildMessageEl(msg, response.data.messages));
+                        });
                     } else {
                         messagesContainer.html('<p>' + (response.data || 'Error') + '</p>');
                     }

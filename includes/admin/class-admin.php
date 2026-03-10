@@ -959,7 +959,7 @@ class WPAIC_Admin {
      * Prevents ciphertext reuse across different sites or contexts.
      */
     private static function get_encryption_aad(): string {
-        return 'wpaic_' . parse_url(get_site_url(), PHP_URL_HOST);
+        return 'wpaic_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
     }
 
     /**
@@ -2483,7 +2483,7 @@ class WPAIC_Admin {
             $filtered_settings = array_intersect_key($import_data['settings'], array_flip($allowed_keys));
 
             // Keep current API keys (never overwrite with empty)
-            $sensitive_keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'recaptcha_secret_key'];
+            $sensitive_keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'recaptcha_secret_key'];
             foreach ($sensitive_keys as $key) {
                 if (!empty($current_settings[$key]) && empty($filtered_settings[$key])) {
                     $filtered_settings[$key] = $current_settings[$key];
