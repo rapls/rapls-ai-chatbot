@@ -435,6 +435,7 @@ class WPAIC_Pro_Features {
             'knowledge_auto_priority_enabled' => false,
             'knowledge_related_links_enabled' => false,
             'intent_classification_enabled' => false,
+            'custom_intents' => '',
 
             // Security
             'pii_masking_enabled' => false,

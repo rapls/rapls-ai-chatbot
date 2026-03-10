@@ -297,6 +297,7 @@ if (!function_exists('wpaic_table_suffixes')) {
             'aichat_leads',
             'aichat_user_context',
             'aichat_audit_log',
+            'aichat_knowledge_versions',
         ];
     }
 }
