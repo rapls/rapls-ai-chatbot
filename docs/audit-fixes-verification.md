@@ -772,6 +772,91 @@ cat exported-settings.json | python3 -c "import sys,json; d=json.load(sys.stdin)
 
 ---
 
+## 第5回監査 (6件)
+
+### 54. `initOfflineForm()` の `_s` 未定義 ReferenceError 修正
+
+**重要度**: Critical
+**ファイル**: Free `assets/js/chatbot.js` — `initOfflineForm()`
+**修正内容**: `var _s = self.config.strings || {};` を関数冒頭に追加
+
+**検証方法**:
+1. Business Hours + Offline Message を有効化
+2. 営業時間外にフロントでチャットを開く
+3. オフラインフォームが正常に表示されること
+4. Console に `ReferenceError: _s is not defined` がないこと
+
+---
+
+### 55. ブックマーク DOM セレクター修正 (contentEl 自身を渡す)
+
+**重要度**: Medium
+**ファイル**: Free `assets/js/chatbot.js`
+**修正内容**: `contentEl.querySelector('.chatbot-message__content')` → `contentEl` (自身がそのクラス)
+
+**検証方法**:
+1. Chat Bookmarks を有効化
+2. メッセージをブックマーク → localStorage の内容を確認
+
+```javascript
+Object.keys(localStorage)
+  .filter(k => k.startsWith('wpaic_bookmarks_'))
+  .forEach(k => {
+    JSON.parse(localStorage.getItem(k)).forEach(b => console.log('text:', b.text));
+    // text が空でなくメッセージ内容が含まれること
+  });
+```
+
+---
+
+### 56. 脆弱性スキャンに `openrouter_api_key` 追加
+
+**重要度**: Medium
+**ファイル**: Pro `includes/class-pro-features.php` — `run_vulnerability_scan()`
+**修正内容**: `$api_key_fields` 配列に `'openrouter_api_key'` を追加
+
+**検証方法**:
+1. OpenRouter API キーを暗号化せずに設定
+2. Security Scan を実行
+3. 「Unencrypted API key: openrouter_api_key」の警告が表示されること
+
+---
+
+### 57. 音声入力後プレースホルダーの `placeholder` 文字列キー追加
+
+**重要度**: Low
+**ファイル**: Free `includes/frontend/class-chatbot-widget.php`, Free `assets/js/chatbot.js`
+**修正内容**: PHP strings 配列に `placeholder` キー追加、JS フォールバックを英語に変更
+
+**検証方法**:
+1. 音声入力を有効化
+2. マイクボタンで録音→停止
+3. テキストエリアのプレースホルダーがサイト言語に応じた翻訳で表示されること
+
+---
+
+### 58. ファイルサイズエラーの翻訳対応
+
+**重要度**: Low
+**ファイル**: Free `assets/js/chatbot.js` — `handleImageSelect()`
+**修正内容**: ハードコード英語 alert を `config.strings.image_too_large` に置換
+
+**検証方法**:
+1. Multimodal を有効化、最大サイズを小さく設定 (例: 100KB)
+2. 大きな画像をアップロード → エラーメッセージがサイト言語で表示されること
+
+---
+
+### 59. `maybe_create_versions_table()` テーブルヘルパー使用
+
+**重要度**: Low
+**ファイル**: Pro `includes/class-pro-main.php` — `maybe_create_versions_table()`
+**修正内容**: `$wpdb->prefix` 直接構築を `trim(wpaic_validated_table(...), '`')` に変更
+
+**検証方法**: Knowledge Versioning 有効時にテーブルが正常に作成されること
+
+---
+
 ## SQL クエリ集
 
 ### 暗号化状態の確認

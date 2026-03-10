@@ -1562,7 +1562,7 @@
                         bookmarkBtn.title = (self.config.strings && self.config.strings.bookmarked) || 'Bookmarked';
                     }
                     bookmarkBtn.onclick = function() {
-                        self.toggleBookmark(messageId, contentEl.querySelector('.chatbot-message__content'), this);
+                        self.toggleBookmark(messageId, contentEl, this);
                     };
                     actionsEl.appendChild(bookmarkBtn);
                 }
@@ -2072,7 +2072,7 @@
 
             // ファイルサイズチェック
             if (file.size > maxSize) {
-                alert('File is too large. Maximum size: ' + maxSizeKB + 'KB');
+                alert(((this.config.strings && this.config.strings.image_too_large) || 'Image is too large. Please select an image under %sKB.').replace('%s', maxSizeKB));
                 this.imageInput.value = '';
                 return;
             }
@@ -2959,7 +2959,7 @@
                 if (stopIcon) stopIcon.style.display = 'none';
             }
             if (this.inputTextarea) {
-                this.inputTextarea.placeholder = (this.config.strings && this.config.strings.placeholder) || 'メッセージを入力...';
+                this.inputTextarea.placeholder = (this.config.strings && this.config.strings.placeholder) || 'Type a message...';
             }
         },
 
@@ -3158,6 +3158,7 @@
             if (!messagesArea) return;
 
             var self = this;
+            var _s = self.config.strings || {};
 
             // Helper: create element with attributes
             var el = function(tag, attrs, children) {
