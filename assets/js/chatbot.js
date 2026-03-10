@@ -124,6 +124,8 @@
             this.bindLeadFormEvents();
             this.initOfflineForm();
             this.initConversionTracking();
+            this.initChatSearch();
+            this.initConversationSharing();
             this.listenForConsentChange();
             this.initTooltips();
             this.isInitialized = true;
@@ -1539,6 +1541,26 @@
                         self.regenerateResponse(currentMessageId, messageEl);
                     };
                     actionsEl.appendChild(regenerateBtn);
+                }
+
+                // Bookmark button (Pro)
+                if (this.config.is_pro && this.config.chat_bookmarks_enabled) {
+                    var bookmarkBtn = document.createElement('button');
+                    bookmarkBtn.type = 'button';
+                    bookmarkBtn.className = 'chatbot-bookmark-btn';
+                    bookmarkBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+                    bookmarkBtn.title = (self.config.strings && self.config.strings.bookmark) || 'Bookmark this message';
+                    // Check if already bookmarked
+                    var bookmarks = JSON.parse(localStorage.getItem('wpaic_bookmarks') || '[]');
+                    var isBookmarked = bookmarks.some(function(b) { return b.id === messageId; });
+                    if (isBookmarked) {
+                        bookmarkBtn.classList.add('wpaic-bookmarked');
+                        bookmarkBtn.title = (self.config.strings && self.config.strings.bookmarked) || 'Bookmarked';
+                    }
+                    bookmarkBtn.onclick = function() {
+                        self.toggleBookmark(messageId, contentEl.querySelector('.chatbot-message__text'), this);
+                    };
+                    actionsEl.appendChild(bookmarkBtn);
                 }
 
                 contentEl.appendChild(actionsEl);
@@ -3748,6 +3770,167 @@
             }).catch(function() {
                 // Silently fail - will retry on next page load
             });
+        },
+
+        /**
+         * Toggle bookmark for a message
+         */
+        toggleBookmark: function(messageId, textEl, btnEl) {
+            var bookmarks = JSON.parse(localStorage.getItem('wpaic_bookmarks') || '[]');
+            var idx = -1;
+            for (var i = 0; i < bookmarks.length; i++) {
+                if (bookmarks[i].id === messageId) { idx = i; break; }
+            }
+            if (idx >= 0) {
+                bookmarks.splice(idx, 1);
+                btnEl.classList.remove('wpaic-bookmarked');
+                btnEl.title = (this.config.strings && this.config.strings.bookmark) || 'Bookmark this message';
+            } else {
+                bookmarks.push({
+                    id: messageId,
+                    content: textEl ? textEl.textContent.substring(0, 500) : '',
+                    timestamp: Date.now()
+                });
+                btnEl.classList.add('wpaic-bookmarked');
+                btnEl.title = (this.config.strings && this.config.strings.bookmarked) || 'Bookmarked';
+            }
+            localStorage.setItem('wpaic_bookmarks', JSON.stringify(bookmarks));
+        },
+
+        /**
+         * Initialize chat search (Pro)
+         */
+        initChatSearch: function() {
+            if (!this.config.is_pro || !this.config.chat_search_enabled) return;
+            if (!this.window) return;
+
+            var self = this;
+            var header = this.window.querySelector('.chatbot-header');
+            if (!header) return;
+
+            // Search toggle button in header
+            var searchBtn = document.createElement('button');
+            searchBtn.type = 'button';
+            searchBtn.className = 'chatbot-search-btn';
+            searchBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>';
+            searchBtn.title = (this.config.strings && this.config.strings.search_placeholder) || 'Search messages...';
+            var closeBtn = header.querySelector('.chatbot-close');
+            if (closeBtn) {
+                header.insertBefore(searchBtn, closeBtn);
+            } else {
+                header.appendChild(searchBtn);
+            }
+
+            // Search bar (hidden by default)
+            var searchBar = document.createElement('div');
+            searchBar.className = 'chatbot-search-bar';
+            searchBar.hidden = true;
+            var searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'chatbot-search-input';
+            searchInput.placeholder = (this.config.strings && this.config.strings.search_placeholder) || 'Search messages...';
+            searchBar.appendChild(searchInput);
+
+            // Insert search bar after header
+            var messagesEl = this.window.querySelector('.chatbot-messages');
+            if (messagesEl) {
+                messagesEl.parentNode.insertBefore(searchBar, messagesEl);
+            }
+
+            // Toggle search bar
+            searchBtn.onclick = function() {
+                searchBar.hidden = !searchBar.hidden;
+                if (!searchBar.hidden) {
+                    searchInput.focus();
+                } else {
+                    searchInput.value = '';
+                    self.clearSearchHighlight();
+                }
+            };
+
+            // Filter messages on input
+            searchInput.addEventListener('input', function() {
+                var query = this.value.toLowerCase().trim();
+                var messages = self.messagesEl.querySelectorAll('.chatbot-message');
+                for (var i = 0; i < messages.length; i++) {
+                    var msg = messages[i];
+                    if (!query) {
+                        msg.style.display = '';
+                        msg.classList.remove('chatbot-search-highlight');
+                    } else {
+                        var text = msg.textContent.toLowerCase();
+                        if (text.includes(query)) {
+                            msg.style.display = '';
+                            msg.classList.add('chatbot-search-highlight');
+                        } else {
+                            msg.style.display = 'none';
+                            msg.classList.remove('chatbot-search-highlight');
+                        }
+                    }
+                }
+            });
+        },
+
+        /**
+         * Clear search highlight from messages
+         */
+        clearSearchHighlight: function() {
+            if (!this.messagesEl) return;
+            var messages = this.messagesEl.querySelectorAll('.chatbot-message');
+            for (var i = 0; i < messages.length; i++) {
+                messages[i].style.display = '';
+                messages[i].classList.remove('chatbot-search-highlight');
+            }
+        },
+
+        /**
+         * Initialize conversation sharing (Pro)
+         */
+        initConversationSharing: function() {
+            if (!this.config.is_pro || !this.config.conversation_sharing_enabled) return;
+            if (!this.window) return;
+
+            var self = this;
+            var header = this.window.querySelector('.chatbot-header');
+            if (!header) return;
+
+            var shareBtn = document.createElement('button');
+            shareBtn.type = 'button';
+            shareBtn.className = 'chatbot-share-btn';
+            shareBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+            shareBtn.title = (this.config.strings && this.config.strings.share_conversation) || 'Copy conversation';
+
+            // Insert before close button
+            var closeBtn = header.querySelector('.chatbot-close');
+            if (closeBtn) {
+                header.insertBefore(shareBtn, closeBtn);
+            } else {
+                header.appendChild(shareBtn);
+            }
+
+            shareBtn.onclick = function() {
+                var messages = self.messagesEl.querySelectorAll('.chatbot-message');
+                var text = '';
+                for (var i = 0; i < messages.length; i++) {
+                    var msg = messages[i];
+                    var role = msg.classList.contains('chatbot-message--user') ? 'User' : 'AI';
+                    var contentEl = msg.querySelector('.chatbot-message__text');
+                    if (contentEl) {
+                        text += role + ': ' + contentEl.textContent.trim() + '\n\n';
+                    }
+                }
+                if (!text) return;
+
+                navigator.clipboard.writeText(text.trim()).then(function() {
+                    var origTitle = shareBtn.title;
+                    shareBtn.title = (self.config.strings && self.config.strings.share_copied) || 'Conversation copied to clipboard';
+                    shareBtn.classList.add('chatbot-share-btn--copied');
+                    setTimeout(function() {
+                        shareBtn.title = origTitle;
+                        shareBtn.classList.remove('chatbot-share-btn--copied');
+                    }, 2000);
+                });
+            };
         },
 
         isValidEmail: function(email) {

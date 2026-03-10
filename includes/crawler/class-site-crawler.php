@@ -254,6 +254,13 @@ class WPAIC_Site_Crawler {
         delete_option(self::PROGRESS_KEY);
         update_option('wpaic_last_crawl', current_time('mysql'));
         update_option('wpaic_last_crawl_results', $results);
+
+        /**
+         * Fires after a crawl cycle completes.
+         *
+         * @param array $results Crawl results with indexed/updated/skipped/errors counts.
+         */
+        do_action('wpaic_after_crawl', $results);
     }
 
     /**

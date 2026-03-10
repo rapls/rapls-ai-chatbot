@@ -432,6 +432,8 @@ class WPAIC_Message {
      * @return string SHA-256 hash
      */
     public static function build_cache_hash(string $message, string $context = ''): string {
+        // Allow Pro to normalize the message further (e.g., similar cache)
+        $message = apply_filters('wpaic_cache_hash_message', $message);
         // Normalize: lowercase, trim whitespace
         $normalized = wpaic_mb_strtolower(trim($message)) . '||' . trim($context);
         return hash('sha256', $normalized);

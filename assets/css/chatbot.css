@@ -2146,3 +2146,121 @@ textarea.wpaic-offline-input {
     opacity: 1;
     background: rgba(0,0,0,0.05);
 }
+
+/* ============================================
+   Bookmark Button
+============================================ */
+.chatbot-bookmark-btn {
+    background: none;
+    border: 1px solid var(--wpaic-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+}
+
+.chatbot-bookmark-btn:hover {
+    opacity: 1;
+    background: var(--wpaic-bg);
+    border-color: var(--wpaic-primary);
+}
+
+.chatbot-bookmark-btn.wpaic-bookmarked {
+    opacity: 1;
+    border-color: var(--wpaic-primary);
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.chatbot-bookmark-btn.wpaic-bookmarked svg {
+    fill: var(--wpaic-primary);
+}
+
+/* ============================================
+   Chat Search
+============================================ */
+.chatbot-search-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatbot-search-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.chatbot-search-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.chatbot-search-bar {
+    padding: 6px 10px;
+    background: var(--wpaic-bg, #f5f5f5);
+    border-bottom: 1px solid var(--wpaic-border);
+}
+
+.chatbot-search-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--wpaic-border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--wpaic-text, #333);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.chatbot-search-input:focus {
+    border-color: var(--wpaic-primary);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+.chatbot-message.chatbot-search-highlight {
+    background: rgba(255, 235, 59, 0.15);
+}
+
+/* ============================================
+   Conversation Sharing
+============================================ */
+.chatbot-share-btn {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatbot-share-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.chatbot-share-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.chatbot-share-btn--copied {
+    background: rgba(40, 167, 69, 0.3);
+}
+
+.chatbot-share-btn--copied:hover {
+    background: rgba(40, 167, 69, 0.4);
+}

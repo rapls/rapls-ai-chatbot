@@ -162,7 +162,7 @@ if (!defined('ABSPATH')) {
         </div>
         <?php endif; ?>
 
-        <?php if (empty($settings['pro_features']['hide_powered_by'])) : ?>
+        <?php if (empty($settings['pro_features']['white_label_enabled']) || empty($settings['pro_features']['hide_powered_by'])) : ?>
         <div class="chatbot-footer-powered"><a href="https://raplsworks.com/rapls-ai-chatbot-guide/" target="_blank" rel="noopener noreferrer">Powered by Rapls Works</a></div>
         <?php endif; ?>
 

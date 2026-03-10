@@ -292,7 +292,7 @@ class WPAIC_Admin {
         }
 
         // String sanitization for key text fields
-        $text_fields = ['system_prompt', 'quota_error_message', 'welcome_message', 'placeholder_text', 'chatbot_title'];
+        $text_fields = ['system_prompt', 'quota_error_message', 'welcome_message'];
         foreach ($text_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = sanitize_textarea_field($settings[$field]);
@@ -2660,7 +2660,6 @@ class WPAIC_Admin {
             'badge_show_on_archives' => true,
             'badge_include_ids'     => '',
             'badge_exclude_ids'     => '',
-            'display_pages'         => 'all',
             'badge_position'        => 'bottom-right',
             'recaptcha_enabled'     => false,
             'recaptcha_site_key'    => '',

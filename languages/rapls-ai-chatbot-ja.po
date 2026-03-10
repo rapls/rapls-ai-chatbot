@@ -7221,3 +7221,19 @@ msgstr "復元に失敗しました。"
 msgid "Active & Closed"
 msgstr "アクティブ & クローズ"
 
+#: includes/frontend/class-chatbot-widget.php
+msgid "Bookmark this message"
+msgstr "このメッセージをブックマーク"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Bookmarked"
+msgstr "ブックマーク済み"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Copy conversation"
+msgstr "会話をコピー"
+
+#: includes/frontend/class-chatbot-widget.php
+msgid "Conversation copied to clipboard"
+msgstr "会話をクリップボードにコピーしました"
+
