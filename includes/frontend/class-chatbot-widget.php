@@ -326,6 +326,7 @@ class WPAIC_Chatbot_Widget {
                     'recaptcha_misconfigured' => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'origin_mismatch'        => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'honeypot_triggered'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                    'queue_full'             => '__use_server_message__',
                 ],
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),

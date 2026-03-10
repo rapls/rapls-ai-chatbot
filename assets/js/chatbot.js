@@ -752,8 +752,14 @@
                     var _s = self.config.strings || {};
                     var ecMap = _s.error_code_messages || {};
                     var ec = error.errorCode || '';
-                    // For rate_limited, prefer server message (supports custom rate limit message)
-                    var errorMessage = (ec === 'rate_limited' && error.message) ? error.message : ecMap[ec]; // wpaic-i18n-ok
+                    // For rate_limited or __use_server_message__, prefer server message
+                    var ecMapValue = ecMap[ec];
+                    var errorMessage;
+                    if ((ec === 'rate_limited' || ecMapValue === '__use_server_message__') && error.message) {
+                        errorMessage = error.message;
+                    } else {
+                        errorMessage = ecMapValue;
+                    } // wpaic-i18n-ok
                     // Dev aid: warn when server sends error_code not in the PHP map.
                     // Uses is_plugin_admin (no WP_DEBUG requirement) so production admins also see it.
                     if (ec && !errorMessage && self.config.is_plugin_admin) {

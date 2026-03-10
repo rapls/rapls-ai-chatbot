@@ -1179,7 +1179,7 @@ class WPAIC_Admin {
         $page = isset($_GET['paged']) ? absint(wp_unslash($_GET['paged'])) : 1;
 
         // Sort parameters
-        $allowed_orderby = ['id', 'status', 'created_at', 'updated_at'];
+        $allowed_orderby = ['id', 'session_id', 'message_count', 'page_url', 'status', 'handoff_status', 'created_at', 'updated_at'];
         $orderby = isset($_GET['orderby']) && in_array(sanitize_text_field(wp_unslash($_GET['orderby'])), $allowed_orderby, true) ? sanitize_text_field(wp_unslash($_GET['orderby'])) : 'created_at';
         $order = isset($_GET['order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['order']))) === 'ASC' ? 'ASC' : 'DESC';
 
@@ -1209,6 +1209,7 @@ class WPAIC_Admin {
             'total'    => WPAIC_Conversation::get_count(),
             'active'   => WPAIC_Conversation::get_count('active'),
             'closed'   => WPAIC_Conversation::get_count('closed'),
+            'archived' => WPAIC_Conversation::get_count('archived'),
             'today'    => WPAIC_Conversation::get_today_count(),
             'handoff'  => WPAIC_Conversation::get_handoff_count(),
         ];
@@ -2012,6 +2013,58 @@ class WPAIC_Admin {
             wp_send_json_success(__('Conversation deleted.', 'rapls-ai-chatbot'));
         } else {
             wp_send_json_error(__('Failed to delete.', 'rapls-ai-chatbot'));
+        }
+    }
+
+    /**
+     * Archive conversation AJAX
+     */
+    public function ajax_archive_conversation(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $conversation_id = absint(wp_unslash($_POST['conversation_id'] ?? 0));
+        if (!$conversation_id) {
+            wp_send_json_error(__('Conversation ID not specified.', 'rapls-ai-chatbot'));
+        }
+
+        $result = WPAIC_Conversation::update_status($conversation_id, 'archived');
+        if ($result) {
+            if (class_exists('WPAIC_Audit_Logger')) {
+                WPAIC_Audit_Logger::log('conversation_archived', 'conversation', $conversation_id);
+            }
+            wp_send_json_success(__('Conversation archived.', 'rapls-ai-chatbot'));
+        } else {
+            wp_send_json_error(__('Failed to archive.', 'rapls-ai-chatbot'));
+        }
+    }
+
+    /**
+     * Unarchive (restore) conversation AJAX
+     */
+    public function ajax_unarchive_conversation(): void {
+        check_ajax_referer('wpaic_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $conversation_id = absint(wp_unslash($_POST['conversation_id'] ?? 0));
+        if (!$conversation_id) {
+            wp_send_json_error(__('Conversation ID not specified.', 'rapls-ai-chatbot'));
+        }
+
+        $result = WPAIC_Conversation::update_status($conversation_id, 'closed');
+        if ($result) {
+            if (class_exists('WPAIC_Audit_Logger')) {
+                WPAIC_Audit_Logger::log('conversation_unarchived', 'conversation', $conversation_id);
+            }
+            wp_send_json_success(__('Conversation restored.', 'rapls-ai-chatbot'));
+        } else {
+            wp_send_json_error(__('Failed to restore.', 'rapls-ai-chatbot'));
         }
     }
 

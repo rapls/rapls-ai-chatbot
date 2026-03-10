@@ -73,6 +73,12 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
             <div class="stat-value"><?php echo esc_html(number_format($conv_stats['today'])); ?></div>
             <div class="stat-label"><?php esc_html_e('Today', 'rapls-ai-chatbot'); ?></div>
         </div>
+        <?php if ($conv_stats['archived'] > 0): ?>
+        <div class="wpaic-list-stat-card">
+            <div class="stat-value"><?php echo esc_html(number_format($conv_stats['archived'])); ?></div>
+            <div class="stat-label"><?php esc_html_e('Archived', 'rapls-ai-chatbot'); ?></div>
+        </div>
+        <?php endif; ?>
         <?php if ($conv_stats['handoff'] > 0): ?>
         <div class="wpaic-list-stat-card" style="border-left: 3px solid #e65100;">
             <div class="stat-value" style="color: #e65100;"><?php echo esc_html(number_format($conv_stats['handoff'])); ?></div>
@@ -92,10 +98,11 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                style="min-width: 220px;">
 
         <select name="status">
-            <option value=""><?php esc_html_e('All Statuses', 'rapls-ai-chatbot'); ?></option>
+            <option value="" <?php selected($status_filter ?? '', ''); ?>><?php esc_html_e('Active & Closed', 'rapls-ai-chatbot'); ?></option>
             <option value="active" <?php selected($status_filter ?? '', 'active'); ?>><?php esc_html_e('Active', 'rapls-ai-chatbot'); ?></option>
             <option value="closed" <?php selected($status_filter ?? '', 'closed'); ?>><?php esc_html_e('Closed', 'rapls-ai-chatbot'); ?></option>
             <option value="archived" <?php selected($status_filter ?? '', 'archived'); ?>><?php esc_html_e('Archived', 'rapls-ai-chatbot'); ?></option>
+            <option value="all" <?php selected($status_filter ?? '', 'all'); ?>><?php esc_html_e('All Statuses', 'rapls-ai-chatbot'); ?></option>
         </select>
 
         <input type="date" name="date_from" value="<?php echo esc_attr($date_from ?? ''); ?>"
@@ -145,12 +152,12 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                 <tr>
                     <th style="width: 40px;"><input type="checkbox" id="wpaic-select-all"></th>
                     <th style="width: 60px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('id', 'ID', $orderby, $order, 'DESC')); ?></th>
-                    <th><?php esc_html_e('Session', 'rapls-ai-chatbot'); ?></th>
-                    <th style="width: 60px;"><?php esc_html_e('Msgs', 'rapls-ai-chatbot'); ?></th>
+                    <th><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 60px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
-                    <th><?php esc_html_e('Start Page', 'rapls-ai-chatbot'); ?></th>
+                    <th><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('page_url', __('Start Page', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 100px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 100px;"><?php esc_html_e('Handoff', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 100px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('handoff_status', __('Handoff', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('created_at', __('Started', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('updated_at', __('Last Updated', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 120px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
@@ -166,7 +173,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                         <td><input type="checkbox" class="wpaic-conv-checkbox" value="<?php echo esc_attr($conv['id']); ?>"></td>
                         <td><?php echo esc_html($conv['id']); ?></td>
                         <td>
-                            <code><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
+                            <code class="wpaic-copy-session" title="<?php echo esc_attr($conv['session_id']); ?>" style="cursor: pointer;"><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
                         </td>
                         <td style="text-align: center;">
                             <?php echo esc_html(isset($conv['message_count']) ? number_format((int) $conv['message_count']) : '-'); ?>
@@ -193,7 +200,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                         </td>
                         <td>
                             <?php if (!empty($conv['page_url'])): ?>
-                                <a href="<?php echo esc_url($conv['page_url']); ?>" target="_blank">
+                                <a href="<?php echo esc_url($conv['page_url']); ?>" target="_blank" title="<?php echo esc_attr($conv['page_url']); ?>">
                                     <?php echo esc_html(wp_trim_words($conv['page_url'], 5)); ?>
                                 </a>
                             <?php else: ?>
@@ -243,6 +250,19 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                                     data-id="<?php echo esc_attr($conv['id']); ?>">
                                 <?php esc_html_e('Details', 'rapls-ai-chatbot'); ?>
                             </button>
+                            <?php if ($conv['status'] === 'archived'): ?>
+                            <button type="button" class="button button-small wpaic-unarchive-conversation"
+                                    data-id="<?php echo esc_attr($conv['id']); ?>"
+                                    title="<?php esc_attr_e('Restore', 'rapls-ai-chatbot'); ?>">
+                                <?php esc_html_e('Restore', 'rapls-ai-chatbot'); ?>
+                            </button>
+                            <?php else: ?>
+                            <button type="button" class="button button-small wpaic-archive-conversation"
+                                    data-id="<?php echo esc_attr($conv['id']); ?>"
+                                    title="<?php esc_attr_e('Archive', 'rapls-ai-chatbot'); ?>">
+                                <?php esc_html_e('Archive', 'rapls-ai-chatbot'); ?>
+                            </button>
+                            <?php endif; ?>
                             <button type="button" class="button button-small button-link-delete wpaic-delete-conversation"
                                     data-id="<?php echo esc_attr($conv['id']); ?>">
                                 <?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?>
@@ -826,6 +846,68 @@ jQuery(document).ready(function($) {
         $('#wpaic-delete-selected').prop('disabled', checkedCount === 0);
     }
 
+    // Restore from archive
+    $('.wpaic-unarchive-conversation').on('click', function() {
+        var id = $(this).data('id');
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: wpaicAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'wpaic_unarchive_conversation',
+                nonce: wpaicAdmin.nonce,
+                conversation_id: id
+            },
+            success: function(response) {
+                if (response.success) {
+                    $row.find('.status-badge').attr('class', 'status-badge status-closed').text('<?php echo esc_js(__('Closed', 'rapls-ai-chatbot')); ?>');
+                    $btn.replaceWith(
+                        '<button type="button" class="button button-small wpaic-archive-conversation" data-id="' + id + '"><?php echo esc_js(__('Archive', 'rapls-ai-chatbot')); ?></button>'
+                    );
+                } else {
+                    alert(response.data || '<?php echo esc_js(__('Failed to restore.', 'rapls-ai-chatbot')); ?>');
+                    $btn.prop('disabled', false);
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    // Archive single
+    $('.wpaic-archive-conversation').on('click', function() {
+        var id = $(this).data('id');
+        var $btn = $(this);
+        var $row = $btn.closest('tr');
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: wpaicAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'wpaic_archive_conversation',
+                nonce: wpaicAdmin.nonce,
+                conversation_id: id
+            },
+            success: function(response) {
+                if (response.success) {
+                    $row.find('.status-badge').attr('class', 'status-badge status-archived').text('<?php echo esc_js(__('Archived', 'rapls-ai-chatbot')); ?>');
+                    $btn.remove();
+                } else {
+                    alert(response.data || '<?php echo esc_js(__('Failed to archive.', 'rapls-ai-chatbot')); ?>');
+                    $btn.prop('disabled', false);
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
     // Delete single
     $('.wpaic-delete-conversation').on('click', function() {
         var id = $(this).data('id');
@@ -1034,5 +1116,17 @@ jQuery(document).ready(function($) {
             });
         }
     }
+
+    // Session ID: click to copy
+    $(document).on('click', '.wpaic-copy-session', function() {
+        var fullId = $(this).attr('title');
+        if (!fullId) return;
+        var el = this;
+        navigator.clipboard.writeText(fullId).then(function() {
+            var orig = el.textContent;
+            el.textContent = '<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>';
+            setTimeout(function() { el.textContent = orig; }, 1000);
+        });
+    });
 });
 </script>

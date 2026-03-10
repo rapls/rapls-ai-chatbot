@@ -173,6 +173,8 @@ class WPAIC_Main {
         $this->loader->add_action('wp_ajax_wpaic_test_api', $admin, 'ajax_test_api');
         $this->loader->add_action('wp_ajax_wpaic_get_conversation_messages', $admin, 'ajax_get_conversation_messages');
         $this->loader->add_action('wp_ajax_wpaic_delete_conversation', $admin, 'ajax_delete_conversation');
+        $this->loader->add_action('wp_ajax_wpaic_archive_conversation', $admin, 'ajax_archive_conversation');
+        $this->loader->add_action('wp_ajax_wpaic_unarchive_conversation', $admin, 'ajax_unarchive_conversation');
         $this->loader->add_action('wp_ajax_wpaic_delete_conversations_bulk', $admin, 'ajax_delete_conversations_bulk');
         $this->loader->add_action('wp_ajax_wpaic_delete_all_conversations', $admin, 'ajax_delete_all_conversations');
         $this->loader->add_action('wp_ajax_wpaic_reset_handoff', $admin, 'ajax_reset_handoff');
@@ -321,6 +323,12 @@ class WPAIC_Main {
         if (!$table_conversations || !$table_messages) {
             return;
         }
+
+        // Auto-close stale active conversations (no activity for 30 minutes)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $wpdb->query(
+            "UPDATE {$table_conversations} SET status = 'closed' WHERE status = 'active' AND updated_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)"
+        );
 
         // Get old conversation IDs
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter

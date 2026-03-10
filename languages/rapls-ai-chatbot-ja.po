@@ -571,7 +571,7 @@ msgstr "学習状態"
 #: templates/admin/conversations.php:74 templates/admin/dashboard.php:126
 #: templates/admin/knowledge.php:256
 msgid "Status"
-msgstr "設定状態"
+msgstr "ステータス"
 
 #: includes/admin/class-admin.php:2521 templates/admin/crawler.php:25
 #: templates/admin/dashboard.php:145 templates/admin/dashboard.php:153
@@ -7187,4 +7187,37 @@ msgstr "メッセージの送信に失敗しました。"
 #: templates/admin/conversations.php
 msgid "Contains screenshot"
 msgstr "スクリーンショットあり"
+
+#: includes/api/class-rest-controller.php
+#, php-format
+msgid "The server is busy. You are #%d in the queue. Please wait a moment."
+msgstr "サーバーが混み合っています。待ち順位は #%d です。しばらくお待ちください。"
+
+#: templates/admin/conversations.php
+msgid "Archive"
+msgstr "アーカイブ"
+
+#: includes/admin/class-admin.php
+msgid "Conversation archived."
+msgstr "会話をアーカイブしました。"
+
+#: includes/admin/class-admin.php
+msgid "Failed to archive."
+msgstr "アーカイブに失敗しました。"
+
+#: templates/admin/conversations.php
+msgid "Restore"
+msgstr "元に戻す"
+
+#: includes/admin/class-admin.php
+msgid "Conversation restored."
+msgstr "会話を元に戻しました。"
+
+#: includes/admin/class-admin.php
+msgid "Failed to restore."
+msgstr "復元に失敗しました。"
+
+#: templates/admin/conversations.php
+msgid "Active & Closed"
+msgstr "アクティブ & クローズ"
 

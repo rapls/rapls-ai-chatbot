@@ -911,6 +911,7 @@ class WPAIC_REST_Controller {
         if (!$is_handoff) {
             $rate_limit_result = $this->check_rate_limit();
             if ($rate_limit_result !== true) {
+                do_action('wpaic_rate_limit_exceeded', $this->get_client_ip());
                 $rate_limit_msg = is_string($rate_limit_result) ? $rate_limit_result : __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
                 return new WP_REST_Response([
                     'success'    => false,
@@ -956,6 +957,7 @@ class WPAIC_REST_Controller {
 
         // Check banned words (Pro feature)
         if ($pro_features->contains_banned_words($message)) {
+            do_action('wpaic_banned_word_detected', $message, $this->get_client_ip());
             return new WP_REST_Response([
                 'success'    => false,
                 'error'      => $pro_features->get_banned_words_message(),
@@ -1423,7 +1425,29 @@ class WPAIC_REST_Controller {
                 $send_options['file_name'] = $file_name;
             }
 
-            $response = $ai_provider->send_message($messages, $send_options);
+            // Queue management: check availability before AI call
+            $queue_check = apply_filters('wpaic_queue_check', ['allowed' => true], $request_id);
+            if (!$queue_check['allowed']) {
+                return new WP_REST_Response([
+                    'success'      => false,
+                    'error'        => sprintf(
+                        /* translators: %d: queue position */
+                        __('The server is busy. You are #%d in the queue. Please wait a moment.', 'rapls-ai-chatbot'),
+                        $queue_check['position'] ?? 1
+                    ),
+                    'error_code'   => 'queue_full',
+                    'queue_position' => $queue_check['position'] ?? 1,
+                    'retry_after'  => $queue_check['wait_seconds'] ?? 3,
+                ], 503);
+            }
+
+            do_action('wpaic_ai_request_start', $request_id);
+
+            try {
+                $response = $ai_provider->send_message($messages, $send_options);
+            } finally {
+                do_action('wpaic_ai_request_end', $request_id);
+            }
 
             // Save AI response
             $resp_msg_id = 0;
@@ -1677,6 +1701,8 @@ class WPAIC_REST_Controller {
                 'chat_error_' . $code,
                 sprintf('WPAIC Chat Error [%d]: %s (request_id=%s)', $code, $error_message, $request_id)
             );
+
+            do_action('wpaic_ai_error', $code, $error_message);
 
             // Build response body — include request_id for admin debugging
             $body = ['success' => false];
@@ -2963,8 +2989,19 @@ class WPAIC_REST_Controller {
             $error_codes = $body['error-codes'] ?? [];
             // Debug: log Google's error response for troubleshooting
             if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 error_log('[WPAIC reCAPTCHA] Verification failed. Google response: ' . wp_json_encode($body));
             }
+            do_action('wpaic_recaptcha_failed', $error_codes);
+
+            // Fail-open for transient/server-side errors (Google outage, token expiry)
+            $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
+            $transient_codes = ['timeout-or-duplicate', 'bad-request', 'internal-error'];
+            $is_transient = !empty(array_intersect($error_codes, $transient_codes));
+            if ($fail_mode === 'open' && $is_transient) {
+                return true;
+            }
+
             $error = new WP_Error('recaptcha_failed', __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'));
             // Attach Google error codes for client-side retry logic
             $error->add_data(['google_error_codes' => $error_codes]);
@@ -4346,6 +4383,9 @@ class WPAIC_REST_Controller {
                 'error'   => __('Failed to save message.', 'rapls-ai-chatbot'),
             ], 500);
         }
+
+        // Notify extensions of offline message (Slack, etc.)
+        do_action('wpaic_offline_message', $lead);
 
         // Send email notification
         if (!empty($pro_settings['offline_notification_enabled'])) {

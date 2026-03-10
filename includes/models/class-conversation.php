@@ -151,9 +151,12 @@ class WPAIC_Conversation {
         $where = '1=1';
         $params = [];
 
-        if (!empty($args['status'])) {
+        if (!empty($args['status']) && $args['status'] !== 'all') {
             $where .= ' AND c.status = %s';
             $params[] = $args['status'];
+        } elseif (empty($args['status'])) {
+            // Default: exclude archived
+            $where .= " AND c.status != 'archived'";
         }
 
         if (!empty($args['date_from'])) {
@@ -178,8 +181,11 @@ class WPAIC_Conversation {
         if (!$orderby) {
             $orderby = 'created_at DESC';
         }
-        // Prefix with table alias for unambiguous column references
-        $orderby = 'c.' . $orderby;
+        // Subquery aliases (message_count, has_screenshot) must not be prefixed
+        $no_prefix = ['message_count', 'has_screenshot'];
+        if (!in_array($orderby_col, $no_prefix, true)) {
+            $orderby = 'c.' . $orderby;
+        }
 
         $params[] = $args['per_page'];
         $params[] = $offset;
@@ -220,9 +226,11 @@ class WPAIC_Conversation {
         $where = '1=1';
         $params = [];
 
-        if (!empty($args['status'])) {
+        if (!empty($args['status']) && $args['status'] !== 'all') {
             $where .= ' AND c.status = %s';
             $params[] = $args['status'];
+        } elseif (empty($args['status'])) {
+            $where .= " AND c.status != 'archived'";
         }
 
         if (!empty($args['date_from'])) {
