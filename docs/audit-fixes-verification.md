@@ -1105,6 +1105,21 @@ SELECT url, title, updated_at FROM wp_aichat_index ORDER BY updated_at DESC LIMI
 
 ---
 
+## 第10回監査 (1件)
+
+### 82-83. `handle_save_pro_settings()` 未定義変数 `$existing` 修正
+
+**重要度**: Low
+**ファイル**: Pro `includes/class-pro-admin.php:501,712`
+**修正内容**: `$existing['ai_forms']` → `$pro_settings['ai_forms']`、`$existing['scenarios']` → `$pro_settings['scenarios']`
+
+**検証方法**:
+1. WP_DEBUG を有効化
+2. Pro Settings で AI Forms / Scenarios タブを空の状態で保存
+3. `debug.log` に `Undefined variable: existing` がないこと
+
+---
+
 ## SQL クエリ集
 
 ### 暗号化状態の確認
