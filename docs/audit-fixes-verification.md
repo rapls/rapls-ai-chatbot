@@ -857,6 +857,98 @@ Object.keys(localStorage)
 
 ---
 
+## 第6回監査 (8件)
+
+### 60. `find_similar_questions()` カラム名修正 (`question`/`answer` → `title`/`content`)
+
+**重要度**: Medium
+**ファイル**: Pro `includes/class-pro-features.php` — `find_similar_questions()`
+**修正内容**: SQL SELECT と配列キーを `title`/`content` に修正
+
+**検証方法**:
+1. Pro Settings > Security > Similar Question Merge を有効化
+2. ナレッジに類似エントリを作成（例: 「返品方法は?」「返品手順は?」）
+3. 「類似質問を検索」ボタンをクリック → 類似エントリが表示されること
+4. Console/debug.log に SQL エラーがないこと
+
+---
+
+### 61. `add_related_knowledge_links()` キー名修正 (`source_type` → `type`)
+
+**重要度**: Medium
+**ファイル**: Pro `includes/class-pro-main.php` — `add_related_knowledge_links()`
+**修正内容**: `$item['source_type']` → `$item['type']` に修正
+
+**検証方法**:
+1. Knowledge Related Links を有効化
+2. 同じカテゴリーの複数ナレッジエントリを作成
+3. フロントでそのカテゴリーの質問をする → 関連リンクが応答に含まれること
+
+---
+
+### 62. `normalize_cache_message()` 小文字化追加
+
+**重要度**: Medium
+**ファイル**: Pro `includes/class-pro-main.php` — `normalize_cache_message()`
+**修正内容**: `mb_strtolower()` を追加してキャッシュヒット率を向上
+
+**検証方法**:
+1. Similar Cache を有効化
+2. `What is your return policy?` を送信
+3. `what is your return policy?` を送信 → キャッシュヒットすること
+
+```sql
+SELECT content, cache_hash, cache_hit FROM wp_aichat_messages
+WHERE role = 'assistant' ORDER BY id DESC LIMIT 5;
+```
+
+---
+
+### 63. テンプレートのハードコード日本語を i18n 化 (10箇所)
+
+**重要度**: Low
+**ファイル**: Free `templates/frontend/chatbot-widget.php`
+**修正内容**: `aria-label`, `alt`, `placeholder` 等を `esc_attr_e()` / `esc_html_e()` に変更
+
+**検証方法**:
+1. サイト言語を英語に変更
+2. フロントのチャットウィジェットを表示
+3. DevTools で aria-label 属性が英語であること確認
+
+---
+
+### 64. JS ハードコード文字列の翻訳対応 (`resize_window`, `fullscreen`)
+
+**重要度**: Low
+**ファイル**: Free `assets/js/chatbot.js`, Free `includes/frontend/class-chatbot-widget.php`
+**修正内容**: ハードコード文字列を `config.strings.*` から取得、PHP に文字列キー追加
+
+---
+
+### 65. Clipboard API ガード追加
+
+**重要度**: Low
+**ファイル**: Free `assets/js/chatbot.js` — 会話共有
+**修正内容**: `navigator.clipboard` の存在チェックと `.catch()` 追加
+
+**検証方法**: HTTP (非 HTTPS) 環境でシェアボタンをクリック → エラーが発生しないこと
+
+---
+
+### 66. `welcome_messages` を `get_all_defaults()` に追加
+
+**重要度**: Low
+**ファイル**: Free `includes/admin/class-admin.php` — `get_all_defaults()`
+**修正内容**: `'welcome_messages' => []` を追加
+
+---
+
+### 67. Bug 8 (欠落キー) は既存確認済み — 対応不要
+
+`dark_mode`, `markdown_enabled`, `save_history`, `retention_days` は既に `get_all_defaults()` に存在していることを確認。
+
+---
+
 ## SQL クエリ集
 
 ### 暗号化状態の確認

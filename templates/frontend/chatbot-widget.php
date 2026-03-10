@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
 <div id="wp-ai-chatbot" class="wp-ai-chatbot wpaic-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed" data-position="<?php echo esc_attr($badge_position ?? 'bottom-right'); ?>">
 
     <!-- バッジ（閉じた状態） -->
-    <button class="chatbot-badge" aria-label="チャットを開く">
+    <button class="chatbot-badge" aria-label="<?php esc_attr_e('Open chat', 'rapls-ai-chatbot'); ?>">
         <?php if ($badge_icon_type === 'preset' && !empty($badge_icon_preset)) : ?>
             <?php echo wp_kses(wpaic_get_badge_preset_svg($badge_icon_preset), wpaic_get_svg_allowed_tags()); ?>
         <?php elseif ($badge_icon_type === 'image' && !empty($badge_icon_image)) : ?>
@@ -41,7 +41,7 @@ if (!defined('ABSPATH')) {
                 <?php endif; ?>
                 <div class="header-text">
                     <span class="bot-name"><?php echo esc_html($bot_name); ?></span>
-                    <span class="bot-status">オンライン</span>
+                    <span class="bot-status"><?php esc_html_e('Online', 'rapls-ai-chatbot'); ?></span>
                 </div>
             </div>
             <button class="chatbot-tts-toggle" aria-label="<?php esc_attr_e('Text-to-speech', 'rapls-ai-chatbot'); ?>" hidden>
@@ -49,7 +49,7 @@ if (!defined('ABSPATH')) {
                     <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                 </svg>
             </button>
-            <button class="chatbot-close" aria-label="閉じる">
+            <button class="chatbot-close" aria-label="<?php esc_attr_e('Close', 'rapls-ai-chatbot'); ?>">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                 </svg>
@@ -93,7 +93,7 @@ if (!defined('ABSPATH')) {
         </div>
 
         <!-- タイピングインジケーター -->
-        <div class="chatbot-typing" hidden aria-label="入力中">
+        <div class="chatbot-typing" hidden aria-label="<?php esc_attr_e('Typing', 'rapls-ai-chatbot'); ?>">
             <span></span>
             <span></span>
             <span></span>
@@ -101,8 +101,8 @@ if (!defined('ABSPATH')) {
 
         <!-- 画像プレビュー（Pro: マルチモーダル） -->
         <div class="chatbot-image-preview" hidden>
-            <img src="" alt="プレビュー">
-            <button type="button" class="image-preview-remove" aria-label="画像を削除">
+            <img src="" alt="<?php esc_attr_e('Preview', 'rapls-ai-chatbot'); ?>">
+            <button type="button" class="image-preview-remove" aria-label="<?php esc_attr_e('Remove image', 'rapls-ai-chatbot'); ?>">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                 </svg>
@@ -112,7 +112,7 @@ if (!defined('ABSPATH')) {
         <!-- 入力エリア -->
         <form class="chatbot-input" autocomplete="off" novalidate>
             <input type="file" class="chatbot-image-input" accept="image/jpeg,image/png,image/gif,image/webp" hidden>
-            <button type="button" class="chatbot-image-btn" aria-label="画像をアップロード" hidden>
+            <button type="button" class="chatbot-image-btn" aria-label="<?php esc_attr_e('Upload image', 'rapls-ai-chatbot'); ?>" hidden>
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
                 </svg>
@@ -134,13 +134,13 @@ if (!defined('ABSPATH')) {
             </button>
             <textarea
                 name="wpaic_message_<?php echo esc_attr(uniqid()); ?>"
-                placeholder="メッセージを入力..."
+                placeholder="<?php esc_attr_e('Type a message...', 'rapls-ai-chatbot'); ?>"
                 rows="1"
-                aria-label="メッセージ入力"
+                aria-label="<?php esc_attr_e('Message input', 'rapls-ai-chatbot'); ?>"
                 autocomplete="new-password"
                 spellcheck="false"
             ></textarea>
-            <button type="submit" aria-label="送信">
+            <button type="submit" aria-label="<?php esc_attr_e('Send', 'rapls-ai-chatbot'); ?>">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>

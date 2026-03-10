@@ -212,7 +212,7 @@
             }
             this.resizeHandle = document.createElement('div');
             this.resizeHandle.className = 'chatbot-resize-handle';
-            this.resizeHandle.setAttribute('aria-label', 'ウィンドウをリサイズ');
+            this.resizeHandle.setAttribute('aria-label', (this.config.strings && this.config.strings.resize_window) || 'Resize window');
             this.window.appendChild(this.resizeHandle);
         },
 
@@ -3093,7 +3093,7 @@
             fsBtn.type = 'button';
             fsBtn.className = 'chatbot-fullscreen-btn';
             fsBtn.innerHTML = '&#x26F6;';
-            fsBtn.title = 'Fullscreen';
+            fsBtn.title = (this.config.strings && this.config.strings.fullscreen) || 'Fullscreen';
             fsBtn.onclick = function() {
                 self.window.classList.toggle('chatbot-window--fullscreen');
                 fsBtn.innerHTML = self.window.classList.contains('chatbot-window--fullscreen') ? '&#x2716;' : '&#x26F6;';
@@ -3927,15 +3927,17 @@
                 }
                 if (!text) return;
 
-                navigator.clipboard.writeText(text.trim()).then(function() {
-                    var origTitle = shareBtn.title;
-                    shareBtn.title = (self.config.strings && self.config.strings.share_copied) || 'Conversation copied to clipboard';
-                    shareBtn.classList.add('chatbot-share-btn--copied');
-                    setTimeout(function() {
-                        shareBtn.title = origTitle;
-                        shareBtn.classList.remove('chatbot-share-btn--copied');
-                    }, 2000);
-                });
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text.trim()).then(function() {
+                        var origTitle = shareBtn.title;
+                        shareBtn.title = (self.config.strings && self.config.strings.share_copied) || 'Conversation copied to clipboard';
+                        shareBtn.classList.add('chatbot-share-btn--copied');
+                        setTimeout(function() {
+                            shareBtn.title = origTitle;
+                            shareBtn.classList.remove('chatbot-share-btn--copied');
+                        }, 2000);
+                    }).catch(function() { /* clipboard permission denied */ });
+                }
             };
         },
 

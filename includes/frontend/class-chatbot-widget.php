@@ -374,6 +374,8 @@ class WPAIC_Chatbot_Widget {
                 'share_conversation'     => __('Copy conversation', 'rapls-ai-chatbot'),
                 'share_copied'           => __('Conversation copied to clipboard', 'rapls-ai-chatbot'),
                 'placeholder'            => __('Type a message...', 'rapls-ai-chatbot'),
+                'resize_window'          => __('Resize window', 'rapls-ai-chatbot'),
+                'fullscreen'             => __('Fullscreen', 'rapls-ai-chatbot'),
                 'web_sources_title'      => __('Web sources:', 'rapls-ai-chatbot'),
                 'listening'              => __('Listening...', 'rapls-ai-chatbot'),
                 'dedup_truncated'        => __('Your message was received and processed. Please reload the page to see the response.', 'rapls-ai-chatbot'),
