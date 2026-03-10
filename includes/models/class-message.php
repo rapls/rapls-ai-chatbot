@@ -23,10 +23,12 @@ class WPAIC_Message {
         global $wpdb;
         $table = self::get_table_name();
 
+        $content = apply_filters('wpaic_message_content_save', $data['content'], $data);
+
         $insert_data = [
             'conversation_id' => $data['conversation_id'],
             'role'            => $data['role'],
-            'content'         => $data['content'],
+            'content'         => $content,
             'tokens_used'     => $data['tokens_used'] ?? 0,
             'input_tokens'    => $data['input_tokens'] ?? 0,
             'output_tokens'   => $data['output_tokens'] ?? 0,
@@ -75,6 +77,10 @@ class WPAIC_Message {
             $limit
         ), ARRAY_A);
 
+        foreach ($messages as &$msg) {
+            $msg['content'] = apply_filters('wpaic_message_content_load', $msg['content'], $msg);
+        }
+
         return array_reverse($messages);
     }
 
@@ -94,6 +100,10 @@ class WPAIC_Message {
             $conversation_id,
             $limit
         ), ARRAY_A);
+
+        foreach ($messages as &$msg) {
+            $msg['content'] = apply_filters('wpaic_message_content_load', $msg['content'], $msg);
+        }
 
         return array_reverse($messages);
     }

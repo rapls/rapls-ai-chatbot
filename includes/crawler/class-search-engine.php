@@ -616,13 +616,14 @@ class WPAIC_Search_Engine {
             // Priority adds significant boost (each priority point = 20 score)
             $priority_boost = ((int) ($item['priority'] ?? 0)) * 20;
             return [
-                'type'     => 'knowledge',
-                'title'    => $item['title'],
-                'content'  => $item['content'],
-                'category' => $item['category'] ?? '',
-                'priority' => (int) ($item['priority'] ?? 0),
-                'url'      => null,
-                'score'    => $this->calculate_keyword_score($item, $keywords) + 10 + $priority_boost, // Prioritize knowledge + priority boost
+                'type'        => 'knowledge',
+                'source_id'   => (int) ($item['id'] ?? 0),
+                'title'       => $item['title'],
+                'content'     => $item['content'],
+                'category'    => $item['category'] ?? '',
+                'priority'    => (int) ($item['priority'] ?? 0),
+                'url'         => null,
+                'score'       => $this->calculate_keyword_score($item, $keywords) + 10 + $priority_boost, // Prioritize knowledge + priority boost
             ];
         }, $results);
     }

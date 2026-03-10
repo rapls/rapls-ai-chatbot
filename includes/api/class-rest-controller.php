@@ -763,6 +763,9 @@ class WPAIC_REST_Controller {
         $bot_id = sanitize_key($request->get_param('bot_id') ?? 'default');
         $bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($bot_id);
 
+        // Multi-bot coordination (intent-based / round-robin routing)
+        $bot_config = apply_filters('wpaic_resolve_bot_config', $bot_config, $message);
+
         // Session ownership already verified by check_session_permission()
 
         // Validate input
@@ -930,6 +933,16 @@ class WPAIC_REST_Controller {
                 'success'    => false,
                 'error'      => $pro_features->get_ip_block_message(),
                 'error_code' => 'ip_blocked',
+            ], 403);
+        }
+
+        // Check country blocking (Pro feature)
+        $country_blocked = apply_filters('wpaic_country_blocked', false);
+        if ($country_blocked) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => is_string($country_blocked) ? $country_blocked : __('Access denied from your region.', 'rapls-ai-chatbot'),
+                'error_code' => 'country_blocked',
             ], 403);
         }
 
@@ -1124,6 +1137,9 @@ class WPAIC_REST_Controller {
             }
             $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
             $context = $search_engine->build_context($related_content, $this->get_max_context_chars(), $message);
+
+            // Notify Pro features about knowledge hits (for auto-priority)
+            do_action('wpaic_knowledge_hits', $related_content);
 
             // Response cache check (Pro feature)
             $pro_settings = $settings['pro_features'] ?? [];

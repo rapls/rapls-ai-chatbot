@@ -323,6 +323,9 @@ class WPAIC_Knowledge {
             return false;
         }
 
+        // Allow Pro to save version history before update
+        do_action('wpaic_knowledge_before_update', (int) $id, $data);
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->update(
             $table,
