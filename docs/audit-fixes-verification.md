@@ -949,6 +949,38 @@ WHERE role = 'assistant' ORDER BY id DESC LIMIT 5;
 
 ---
 
+## 第7回監査 (4件)
+
+### 68-70. fetch content-type チェック統一 (3箇所)
+
+**重要度**: Low
+**ファイル**: Free `assets/js/chatbot.js` — `sendFeedback`, `regenerateResponse`, `submitOfflineForm`
+**修正内容**: `response.json()` の前に content-type ヘッダー確認を追加。非JSON応答 (503 HTMLエラー等) 時の挙動を他の fetch 呼び出しと統一
+
+**検証方法**:
+1. サーバーが一時的に 503 を返す状況をシミュレート
+2. フィードバック送信 / 再生成 / オフラインフォーム送信でクラッシュしないこと
+3. Console に適切なエラーログが出力されること
+
+---
+
+### 71. アンインストール時の `wpaic_pro_license_type/revoked` 削除漏れ
+
+**重要度**: Low
+**ファイル**: Pro `uninstall.php`
+**修正内容**: `delete_option('wpaic_pro_license_type')` と `delete_option('wpaic_pro_license_revoked')` を追加
+
+**検証方法**:
+1. Pro プラグインをアンインストール
+2. DB に `wpaic_pro_license_type` / `wpaic_pro_license_revoked` が残っていないこと
+
+```sql
+SELECT option_name FROM wp_options WHERE option_name LIKE 'wpaic_pro_license%';
+-- 0件であること
+```
+
+---
+
 ## SQL クエリ集
 
 ### 暗号化状態の確認

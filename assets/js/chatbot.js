@@ -1615,9 +1615,13 @@
                     session_id: this.sessionId,
                 }),
             })
-            .then(function(response) { return response.json(); })
+            .then(function(response) {
+                var ct = response.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) { return null; }
+                return response.json();
+            })
             .then(function(data) {
-                if (!data.success) {
+                if (data && !data.success) {
                     console.error('Feedback error:', data.error);
                 }
             })
@@ -1650,7 +1654,13 @@
                     session_id: this.sessionId,
                 }),
             })
-            .then(function(response) { return response.json(); })
+            .then(function(response) {
+                var ct = response.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) {
+                    throw new Error('Non-JSON response');
+                }
+                return response.json();
+            })
             .then(function(data) {
                 self.setLoading(false);
                 messageEl.classList.remove('chatbot-message--regenerating');
@@ -3301,7 +3311,13 @@
                     body: JSON.stringify(requestBody)
                 });
             })
-            .then(function(response) { return response.json(); })
+            .then(function(response) {
+                var ct = response.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) {
+                    throw new Error('Non-JSON response');
+                }
+                return response.json();
+            })
             .then(function(data) {
                 if (data.success && data._dropped) {
                     // Request was silently dropped by server-side validation.
