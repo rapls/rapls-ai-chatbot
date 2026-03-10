@@ -55,10 +55,16 @@ class WPAIC_Message {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->get_row($wpdb->prepare(
+        $row = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM `{$table}` WHERE id = %d",
             $id
         ), ARRAY_A);
+
+        if ($row && isset($row['content'])) {
+            $row['content'] = apply_filters('wpaic_message_content_load', $row['content'], $row);
+        }
+
+        return $row;
     }
 
     /**

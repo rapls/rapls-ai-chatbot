@@ -344,11 +344,17 @@ class WPAIC_Knowledge {
         $table = self::get_table_name();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        return $wpdb->delete(
+        $result = $wpdb->delete(
             $table,
             ['id' => $id],
             ['%d']
         );
+
+        if ($result !== false) {
+            do_action('wpaic_knowledge_deleted', (int) $id);
+        }
+
+        return $result;
     }
 
     /**

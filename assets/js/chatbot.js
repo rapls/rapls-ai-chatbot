@@ -101,6 +101,7 @@
          * 初期化
          */
         init: function() {
+            this.bookmarkKey = 'wpaic_bookmarks_' + (this.config.rest_url || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
             this.cacheElements();
             if (!this.container) return;
 
@@ -1551,7 +1552,7 @@
                     bookmarkBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
                     bookmarkBtn.title = (self.config.strings && self.config.strings.bookmark) || 'Bookmark this message';
                     // Check if already bookmarked
-                    var bookmarks = JSON.parse(localStorage.getItem('wpaic_bookmarks') || '[]');
+                    var bookmarks = JSON.parse(localStorage.getItem(self.bookmarkKey) || '[]');
                     var isBookmarked = bookmarks.some(function(b) { return b.id === messageId; });
                     if (isBookmarked) {
                         bookmarkBtn.classList.add('wpaic-bookmarked');
@@ -3776,7 +3777,7 @@
          * Toggle bookmark for a message
          */
         toggleBookmark: function(messageId, textEl, btnEl) {
-            var bookmarks = JSON.parse(localStorage.getItem('wpaic_bookmarks') || '[]');
+            var bookmarks = JSON.parse(localStorage.getItem(this.bookmarkKey) || '[]');
             var idx = -1;
             for (var i = 0; i < bookmarks.length; i++) {
                 if (bookmarks[i].id === messageId) { idx = i; break; }
@@ -3794,7 +3795,7 @@
                 btnEl.classList.add('wpaic-bookmarked');
                 btnEl.title = (this.config.strings && this.config.strings.bookmarked) || 'Bookmarked';
             }
-            localStorage.setItem('wpaic_bookmarks', JSON.stringify(bookmarks));
+            localStorage.setItem(this.bookmarkKey, JSON.stringify(bookmarks));
         },
 
         /**

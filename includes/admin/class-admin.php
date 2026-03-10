@@ -681,9 +681,6 @@ class WPAIC_Admin {
         $defaults = WPAIC_Pro_Features::get_default_settings();
         $sanitized = [];
 
-        // Message limit
-        $sanitized['free_message_limit'] = absint($input['free_message_limit'] ?? ($existing['free_message_limit'] ?? $defaults['free_message_limit']));
-
         // Lead capture
         $sanitized['lead_capture_enabled'] = !empty($input['lead_capture_enabled']);
         $sanitized['lead_capture_required'] = !empty($input['lead_capture_required']);
@@ -766,7 +763,7 @@ class WPAIC_Admin {
 
         // Webhook events
         $sanitized['webhook_events'] = [];
-        $event_names = ['new_conversation', 'new_message', 'lead_captured'];
+        $event_names = ['new_conversation', 'new_message', 'lead_captured', 'handoff_requested'];
         foreach ($event_names as $event) {
             $sanitized['webhook_events'][$event] = !empty($input['webhook_events'][$event]);
         }
