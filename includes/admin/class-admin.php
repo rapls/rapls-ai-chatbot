@@ -695,6 +695,7 @@ class WPAIC_Admin {
                 'enabled' => !empty($field_input['enabled']),
                 'required' => !empty($field_input['required']),
                 'label' => sanitize_text_field($field_input['label'] ?? ($field_existing['label'] ?? ucfirst($field))),
+                'type' => sanitize_key($field_input['type'] ?? ($field_existing['type'] ?? 'text')),
             ];
         }
 
@@ -2536,9 +2537,9 @@ class WPAIC_Admin {
             // AI Provider
             'ai_provider'           => 'openai',
             'openai_api_key'        => '',
-            'openai_model'          => 'gpt-4o',
+            'openai_model'          => 'gpt-4o-mini',
             'claude_api_key'        => '',
-            'claude_model'          => 'claude-sonnet-4-20250514',
+            'claude_model'          => 'claude-haiku-4-5-20251001',
             'gemini_api_key'        => '',
             'gemini_model'          => 'gemini-2.0-flash-exp',
             'openrouter_api_key'    => '',
@@ -2626,7 +2627,7 @@ class WPAIC_Admin {
             'openai_api_key'        => '',
             'openai_model'          => 'gpt-4o-mini',
             'claude_api_key'        => '',
-            'claude_model'          => 'claude-sonnet-4-20250514',
+            'claude_model'          => 'claude-haiku-4-5-20251001',
             'gemini_api_key'        => '',
             'gemini_model'          => 'gemini-2.0-flash-exp',
             'system_prompt'         => "You are a knowledgeable assistant for this website. Follow these rules:\n\n1. ACCURACY: When reference information is provided, treat it as the primary and most reliable source. Base your answers on this information first.\n2. HONESTY: If the provided information does not cover the user's question, clearly state that you don't have specific information about it, then offer general guidance if appropriate.\n3. NO FABRICATION: Never invent facts, URLs, prices, dates, or specific details that are not in the provided reference information.\n4. CONCISENESS: Provide clear, focused answers. Avoid unnecessary repetition or filler.\n5. LANGUAGE: Always respond in the same language the user writes in.\n6. TONE: Be professional, friendly, and helpful.",

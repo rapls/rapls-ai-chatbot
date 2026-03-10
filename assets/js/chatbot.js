@@ -101,7 +101,7 @@
          * 初期化
          */
         init: function() {
-            this.bookmarkKey = 'wpaic_bookmarks_' + (this.config.rest_url || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
+            this.bookmarkKey = 'wpaic_bookmarks_' + (this.config.restUrl || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
             this.cacheElements();
             if (!this.container) return;
 
@@ -3048,7 +3048,7 @@
                 var startBtn = document.createElement('button');
                 startBtn.type = 'button';
                 startBtn.className = 'chatbot-welcome-btn';
-                startBtn.textContent = this.config.start_chat_label || 'Start Chat';
+                startBtn.textContent = (this.config.strings && this.config.strings.start_chat) || this.config.start_chat_label || 'Start Chat';
                 startBtn.onclick = function() {
                     self._dismissWelcomeScreen();
                 };

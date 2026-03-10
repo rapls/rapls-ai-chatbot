@@ -373,6 +373,11 @@ class WPAIC_Chatbot_Widget {
                 'search_placeholder'     => __('Search messages...', 'rapls-ai-chatbot'),
                 'share_conversation'     => __('Copy conversation', 'rapls-ai-chatbot'),
                 'share_copied'           => __('Conversation copied to clipboard', 'rapls-ai-chatbot'),
+                'web_sources_title'      => __('Web sources:', 'rapls-ai-chatbot'),
+                'listening'              => __('Listening...', 'rapls-ai-chatbot'),
+                'dedup_truncated'        => __('Your message was received and processed. Please reload the page to see the response.', 'rapls-ai-chatbot'),
+                'dedup_stale'            => __('A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.', 'rapls-ai-chatbot'),
+                'dedup_truncated_no_history' => __('Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.', 'rapls-ai-chatbot'),
             ],
         ]);
     }
