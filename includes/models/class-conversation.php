@@ -292,6 +292,10 @@ class WPAIC_Conversation {
      * Update status
      */
     public static function update_status($id, $status) {
+        $allowed = ['active', 'archived', 'handoff_pending', 'handoff_active', 'resolved', 'closed'];
+        if (!in_array($status, $allowed, true)) {
+            return false;
+        }
         global $wpdb;
         $table = self::get_table_name();
 
@@ -303,6 +307,25 @@ class WPAIC_Conversation {
             ['%s'],
             ['%d']
         );
+    }
+
+    /**
+     * Touch conversation: update updated_at and reactivate if closed.
+     *
+     * Called when a new message is sent so the auto-close cron
+     * does not mark an ongoing conversation as closed.
+     *
+     * @param int $id Conversation ID.
+     */
+    public static function touch($id) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$table} SET updated_at = NOW(), status = CASE WHEN status = 'closed' THEN 'active' ELSE status END WHERE id = %d",
+            $id
+        ));
     }
 
     /**
@@ -393,8 +416,8 @@ class WPAIC_Conversation {
         if (!empty($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
             $lang = sanitize_text_field(wp_unslash($_SERVER['HTTP_ACCEPT_LANGUAGE']));
             // Try to extract country from first locale with region (e.g. en-US → US, zh-TW → TW)
-            if (preg_match('/^([a-z]{2})-([A-Z]{2})/', $lang, $m)) {
-                return $m[2];
+            if (preg_match('/^([a-zA-Z]{2})-([a-zA-Z]{2})/', $lang, $m)) {
+                return strtoupper($m[2]);
             }
             // Map bare language codes to most likely country
             $lang_map = [
@@ -517,8 +540,20 @@ class WPAIC_Conversation {
      * Export conversations for given filters
      */
     public static function export(array $filters = []): array {
-        $args = array_merge($filters, ['per_page' => 10000, 'page' => 1]);
-        return self::get_list($args);
+        $all = [];
+        $page = 1;
+        $per_page = 1000;
+        $max_pages = 1000; // Safety limit: 1M rows max
+        do {
+            $args = array_merge($filters, ['per_page' => $per_page, 'page' => $page]);
+            $batch = self::get_list($args);
+            if (empty($batch)) {
+                break;
+            }
+            $all = array_merge($all, $batch);
+            $page++;
+        } while (count($batch) === $per_page && $page <= $max_pages);
+        return $all;
     }
 
     /**
@@ -543,7 +578,7 @@ class WPAIC_Conversation {
                 $c['session_id'] ?? '',
                 $c['status'] ?? '',
                 $c['message_count'] ?? '',
-                !empty($c['is_converted']) ? 'Yes' : 'No',
+                !empty($c['converted_at']) ? __('Yes', 'rapls-ai-chatbot') : __('No', 'rapls-ai-chatbot'),
                 self::csv_safe_cell($c['page_url'] ?? ''),
                 $c['created_at'] ?? '',
             ];

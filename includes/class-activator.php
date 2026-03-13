@@ -58,15 +58,18 @@ class WPAIC_Activator {
         }
         set_transient($lock_key, 1, 3 * MINUTE_IN_SECONDS);
 
-        self::create_tables();
-        self::upgrade_columns();
-        self::set_default_options();
-        self::schedule_cron();
-        self::migrate_diag_options();
+        try {
+            self::create_tables();
+            self::upgrade_columns();
+            self::set_default_options();
+            self::schedule_cron();
+            self::migrate_diag_options();
 
-        // Save version
-        update_option('wpaic_version', WPAIC_VERSION);
-        delete_transient($lock_key);
+            // Save version
+            update_option('wpaic_version', WPAIC_VERSION);
+        } finally {
+            delete_transient($lock_key);
+        }
     }
 
     /**
@@ -192,31 +195,6 @@ class WPAIC_Activator {
     }
 
     /**
-     * Execute an ALTER TABLE query on a known plugin table.
-     *
-     * Table name is validated against get_table_suffixes() whitelist before execution.
-     * The $alter_clause parameter MUST be a hardcoded string literal (no user input).
-     * $wpdb->prepare() cannot be used for identifiers (table/column names);
-     * safety is ensured by the whitelist check + backtick-quoted table identifier.
-     *
-     * @param string $table_suffix Plugin table suffix (e.g. 'aichat_messages')
-     * @param string $alter_clause ALTER TABLE clause (e.g. 'ADD COLUMN foo INT DEFAULT 0')
-     * @param string $desc         Human-readable description for the log
-     */
-    /**
-     * Return backtick-quoted full table name after whitelist validation.
-     *
-     * Use this for any direct SQL that references plugin tables. Returns the
-     * table name in `backtick-quoted` form, ready for SQL interpolation.
-     * Returns empty string if the suffix is not in the whitelist.
-     *
-     * Safety guarantee: table name = $wpdb->prefix (WordPress-controlled)
-     * + whitelist-validated suffix. No user input.
-     *
-     * @param string $suffix Table suffix (e.g. 'aichat_messages').
-     * @return string Backtick-quoted table name, or '' if invalid.
-     */
-    /**
      * Validate a table suffix and return backtick-quoted table name.
      * Delegates to wpaic_validated_table() — see rapls-ai-chatbot.php.
      *
@@ -240,9 +218,9 @@ class WPAIC_Activator {
             return false;
         }
         global $wpdb;
-        // Table name is whitelist-validated via validated_table(). Column name is a hardcoded literal.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $result = $wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE '{$column_name}'");
+        // Table name is whitelist-validated via validated_table(). Column name uses $wpdb->prepare().
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $result = $wpdb->get_results($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column_name));
         return !empty($result);
     }
 
@@ -259,9 +237,9 @@ class WPAIC_Activator {
             return false;
         }
         global $wpdb;
-        // Table name is whitelist-validated via validated_table(). Index name is a hardcoded literal.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $result = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Key_name = '{$index_name}'");
+        // Table name is whitelist-validated via validated_table(). Index name uses $wpdb->prepare().
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $result = $wpdb->get_results($wpdb->prepare("SHOW INDEX FROM {$table} WHERE Key_name = %s", $index_name));
         return !empty($result);
     }
 
@@ -294,9 +272,9 @@ class WPAIC_Activator {
             return null;
         }
         global $wpdb;
-        // Table name is whitelist-validated. Column name is a hardcoded literal.
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->get_row("SHOW COLUMNS FROM {$table} LIKE '{$column_name}'");
+        // Table name is whitelist-validated. Column name uses $wpdb->prepare().
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return $wpdb->get_row($wpdb->prepare("SHOW COLUMNS FROM {$table} LIKE %s", $column_name));
     }
 
     private static function safe_alter(string $table_suffix, string $alter_clause, string $desc = ''): void {
@@ -661,8 +639,13 @@ class WPAIC_Activator {
             // Display settings
             'badge_margin_right'  => 20,
             'badge_margin_bottom' => 20,
-            'primary_color'   => '#007bff',
-            'show_on_mobile'  => true,
+            'badge_position'      => 'bottom-right',
+            'primary_color'       => '#007bff',
+            'show_on_mobile'      => true,
+            'badge_show_on_home'     => true,
+            'badge_show_on_posts'    => true,
+            'badge_show_on_pages'    => true,
+            'badge_show_on_archives' => true,
             'excluded_pages'  => [],
 
             // History settings
@@ -688,9 +671,16 @@ class WPAIC_Activator {
             'delete_data_on_uninstall' => false,
         ];
 
-        // Set default if no existing settings
-        if (!get_option('wpaic_settings')) {
+        $existing = get_option('wpaic_settings');
+        if (!$existing) {
+            // Fresh install: set all defaults
             update_option('wpaic_settings', $default_settings);
+        } else {
+            // Upgrade: merge new default keys into existing settings (existing values take priority)
+            $merged = array_merge($default_settings, $existing);
+            if ($merged !== $existing) {
+                update_option('wpaic_settings', $merged);
+            }
         }
     }
 
@@ -733,8 +723,17 @@ class WPAIC_Activator {
             wp_schedule_event(time(), 'daily', 'wpaic_crawl_site');
         }
 
-        if (!wp_next_scheduled('wpaic_cleanup_old_conversations')) {
-            wp_schedule_event(time(), 'daily', 'wpaic_cleanup_old_conversations');
+        // Reschedule from daily to half-hourly if needed (so conversation status updates promptly)
+        $next = wp_next_scheduled('wpaic_cleanup_old_conversations');
+        if ($next) {
+            $schedule = wp_get_schedule('wpaic_cleanup_old_conversations');
+            if ($schedule !== 'wpaic_half_hourly') {
+                wp_clear_scheduled_hook('wpaic_cleanup_old_conversations');
+                $next = false;
+            }
+        }
+        if (!$next) {
+            wp_schedule_event(time(), 'wpaic_half_hourly', 'wpaic_cleanup_old_conversations');
         }
     }
 }

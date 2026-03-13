@@ -287,8 +287,10 @@ class WPAIC_Site_Crawler {
         // Calculate content hash
         $content_hash = hash('sha256', $content);
 
-        // Skip if no changes
-        if (WPAIC_Content_Index::hash_exists($post->ID, $content_hash)) {
+        // Skip if no changes (differential crawl)
+        $crawl_settings = get_option('wpaic_settings', []);
+        $diff_crawl = $crawl_settings['pro_features']['diff_crawl_enabled'] ?? true;
+        if ($diff_crawl && WPAIC_Content_Index::hash_exists($post->ID, $content_hash)) {
             return 'skipped';
         }
 
@@ -406,61 +408,6 @@ class WPAIC_Site_Crawler {
      */
     public function on_delete_post(int $post_id): void {
         WPAIC_Content_Index::delete_by_post_id($post_id);
-    }
-
-    /**
-     * Crawl specific post type only
-     */
-    public function crawl_post_type(string $post_type): array {
-        $settings = get_option('wpaic_settings', []);
-        $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
-
-        $this->chunker->set_chunk_size($chunk_size);
-
-        $results = [
-            'indexed' => 0,
-            'updated' => 0,
-            'skipped' => 0,
-            'errors'  => 0,
-        ];
-
-        $batch_size = 100;
-        $paged = 1;
-        do {
-            $post_ids = get_posts([
-                'post_type'      => $post_type,
-                'post_status'    => 'publish',
-                'posts_per_page' => $batch_size,
-                'paged'          => $paged,
-                'fields'         => 'ids',
-                'orderby'        => 'ID',
-                'order'          => 'ASC',
-            ]);
-
-            foreach ($post_ids as $post_id) {
-                $post = get_post($post_id);
-                if (!$post) {
-                    continue;
-                }
-                try {
-                    $result = $this->index_post($post);
-                    $results[$result]++;
-                } catch (Exception $e) {
-                    $results['errors']++;
-                }
-            }
-
-            $paged++;
-        } while (count($post_ids) === $batch_size);
-
-        return $results;
-    }
-
-    /**
-     * Clear index
-     */
-    public function clear_index(): bool {
-        return WPAIC_Content_Index::truncate() !== false;
     }
 
     /**

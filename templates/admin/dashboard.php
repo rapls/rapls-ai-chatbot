@@ -126,7 +126,7 @@ if (!defined('ABSPATH')) {
             <h2><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></h2>
             <?php
             $settings = get_option('wpaic_settings', []);
-            $has_api_key = !empty($settings['openai_api_key']) || !empty($settings['claude_api_key']);
+            $has_api_key = !empty($settings['openai_api_key']) || !empty($settings['claude_api_key']) || !empty($settings['gemini_api_key']) || !empty($settings['openrouter_api_key']);
             ?>
             <table class="wpaic-status-table">
                 <tr>
@@ -296,7 +296,7 @@ jQuery(document).ready(function($) {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' tokens';
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ' + <?php echo wp_json_encode(__('tokens', 'rapls-ai-chatbot')); ?>;
                             }
                         }
                     }

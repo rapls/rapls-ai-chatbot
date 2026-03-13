@@ -85,8 +85,31 @@ function wpaic_uninstall_site() {
         delete_option('wpaic_nohist_msg_counts');
 
         // Delete database tables.
-        // Single source: WPAIC_Activator::get_table_suffixes().
-        // Never duplicate this list — always read from activator.
+        // wpaic_table_suffixes() is defined in rapls-ai-chatbot.php which is NOT
+        // loaded during uninstall. Define it here so WPAIC_Activator can use it.
+        if (!function_exists('wpaic_table_suffixes')) {
+            function wpaic_table_suffixes(): array {
+                return [
+                    'aichat_conversations',
+                    'aichat_messages',
+                    'aichat_index',
+                    'aichat_knowledge',
+                    'aichat_leads',
+                    'aichat_user_context',
+                    'aichat_audit_log',
+                    'aichat_knowledge_versions',
+                ];
+            }
+        }
+        if (!function_exists('wpaic_validated_table')) {
+            function wpaic_validated_table(string $suffix): string {
+                global $wpdb;
+                if (!in_array($suffix, wpaic_table_suffixes(), true)) {
+                    return '';
+                }
+                return '`' . $wpdb->prefix . $suffix . '`';
+            }
+        }
         require_once __DIR__ . '/includes/class-activator.php';
         $allowed_suffixes = WPAIC_Activator::get_table_suffixes();
 

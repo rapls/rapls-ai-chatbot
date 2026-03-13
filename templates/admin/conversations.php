@@ -150,7 +150,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
-                    <th style="width: 40px;"><input type="checkbox" id="wpaic-select-all"></th>
+                    <th style="width: 40px;"><input type="checkbox" id="wpaic-select-all" aria-label="<?php esc_attr_e('Select all conversations', 'rapls-ai-chatbot'); ?>"></th>
                     <th style="width: 60px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('id', 'ID', $orderby, $order, 'DESC')); ?></th>
                     <th><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 60px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
@@ -160,7 +160,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                     <th style="width: 100px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('handoff_status', __('Handoff', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('created_at', __('Started', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(WPAIC_Admin::sortable_column_header('updated_at', __('Last Updated', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
-                    <th style="width: 120px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 160px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -170,7 +170,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                     $lead = WPAIC_Lead::get_by_conversation($conv['id']);
                     ?>
                     <tr data-id="<?php echo esc_attr($conv['id']); ?>">
-                        <td><input type="checkbox" class="wpaic-conv-checkbox" value="<?php echo esc_attr($conv['id']); ?>"></td>
+                        <td><input type="checkbox" class="wpaic-conv-checkbox" value="<?php echo esc_attr($conv['id']); ?>" aria-label="<?php /* translators: %d: conversation ID */ printf(esc_attr__('Select conversation %d', 'rapls-ai-chatbot'), (int) $conv['id']); ?>"></td>
                         <td><?php echo esc_html($conv['id']); ?></td>
                         <td>
                             <code class="wpaic-copy-session" title="<?php echo esc_attr($conv['session_id']); ?>" style="cursor: pointer;"><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
@@ -263,6 +263,12 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                                 <?php esc_html_e('Archive', 'rapls-ai-chatbot'); ?>
                             </button>
                             <?php endif; ?>
+                            <button type="button" class="button button-small wpaic-download-conversation"
+                                    data-id="<?php echo esc_attr($conv['id']); ?>"
+                                    data-session="<?php echo esc_attr($conv['session_id']); ?>"
+                                    title="<?php esc_attr_e('Download', 'rapls-ai-chatbot'); ?>">
+                                <span class="dashicons dashicons-download" style="font-size:16px;width:16px;height:16px;vertical-align:text-bottom;"></span>
+                            </button>
                             <button type="button" class="button button-small button-link-delete wpaic-delete-conversation"
                                     data-id="<?php echo esc_attr($conv['id']); ?>">
                                 <?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?>
@@ -497,7 +503,7 @@ jQuery(document).ready(function($) {
             imgWrap.style.cssText = 'margin: 6px 0;';
             var img = document.createElement('img');
             img.src = imageMatch[1];
-            img.alt = 'Screenshot';
+            img.alt = <?php echo wp_json_encode(__('Screenshot', 'rapls-ai-chatbot')); ?>;
             img.style.cssText = 'max-width: 300px; max-height: 200px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer;';
             img.addEventListener('click', function() { window.open(this.src, '_blank'); });
             imgWrap.appendChild(img);
@@ -633,7 +639,7 @@ jQuery(document).ready(function($) {
         var modal = $('#wpaic-conversation-modal');
         var messagesContainer = $('#wpaic-conversation-messages');
 
-        messagesContainer.html('<p>' + (i18n.processing || 'Loading...') + '</p>');
+        messagesContainer.empty().append($('<p></p>').text(i18n.processing || 'Loading...'));
         $('#wpaic-operator-reply-form').hide();
         $('#wpaic-operator-start').hide();
         $('#wpaic-operator-end').hide();
@@ -650,7 +656,7 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (!response.success) {
-                    messagesContainer.html('<p>' + (i18n.error || 'Error occurred.') + '</p>');
+                    messagesContainer.empty().append($('<p></p>').text(i18n.error || 'Error'));
                     return;
                 }
 
@@ -742,7 +748,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     updateOperatorUI('active');
                 } else {
-                    alert(response.error || 'Error');
+                    alert(response.error || i18n.error || 'Error');
                 }
             },
             error: function() { alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>'); },
@@ -766,7 +772,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     updateOperatorUI(null);
                 } else {
-                    alert(response.error || 'Error');
+                    alert(response.error || i18n.error || 'Error');
                 }
             },
             error: function() { alert('<?php echo esc_js(__('An error occurred.', 'rapls-ai-chatbot')); ?>'); },
@@ -846,8 +852,8 @@ jQuery(document).ready(function($) {
         $('#wpaic-delete-selected').prop('disabled', checkedCount === 0);
     }
 
-    // Restore from archive
-    $('.wpaic-unarchive-conversation').on('click', function() {
+    // Restore from archive (delegated for dynamically replaced buttons)
+    $(document).on('click', '.wpaic-unarchive-conversation', function() {
         var id = $(this).data('id');
         var $btn = $(this);
         var $row = $btn.closest('tr');
@@ -878,8 +884,8 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Archive single
-    $('.wpaic-archive-conversation').on('click', function() {
+    // Archive single (delegated for dynamically replaced buttons)
+    $(document).on('click', '.wpaic-archive-conversation', function() {
         var id = $(this).data('id');
         var $btn = $(this);
         var $row = $btn.closest('tr');
@@ -901,6 +907,64 @@ jQuery(document).ready(function($) {
                     alert(response.data || '<?php echo esc_js(__('Failed to archive.', 'rapls-ai-chatbot')); ?>');
                     $btn.prop('disabled', false);
                 }
+            },
+            error: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    // Download conversation as Markdown
+    $('.wpaic-download-conversation').on('click', function() {
+        var $btn = $(this);
+        var id = $btn.data('id');
+        var sessionId = $btn.data('session') || id;
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: wpaicAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'wpaic_get_conversation_messages',
+                nonce: wpaicAdmin.nonce,
+                conversation_id: id
+            },
+            success: function(response) {
+                $btn.prop('disabled', false);
+                if (!response.success) {
+                    alert(i18n.error || 'Error');
+                    return;
+                }
+
+                var data = response.data;
+                var messages = Array.isArray(data) ? data : (data.messages || []);
+
+                // Build Markdown
+                var md = '# <?php echo esc_js(__('Conversation', 'rapls-ai-chatbot')); ?> #' + id + '\n\n';
+                md += '**Session:** ' + sessionId + '\n\n';
+                md += '---\n\n';
+
+                messages.forEach(function(msg) {
+                    var role = msg.role === 'user' ? '<?php echo esc_js(__('User', 'rapls-ai-chatbot')); ?>'
+                             : msg.role === 'operator' ? '<?php echo esc_js(__('Operator', 'rapls-ai-chatbot')); ?>'
+                             : '<?php echo esc_js(__('Assistant', 'rapls-ai-chatbot')); ?>';
+                    md += '### ' + role;
+                    if (msg.created_at) {
+                        md += ' (' + msg.created_at + ')';
+                    }
+                    md += '\n\n' + (msg.content || '') + '\n\n';
+                });
+
+                // Download as file
+                var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'conversation-' + id + '.md';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
             },
             error: function() {
                 $btn.prop('disabled', false);
@@ -1084,7 +1148,7 @@ jQuery(document).ready(function($) {
     });
     // Auto-open conversation modal if conversation_id is in URL (e.g., from handoff email)
     var urlParams = new URLSearchParams(window.location.search);
-    var autoOpenId = urlParams.get('conversation_id');
+    var autoOpenId = parseInt(urlParams.get('conversation_id'), 10) || 0;
     if (autoOpenId) {
         var $target = $('.wpaic-view-conversation[data-id="' + autoOpenId + '"]');
         if ($target.length) {
@@ -1093,7 +1157,7 @@ jQuery(document).ready(function($) {
             // Conversation may not be on current page — open modal directly
             var modal = $('#wpaic-conversation-modal');
             var messagesContainer = $('#wpaic-conversation-messages');
-            messagesContainer.html('<p>' + (i18n.processing || 'Loading...') + '</p>');
+            messagesContainer.empty().append($('<p></p>').text(i18n.processing || 'Loading...'));
             modal.show();
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
@@ -1110,11 +1174,11 @@ jQuery(document).ready(function($) {
                             messagesContainer.append(buildMessageEl(msg, response.data.messages));
                         });
                     } else {
-                        messagesContainer.html('<p>' + (response.data || 'Error') + '</p>');
+                        messagesContainer.empty().append($('<p></p>').text(response.data || 'Error'));
                     }
                 },
                 error: function() {
-                    messagesContainer.html('<p>Error loading conversation.</p>');
+                    messagesContainer.empty().append($('<p></p>').text(wpaicAdmin.i18n.error || 'Error'));
                 }
             });
         }
@@ -1125,7 +1189,21 @@ jQuery(document).ready(function($) {
         var fullId = $(this).attr('title');
         if (!fullId) return;
         var el = this;
-        navigator.clipboard.writeText(fullId).then(function() {
+        var copyPromise;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            copyPromise = navigator.clipboard.writeText(fullId);
+        } else {
+            // Fallback for non-HTTPS or older browsers
+            var ta = document.createElement('textarea');
+            ta.value = fullId;
+            ta.style.cssText = 'position:fixed;left:-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            copyPromise = Promise.resolve();
+        }
+        copyPromise.then(function() {
             var orig = el.textContent;
             el.textContent = '<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>';
             setTimeout(function() { el.textContent = orig; }, 1000);

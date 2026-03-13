@@ -104,6 +104,7 @@
             this.bookmarkKey = 'wpaic_bookmarks_' + (this.config.restUrl || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
             this.cacheElements();
             if (!this.container) return;
+            this.applyBrowserLanguagePlaceholders();
 
             // Inline mode: shortcode-embedded chatbot
             if (this.config.inlineMode) {
@@ -126,6 +127,7 @@
             this.initOfflineForm();
             this.initConversionTracking();
             this.initChatSearch();
+            this.initBookmarkNav();
             this.initConversationSharing();
             this.listenForConsentChange();
             this.initTooltips();
@@ -142,6 +144,38 @@
                 var label = buttons[i].getAttribute('aria-label');
                 if (label && !buttons[i].title) {
                     buttons[i].title = label;
+                }
+            }
+        },
+
+        /**
+         * Apply browser-language-based placeholders for input field.
+         * Overrides the server-side placeholder with a browser-locale-aware translation.
+         */
+        applyBrowserLanguagePlaceholders: function() {
+            if (!this.inputTextarea) return;
+            var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+            var placeholders = {
+                ja: 'メッセージを入力...',
+                en: 'Type a message...',
+                zh: '输入消息...',
+                ko: '메시지를 입력하세요...',
+                es: 'Escribe un mensaje...',
+                fr: 'Tapez un message...',
+                de: 'Nachricht eingeben...',
+                pt: 'Digite uma mensagem...',
+                it: 'Scrivi un messaggio...',
+                ru: 'Введите сообщение...',
+                ar: '...اكتب رسالة',
+                th: 'พิมพ์ข้อความ...',
+                vi: 'Nhập tin nhắn...'
+            };
+            var placeholder = placeholders[lang];
+            if (placeholder) {
+                this.inputTextarea.placeholder = placeholder;
+                // Update config.strings so voice input reset also uses the correct placeholder
+                if (this.config.strings) {
+                    this.config.strings.placeholder = placeholder;
                 }
             }
         },
@@ -184,7 +218,7 @@
             this.window = this.container.querySelector('.chatbot-window');
             this.messagesEl = this.container.querySelector('.chatbot-messages');
             this.inputForm = this.container.querySelector('.chatbot-input');
-            this.inputTextarea = this.inputForm.querySelector('textarea');
+            this.inputTextarea = this.inputForm ? this.inputForm.querySelector('textarea') : null;
             this.typingIndicator = this.container.querySelector('.chatbot-typing');
             this.leadFormEl = this.container.querySelector('.chatbot-lead-form');
             this.leadForm = this.container.querySelector('.lead-form');
@@ -417,6 +451,7 @@
         close: function() {
             // Embed mode: notify parent frame only, don't alter window state
             if (this.config.embedMode) {
+                this.stopHandoffPolling();
                 if (window.parent !== window) {
                     window.parent.postMessage({type: 'wpaic:close'}, '*');
                 }
@@ -425,6 +460,7 @@
 
             this.isOpen = false;
             this.container.dataset.state = 'closed';
+            this.stopHandoffPolling();
             // Blur any focused element inside before hiding to avoid aria-hidden warning
             if (document.activeElement && this.window.contains(document.activeElement)) {
                 document.activeElement.blur();
@@ -674,6 +710,39 @@
             }
 
             this.addMessage('bot', welcomeMsg);
+            this.showQuickReplies();
+        },
+
+        /**
+         * Show quick reply buttons after welcome message
+         */
+        showQuickReplies: function() {
+            var replies = this.config.quick_replies;
+            if (!replies || !replies.length || !this.messagesEl) return;
+
+            var self = this;
+            var container = document.createElement('div');
+            container.className = 'chatbot-quick-replies';
+
+            for (var i = 0; i < replies.length; i++) {
+                (function(text) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chatbot-quick-reply-btn';
+                    btn.textContent = text;
+                    btn.onclick = function() {
+                        // Remove quick replies after click
+                        if (container.parentNode) container.parentNode.removeChild(container);
+                        // Set input and submit
+                        self.inputEl.value = text;
+                        self.handleSubmit();
+                    };
+                    container.appendChild(btn);
+                })(replies[i].text || replies[i]);
+            }
+
+            this.messagesEl.appendChild(container);
+            this.scrollToBottom();
         },
 
         /**
@@ -864,7 +933,7 @@
                                     : '';
                                 self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                             } else {
-                                self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario);
+                                self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario, response.data.related_knowledge);
                                 self.fetchSuggestions();
                                 self.saveContext();
                                 self.recheckConversionGoals();
@@ -987,6 +1056,8 @@
             })
             .then(function(response) {
                 if (!response.ok) return null;
+                var ct = response.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) return null;
                 return response.json();
             })
             .then(function(result) {
@@ -1070,9 +1141,15 @@
             var statusText = document.createElement('span');
             statusText.className = 'chatbot-handoff-text';
             if (status === 'pending') {
-                statusText.innerHTML = '<span class="chatbot-handoff-dot"></span>' + (s.handoff_waiting || 'Waiting for support representative...');
+                var dotP = document.createElement('span');
+                dotP.className = 'chatbot-handoff-dot';
+                statusText.appendChild(dotP);
+                statusText.appendChild(document.createTextNode(s.handoff_waiting || 'Waiting for support representative...'));
             } else if (status === 'active') {
-                statusText.innerHTML = '<span class="chatbot-handoff-dot chatbot-handoff-dot--active"></span>' + (s.handoff_active || 'Connected with support');
+                var dotA = document.createElement('span');
+                dotA.className = 'chatbot-handoff-dot chatbot-handoff-dot--active';
+                statusText.appendChild(dotA);
+                statusText.appendChild(document.createTextNode(s.handoff_active || 'Connected with support'));
             }
             indicator.appendChild(statusText);
 
@@ -1109,7 +1186,11 @@
                 },
                 body: JSON.stringify({ session_id: this.sessionId })
             })
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                var ct = r.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) return null;
+                return r.json();
+            })
             .then(function(result) {
                 self.handoffStatus = null;
                 self.showHandoffIndicator(null);
@@ -1198,7 +1279,7 @@
         /**
          * Add message to UI
          */
-        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards, scenarioData) {
+        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards, scenarioData, relatedKnowledge) {
             var self = this;
             var messageEl = document.createElement('div');
             messageEl.className = 'chatbot-message chatbot-message--' + role;
@@ -1363,6 +1444,12 @@
                 cardsContainer.className = 'chatbot-product-cards';
 
                 productCards.forEach(function(card) {
+                    // Validate URL protocol to prevent javascript: XSS
+                    try {
+                        var cardParsed = new URL(card.url);
+                        if (cardParsed.protocol !== 'http:' && cardParsed.protocol !== 'https:') return;
+                    } catch (e) { return; }
+
                     var cardLink = document.createElement('a');
                     cardLink.className = 'chatbot-product-card';
                     cardLink.href = card.url;
@@ -1407,21 +1494,61 @@
                 contentEl.appendChild(cardsContainer);
             }
 
+            // Related knowledge links (Pro feature)
+            if (relatedKnowledge && relatedKnowledge.length > 0) {
+                var rkContainer = document.createElement('div');
+                rkContainer.className = 'chatbot-related-knowledge';
+
+                var rkTitle = document.createElement('div');
+                rkTitle.className = 'chatbot-related-knowledge__title';
+                rkTitle.textContent = (self.config.strings && self.config.strings.related_knowledge) || 'Related';
+                rkContainer.appendChild(rkTitle);
+
+                relatedKnowledge.forEach(function(rk) {
+                    var rkBtn = document.createElement('button');
+                    rkBtn.type = 'button';
+                    rkBtn.className = 'chatbot-related-knowledge__item';
+                    rkBtn.textContent = rk.title;
+                    rkBtn.addEventListener('click', function() {
+                        self.inputTextarea.value = rk.title;
+                        self.autoResizeTextarea();
+                        self.handleSubmit(new Event('submit'));
+                    });
+                    rkContainer.appendChild(rkBtn);
+                });
+
+                contentEl.appendChild(rkContainer);
+            }
+
             // Action buttons (Pro intent recognition)
             if (actionData) {
                 var actionEl = document.createElement('div');
                 actionEl.className = 'chatbot-action-buttons';
 
                 if (actionData.type === 'redirect' && actionData.url) {
+                    // Validate URL protocol
+                    try {
+                        var actionParsed = new URL(actionData.url);
+                        if (actionParsed.protocol !== 'http:' && actionParsed.protocol !== 'https:') {
+                            actionData = null;
+                        }
+                    } catch (e) { actionData = null; }
+                }
+                if (actionData && actionData.type === 'redirect' && actionData.url) {
                     var actionBtn = document.createElement('a');
                     actionBtn.href = actionData.url;
                     actionBtn.target = '_blank';
                     actionBtn.rel = 'noopener noreferrer';
                     actionBtn.className = 'chatbot-action-btn';
-                    actionBtn.textContent = actionData.label || 'Open';
+                    actionBtn.textContent = actionData.label || ((self.config.strings && self.config.strings.open) || 'Open');
                     actionEl.appendChild(actionBtn);
-                } else if (actionData.type === 'link_buttons' && actionData.links) {
+                } else if (actionData && actionData.type === 'link_buttons' && actionData.links) {
                     actionData.links.forEach(function(link) {
+                        // Validate URL protocol
+                        try {
+                            var linkParsed = new URL(link.url);
+                            if (linkParsed.protocol !== 'http:' && linkParsed.protocol !== 'https:') return;
+                        } catch (e) { return; }
                         var linkBtn = document.createElement('a');
                         linkBtn.href = link.url;
                         linkBtn.target = '_blank';
@@ -1430,14 +1557,14 @@
                         linkBtn.textContent = link.label;
                         actionEl.appendChild(linkBtn);
                     });
-                } else if (actionData.type === 'notify_email' && actionData.message) {
+                } else if (actionData && actionData.type === 'notify_email' && actionData.message) {
                     var noticeEl = document.createElement('div');
                     noticeEl.className = 'chatbot-action-notice';
                     noticeEl.textContent = actionData.message;
                     actionEl.appendChild(noticeEl);
                 }
 
-                contentEl.appendChild(actionEl);
+                if (actionEl.hasChildNodes()) contentEl.appendChild(actionEl);
             }
 
             // Scenario UI (Pro conversation scenarios)
@@ -1494,7 +1621,7 @@
                 if (scenarioData.status === 'completed') {
                     var completeEl = document.createElement('div');
                     completeEl.className = 'chatbot-scenario-complete';
-                    completeEl.textContent = '\u2713 ' + (scenarioData.name || 'Scenario') + ' completed';
+                    completeEl.textContent = '\u2713 ' + (scenarioData.name || ((self.config.strings && self.config.strings.scenario) || 'Scenario')) + ' ' + ((self.config.strings && self.config.strings.scenario_completed) || 'completed');
                     scenarioEl.appendChild(completeEl);
                 }
 
@@ -1556,7 +1683,8 @@
                     bookmarkBtn.title = (self.config.strings && self.config.strings.bookmark) || 'Bookmark this message';
                     // Check if already bookmarked
                     var bookmarks = JSON.parse(wpaicLsGet(self.bookmarkKey) || '[]');
-                    var isBookmarked = bookmarks.some(function(b) { return b.id === messageId; });
+                    var bmkNumId = parseInt(messageId, 10);
+                    var isBookmarked = !isNaN(bmkNumId) && bookmarks.some(function(b) { return parseInt(b.id, 10) === bmkNumId; });
                     if (isBookmarked) {
                         bookmarkBtn.classList.add('wpaic-bookmarked');
                         bookmarkBtn.title = (self.config.strings && self.config.strings.bookmarked) || 'Bookmarked';
@@ -1608,6 +1736,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-WP-Nonce': this.config.nonce
                 },
                 body: JSON.stringify({
                     message_id: messageId,
@@ -1648,6 +1777,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-WP-Nonce': this.config.nonce
                 },
                 body: JSON.stringify({
                     message_id: messageId,
@@ -1769,6 +1899,11 @@
                         var cardsContainer = document.createElement('div');
                         cardsContainer.className = 'chatbot-product-cards';
                         data.data.product_cards.forEach(function(card) {
+                            // Validate URL protocol
+                            try {
+                                var rCardParsed = new URL(card.url);
+                                if (rCardParsed.protocol !== 'http:' && rCardParsed.protocol !== 'https:') return;
+                            } catch (e) { return; }
                             var cardLink = document.createElement('a');
                             cardLink.className = 'chatbot-product-card';
                             cardLink.href = card.url;
@@ -1812,15 +1947,27 @@
                         var regenActionEl = document.createElement('div');
                         regenActionEl.className = 'chatbot-action-buttons';
                         if (regenAction.type === 'redirect' && regenAction.url) {
+                            // Validate URL protocol
+                            try {
+                                var raParsed = new URL(regenAction.url);
+                                if (raParsed.protocol !== 'http:' && raParsed.protocol !== 'https:') regenAction = null;
+                            } catch (e) { regenAction = null; }
+                        }
+                        if (regenAction && regenAction.type === 'redirect' && regenAction.url) {
                             var rBtn = document.createElement('a');
                             rBtn.href = regenAction.url;
                             rBtn.target = '_blank';
                             rBtn.rel = 'noopener noreferrer';
                             rBtn.className = 'chatbot-action-btn';
-                            rBtn.textContent = regenAction.label || 'Open';
+                            rBtn.textContent = regenAction.label || ((self.config.strings && self.config.strings.open) || 'Open');
                             regenActionEl.appendChild(rBtn);
-                        } else if (regenAction.type === 'link_buttons' && regenAction.links) {
+                        } else if (regenAction && regenAction.type === 'link_buttons' && regenAction.links) {
                             regenAction.links.forEach(function(link) {
+                                // Validate URL protocol
+                                try {
+                                    var rlParsed = new URL(link.url);
+                                    if (rlParsed.protocol !== 'http:' && rlParsed.protocol !== 'https:') return;
+                                } catch (e) { return; }
                                 var lBtn = document.createElement('a');
                                 lBtn.href = link.url;
                                 lBtn.target = '_blank';
@@ -1829,13 +1976,13 @@
                                 lBtn.textContent = link.label;
                                 regenActionEl.appendChild(lBtn);
                             });
-                        } else if (regenAction.type === 'notify_email' && regenAction.message) {
+                        } else if (regenAction && regenAction.type === 'notify_email' && regenAction.message) {
                             var rNotice = document.createElement('div');
                             rNotice.className = 'chatbot-action-notice';
                             rNotice.textContent = regenAction.message;
                             regenActionEl.appendChild(rNotice);
                         }
-                        contentEl.appendChild(regenActionEl);
+                        if (regenActionEl.hasChildNodes()) contentEl.appendChild(regenActionEl);
                     }
 
                     // Re-add actions
@@ -1868,7 +2015,7 @@
 
             fetch(this.config.restUrl + 'suggestions', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': this.config.nonce },
                 body: JSON.stringify({ session_id: this.sessionId }),
             })
             .then(function(response) {
@@ -2319,8 +2466,9 @@
          */
         setLoading: function(loading) {
             this.isLoading = loading;
-            this.typingIndicator.hidden = !loading;
-            this.inputForm.querySelector('button[type="submit"]').disabled = loading;
+            if (this.typingIndicator) this.typingIndicator.hidden = !loading;
+            var submitBtn = this.inputForm ? this.inputForm.querySelector('button[type="submit"]') : null;
+            if (submitBtn) submitBtn.disabled = loading;
 
             if (loading) {
                 this.scrollToBottom();
@@ -2439,7 +2587,7 @@
                         if (!response.ok) {
                             // WP_Error format: {code, message, data} vs plugin format: {success, error, error_code}
                             var errorCode = json.error_code || (json.data && json.data.error_code) || json.code || '';
-                            var errorMsg = json.error || json.message || 'API error: ' + response.status;
+                            var errorMsg = json.error || json.message || (self.config.strings.api_error || 'API error') + ': ' + response.status;
 
                             // Auto-retry: 429 rate limited → wait and retry with exponential backoff (up to 2 retries)
                             // Skip retry if error_code is rate_limited (intentional block with custom message)
@@ -3139,7 +3287,10 @@
         playNotificationSound: function() {
             if (!this._notifSoundEnabled) return;
             try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (!this._audioCtx) {
+                    this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                var ctx = this._audioCtx;
                 var osc = ctx.createOscillator();
                 var gain = ctx.createGain();
                 osc.connect(gain);
@@ -3356,15 +3507,6 @@
          */
         generateRequestId: function() {
             return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
-        },
-
-        /**
-         * Escape HTML entities
-         */
-        escapeHtml: function(text) {
-            var div = document.createElement('div');
-            div.appendChild(document.createTextNode(text));
-            return div.innerHTML;
         },
 
         /**
@@ -3798,10 +3940,12 @@
          * Toggle bookmark for a message
          */
         toggleBookmark: function(messageId, textEl, btnEl) {
+            var numId = parseInt(messageId, 10);
+            if (isNaN(numId)) return;
             var bookmarks = JSON.parse(wpaicLsGet(this.bookmarkKey) || '[]');
             var idx = -1;
             for (var i = 0; i < bookmarks.length; i++) {
-                if (bookmarks[i].id === messageId) { idx = i; break; }
+                if (parseInt(bookmarks[i].id, 10) === numId) { idx = i; break; }
             }
             if (idx >= 0) {
                 bookmarks.splice(idx, 1);
@@ -3809,7 +3953,7 @@
                 btnEl.title = (this.config.strings && this.config.strings.bookmark) || 'Bookmark this message';
             } else {
                 bookmarks.push({
-                    id: messageId,
+                    id: numId,
                     content: textEl ? textEl.textContent.substring(0, 500) : '',
                     timestamp: Date.now()
                 });
@@ -3847,16 +3991,94 @@
             var searchBar = document.createElement('div');
             searchBar.className = 'chatbot-search-bar';
             searchBar.hidden = true;
+
             var searchInput = document.createElement('input');
             searchInput.type = 'text';
             searchInput.className = 'chatbot-search-input';
             searchInput.placeholder = (this.config.strings && this.config.strings.search_placeholder) || 'Search messages...';
+
+            // Navigation buttons ▲▼
+            var searchNav = document.createElement('div');
+            searchNav.className = 'chatbot-search-nav';
+
+            var prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.className = 'chatbot-search-nav-btn';
+            prevBtn.innerHTML = '&#9650;';
+            prevBtn.title = (this.config.strings && this.config.strings.search_prev) || 'Previous match';
+
+            var nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'chatbot-search-nav-btn';
+            nextBtn.innerHTML = '&#9660;';
+            nextBtn.title = (this.config.strings && this.config.strings.search_next) || 'Next match';
+
+            var countEl = document.createElement('span');
+            countEl.className = 'chatbot-search-count';
+
+            searchNav.appendChild(countEl);
+            searchNav.appendChild(prevBtn);
+            searchNav.appendChild(nextBtn);
+
             searchBar.appendChild(searchInput);
+            searchBar.appendChild(searchNav);
 
             // Insert search bar after header
             var messagesEl = this.window.querySelector('.chatbot-messages');
             if (messagesEl) {
                 messagesEl.parentNode.insertBefore(searchBar, messagesEl);
+            }
+
+            // Search state
+            var searchMatches = [];
+            var currentMatchIdx = -1;
+
+            function updateSearchMatches(query) {
+                // Clear previous
+                searchMatches = [];
+                currentMatchIdx = -1;
+                var messages = self.messagesEl.querySelectorAll('.chatbot-message');
+                for (var i = 0; i < messages.length; i++) {
+                    var msg = messages[i];
+                    msg.classList.remove('chatbot-search-highlight', 'chatbot-search-current');
+                    if (!query) {
+                        msg.style.display = '';
+                    } else {
+                        var text = msg.textContent.toLowerCase();
+                        if (text.indexOf(query) !== -1) {
+                            msg.style.display = '';
+                            msg.classList.add('chatbot-search-highlight');
+                            searchMatches.push(msg);
+                        } else {
+                            msg.style.display = 'none';
+                        }
+                    }
+                }
+                updateCountDisplay();
+                if (searchMatches.length > 0) {
+                    jumpToMatch(0);
+                }
+            }
+
+            function jumpToMatch(idx) {
+                if (searchMatches.length === 0) return;
+                // Remove current marker from previous
+                if (currentMatchIdx >= 0 && currentMatchIdx < searchMatches.length) {
+                    searchMatches[currentMatchIdx].classList.remove('chatbot-search-current');
+                }
+                currentMatchIdx = idx;
+                var el = searchMatches[currentMatchIdx];
+                el.classList.add('chatbot-search-current');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                updateCountDisplay();
+            }
+
+            function updateCountDisplay() {
+                if (searchMatches.length === 0) {
+                    countEl.textContent = searchInput.value.trim() ? '0/0' : '';
+                } else {
+                    countEl.textContent = (currentMatchIdx + 1) + '/' + searchMatches.length;
+                }
             }
 
             // Toggle search bar
@@ -3867,28 +4089,44 @@
                 } else {
                     searchInput.value = '';
                     self.clearSearchHighlight();
+                    searchMatches = [];
+                    currentMatchIdx = -1;
+                    countEl.textContent = '';
                 }
             };
 
             // Filter messages on input
             searchInput.addEventListener('input', function() {
-                var query = this.value.toLowerCase().trim();
-                var messages = self.messagesEl.querySelectorAll('.chatbot-message');
-                for (var i = 0; i < messages.length; i++) {
-                    var msg = messages[i];
-                    if (!query) {
-                        msg.style.display = '';
-                        msg.classList.remove('chatbot-search-highlight');
+                updateSearchMatches(this.value.toLowerCase().trim());
+            });
+
+            // ▲ Previous match
+            prevBtn.onclick = function() {
+                if (searchMatches.length === 0) return;
+                var idx = currentMatchIdx - 1;
+                if (idx < 0) idx = searchMatches.length - 1;
+                jumpToMatch(idx);
+            };
+
+            // ▼ Next match
+            nextBtn.onclick = function() {
+                if (searchMatches.length === 0) return;
+                var idx = currentMatchIdx + 1;
+                if (idx >= searchMatches.length) idx = 0;
+                jumpToMatch(idx);
+            };
+
+            // Enter = next, Shift+Enter = previous
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        prevBtn.onclick();
                     } else {
-                        var text = msg.textContent.toLowerCase();
-                        if (text.includes(query)) {
-                            msg.style.display = '';
-                            msg.classList.add('chatbot-search-highlight');
-                        } else {
-                            msg.style.display = 'none';
-                            msg.classList.remove('chatbot-search-highlight');
-                        }
+                        nextBtn.onclick();
                     }
+                } else if (e.key === 'Escape') {
+                    searchBtn.onclick();
                 }
             });
         },
@@ -3901,8 +4139,153 @@
             var messages = this.messagesEl.querySelectorAll('.chatbot-message');
             for (var i = 0; i < messages.length; i++) {
                 messages[i].style.display = '';
-                messages[i].classList.remove('chatbot-search-highlight');
+                messages[i].classList.remove('chatbot-search-highlight', 'chatbot-search-current');
             }
+        },
+
+        /**
+         * Initialize bookmark navigation (Pro)
+         */
+        initBookmarkNav: function() {
+            if (!this.config.is_pro || !this.config.chat_bookmarks_enabled) return;
+            if (!this.window) return;
+
+            var self = this;
+            var header = this.window.querySelector('.chatbot-header');
+            if (!header) return;
+
+            // Bookmark toggle button in header
+            var bmkBtn = document.createElement('button');
+            bmkBtn.type = 'button';
+            bmkBtn.className = 'chatbot-bookmark-nav-toggle';
+            bmkBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
+            bmkBtn.title = (this.config.strings && this.config.strings.bookmark_nav) || 'Navigate bookmarks';
+            var closeBtn = header.querySelector('.chatbot-close');
+            var searchBtn = header.querySelector('.chatbot-search-btn');
+            // Insert after search button, or before close
+            var insertRef = searchBtn ? searchBtn.nextSibling : closeBtn;
+            if (insertRef) {
+                header.insertBefore(bmkBtn, insertRef);
+            } else {
+                header.appendChild(bmkBtn);
+            }
+
+            // Navigation bar (hidden by default)
+            var navBar = document.createElement('div');
+            navBar.className = 'chatbot-bookmark-bar';
+            navBar.hidden = true;
+
+            var prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.className = 'chatbot-search-nav-btn';
+            prevBtn.innerHTML = '&#9650;';
+            prevBtn.title = (this.config.strings && this.config.strings.bookmark_prev) || 'Previous bookmark';
+
+            var nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'chatbot-search-nav-btn';
+            nextBtn.innerHTML = '&#9660;';
+            nextBtn.title = (this.config.strings && this.config.strings.bookmark_next) || 'Next bookmark';
+
+            var countEl = document.createElement('span');
+            countEl.className = 'chatbot-search-count';
+
+            var labelEl = document.createElement('span');
+            labelEl.className = 'chatbot-bookmark-bar-label';
+            labelEl.textContent = (this.config.strings && this.config.strings.bookmarked) || 'Bookmarked';
+
+            navBar.appendChild(labelEl);
+            navBar.appendChild(countEl);
+            navBar.appendChild(prevBtn);
+            navBar.appendChild(nextBtn);
+
+            // Insert after header (before search bar or messages)
+            var messagesEl = this.window.querySelector('.chatbot-messages');
+            var searchBar = this.window.querySelector('.chatbot-search-bar');
+            var insertBeforeEl = searchBar || messagesEl;
+            if (insertBeforeEl) {
+                insertBeforeEl.parentNode.insertBefore(navBar, insertBeforeEl);
+            }
+
+            // State
+            var bmkMatches = [];
+            var currentBmkIdx = -1;
+
+            function collectBookmarkedMessages() {
+                bmkMatches = [];
+                currentBmkIdx = -1;
+                var bookmarks = JSON.parse(wpaicLsGet(self.bookmarkKey) || '[]');
+                if (bookmarks.length === 0) return;
+                var bmkIds = {};
+                for (var i = 0; i < bookmarks.length; i++) {
+                    bmkIds[parseInt(bookmarks[i].id, 10)] = true;
+                }
+                var messages = self.messagesEl.querySelectorAll('.chatbot-message[data-message-id]');
+                for (var j = 0; j < messages.length; j++) {
+                    var mid = parseInt(messages[j].getAttribute('data-message-id'), 10);
+                    if (bmkIds[mid]) {
+                        bmkMatches.push(messages[j]);
+                    }
+                }
+            }
+
+            function jumpToBmk(idx) {
+                if (bmkMatches.length === 0) return;
+                // Remove previous highlight
+                if (currentBmkIdx >= 0 && currentBmkIdx < bmkMatches.length) {
+                    bmkMatches[currentBmkIdx].classList.remove('chatbot-bookmark-current');
+                }
+                currentBmkIdx = idx;
+                var el = bmkMatches[currentBmkIdx];
+                el.classList.add('chatbot-bookmark-current');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                updateBmkCount();
+            }
+
+            function updateBmkCount() {
+                if (bmkMatches.length === 0) {
+                    countEl.textContent = '0/0';
+                } else {
+                    countEl.textContent = (currentBmkIdx + 1) + '/' + bmkMatches.length;
+                }
+            }
+
+            function clearBmkHighlight() {
+                for (var i = 0; i < bmkMatches.length; i++) {
+                    bmkMatches[i].classList.remove('chatbot-bookmark-current');
+                }
+                bmkMatches = [];
+                currentBmkIdx = -1;
+            }
+
+            // Toggle bookmark nav bar
+            bmkBtn.onclick = function() {
+                navBar.hidden = !navBar.hidden;
+                if (!navBar.hidden) {
+                    collectBookmarkedMessages();
+                    updateBmkCount();
+                    if (bmkMatches.length > 0) {
+                        jumpToBmk(0);
+                    }
+                } else {
+                    clearBmkHighlight();
+                    countEl.textContent = '';
+                }
+            };
+
+            prevBtn.onclick = function() {
+                if (bmkMatches.length === 0) return;
+                var idx = currentBmkIdx - 1;
+                if (idx < 0) idx = bmkMatches.length - 1;
+                jumpToBmk(idx);
+            };
+
+            nextBtn.onclick = function() {
+                if (bmkMatches.length === 0) return;
+                var idx = currentBmkIdx + 1;
+                if (idx >= bmkMatches.length) idx = 0;
+                jumpToBmk(idx);
+            };
         },
 
         /**

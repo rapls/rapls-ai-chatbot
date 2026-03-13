@@ -41,6 +41,8 @@ class WPAIC_Message {
         wpaic_log_db_error('Message::create');
 
         if ($result) {
+            // Keep conversation alive: update updated_at and reactivate if auto-closed
+            WPAIC_Conversation::touch($data['conversation_id']);
             return self::get_by_id($wpdb->insert_id);
         }
 
@@ -255,32 +257,6 @@ class WPAIC_Message {
     }
 
     /**
-     * Get messages with negative feedback (Pro feature)
-     *
-     * @param int $limit
-     * @return array
-     */
-    public static function get_negative_feedback_messages(int $limit = 50): array {
-        global $wpdb;
-        $table = self::get_table_name();
-        $conv_table = trim(wpaic_validated_table('aichat_conversations'), '`');
-        if (!$table || !$conv_table) {
-            return [];
-        }
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->get_results($wpdb->prepare(
-            "SELECT m.*, c.page_url
-            FROM `{$table}` m
-            LEFT JOIN `{$conv_table}` c ON m.conversation_id = c.id
-            WHERE m.feedback = -1 AND m.role = 'assistant'
-            ORDER BY m.created_at DESC
-            LIMIT %d",
-            $limit
-        ), ARRAY_A);
-    }
-
-    /**
      * Get negative feedback Q&A pairs for learning (what to avoid)
      *
      * @param int $limit Number of pairs to retrieve
@@ -437,11 +413,11 @@ class WPAIC_Message {
      * @param string $context Knowledge/RAG context
      * @return string SHA-256 hash
      */
-    public static function build_cache_hash(string $message, string $context = ''): string {
+    public static function build_cache_hash(string $message, string $context = '', string $bot_id = 'default'): string {
         // Allow Pro to normalize the message further (e.g., similar cache)
         $message = apply_filters('wpaic_cache_hash_message', $message);
-        // Normalize: lowercase, trim whitespace
-        $normalized = wpaic_mb_strtolower(trim($message)) . '||' . trim($context);
+        // Normalize: lowercase, trim whitespace; include bot_id so each bot has its own cache
+        $normalized = wpaic_mb_strtolower(trim($message)) . '||' . trim($context) . '||' . $bot_id;
         return hash('sha256', $normalized);
     }
 

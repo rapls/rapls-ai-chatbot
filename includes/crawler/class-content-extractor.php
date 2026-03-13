@@ -109,7 +109,8 @@ class WPAIC_Content_Extractor {
 
         $doc = new DOMDocument();
         libxml_use_internal_errors(true);
-        $converted = wpaic_mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8');
+        // Use mb_encode_numericentity instead of deprecated HTML-ENTITIES (PHP 8.2+)
+        $converted = mb_encode_numericentity($html, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8');
         $doc->loadHTML($converted, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
 
@@ -620,18 +621,4 @@ class WPAIC_Content_Extractor {
         return implode("\n", $parts);
     }
 
-    /**
-     * Extract page metadata
-     */
-    public function extract_metadata(WP_Post $post): array {
-        return [
-            'title'        => $post->post_title,
-            'excerpt'      => $post->post_excerpt,
-            'post_type'    => $post->post_type,
-            'url'          => get_permalink($post->ID),
-            'author'       => get_the_author_meta('display_name', $post->post_author),
-            'published_at' => $post->post_date,
-            'modified_at'  => $post->post_modified,
-        ];
-    }
 }

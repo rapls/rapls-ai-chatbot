@@ -915,7 +915,9 @@ class WPAIC_REST_Controller {
             $rate_limit_result = $this->check_rate_limit();
             if ($rate_limit_result !== true) {
                 do_action('wpaic_rate_limit_exceeded', $this->get_client_ip());
-                $rate_limit_msg = is_string($rate_limit_result) ? $rate_limit_result : __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+                $rate_limit_msg = is_string($rate_limit_result) && $rate_limit_result !== ''
+                    ? $rate_limit_result
+                    : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
                 return new WP_REST_Response([
                     'success'    => false,
                     'error'      => $rate_limit_msg,
@@ -933,6 +935,15 @@ class WPAIC_REST_Controller {
                 'success'    => false,
                 'error'      => $pro_features->get_ip_block_message(),
                 'error_code' => 'ip_blocked',
+            ], 403);
+        }
+
+        // Check IP whitelist (Pro feature)
+        if (!$pro_features->check_ip_whitelist()) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $pro_features->get_ip_block_message(),
+                'error_code' => 'ip_not_whitelisted',
             ], 403);
         }
 
@@ -975,6 +986,15 @@ class WPAIC_REST_Controller {
                 'success'    => false,
                 'error'      => $pro_features->get_banned_words_message(),
                 'error_code' => 'banned_words',
+            ], 400);
+        }
+
+        // Check spam detection (Pro feature)
+        if ($pro_features->is_spam($message)) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $pro_features->get_spam_message(),
+                'error_code' => 'spam_detected',
             ], 400);
         }
 
@@ -1077,8 +1097,11 @@ class WPAIC_REST_Controller {
             if ($pro_features->is_limit_reached()) {
                 $search_engine = new WPAIC_Search_Engine();
                 // Apply bot-specific knowledge filter for FAQ fallback
+                $faq_use_knowledge = $bot_config['use_knowledge'] ?? true;
                 if (!empty($bot_config['knowledge_categories'])) {
-                    $search_engine->set_bot_filters($bot_config['knowledge_categories'], false);
+                    $search_engine->set_bot_filters($bot_config['knowledge_categories'], false, $faq_use_knowledge);
+                } elseif (!$faq_use_knowledge) {
+                    $search_engine->set_bot_filters([], false, false);
                 }
                 $faq_results = $search_engine->search_knowledge_only($message, 3);
                 $faq_answer = $this->extract_faq_answer($faq_results, $message);
@@ -1127,13 +1150,16 @@ class WPAIC_REST_Controller {
             // Search related content
             $search_engine = new WPAIC_Search_Engine();
             // Apply bot-specific knowledge/crawl filters
+            $bot_use_knowledge = $bot_config['use_knowledge'] ?? true;
+            $bot_use_crawl = $bot_config['use_site_crawl'] ?? true;
             if (!empty($bot_config['knowledge_categories'])) {
                 $search_engine->set_bot_filters(
                     $bot_config['knowledge_categories'],
-                    $bot_config['use_site_crawl'] ?? true
+                    $bot_use_crawl,
+                    $bot_use_knowledge
                 );
-            } elseif (isset($bot_config['use_site_crawl']) && !$bot_config['use_site_crawl']) {
-                $search_engine->set_bot_filters([], false);
+            } elseif (!$bot_use_knowledge || !$bot_use_crawl) {
+                $search_engine->set_bot_filters([], $bot_use_crawl, $bot_use_knowledge);
             }
             $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
             $context = $search_engine->build_context($related_content, $this->get_max_context_chars(), $message);
@@ -1148,7 +1174,7 @@ class WPAIC_REST_Controller {
 
             if ($cache_enabled) {
                 $cache_ttl = (int) ($pro_settings['cache_ttl_days'] ?? 7);
-                $cache_hash = WPAIC_Message::build_cache_hash($message, $context);
+                $cache_hash = WPAIC_Message::build_cache_hash($message, $context, $bot_id);
                 $cached = WPAIC_Message::find_cached_response($cache_hash, $cache_ttl);
 
                 if ($cached) {
@@ -1267,9 +1293,15 @@ class WPAIC_REST_Controller {
             }
 
             // Build system prompt (bot config may override)
-            $system_prompt = (is_array($bot_config) && !empty($bot_config['system_prompt']))
-                ? $bot_config['system_prompt']
-                : ($settings['system_prompt'] ?? 'You are a helpful assistant. Please answer user questions politely.');
+            $bot_no_knowledge = is_array($bot_config) && empty($bot_config['use_knowledge']) && empty($bot_config['use_site_crawl']);
+            if (is_array($bot_config) && !empty($bot_config['system_prompt'])) {
+                $system_prompt = $bot_config['system_prompt'];
+            } elseif ($bot_no_knowledge) {
+                // Bot has knowledge/crawl disabled — use generic prompt, not global (which may contain site info)
+                $system_prompt = "You are a helpful assistant. Please answer user questions politely.\n\nIMPORTANT: You do NOT have access to any knowledge base or site content. Do NOT answer questions about specific companies, products, services, or site content. If asked about such topics, politely explain that you don't have that information.";
+            } else {
+                $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant. Please answer user questions politely.';
+            }
 
             /**
              * Filter the system prompt sent to the AI provider.
@@ -1301,7 +1333,8 @@ class WPAIC_REST_Controller {
             }
 
             // Add feedback examples for learning (if feedback is enabled)
-            if (!empty($settings['show_feedback_buttons'])) {
+            // Skip feedback examples when bot has knowledge/crawl disabled (prevents info leak from other bots)
+            if (!empty($settings['show_feedback_buttons']) && !$bot_no_knowledge) {
                 $feedback_prompt = '';
 
                 // Positive examples - what works well
@@ -1559,6 +1592,12 @@ class WPAIC_REST_Controller {
                 'session_id'  => $session_id,
             ];
 
+            // Include resolved bot_id when multi-bot is active
+            $resolved_bot_slug = is_array($bot_config) ? ($bot_config['slug'] ?? $bot_id) : $bot_id;
+            if ($resolved_bot_slug !== 'default') {
+                $response_data['bot_id'] = $resolved_bot_slug;
+            }
+
             // Add web search sources if present
             if (!empty($response['web_sources'])) {
                 $response_data['web_sources'] = $response['web_sources'];
@@ -1638,6 +1677,7 @@ class WPAIC_REST_Controller {
                     'content'     => $response_data['content'] ?? '',
                     'tokens_used' => $response_data['tokens_used'] ?? 0,
                     'sources'     => $dedup_sources,
+                    '_saved_at'   => time(),
                 ];
                 // Include product cards in dedup cache if present
                 if (!empty($response_data['product_cards'])) {
@@ -1836,7 +1876,7 @@ class WPAIC_REST_Controller {
             case 'openai':
                 $model = $settings['openai_model'] ?? 'gpt-4o';
                 // GPT-4.1 and o-series have 128K+ context
-                if (strpos($model, 'gpt-4.1') === 0 || strpos($model, 'o') === 0) {
+                if (strpos($model, 'gpt-4.1') === 0 || preg_match('/^o[1-9]/', $model)) {
                     return 40000;
                 }
                 // GPT-4o: 128K context
@@ -2035,13 +2075,10 @@ class WPAIC_REST_Controller {
     }
 
     /**
-     * Extract text content from uploaded plain text file data URI
+     * Extract text content from uploaded plain text file data URI.
      *
-     * Save a base64-encoded image to the WordPress media library.
-     *
-     * @param string $base64_data Base64 data URI (data:image/...;base64,...)
-     * @param int    $conversation_id Conversation ID for filename context
-     * @return string Attachment URL or empty string on failure
+     * @param string $data_uri Base64 data URI (data:text/...;base64,...)
+     * @return string Extracted text content or empty string on failure
      */
     private function save_image_to_media(string $base64_data, int $conversation_id): string {
         if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $base64_data, $matches)) {
@@ -2424,7 +2461,9 @@ class WPAIC_REST_Controller {
         if ($pro_features->is_pro() && !empty($pro_feat_settings['enhanced_rate_limit_enabled'])) {
             $result = $pro_features->check_enhanced_rate_limit();
             if ($result['blocked']) {
-                return $result['message'];
+                return !empty($result['message'])
+                    ? $result['message']
+                    : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
             }
             return true;
         }
@@ -2961,7 +3000,8 @@ class WPAIC_REST_Controller {
         $threshold = floatval($settings['recaptcha_threshold'] ?? 0.5);
 
         // Decrypt secret key if encrypted (GCM or legacy CBC)
-        if (!empty($secret_key) && (strpos($secret_key, 'encg:') === 0 || strpos($secret_key, 'enc:') === 0)) {
+        // Loop handles double-encryption caused by older sanitize_settings bug (max 3 layers)
+        for ($i = 0; $i < 3 && !empty($secret_key) && (strpos($secret_key, 'encg:') === 0 || strpos($secret_key, 'enc:') === 0); $i++) {
             $secret_key = WPAIC_Admin::decrypt_secret_static($secret_key);
         }
         $secret_key = trim($secret_key);
@@ -2999,21 +3039,36 @@ class WPAIC_REST_Controller {
             return true; // fail-open: allow request through
         }
 
-        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $raw_body = wp_remote_retrieve_body($response);
+        $body = json_decode($raw_body, true);
+        $http_code = (int) wp_remote_retrieve_response_code($response);
+
+        // Fail-open when Google response is unreachable/malformed (non-200, empty body, or bad JSON)
+        if ($http_code !== 200 || !is_array($body)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('[WPAIC reCAPTCHA] Google returned HTTP ' . $http_code . ', body: ' . substr($raw_body, 0, 500));
+            }
+            $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
+            if ($fail_mode === 'open') {
+                return true;
+            }
+            return new WP_Error('recaptcha_unavailable', __('Security verification is temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'));
+        }
 
         if (empty($body['success'])) {
             $error_codes = $body['error-codes'] ?? [];
             // Debug: log Google's error response for troubleshooting
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('[WPAIC reCAPTCHA] Verification failed. Google response: ' . wp_json_encode($body));
+                error_log('[WPAIC reCAPTCHA] Verification failed. Google error codes: ' . wp_json_encode($error_codes) . ' | Response: ' . wp_json_encode($body));
             }
             do_action('wpaic_recaptcha_failed', $error_codes);
 
-            // Fail-open for transient/server-side errors (Google outage, token expiry)
+            // Fail-open for transient/server-side errors (Google outage, token expiry, empty error codes)
             $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
             $transient_codes = ['timeout-or-duplicate', 'bad-request', 'internal-error'];
-            $is_transient = !empty(array_intersect($error_codes, $transient_codes));
+            $is_transient = empty($error_codes) || !empty(array_intersect($error_codes, $transient_codes));
             if ($fail_mode === 'open' && $is_transient) {
                 return true;
             }
@@ -3560,7 +3615,7 @@ class WPAIC_REST_Controller {
 
         // Get conversation
         $conversation = WPAIC_Conversation::get_by_session($session_id);
-        if (!$conversation || $conversation['id'] != $message['conversation_id']) {
+        if (!$conversation || (int) $conversation['id'] !== (int) $message['conversation_id']) {
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Invalid session.', 'rapls-ai-chatbot'),
@@ -3569,12 +3624,62 @@ class WPAIC_REST_Controller {
 
         // Session ownership already verified by check_session_permission()
 
+        // Rate limit check (same as send_message)
+        $rate_limit_result = $this->check_rate_limit();
+        if ($rate_limit_result !== true) {
+            $rate_limit_msg = is_string($rate_limit_result) && $rate_limit_result !== ''
+                ? $rate_limit_result
+                : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $rate_limit_msg,
+                'error_code' => 'rate_limited',
+            ], 429);
+        }
+
         // Check message limit
         $limit_check = $pro_features->check_message_limit();
         if (is_wp_error($limit_check)) {
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => $limit_check->get_error_message(),
+            ], 429);
+        }
+
+        // Check IP block (Pro feature)
+        if ($pro_features->is_ip_blocked()) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $pro_features->get_ip_block_message(),
+                'error_code' => 'ip_blocked',
+            ], 403);
+        }
+
+        // Check IP whitelist (Pro feature)
+        if (!$pro_features->check_ip_whitelist()) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $pro_features->get_ip_block_message(),
+                'error_code' => 'ip_not_whitelisted',
+            ], 403);
+        }
+
+        // Check country blocking (Pro feature)
+        $country_blocked = apply_filters('wpaic_country_blocked', false);
+        if ($country_blocked) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => is_string($country_blocked) ? $country_blocked : __('Access denied from your region.', 'rapls-ai-chatbot'),
+                'error_code' => 'country_blocked',
+            ], 403);
+        }
+
+        // Check budget limit (Pro feature)
+        if ($pro_features->check_budget_limit()) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $pro_features->get_budget_block_message(),
+                'error_code' => 'budget_exceeded',
             ], 429);
         }
 
@@ -3610,22 +3715,85 @@ class WPAIC_REST_Controller {
         }
 
         try {
-            // Get AI provider
-            $provider = $this->get_ai_provider();
+            // Get AI provider (respect per-page bot_config if multi-bot is active)
             $settings = get_option('wpaic_settings', []);
-
-            // Search for related content
-            $search = new WPAIC_Search_Engine();
-            $related_content = $search->search($user_message_content, 3);
-
-            // Build system prompt with context
-            $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant.';
-            if (!empty($related_content)) {
-                $context = "Reference:\n";
-                foreach ($related_content as $item) {
-                    $context .= "- " . ($item['content'] ?? '') . "\n";
+            $bot_config = null;
+            $pro = WPAIC_Pro_Features::get_instance();
+            if ($pro->is_pro() && !empty($settings['pro_features']['multi_bot_enabled'])) {
+                $page_url = $conversation['page_url'] ?? '';
+                $bots = $settings['pro_features']['bots'] ?? [];
+                foreach ($bots as $bot) {
+                    if (!empty($bot['pages']) && is_array($bot['pages'])) {
+                        foreach ($bot['pages'] as $bp) {
+                            if (!empty($bp) && strpos($page_url, $bp) !== false) {
+                                $bot_config = $bot;
+                                break 2;
+                            }
+                        }
+                    }
                 }
-                $system_prompt .= "\n\n" . $context;
+            }
+            $provider = $this->get_ai_provider($bot_config);
+
+            // Search for related content (same logic as send_message)
+            $search = new WPAIC_Search_Engine();
+            // Apply bot-specific knowledge/crawl filters
+            if ($bot_config) {
+                $bot_use_knowledge = $bot_config['use_knowledge'] ?? true;
+                $bot_use_crawl = $bot_config['use_site_crawl'] ?? true;
+                if (!empty($bot_config['knowledge_categories'])) {
+                    $search->set_bot_filters($bot_config['knowledge_categories'], $bot_use_crawl, $bot_use_knowledge);
+                } elseif (!$bot_use_knowledge || !$bot_use_crawl) {
+                    $search->set_bot_filters([], $bot_use_crawl, $bot_use_knowledge);
+                }
+            }
+            $max_results = $settings['crawler_max_results'] ?? 3;
+            $related_content = $search->search($user_message_content, $max_results);
+            $context = $search->build_context($related_content, $this->get_max_context_chars(), $user_message_content);
+
+            /** This filter is documented in send_message(). */
+            $context = apply_filters('wpaic_context', $context, $user_message_content, $settings);
+
+            // Build system prompt (bot config may override)
+            if (is_array($bot_config) && !empty($bot_config['system_prompt'])) {
+                $system_prompt = $bot_config['system_prompt'];
+            } else {
+                $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant.';
+            }
+
+            /** This filter is documented in send_message(). */
+            $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt, $settings);
+
+            // Response language instruction
+            $response_lang = $settings['response_language'] ?? '';
+            if ($response_lang === 'auto') {
+                $system_prompt .= "\n\nIMPORTANT: Always detect the language of the user's message and respond in that same language.";
+            } elseif (!empty($response_lang)) {
+                $lang_names = [
+                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
+                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
+                    'de' => 'German', 'pt' => 'Portuguese',
+                ];
+                $lang_name = $lang_names[$response_lang] ?? $response_lang;
+                $system_prompt .= "\n\nIMPORTANT: Always respond in {$lang_name}.";
+            }
+
+            // Add context to system prompt using configurable prompts (same as send_message)
+            if (!empty($context)) {
+                $has_qa_format = preg_match('/Question\s*[:：]/ui', $context) && preg_match('/Answer\s*[:：]/ui', $context);
+                if ($has_qa_format) {
+                    $has_exact_match = strpos($context, '[EXACT MATCH') !== false;
+                    if ($has_exact_match) {
+                        $exact_prompt = $settings['knowledge_exact_prompt'] ?? "=== STRICT INSTRUCTIONS ===\nAn EXACT MATCH has been found for the user's question.\nYou MUST:\n1. Use ONLY the Answer provided below\n2. DO NOT add any information not in this Answer\n3. DO NOT combine with other sources\n4. Respond naturally using this Answer's content\n\n=== ANSWER TO USE ===\n{context}\n=== END ===";
+                        $system_prompt .= "\n\n" . str_replace('{context}', $context, $exact_prompt);
+                    } else {
+                        $qa_prompt = $settings['knowledge_qa_prompt'] ?? "=== CRITICAL INSTRUCTIONS ===\nBelow is a FAQ database. When the user asks a question:\n1. FIRST, look for [BEST MATCH] - this is the most relevant Q&A for the user's question\n2. If [BEST MATCH] exists, use that Answer to respond\n3. If no [BEST MATCH], find the Question that matches or is similar to the user's question\n4. Return the corresponding Answer from the FAQ\n5. DO NOT make up answers - ONLY use the information provided below\n\nIMPORTANT: The Answer after [BEST MATCH] is your primary response source.\n\n=== FAQ DATABASE ===\n{context}\n=== END FAQ DATABASE ===";
+                        $system_prompt .= "\n\n" . str_replace('{context}', $context, $qa_prompt);
+                    }
+                } else {
+                    $site_prompt = $settings['site_context_prompt'] ?? "[IMPORTANT: Reference Information]\nBelow is reference information from this site's knowledge base. You MUST use this as the primary source when answering.\n- Search the ENTIRE reference information thoroughly before concluding that no relevant data exists.\n- The user's wording may differ from the reference text (e.g. \"料金プラン\" vs \"料金体系\", \"price\" vs \"pricing\"). Match by MEANING, not exact keywords.\n- If ANY part of the reference information is relevant to the user's question, use it to answer.\n- Only say you don't have the information if, after careful review, absolutely nothing in the reference is related.\n\n{context}";
+                    $system_prompt .= "\n\n" . str_replace('{context}', $context, $site_prompt);
+                }
             }
 
             // Get the previous response to avoid repeating it
@@ -3656,8 +3824,13 @@ class WPAIC_REST_Controller {
             );
             $system_prompt .= $regenerate_instruction;
 
-            // Remove the last context message if it's the same user message
-            array_pop($context_messages);
+            // Remove the last context message if it duplicates the user message we're about to re-add
+            if (!empty($context_messages)) {
+                $last = end($context_messages);
+                if (isset($last['role']) && $last['role'] === 'user') {
+                    array_pop($context_messages);
+                }
+            }
 
             // Build message array for AI
             $ai_messages = [
@@ -3703,6 +3876,12 @@ class WPAIC_REST_Controller {
                 'temperature' => 1.0, // Maximum temperature for variety
             ]);
 
+            /**
+             * Filter the AI response before display.
+             * This filter is documented in send_message().
+             */
+            $response['content'] = apply_filters('wpaic_ai_response', $response['content'], $user_message_content, $settings);
+
             // Delete old message and create new one
             global $wpdb;
             $table = trim(wpaic_validated_table('aichat_messages'), '`');
@@ -3717,9 +3896,16 @@ class WPAIC_REST_Controller {
                 'tokens_used' => $response['tokens_used'],
                 'input_tokens' => $response['input_tokens'] ?? 0,
                 'output_tokens' => $response['output_tokens'] ?? 0,
-                'ai_provider' => $settings['ai_provider'] ?? 'openai',
+                'ai_provider' => $response['provider'] ?? ($settings['ai_provider'] ?? 'openai'),
                 'ai_model' => $response['model'] ?? null,
             ]);
+
+            if (!$new_message) {
+                return $this->no_cache(new WP_REST_Response([
+                    'success' => false,
+                    'error'   => __('Failed to save response.', 'rapls-ai-chatbot'),
+                ], 500));
+            }
 
             // Get source URLs (filter by display mode)
             $sources_mode = $settings['sources_display_mode'] ?? 'matched';

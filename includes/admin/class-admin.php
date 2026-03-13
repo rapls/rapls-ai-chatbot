@@ -222,14 +222,17 @@ class WPAIC_Admin {
                 <strong style="color: #e65100;">&#x1f6a8; <?php esc_html_e('AI Chatbot — Handoff:', 'rapls-ai-chatbot'); ?></strong>
                 <?php
                 printf(
-                    /* translators: %1$d: number of pending handoff conversations, %2$s: link open tag, %3$s: link close tag */
-                    esc_html(_n(
-                        '%1$d conversation is waiting for support. %2$sView conversations%3$s',
-                        '%1$d conversations are waiting for support. %2$sView conversations%3$s',
-                        $count,
-                        'rapls-ai-chatbot'
-                    )),
-                    $count,
+                    wp_kses(
+                        /* translators: %1$d: number of pending handoff conversations, %2$s: link open tag, %3$s: link close tag */
+                        _n(
+                            '%1$d conversation is waiting for support. %2$sView conversations%3$s',
+                            '%1$d conversations are waiting for support. %2$sView conversations%3$s',
+                            $count,
+                            'rapls-ai-chatbot'
+                        ),
+                        ['a' => ['href' => []]]
+                    ),
+                    (int) $count,
                     '<a href="' . esc_url($conversations_url) . '">',
                     '</a>'
                 );
@@ -531,7 +534,7 @@ class WPAIC_Admin {
         } else {
             $sanitized['recaptcha_secret_key'] = $existing['recaptcha_secret_key'] ?? '';
         }
-        $sanitized['recaptcha_threshold'] = floatval($input['recaptcha_threshold'] ?? ($existing['recaptcha_threshold'] ?? 0.5));
+        $sanitized['recaptcha_threshold'] = max(0.1, min(1.0, floatval($input['recaptcha_threshold'] ?? ($existing['recaptcha_threshold'] ?? 0.5))));
         if ($settings_page_submitted) {
             $sanitized['recaptcha_use_existing'] = !empty($input['recaptcha_use_existing']);
         } else {
@@ -544,7 +547,7 @@ class WPAIC_Admin {
         } else {
             $sanitized['save_history'] = $existing['save_history'] ?? true;
         }
-        $sanitized['retention_days'] = absint($input['retention_days'] ?? ($existing['retention_days'] ?? 90));
+        $sanitized['retention_days'] = max(1, min(3650, absint($input['retention_days'] ?? ($existing['retention_days'] ?? 90))));
 
         // Web search setting (AI Settings tab)
         if ($settings_page_submitted) {
@@ -602,8 +605,8 @@ class WPAIC_Admin {
         $sanitized['crawler_interval'] = in_array($crawler_interval_raw, ['hourly', 'twicedaily', 'daily', 'weekly', 'monthly'], true)
             ? $crawler_interval_raw
             : 'daily';
-        $sanitized['crawler_chunk_size'] = absint($input['crawler_chunk_size'] ?? ($existing['crawler_chunk_size'] ?? 1000));
-        $sanitized['crawler_max_results'] = absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3));
+        $sanitized['crawler_chunk_size'] = max(100, min(10000, absint($input['crawler_chunk_size'] ?? ($existing['crawler_chunk_size'] ?? 1000))));
+        $sanitized['crawler_max_results'] = max(1, min(20, absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3))));
         $sources_mode = $input['sources_display_mode'] ?? ($existing['sources_display_mode'] ?? 'matched');
         $sanitized['sources_display_mode'] = in_array($sources_mode, ['none', 'matched', 'all'], true) ? $sources_mode : 'matched';
         $sanitized['crawler_exclude_ids'] = array_values(array_unique(array_map(
@@ -633,7 +636,7 @@ class WPAIC_Admin {
         if ($settings_page_submitted) {
             $sanitized['show_feedback_buttons'] = !empty($input['show_feedback_buttons']);
         } else {
-            $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? false;
+            $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? true;
         }
 
         // MCP settings (AI Settings form — use _settings_page sentinel, not ai_provider which is also in crawler)
@@ -645,7 +648,7 @@ class WPAIC_Admin {
         // Preserve MCP API key hash (managed via AJAX, not form submission)
         // When called via update_option (AJAX key generation), $input may contain the new hash.
         $sanitized['mcp_api_key_hash'] = !empty($input['mcp_api_key_hash'])
-            ? $input['mcp_api_key_hash']
+            ? sanitize_text_field($input['mcp_api_key_hash'])
             : ($existing['mcp_api_key_hash'] ?? '');
 
         // Pro features settings
@@ -655,7 +658,6 @@ class WPAIC_Admin {
         );
 
         // Enhanced content extraction checkbox (on Crawler page, outside pro_features form)
-        $crawler_form_submitted = array_key_exists('crawler_interval', $input);
         if ($crawler_form_submitted) {
             $sanitized['pro_features']['enhanced_content_extraction'] = !empty($input['enhanced_content_extraction']);
         }
@@ -765,7 +767,7 @@ class WPAIC_Admin {
 
         // Webhook events
         $sanitized['webhook_events'] = [];
-        $event_names = ['new_conversation', 'new_message', 'lead_captured', 'handoff_requested'];
+        $event_names = ['new_conversation', 'new_message', 'lead_captured', 'handoff_requested', 'handoff_resolved', 'offline_message', 'ai_error', 'budget_alert', 'rate_limit_exceeded', 'banned_word_detected', 'recaptcha_failed'];
         foreach ($event_names as $event) {
             $sanitized['webhook_events'][$event] = !empty($input['webhook_events'][$event]);
         }
@@ -796,7 +798,8 @@ class WPAIC_Admin {
                 'end' => sanitize_text_field($day_input['end'] ?? ($day_existing['end'] ?? '18:00')),
             ];
         }
-        $sanitized['business_hours_timezone'] = sanitize_text_field($input['business_hours_timezone'] ?? ($existing['business_hours_timezone'] ?? 'Asia/Tokyo'));
+        $tz_input = sanitize_text_field($input['business_hours_timezone'] ?? ($existing['business_hours_timezone'] ?? 'Asia/Tokyo'));
+        $sanitized['business_hours_timezone'] = in_array($tz_input, timezone_identifiers_list(), true) ? $tz_input : 'Asia/Tokyo';
         $sanitized['outside_hours_message'] = sanitize_textarea_field($input['outside_hours_message'] ?? ($existing['outside_hours_message'] ?? $defaults['outside_hours_message']));
 
         // Holidays
@@ -898,11 +901,11 @@ class WPAIC_Admin {
             $sanitized['role_limits'] = $existing['role_limits'] ?? [];
         }
 
-        // Preserve Pro-only keys not handled by Free sanitizer (e.g. badge_icon_*, scheduling, etc.)
-        // 1. $existing: base from DB (preserves keys not in current form submission)
-        // 2. $input: pass-through for Pro-managed keys (badge_icon_*, etc.) added via update_option()
-        // 3. $sanitized: explicitly sanitized keys take final priority
-        return array_merge($existing, $input, $sanitized);
+        // Merge: $existing (preserved DB values) + $sanitized (explicitly sanitized keys).
+        // Raw $input is NOT merged — only explicitly sanitized keys are stored.
+        // Pro-managed keys (badge_icon_*, scheduling, etc.) are preserved via $existing
+        // because Pro writes them via update_option() which stores them in the DB.
+        return array_merge($existing, $sanitized);
     }
 
     /**
@@ -915,15 +918,6 @@ class WPAIC_Admin {
 
         // Already encrypted (GCM or CBC)
         if (strpos($key, 'encg:') === 0 || strpos($key, 'enc:') === 0) {
-            return $key;
-        }
-
-        // Only encrypt recognized API key formats
-        $is_api_key = strpos($key, 'sk-') === 0
-                   || strpos($key, 'sk-ant-') === 0
-                   || strpos($key, 'AIza') === 0;
-
-        if (!$is_api_key) {
             return $key;
         }
 
@@ -1053,6 +1047,18 @@ class WPAIC_Admin {
                 'leftLabel' => __('Left:', 'rapls-ai-chatbot'),
                 'bottomLabel' => __('Bottom:', 'rapls-ai-chatbot'),
                 'topLabel' => __('Top:', 'rapls-ai-chatbot'),
+                'confirmDeleteApiKey' => __('Delete this API key?\nPlease save settings after deletion.', 'rapls-ai-chatbot'),
+                'keyUnset' => __('Not set (will be deleted on save)', 'rapls-ai-chatbot'),
+                'enterApiKey' => __('Please enter an API key.', 'rapls-ai-chatbot'),
+                'testing' => __('Testing...', 'rapls-ai-chatbot'),
+                'connectionTest' => __('Connection test', 'rapls-ai-chatbot'),
+                'confirmCrawl' => __('Run site-wide learning?\nThis may take a while depending on the number of pages.', 'rapls-ai-chatbot'),
+                'crawling' => __('Learning...', 'rapls-ai-chatbot'),
+                'exportConversations' => __('Export', 'rapls-ai-chatbot'),
+                'quickReplyPlaceholder' => __('e.g., What are your business hours?', 'rapls-ai-chatbot'),
+                'holidayNamePlaceholder' => __('Holiday name (optional)', 'rapls-ai-chatbot'),
+                'templateNamePlaceholder' => __('Template name', 'rapls-ai-chatbot'),
+                'templatePromptPlaceholder' => __('System prompt for this template...', 'rapls-ai-chatbot'),
             ],
         ]);
     }
@@ -1101,6 +1107,9 @@ class WPAIC_Admin {
         // Auto-migrate legacy enc: (CBC) keys to encg: (GCM) on settings page load
         $this->maybe_migrate_legacy_keys($settings);
 
+        // Auto-encrypt any plaintext API keys (always, regardless of data encryption toggle)
+        $this->maybe_encrypt_plaintext_keys($settings);
+
         $openai_provider = new WPAIC_OpenAI_Provider();
         $claude_provider = new WPAIC_Claude_Provider();
         $gemini_provider = new WPAIC_Gemini_Provider();
@@ -1118,19 +1127,32 @@ class WPAIC_Admin {
 
         foreach ($key_fields as $field) {
             $value = $settings[$field] ?? '';
-            if (empty($value) || strpos($value, 'enc:') !== 0) {
-                continue; // Not legacy CBC format
+            if (empty($value)) {
+                continue;
             }
 
-            $decrypted = ($field === 'recaptcha_secret_key')
-                ? self::decrypt_secret_static($value)
-                : $this->decrypt_api_key($value);
-
-            if (empty($decrypted)) {
-                continue; // Decryption failed, leave as-is
+            $is_encrypted = strpos($value, 'enc:') === 0 || strpos($value, 'encg:') === 0;
+            if (!$is_encrypted) {
+                continue;
             }
 
-            // Re-encrypt with GCM
+            // Decrypt fully (handles double/triple encryption from older sanitize_settings bug)
+            $decrypted = $value;
+            for ($i = 0; $i < 3 && (strpos($decrypted, 'encg:') === 0 || strpos($decrypted, 'enc:') === 0); $i++) {
+                $inner = ($field === 'recaptcha_secret_key')
+                    ? self::decrypt_secret_static($decrypted)
+                    : $this->decrypt_api_key($decrypted);
+                if (empty($inner)) {
+                    break; // Decryption failed, stop
+                }
+                $decrypted = $inner;
+            }
+
+            if (empty($decrypted) || $decrypted === $value) {
+                continue; // Decryption failed entirely, leave as-is
+            }
+
+            // Re-encrypt with single-layer GCM
             $re_encrypted = ($field === 'recaptcha_secret_key')
                 ? $this->encrypt_secret($decrypted)
                 : $this->maybe_encrypt_api_key($decrypted);
@@ -1143,6 +1165,59 @@ class WPAIC_Admin {
 
         if ($migrated) {
             update_option('wpaic_settings', $settings);
+        }
+    }
+
+    /**
+     * admin_init callback: auto-encrypt plaintext API keys on any admin page load.
+     * Skips quickly if all keys are already encrypted (transient check).
+     */
+    public function maybe_encrypt_plaintext_keys_on_init(): void {
+        // Quick skip: if we encrypted recently, don't re-check every request
+        if (get_transient('wpaic_keys_encrypted')) {
+            return;
+        }
+        $settings = get_option('wpaic_settings', []);
+        $this->maybe_encrypt_plaintext_keys($settings);
+        // Cache for 1 hour — re-check after that in case keys were changed externally
+        set_transient('wpaic_keys_encrypted', 1, HOUR_IN_SECONDS);
+    }
+
+    /**
+     * Auto-encrypt plaintext API keys.
+     * API keys are always encrypted regardless of the "data encryption" toggle
+     * (which controls message encryption).
+     */
+    private function maybe_encrypt_plaintext_keys(array &$settings): void {
+        $key_fields = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'recaptcha_secret_key'];
+        $changed = false;
+
+        foreach ($key_fields as $field) {
+            $value = $settings[$field] ?? '';
+            if (empty($value)) {
+                continue;
+            }
+            // Already encrypted
+            if (strpos($value, 'enc:') === 0 || strpos($value, 'encg:') === 0) {
+                continue;
+            }
+            // Encrypt unconditionally (encrypt_secret has no prefix check, unlike maybe_encrypt_api_key)
+            $encrypted = $this->encrypt_secret($value);
+            if ($encrypted !== $value && strpos($encrypted, 'encg:') === 0) {
+                $settings[$field] = $encrypted;
+                $changed = true;
+            }
+        }
+
+        if ($changed) {
+            // Bypass sanitize filter to avoid re-processing
+            global $wp_filter;
+            $saved = isset($wp_filter['sanitize_option_wpaic_settings']) ? $wp_filter['sanitize_option_wpaic_settings'] : null;
+            remove_all_filters('sanitize_option_wpaic_settings');
+            update_option('wpaic_settings', $settings);
+            if ($saved !== null) {
+                $wp_filter['sanitize_option_wpaic_settings'] = $saved;
+            }
         }
     }
 
@@ -1172,9 +1247,28 @@ class WPAIC_Admin {
     }
 
     /**
+     * Auto-close conversations inactive for 30+ minutes.
+     * Called on conversations page render to supplement cron.
+     */
+    private function auto_close_stale_conversations(): void {
+        $table = wpaic_require_table('aichat_conversations', __METHOD__);
+        if (!$table) {
+            return;
+        }
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $wpdb->query(
+            "UPDATE {$table} SET status = 'closed' WHERE status = 'active' AND updated_at < DATE_SUB(NOW(), INTERVAL 30 MINUTE)"
+        );
+    }
+
+    /**
      * Render conversations page
      */
     public function render_conversations_page(): void {
+        // Auto-close stale conversations on page view (supplements cron for environments like Local by Flywheel)
+        $this->auto_close_stale_conversations();
+
         $page = isset($_GET['paged']) ? absint(wp_unslash($_GET['paged'])) : 1;
 
         // Sort parameters
@@ -1304,13 +1398,17 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
-        $post_id = (int) wp_unslash($_POST['post_id'] ?? 0);
+        $post_id = absint(wp_unslash($_POST['post_id'] ?? 0));
+        $index_id = absint(wp_unslash($_POST['index_id'] ?? 0));
 
-        if (!$post_id) {
+        if (!$post_id && !$index_id) {
             wp_send_json_error(__('ID not specified.', 'rapls-ai-chatbot'));
         }
 
-        $result = WPAIC_Content_Index::delete_by_post_id($post_id);
+        // Delete by primary key (index_id) for external URLs (post_id=0), or by post_id for WP content
+        $result = $index_id
+            ? WPAIC_Content_Index::delete_by_id($index_id)
+            : WPAIC_Content_Index::delete_by_post_id($post_id);
 
         if ($result !== false) {
             wp_send_json_success([
@@ -1337,9 +1435,9 @@ class WPAIC_Admin {
 
         $result = WPAIC_Content_Index::truncate();
 
-        // Update last crawl status
-        update_option('wpaic_last_crawl', null);
-        update_option('wpaic_last_crawl_results', null);
+        // Clear last crawl status
+        delete_option('wpaic_last_crawl');
+        delete_option('wpaic_last_crawl_results');
 
         wp_send_json_success([
             'message' => __('All index data deleted.', 'rapls-ai-chatbot'),
@@ -1475,7 +1573,9 @@ class WPAIC_Admin {
         }
 
         $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? 'openai'));
-        $api_key = sanitize_text_field(wp_unslash($_POST['api_key'] ?? ''));
+        // Use lighter sanitization for API keys — sanitize_text_field strips characters
+        // that some providers may use in key formats. Only remove control chars and trim.
+        $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
         $use_saved = !empty(wp_unslash($_POST['use_saved']));
         $force_refresh = !empty(wp_unslash($_POST['force_refresh']));
 
@@ -1529,9 +1629,9 @@ class WPAIC_Admin {
             $models = $ai->get_available_models();
             $source = 'hardcoded';
         } else {
-            // Check if from cache
-            $cache_key = 'wpaic_models_' . $provider . '_' . md5($api_key);
-            if (get_transient($cache_key) !== false && !$force_refresh) {
+            // Check if from cache (use v2 key format to match provider cache)
+            $cache_key_v2 = 'wpaic_models_' . $provider . '_v2_' . md5($api_key);
+            if (get_transient($cache_key_v2) !== false && !$force_refresh) {
                 $source = 'cached';
             }
         }
@@ -1824,10 +1924,15 @@ class WPAIC_Admin {
     }
 
     /**
-     * Encrypt a secret value (general purpose, no prefix check)
+     * Encrypt a secret value (general purpose, idempotent — skips if already encrypted)
      */
     private function encrypt_secret(string $value): string {
         if (empty($value) || !function_exists('openssl_encrypt')) {
+            return $value;
+        }
+
+        // Already encrypted (GCM or legacy CBC) — prevent double encryption
+        if (strpos($value, 'encg:') === 0 || strpos($value, 'enc:') === 0) {
             return $value;
         }
 
@@ -2422,7 +2527,7 @@ class WPAIC_Admin {
             wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
         }
 
-        $include_knowledge = !empty(wp_unslash($_POST['include_knowledge']));
+        $include_knowledge = !empty($_POST['include_knowledge']);
 
         $export_data = [
             'version' => WPAIC_VERSION,
@@ -2430,11 +2535,20 @@ class WPAIC_Admin {
             'settings' => get_option('wpaic_settings', []),
         ];
 
-        // Exclude API keys for security
-        $sensitive_keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'recaptcha_secret_key'];
+        // Exclude API keys and secrets for security
+        $sensitive_keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'recaptcha_secret_key', 'mcp_api_key_hash'];
         foreach ($sensitive_keys as $key) {
             if (isset($export_data['settings'][$key])) {
                 $export_data['settings'][$key] = '';
+            }
+        }
+        // Also strip secrets from nested pro_features
+        $pro_sensitive = ['webhook_secret', 'line_channel_secret', 'line_channel_access_token', 'slack_webhook_url', 'google_sheets_url'];
+        if (isset($export_data['settings']['pro_features']) && is_array($export_data['settings']['pro_features'])) {
+            foreach ($pro_sensitive as $key) {
+                if (isset($export_data['settings']['pro_features'][$key])) {
+                    $export_data['settings']['pro_features'][$key] = '';
+                }
             }
         }
 
@@ -2483,10 +2597,20 @@ class WPAIC_Admin {
             $filtered_settings = array_intersect_key($import_data['settings'], array_flip($allowed_keys));
 
             // Keep current API keys (never overwrite with empty)
-            $sensitive_keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'recaptcha_secret_key'];
+            $sensitive_keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'recaptcha_secret_key', 'mcp_api_key_hash'];
             foreach ($sensitive_keys as $key) {
                 if (!empty($current_settings[$key]) && empty($filtered_settings[$key])) {
                     $filtered_settings[$key] = $current_settings[$key];
+                }
+            }
+            // Keep current Pro secrets (never overwrite with empty)
+            $pro_sensitive = ['webhook_secret', 'line_channel_secret', 'line_channel_access_token', 'slack_webhook_url', 'google_sheets_url'];
+            $current_pro = $current_settings['pro_features'] ?? [];
+            if (isset($filtered_settings['pro_features']) && is_array($filtered_settings['pro_features'])) {
+                foreach ($pro_sensitive as $key) {
+                    if (!empty($current_pro[$key]) && empty($filtered_settings['pro_features'][$key])) {
+                        $filtered_settings['pro_features'][$key] = $current_pro[$key];
+                    }
                 }
             }
 
@@ -2509,10 +2633,10 @@ class WPAIC_Admin {
                     break; // FAQ limit reached — stop importing
                 }
                 $result = WPAIC_Knowledge::create([
-                    'title'     => $item['title'] ?? '',
-                    'content'   => $item['content'] ?? '',
-                    'category'  => $item['category'] ?? '',
-                    'is_active' => $item['is_active'] ?? 1,
+                    'title'     => sanitize_text_field($item['title'] ?? ''),
+                    'content'   => wp_kses_post($item['content'] ?? ''),
+                    'category'  => sanitize_text_field($item['category'] ?? ''),
+                    'is_active' => absint($item['is_active'] ?? 1),
                 ]);
                 if ($result && !is_wp_error($result)) {
                     $knowledge_count++;
@@ -2828,12 +2952,16 @@ class WPAIC_Admin {
         // sanitize_option_{option} which calls sanitize_settings).
         $settings = get_option('wpaic_settings', []);
         $settings['mcp_api_key_hash'] = wp_hash_password($raw_key);
+        global $wp_filter;
+        $saved = isset($wp_filter['sanitize_option_wpaic_settings']) ? $wp_filter['sanitize_option_wpaic_settings'] : null;
         remove_all_filters('sanitize_option_wpaic_settings');
-        update_option('wpaic_settings', $settings);
-        // Re-register so subsequent form saves still sanitize
-        register_setting('wpaic_settings_group', 'wpaic_settings', [
-            'sanitize_callback' => [$this, 'sanitize_settings'],
-        ]);
+        try {
+            update_option('wpaic_settings', $settings);
+        } finally {
+            if ($saved !== null) {
+                $wp_filter['sanitize_option_wpaic_settings'] = $saved;
+            }
+        }
 
         wp_send_json_success([
             'api_key'  => $raw_key,

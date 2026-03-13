@@ -168,34 +168,7 @@ class WPAIC_Lead {
         return $lead;
     }
 
-    /**
-     * Get lead by email
-     *
-     * @param string $email Email address
-     * @return array|null Lead data or null if not found
-     */
-    public static function get_by_email(string $email) {
-        global $wpdb;
 
-        // Table name is safe - uses $wpdb->prefix with hardcoded suffix
-        $table = self::get_table_name();
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        $lead = $wpdb->get_row(
-            $wpdb->prepare("SELECT * FROM `{$table}` WHERE email = %s ORDER BY created_at DESC LIMIT 1", $email),
-            ARRAY_A
-        );
-
-        if (!$lead) {
-            return null;
-        }
-
-        if ($lead['custom_fields']) {
-            $lead['custom_fields'] = json_decode($lead['custom_fields'], true);
-        }
-
-        return $lead;
-    }
 
     /**
      * Get leads list with pagination
@@ -315,38 +288,6 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return (int) $wpdb->get_var($query);
-    }
-
-    /**
-     * Get count of leads for a specific time period
-     *
-     * @param string $period 'today', 'week', or 'month'
-     * @return int
-     */
-    public static function get_period_count($period) {
-        global $wpdb;
-        $table = self::get_table_name();
-
-        // Use MySQL time functions to match CURRENT_TIMESTAMP stored in created_at (same TZ)
-        switch ($period) {
-            case 'today':
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-                return (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM `{$table}` WHERE DATE(created_at) = CURDATE()"
-                );
-            case 'week':
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-                return (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
-                );
-            case 'month':
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-                return (int) $wpdb->get_var(
-                    "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
-                );
-            default:
-                return 0;
-        }
     }
 
     /**

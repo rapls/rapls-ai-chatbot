@@ -168,14 +168,14 @@ class WPAIC_Pro_Features {
             'lead_capture_enabled' => false,
             'lead_capture_required' => false,
             'lead_fields' => [
-                'name' => ['enabled' => true, 'required' => true, 'label' => __('Name', 'rapls-ai-chatbot'), 'type' => 'text'],
-                'email' => ['enabled' => true, 'required' => true, 'label' => __('Email', 'rapls-ai-chatbot'), 'type' => 'email'],
-                'phone' => ['enabled' => false, 'required' => false, 'label' => __('Phone', 'rapls-ai-chatbot'), 'type' => 'tel'],
-                'company' => ['enabled' => false, 'required' => false, 'label' => __('Company', 'rapls-ai-chatbot'), 'type' => 'text'],
+                'name' => ['enabled' => true, 'required' => true, 'label' => 'Name', 'type' => 'text'],
+                'email' => ['enabled' => true, 'required' => true, 'label' => 'Email', 'type' => 'email'],
+                'phone' => ['enabled' => false, 'required' => false, 'label' => 'Phone', 'type' => 'tel'],
+                'company' => ['enabled' => false, 'required' => false, 'label' => 'Company', 'type' => 'text'],
             ],
             'lead_custom_fields' => [],
-            'lead_form_title' => __('Before we start', 'rapls-ai-chatbot'),
-            'lead_form_description' => __('Please enter your information', 'rapls-ai-chatbot'),
+            'lead_form_title' => 'Before we start',
+            'lead_form_description' => 'Please enter your information',
             'lead_notification_enabled' => false,
             'lead_notification_email' => '',
 
@@ -199,6 +199,13 @@ class WPAIC_Pro_Features {
                 'new_message' => true,
                 'lead_captured' => true,
                 'handoff_requested' => true,
+                'handoff_resolved' => true,
+                'offline_message' => true,
+                'ai_error' => true,
+                'budget_alert' => true,
+                'rate_limit_exceeded' => false,
+                'banned_word_detected' => false,
+                'recaptcha_failed' => false,
             ],
 
             // Quick replies
@@ -217,28 +224,28 @@ class WPAIC_Pro_Features {
                 'sunday' => ['enabled' => false, 'start' => '10:00', 'end' => '17:00'],
             ],
             'business_hours_timezone' => 'Asia/Tokyo',
-            'outside_hours_message' => __('We are currently outside business hours. Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
+            'outside_hours_message' => 'We are currently outside business hours. Please leave a message and we will get back to you.',
 
             // Holidays
             'holidays_enabled' => false,
             'holidays' => [],
-            'holiday_message' => __('We are closed today. Please contact us on the next business day.', 'rapls-ai-chatbot'),
+            'holiday_message' => 'We are closed today. Please contact us on the next business day.',
 
             // Content filters
             'banned_words_enabled' => false,
             'banned_words' => '',
-            'banned_words_message' => __('Your message contains prohibited content.', 'rapls-ai-chatbot'),
+            'banned_words_message' => 'Your message contains prohibited content.',
 
             // IP blocking
             'ip_block_enabled' => false,
             'blocked_ips' => '',
-            'ip_block_message' => __('Access denied.', 'rapls-ai-chatbot'),
+            'ip_block_message' => 'Access denied.',
 
             // Enhanced Rate Limiting
             'enhanced_rate_limit_enabled' => false,
             'rate_limit_per_minute' => 5,
             'rate_limit_per_hour' => 30,
-            'rate_limit_message' => __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot'),
+            'rate_limit_message' => 'Too many messages. Please wait a moment before sending again.',
 
             // AI Enhancement
             'related_suggestions_enabled' => false,
@@ -274,7 +281,7 @@ class WPAIC_Pro_Features {
             'handoff_keywords' => '',
             'handoff_auto_keywords_ja' => '人間と話したい,オペレーター,サポートに繋いで,担当者',
             'handoff_email' => '',
-            'handoff_message' => __('I understand this may need human assistance. A support representative will contact you soon.', 'rapls-ai-chatbot'),
+            'handoff_message' => 'I understand this may need human assistance. A support representative will contact you soon.',
             'handoff_notification_method' => 'email',
             'handoff_slack_webhook_url' => '',
             'handoff_auto_detect' => true,
@@ -282,7 +289,7 @@ class WPAIC_Pro_Features {
 
             'survey_enabled' => false,
             'survey_trigger' => 'end',
-            'survey_question' => __('How would you rate this conversation?', 'rapls-ai-chatbot'),
+            'survey_question' => 'How would you rate this conversation?',
             'survey_options' => [],
 
             'conversation_tags_enabled' => false,
@@ -293,14 +300,11 @@ class WPAIC_Pro_Features {
             'bots' => [],
 
             'operator_mode_enabled' => false,
-            'operator_takeover_message' => __('You are now connected with a support representative.', 'rapls-ai-chatbot'),
+            'operator_takeover_message' => 'You are now connected with a support representative.',
 
             'faq_auto_generation_enabled' => false,
             'faq_min_occurrences' => 3,
             'faq_generation_prompt' => "You are a helpful assistant for a website. Based on the following frequently asked question, write a clear, concise, and helpful answer.\n\nQuestion: {question}\n\nProvide ONLY the answer text, no prefix or labels. Keep it under 300 words. Use a friendly, professional tone.",
-
-            'realtime_monitor_enabled' => false,
-            'monitor_refresh_interval' => 10,
 
             // Badge icon
             'badge_icon_type' => 'default',
@@ -314,7 +318,7 @@ class WPAIC_Pro_Features {
             'budget_alert_threshold' => 10.00,
             'budget_limit_enabled' => false,
             'budget_limit_amount' => 50.00,
-            'budget_block_message' => __('The AI service is temporarily unavailable due to usage limits. Please try again later.', 'rapls-ai-chatbot'),
+            'budget_block_message' => 'The AI service is temporarily unavailable due to usage limits. Please try again later.',
 
             // Monthly Report
             'monthly_report_enabled' => false,
@@ -348,9 +352,8 @@ class WPAIC_Pro_Features {
             // WooCommerce Product Cards
             'woocommerce_cards_enabled' => true,
 
-            // Embedding / Vector RAG
-            'embedding_enabled'  => false,
-            'embedding_provider' => 'auto',  // 'auto' | 'openai' | 'gemini'
+            // Note: embedding_enabled / embedding_provider are managed as top-level settings
+            // in get_all_defaults(), not in pro_features.
 
             // Voice Input / TTS
             'voice_input_enabled' => false,
@@ -379,8 +382,8 @@ class WPAIC_Pro_Features {
 
             // Offline Messages
             'offline_message_enabled' => false,
-            'offline_form_title' => __('We are currently offline', 'rapls-ai-chatbot'),
-            'offline_form_description' => __('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
+            'offline_form_title' => 'We are currently offline',
+            'offline_form_description' => 'Please leave a message and we will get back to you.',
             'offline_notification_email' => '',
             'offline_notification_enabled' => false,
 
@@ -414,7 +417,7 @@ class WPAIC_Pro_Features {
             'spam_score_threshold' => 3,
             'country_block_enabled' => false,
             'blocked_countries' => '',
-            'country_block_message' => __('Access denied from your region.', 'rapls-ai-chatbot'),
+            'country_block_message' => 'Access denied from your region.',
             'ip_whitelist_enabled' => false,
             'whitelisted_ips' => '',
             'external_learning_enabled' => false,
@@ -452,8 +455,6 @@ class WPAIC_Pro_Features {
             // Developer
             'test_mode_enabled' => false,
             'test_mode_response' => '',
-            'custom_fields_enabled' => false,
-            'custom_metadata_fields' => [],
 
             // Change Management
             'change_history_enabled' => false,
@@ -663,17 +664,28 @@ class WPAIC_Pro_Features {
     }
 
     /**
+     * Stub: Check IP whitelist
+     */
+    public function check_ip_whitelist(?string $ip = null): bool {
+        return true; // Allow all when Pro is not active
+    }
+
+    /**
+     * Stub: Check spam
+     */
+    public function is_spam(string $message): bool {
+        return false;
+    }
+
+    public function get_spam_message(): string {
+        return __('Your message was flagged as spam.', 'rapls-ai-chatbot');
+    }
+
+    /**
      * Stub: Check enhanced rate limit
      */
     public function check_enhanced_rate_limit(?string $ip = null): array {
         return ['blocked' => false, 'message' => ''];
-    }
-
-    /**
-     * Stub: Get rate limit message
-     */
-    public function get_rate_limit_message(): string {
-        return __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
     }
 
     public function get_quick_replies(): array {
@@ -760,20 +772,6 @@ class WPAIC_Pro_Features {
     }
 
     /**
-     * Stub: Validate image
-     */
-    public function validate_image(array $file) {
-        return new WP_Error('multimodal_disabled', __('Image upload requires Pro.', 'rapls-ai-chatbot'));
-    }
-
-    /**
-     * Stub: Process image for AI
-     */
-    public function process_image_for_ai(string $file_path): string {
-        return '';
-    }
-
-    /**
      * Stub: Check budget limit
      */
     public function check_budget_limit(): bool {
@@ -798,20 +796,6 @@ class WPAIC_Pro_Features {
      * Stub: Check if WooCommerce product cards are enabled
      */
     public function is_woocommerce_cards_enabled(): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Check if scenarios are enabled
-     */
-    public function is_scenarios_enabled(): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Check if actions/intent recognition is enabled
-     */
-    public function is_actions_enabled(): bool {
         return false;
     }
 
@@ -855,13 +839,6 @@ class WPAIC_Pro_Features {
      */
     public function process_handoff(int $conversation_id, string $session_id): array {
         return ['escalated' => false];
-    }
-
-    /**
-     * Stub: Check if operator is actively handling a conversation
-     */
-    public function is_operator_active(int $conversation_id): bool {
-        return false;
     }
 
     /**
@@ -917,13 +894,6 @@ class WPAIC_Pro_Features {
     }
 
     /**
-     * Stub: Check if staging mode is active
-     */
-    public function is_staging_active(): bool {
-        return false;
-    }
-
-    /**
      * Stub: Get staging settings
      */
     public function get_staging_settings(): ?array {
@@ -938,31 +908,10 @@ class WPAIC_Pro_Features {
     }
 
     /**
-     * Stub: Check if approval is required
-     */
-    public function is_approval_required(): bool {
-        return false;
-    }
-
-    /**
      * Stub: Get pending approval changes
      */
     public function get_pending_approvals(): array {
         return [];
-    }
-
-    /**
-     * Stub: Encrypt field value
-     */
-    public function encrypt_field(string $value): string {
-        return $value;
-    }
-
-    /**
-     * Stub: Decrypt field value
-     */
-    public function decrypt_field(string $value): string {
-        return $value;
     }
 
     /**
@@ -977,13 +926,6 @@ class WPAIC_Pro_Features {
      */
     public function get_queue_status(): array {
         return ['pending' => 0, 'processing' => 0, 'max' => 5];
-    }
-
-    /**
-     * Stub: Enqueue AI request
-     */
-    public function enqueue_request(array $request): bool {
-        return false;
     }
 
     /**

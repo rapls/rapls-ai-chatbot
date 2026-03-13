@@ -335,11 +335,10 @@ $post_types = get_post_types(['public' => true], 'objects');
 
                 <!-- Hidden settings to maintain -->
                 <input type="hidden" name="wpaic_settings[ai_provider]" value="<?php echo esc_attr($settings['ai_provider'] ?? 'openai'); ?>">
-                <input type="hidden" name="wpaic_settings[openai_api_key]" value="<?php echo esc_attr($settings['openai_api_key'] ?? ''); ?>">
-                <input type="hidden" name="wpaic_settings[claude_api_key]" value="<?php echo esc_attr($settings['claude_api_key'] ?? ''); ?>">
-                <input type="hidden" name="wpaic_settings[gemini_api_key]" value="<?php echo esc_attr($settings['gemini_api_key'] ?? ''); ?>">
-                <input type="hidden" name="wpaic_settings[openrouter_api_key]" value="<?php echo esc_attr($settings['openrouter_api_key'] ?? ''); ?>">
-                <input type="hidden" name="wpaic_settings[openai_model]" value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o'); ?>">
+                <!-- API keys are intentionally omitted from hidden fields to prevent
+                     exposure in page source. The sanitize_settings() callback preserves
+                     existing keys when blank values are submitted. -->
+                <input type="hidden" name="wpaic_settings[openai_model]" value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o-mini'); ?>">
                 <input type="hidden" name="wpaic_settings[claude_model]" value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-sonnet-4-20250514'); ?>">
                 <input type="hidden" name="wpaic_settings[gemini_model]" value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'); ?>">
                 <input type="hidden" name="wpaic_settings[openrouter_model]" value="<?php echo esc_attr($settings['openrouter_model'] ?? 'openrouter/auto'); ?>">
@@ -349,7 +348,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                 <input type="hidden" name="wpaic_settings[system_prompt]" value="<?php echo esc_attr($settings['system_prompt'] ?? ''); ?>">
                 <input type="hidden" name="wpaic_settings[max_tokens]" value="<?php echo esc_attr($settings['max_tokens'] ?? 1000); ?>">
                 <input type="hidden" name="wpaic_settings[temperature]" value="<?php echo esc_attr($settings['temperature'] ?? 0.7); ?>">
-                <input type="hidden" name="wpaic_settings[position]" value="<?php echo esc_attr($settings['position'] ?? 'bottom-right'); ?>">
+                <input type="hidden" name="wpaic_settings[badge_position]" value="<?php echo esc_attr($settings['badge_position'] ?? 'bottom-right'); ?>">
                 <input type="hidden" name="wpaic_settings[primary_color]" value="<?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>">
                 <input type="hidden" name="wpaic_settings[show_on_mobile]" value="<?php echo esc_attr($settings['show_on_mobile'] ?? 1); ?>">
                 <input type="hidden" name="wpaic_settings[save_history]" value="<?php echo esc_attr($settings['save_history'] ?? 1); ?>">
@@ -391,7 +390,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                 <h2 style="margin: 0;"><?php esc_html_e('Indexed Pages', 'rapls-ai-chatbot'); ?></h2>
                 <?php if (!empty($indexed_list)): ?>
                     <button type="button" id="wpaic-delete-all-index" class="button button-secondary">
-                        🗑️ <?php esc_html_e('Delete All', 'rapls-ai-chatbot'); ?>
+                        🗑️ <?php esc_html_e('Delete All Learning Data', 'rapls-ai-chatbot'); ?>
                     </button>
                 <?php endif; ?>
             </div>
@@ -422,7 +421,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                                 </td>
                                 <td><?php echo esc_html(mysql2date('Y/m/d H:i', $item['indexed_at'])); ?></td>
                                 <td style="white-space: nowrap;">
-                                    <button type="button" class="button button-small wpaic-delete-index" data-post-id="<?php echo esc_attr($item['post_id']); ?>" title="<?php esc_attr_e('Delete', 'rapls-ai-chatbot'); ?>">
+                                    <button type="button" class="button button-small wpaic-delete-index" data-post-id="<?php echo esc_attr($item['post_id']); ?>" data-index-id="<?php echo esc_attr($item['id']); ?>" title="<?php esc_attr_e('Delete', 'rapls-ai-chatbot'); ?>">
                                         🗑️
                                     </button>
                                     <button type="button" class="button button-small wpaic-exclude-post" data-post-id="<?php echo esc_attr($item['post_id']); ?>" data-title="<?php echo esc_attr($item['title']); ?>" title="<?php esc_attr_e('Exclude from learning', 'rapls-ai-chatbot'); ?>">
@@ -446,6 +445,7 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.wpaic-delete-index', function() {
         var $btn = $(this);
         var postId = $btn.data('post-id');
+        var indexId = $btn.data('index-id');
         var $row = $btn.closest('tr');
 
         if (!confirm('<?php echo esc_js(__('Are you sure you want to delete this index?', 'rapls-ai-chatbot')); ?>')) {
@@ -454,11 +454,15 @@ jQuery(document).ready(function($) {
 
         $btn.prop('disabled', true);
 
-        $.post(ajaxurl, {
+        var postData = {
             action: 'wpaic_delete_index',
             nonce: wpaicAdmin.nonce,
             post_id: postId
-        }, function(response) {
+        };
+        if (!postId && indexId) {
+            postData.index_id = indexId;
+        }
+        $.post(ajaxurl, postData, function(response) {
             if (response.success) {
                 $row.fadeOut(300, function() {
                     $(this).remove();

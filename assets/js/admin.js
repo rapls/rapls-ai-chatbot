@@ -52,7 +52,7 @@
             history.replaceState(null, null, targetId);
 
             // タブをlocalStorageに保存（設定保存後も維持するため）
-            localStorage.setItem('wpaic_active_tab', targetId);
+            try { localStorage.setItem('wpaic_active_tab', targetId); } catch (e) { /* storage unavailable */ }
 
             // Pro機能タブのときはグローバル保存ボタンを非表示
             if (targetId === '#tab-pro') {
@@ -68,22 +68,26 @@
 
         if (window.location.hash) {
             // URLハッシュがある場合はそのタブを表示
-            var $tab = $('.wpaic-settings-tabs .nav-tab[href="' + window.location.hash + '"]');
+            var $tab = $('.wpaic-settings-tabs .nav-tab').filter(function() {
+                return $(this).attr('href') === window.location.hash;
+            });
             if ($tab.length) {
                 $tab.trigger('click');
             }
         } else if (settingsUpdated) {
             // 設定保存後は保存されたタブを復元
-            var savedTab = localStorage.getItem('wpaic_active_tab');
+            var savedTab = null; try { savedTab = localStorage.getItem('wpaic_active_tab'); } catch (e) { /* storage unavailable */ }
             if (savedTab) {
-                var $tab = $('.wpaic-settings-tabs .nav-tab[href="' + savedTab + '"]');
+                var $tab = $('.wpaic-settings-tabs .nav-tab').filter(function() {
+                    return $(this).attr('href') === savedTab;
+                });
                 if ($tab.length) {
                     $tab.trigger('click');
                 }
             }
         } else {
             // 通常のページ遷移時はlocalStorageをクリア（最初のタブを表示）
-            localStorage.removeItem('wpaic_active_tab');
+            try { localStorage.removeItem('wpaic_active_tab'); } catch (e) { /* storage unavailable */ }
         }
 
         // AIプロバイダー切り替え時の表示制御
@@ -104,14 +108,14 @@
             var $deleteFlag = $('#delete_' + targetId);
             var $wrapper = $(this).closest('.wpaic-api-key-wrapper');
 
-            if (confirm('APIキーを削除しますか？\n削除後、設定を保存してください。')) {
+            if (confirm(wpaicAdmin.i18n.confirmDeleteApiKey || 'Delete this API key?\nPlease save settings after deletion.')) {
                 $input.val('').attr('placeholder', '');
                 $deleteFlag.val('1');
                 $(this).hide();
                 $wrapper.find('.wpaic-key-status')
                     .removeClass('wpaic-key-set')
                     .addClass('wpaic-key-empty')
-                    .text('未設定（保存で削除）');
+                    .text(wpaicAdmin.i18n.keyUnset || 'Not set (will be deleted on save)');
             }
         });
 
@@ -124,11 +128,11 @@
             var useSaved = !apiKey && $input.attr('placeholder');
 
             if (!apiKey && !useSaved) {
-                alert('APIキーを入力してください。');
+                alert(wpaicAdmin.i18n.enterApiKey || 'Please enter an API key.');
                 return;
             }
 
-            $button.prop('disabled', true).text('テスト中...');
+            $button.prop('disabled', true).text(wpaicAdmin.i18n.testing || 'Testing...');
 
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
@@ -150,10 +154,10 @@
                     }
                 },
                 error: function() {
-                    alert('エラーが発生しました。');
+                    alert(wpaicAdmin.i18n.error || 'Error');
                 },
                 complete: function() {
-                    $button.prop('disabled', false).text('接続テスト');
+                    $button.prop('disabled', false).text(wpaicAdmin.i18n.connectionTest || 'Connection test');
                 }
             });
         });
@@ -294,12 +298,12 @@
             var $button = $(this);
             var $status = $('#crawl-status');
 
-            if (!confirm('サイト全体の学習を実行しますか？\nページ数によっては時間がかかる場合があります。')) {
+            if (!confirm(wpaicAdmin.i18n.confirmCrawl || 'Run site-wide learning?\nThis may take a while depending on the number of pages.')) {
                 return;
             }
 
             $button.prop('disabled', true);
-            $status.text('学習中...');
+            $status.text(wpaicAdmin.i18n.crawling || 'Learning...');
 
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
@@ -321,7 +325,7 @@
                     }
                 },
                 error: function() {
-                    $status.text('✗ エラーが発生しました。');
+                    $status.text('✗ ' + (wpaicAdmin.i18n.error || 'Error'));
                 },
                 complete: function() {
                     $button.prop('disabled', false);
@@ -339,7 +343,7 @@
             var $result = $('#wpaic-webhook-test-result');
 
             $button.prop('disabled', true);
-            $result.text('テスト中...').css('color', '#666');
+            $result.text((wpaicAdmin.i18n && wpaicAdmin.i18n.testing) || 'Testing...').css('color', '#666');
 
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
@@ -356,7 +360,7 @@
                     }
                 },
                 error: function() {
-                    $result.text('✗ エラーが発生しました。').css('color', '#721c24');
+                    $result.text('✗ ' + ((wpaicAdmin.i18n && wpaicAdmin.i18n.error) || 'An error occurred.')).css('color', '#721c24');
                 },
                 complete: function() {
                     $button.prop('disabled', false);
@@ -371,7 +375,7 @@
             var dateFrom = $('#wpaic-export-date-from').val() || '';
             var dateTo = $('#wpaic-export-date-to').val() || '';
 
-            $button.prop('disabled', true).text('エクスポート中...');
+            $button.prop('disabled', true).text(wpaicAdmin.i18n.exporting || 'Exporting...');
 
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
@@ -387,14 +391,14 @@
                     if (response.success) {
                         downloadExport(response.data);
                     } else {
-                        alert('エクスポートに失敗しました: ' + response.data);
+                        alert((wpaicAdmin.i18n.exportFailed || 'Export failed.') + ' ' + response.data);
                     }
                 },
                 error: function() {
-                    alert('エラーが発生しました。');
+                    alert(wpaicAdmin.i18n.error || 'Error');
                 },
                 complete: function() {
-                    $button.prop('disabled', false).text('エクスポート');
+                    $button.prop('disabled', false).text(wpaicAdmin.i18n.exportConversations || 'Export');
                 }
             });
         });
@@ -406,7 +410,7 @@
             var dateFrom = $('#wpaic-leads-export-date-from').val() || '';
             var dateTo = $('#wpaic-leads-export-date-to').val() || '';
 
-            $button.prop('disabled', true).text('エクスポート中...');
+            $button.prop('disabled', true).text(wpaicAdmin.i18n.exporting || 'Exporting...');
 
             $.ajax({
                 url: wpaicAdmin.ajaxUrl,
@@ -422,14 +426,14 @@
                     if (response.success) {
                         downloadExport(response.data);
                     } else {
-                        alert('エクスポートに失敗しました: ' + response.data);
+                        alert((wpaicAdmin.i18n.exportFailed || 'Export failed.') + ' ' + response.data);
                     }
                 },
                 error: function() {
-                    alert('エラーが発生しました。');
+                    alert(wpaicAdmin.i18n.error || 'Error');
                 },
                 complete: function() {
-                    $button.prop('disabled', false).text('エクスポート');
+                    $button.prop('disabled', false).text(wpaicAdmin.i18n.exportConversations || 'Export');
                 }
             });
         });
@@ -441,7 +445,7 @@
         $('#wpaic-add-quick-reply').on('click', function() {
             var html = '<div class="wpaic-quick-reply-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
                 '<input type="text" name="wpaic_settings[pro_features][quick_replies][' + quickReplyIndex + '][text]" ' +
-                'class="regular-text" placeholder="例: 営業時間を教えてください">' +
+                'class="regular-text" placeholder="' + (wpaicAdmin.i18n.quickReplyPlaceholder || 'e.g., What are your business hours?') + '">' +
                 '<button type="button" class="button wpaic-remove-quick-reply">×</button>' +
                 '</div>';
             $quickRepliesContainer.append(html);
@@ -460,7 +464,7 @@
             var html = '<div class="wpaic-holiday-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
                 '<input type="date" name="wpaic_settings[pro_features][holidays][' + holidayIndex + '][date]">' +
                 '<input type="text" name="wpaic_settings[pro_features][holidays][' + holidayIndex + '][name]" ' +
-                'class="regular-text" placeholder="休日名（任意）">' +
+                'class="regular-text" placeholder="' + (wpaicAdmin.i18n.holidayNamePlaceholder || 'Holiday name (optional)') + '">' +
                 '<button type="button" class="button wpaic-remove-holiday">×</button>' +
                 '</div>';
             $holidaysContainer.append(html);
@@ -479,11 +483,11 @@
             var html = '<div class="wpaic-prompt-template-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">' +
                 '<div style="margin-bottom: 10px;">' +
                 '<input type="text" name="wpaic_settings[pro_features][prompt_templates][' + templateIndex + '][name]" ' +
-                'placeholder="テンプレート名" class="regular-text">' +
+                'placeholder="' + (wpaicAdmin.i18n.templateNamePlaceholder || 'Template name') + '" class="regular-text">' +
                 '<button type="button" class="button wpaic-remove-template">×</button>' +
                 '</div>' +
                 '<textarea name="wpaic_settings[pro_features][prompt_templates][' + templateIndex + '][prompt]" ' +
-                'rows="3" class="large-text" placeholder="このテンプレートのシステムプロンプト..."></textarea>' +
+                'rows="3" class="large-text" placeholder="' + (wpaicAdmin.i18n.templatePromptPlaceholder || 'System prompt for this template...') + '"></textarea>' +
                 '</div>';
             $templatesContainer.append(html);
             templateIndex++;
@@ -741,7 +745,7 @@
     // Advanced section toggle (checkbox-gated, state persisted in localStorage)
     $('.wpaic-advanced-toggle').each(function () {
         var key = 'wpaic_adv_' + this.id;
-        if (localStorage.getItem(key) === '1') {
+        if ((function() { try { return localStorage.getItem(key); } catch (e) { return null; } })() === '1') {
             this.checked = true;
             $('#' + $(this).data('target')).removeClass('wpaic-advanced-disabled');
         }
@@ -751,10 +755,10 @@
         var key = 'wpaic_adv_' + this.id;
         if (this.checked) {
             $section.removeClass('wpaic-advanced-disabled');
-            localStorage.setItem(key, '1');
+            try { localStorage.setItem(key, '1'); } catch (e) { /* storage unavailable */ }
         } else {
             $section.addClass('wpaic-advanced-disabled');
-            localStorage.removeItem(key);
+            try { localStorage.removeItem(key); } catch (e) { /* storage unavailable */ }
         }
     });
 

@@ -289,7 +289,8 @@
 }
 
 .chatbot-close:focus {
-    outline: none;
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: -2px;
     background: rgba(255, 255, 255, 0.2);
 }
 
@@ -414,21 +415,6 @@
 }
 
 /* カルーセル共通 (Shared carousel for product cards & content cards) */
-.chatbot-card-carousel {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    padding: 8px 0 4px;
-    border-top: 1px solid var(--wpaic-border);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-.chatbot-card-carousel::-webkit-scrollbar {
-    display: none;
-}
-
 /* 商品カード (WooCommerce Product Cards) */
 .chatbot-product-cards {
     display: flex;
@@ -1238,6 +1224,45 @@
 /* ============================================
    関連質問サジェスト (Pro)
 ============================================ */
+/* ============================================
+   関連ナレッジリンク (Pro)
+============================================ */
+.chatbot-related-knowledge {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.chatbot-related-knowledge__title {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 6px;
+}
+
+.chatbot-related-knowledge__item {
+    display: inline-block;
+    background: none;
+    border: 1px solid var(--wpaic-border, #e0e0e0);
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--wpaic-primary, #007bff);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 0 4px 4px 0;
+    line-height: 1.4;
+    font-family: inherit;
+}
+
+.chatbot-related-knowledge__item:hover {
+    background: var(--wpaic-primary, #007bff);
+    color: #fff;
+    border-color: var(--wpaic-primary, #007bff);
+}
+
+/* ============================================
+   関連質問候補 (Pro)
+============================================ */
 .chatbot-suggestions {
     padding: 12px 16px;
     margin: 8px 0;
@@ -1356,26 +1381,6 @@
 /* ============================================
    会話サマリー (Pro)
 ============================================ */
-.chatbot-summary {
-    background: linear-gradient(135deg, #f8f9fa, #fff);
-    border: 1px solid var(--wpaic-border);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin: 8px 16px;
-    font-size: 13px;
-}
-
-.chatbot-summary__title {
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #333;
-}
-
-.chatbot-summary__content {
-    color: #666;
-    line-height: 1.5;
-}
-
 /* ============================================
    テーマスタイル
 ============================================ */
@@ -2148,6 +2153,33 @@ textarea.wpaic-offline-input {
 }
 
 /* ============================================
+   Quick Replies
+============================================ */
+.chatbot-quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 16px;
+}
+
+.chatbot-quick-reply-btn {
+    background: var(--wpaic-bg, #fff);
+    border: 1px solid var(--wpaic-primary, #007bff);
+    color: var(--wpaic-primary, #007bff);
+    border-radius: 16px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1.3;
+}
+
+.chatbot-quick-reply-btn:hover {
+    background: var(--wpaic-primary, #007bff);
+    color: #fff;
+}
+
+/* ============================================
    Bookmark Button
 ============================================ */
 .chatbot-bookmark-btn {
@@ -2181,6 +2213,55 @@ textarea.wpaic-offline-input {
 }
 
 /* ============================================
+   Bookmark Navigation
+============================================ */
+.chatbot-bookmark-nav-toggle {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatbot-bookmark-nav-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.chatbot-bookmark-nav-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.chatbot-bookmark-bar {
+    padding: 6px 10px;
+    background: rgba(0, 123, 255, 0.06);
+    border-bottom: 1px solid var(--wpaic-border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chatbot-bookmark-bar[hidden] {
+    display: none;
+}
+
+.chatbot-bookmark-bar-label {
+    font-size: 12px;
+    color: var(--wpaic-primary, #007bff);
+    font-weight: 600;
+    margin-right: auto;
+}
+
+.chatbot-message.chatbot-bookmark-current {
+    background: rgba(0, 123, 255, 0.08);
+    box-shadow: inset 3px 0 0 var(--wpaic-primary, #007bff);
+}
+
+/* ============================================
    Chat Search
 ============================================ */
 .chatbot-search-btn {
@@ -2209,10 +2290,18 @@ textarea.wpaic-offline-input {
     padding: 6px 10px;
     background: var(--wpaic-bg, #f5f5f5);
     border-bottom: 1px solid var(--wpaic-border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chatbot-search-bar[hidden] {
+    display: none;
 }
 
 .chatbot-search-input {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     padding: 6px 10px;
     border: 1px solid var(--wpaic-border);
     border-radius: 6px;
@@ -2228,8 +2317,46 @@ textarea.wpaic-offline-input {
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
 }
 
+.chatbot-search-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.chatbot-search-count {
+    font-size: 11px;
+    color: var(--wpaic-text, #666);
+    min-width: 32px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.chatbot-search-nav-btn {
+    background: none;
+    border: 1px solid var(--wpaic-border, #ddd);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 10px;
+    line-height: 1;
+    color: var(--wpaic-text, #666);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.chatbot-search-nav-btn:hover {
+    background: rgba(0, 123, 255, 0.1);
+    border-color: var(--wpaic-primary);
+    color: var(--wpaic-primary);
+}
+
 .chatbot-message.chatbot-search-highlight {
     background: rgba(255, 235, 59, 0.15);
+}
+
+.chatbot-message.chatbot-search-current {
+    background: rgba(255, 235, 59, 0.35);
+    box-shadow: inset 3px 0 0 var(--wpaic-primary, #007bff);
 }
 
 /* ============================================

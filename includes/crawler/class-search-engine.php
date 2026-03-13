@@ -31,14 +31,21 @@ class WPAIC_Search_Engine {
     private bool $use_site_crawl = true;
 
     /**
+     * Whether to include knowledge base in search results
+     */
+    private bool $use_knowledge = true;
+
+    /**
      * Set bot-specific search filters.
      *
-     * @param string[] $categories  Knowledge categories to include (empty = all).
-     * @param bool     $use_crawl   Whether to search the site crawl index.
+     * @param string[] $categories     Knowledge categories to include (empty = all).
+     * @param bool     $use_crawl      Whether to search the site crawl index.
+     * @param bool     $use_knowledge  Whether to search the knowledge base.
      */
-    public function set_bot_filters(array $categories = [], bool $use_crawl = true): void {
+    public function set_bot_filters(array $categories = [], bool $use_crawl = true, bool $use_knowledge = true): void {
         $this->knowledge_categories = array_filter(array_map('trim', $categories));
         $this->use_site_crawl = $use_crawl;
+        $this->use_knowledge = $use_knowledge;
     }
 
     /**
@@ -102,32 +109,36 @@ class WPAIC_Search_Engine {
     public function search(string $query, int $limit = 3): array {
         $results = [];
 
-        // Always get knowledge (regardless of keywords)
-        $knowledge_limit = max($limit * 2, 5);
-        $priority_knowledge = $this->get_high_priority_knowledge($knowledge_limit);
-        // Priority knowledge is not keyword-matched
-        foreach ($priority_knowledge as &$pk) {
-            $pk['keyword_matched'] = false;
-        }
-        unset($pk);
-        $results = array_merge($results, $priority_knowledge);
-
-        // Search knowledge base by keywords (additional match)
-        $knowledge_results = $this->search_knowledge($query, $limit);
-        foreach ($knowledge_results as $kr) {
-            $kr['keyword_matched'] = true;
-            $exists = false;
-            foreach ($results as &$r) {
-                if ($r['type'] === 'knowledge' && $r['title'] === $kr['title']) {
-                    $r['score'] = max($r['score'], $kr['score']);
-                    $r['keyword_matched'] = true;
-                    $exists = true;
-                    break;
-                }
+        // Knowledge base search — skip when bot disables knowledge
+        $priority_knowledge = [];
+        if ($this->use_knowledge) {
+            // Always get knowledge (regardless of keywords)
+            $knowledge_limit = max($limit * 2, 5);
+            $priority_knowledge = $this->get_high_priority_knowledge($knowledge_limit);
+            // Priority knowledge is not keyword-matched
+            foreach ($priority_knowledge as &$pk) {
+                $pk['keyword_matched'] = false;
             }
-            unset($r);
-            if (!$exists) {
-                $results[] = $kr;
+            unset($pk);
+            $results = array_merge($results, $priority_knowledge);
+
+            // Search knowledge base by keywords (additional match)
+            $knowledge_results = $this->search_knowledge($query, $limit);
+            foreach ($knowledge_results as $kr) {
+                $kr['keyword_matched'] = true;
+                $exists = false;
+                foreach ($results as &$r) {
+                    if ($r['type'] === 'knowledge' && $r['title'] === $kr['title']) {
+                        $r['score'] = max($r['score'], $kr['score']);
+                        $r['keyword_matched'] = true;
+                        $exists = true;
+                        break;
+                    }
+                }
+                unset($r);
+                if (!$exists) {
+                    $results[] = $kr;
+                }
             }
         }
 
@@ -196,10 +207,10 @@ class WPAIC_Search_Engine {
 
         $vector_search = new WPAIC_Vector_Search();
         $vector_index = $this->use_site_crawl ? $vector_search->search_index($query_embedding, $limit * 3) : [];
-        $vector_knowledge = $vector_search->search_knowledge($query_embedding, $limit);
+        $vector_knowledge = $this->use_knowledge ? $vector_search->search_knowledge($query_embedding, $limit) : [];
 
         // Filter vector knowledge by category if bot filter is set
-        if (!empty($this->knowledge_categories)) {
+        if (!empty($vector_knowledge) && !empty($this->knowledge_categories)) {
             $allowed = $this->knowledge_categories;
             $vector_knowledge = array_filter($vector_knowledge, function($item) use ($allowed) {
                 return in_array($item['category'] ?? '', $allowed, true);
@@ -290,6 +301,10 @@ class WPAIC_Search_Engine {
      * Used when message limit is reached to provide FAQ-based answers
      */
     public function search_knowledge_only(string $query, int $limit = 5): array {
+        if (!$this->use_knowledge) {
+            return [];
+        }
+
         $results = [];
 
         // Get high priority knowledge
@@ -373,13 +388,14 @@ class WPAIC_Search_Engine {
             // Priority 0 also has base score 50 (lower than keyword match, but always referenced)
             $base_score = $priority > 0 ? 100 : 50;
             return [
-                'type'     => 'knowledge',
-                'title'    => $item['title'],
-                'content'  => $item['content'],
-                'category' => $item['category'] ?? '',
-                'priority' => $priority,
-                'url'      => null,
-                'score'    => $base_score + $priority_boost,
+                'type'      => 'knowledge',
+                'source_id' => (int) ($item['id'] ?? 0),
+                'title'     => $item['title'],
+                'content'   => $item['content'],
+                'category'  => $item['category'] ?? '',
+                'priority'  => $priority,
+                'url'       => null,
+                'score'     => $base_score + $priority_boost,
             ];
         }, $results);
     }
@@ -796,7 +812,7 @@ class WPAIC_Search_Engine {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT post_id, post_type, title, content, url
+            "SELECT MIN(post_id) AS post_id, MIN(post_type) AS post_type, MIN(title) AS title, MIN(content) AS content, url
              FROM {$table}
              WHERE url IS NOT NULL AND url != ''
              GROUP BY url

@@ -17,7 +17,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
     /**
      * Model
      */
-    private string $model = 'claude-3-haiku-20240307';
+    private string $model = 'claude-haiku-4-5-20251001';
 
     /**
      * API Endpoint
@@ -51,14 +51,13 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             throw new Exception(esc_html__('Claude API key is not configured.', 'rapls-ai-chatbot'));
         }
 
-        // Validate model is still available
-        $available_models = $this->get_available_models();
-        if (!array_key_exists($this->model, $available_models)) {
+        // Validate model format (allow any claude-* model, including dynamically fetched ones)
+        if (!preg_match('/^claude-/', $this->model)) {
             $default_model = 'claude-haiku-4-5-20251001';
             throw new Exception(
                 sprintf(
                     /* translators: 1: current model name, 2: default model name */
-                    esc_html__('The model "%1$s" is no longer available. Please go to Settings and select a current model (e.g. %2$s).', 'rapls-ai-chatbot'),
+                    esc_html__('The model "%1$s" is not a valid Claude model. Please go to Settings and select a current model (e.g. %2$s).', 'rapls-ai-chatbot'),
                     esc_html($this->model),
                     esc_html($default_model)
                 )
@@ -248,6 +247,10 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                 }
             }
             $web_sources = $unique;
+        }
+
+        if ($content === '') {
+            throw new Exception(esc_html__('Failed to get response from AI.', 'rapls-ai-chatbot'));
         }
 
         // Calculate token usage

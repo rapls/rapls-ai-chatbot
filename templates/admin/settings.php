@@ -340,7 +340,7 @@ if (!defined('ABSPATH')) {
 
                 <!-- MCP Settings -->
                 <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
-                    MCP (Model Context Protocol)
+                    <?php esc_html_e('MCP (Model Context Protocol)', 'rapls-ai-chatbot'); ?>
                 </h3>
                 <p class="description" style="margin-bottom: 15px;">
                     <?php esc_html_e('Allow external AI agents (Claude Desktop, Cursor, etc.) to access your knowledge base and conversations via MCP.', 'rapls-ai-chatbot'); ?>
@@ -449,12 +449,12 @@ if (!defined('ABSPATH')) {
                                     copyKeyBtn.style.display = 'inline-block';
                                     copyKeyBtn.dataset.key = response.data.api_key;
                                 } else {
-                                    alert(response.data || 'Error generating key.');
+                                    alert(response.data || <?php echo wp_json_encode(__('Error generating key.', 'rapls-ai-chatbot')); ?>);
                                 }
                             }).fail(function() {
                                 generateBtn.disabled = false;
                                 generateBtn.textContent = <?php echo wp_json_encode(__('Regenerate Key', 'rapls-ai-chatbot')); ?>;
-                                alert('Request failed.');
+                                alert(<?php echo wp_json_encode(__('Request failed.', 'rapls-ai-chatbot')); ?>);
                             });
                         });
                     }
@@ -673,7 +673,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <label>
                                 <input type="checkbox" name="wpaic_settings[show_feedback_buttons]" value="1"
-                                    <?php checked($settings['show_feedback_buttons'] ?? false); ?>>
+                                    <?php checked($settings['show_feedback_buttons'] ?? true); ?>>
                                 <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
                             </label>
                             <p class="description"><?php esc_html_e('Allow users to rate bot responses with 👍👎. Feedback is used to improve AI response quality.', 'rapls-ai-chatbot'); ?></p>
@@ -916,7 +916,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Widget Theme', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('チャットウィジェットの外観テーマを選択します。Pro版ではより洗練されたデザインのテーマが利用できます。', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('Select the appearance theme for the chat widget. Pro version offers more refined design themes.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <?php
@@ -1110,7 +1110,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row">
                             <?php esc_html_e('Dark Mode', 'rapls-ai-chatbot'); ?>
                             <?php if (!$is_pro_active): ?><span class="wpaic-pro-badge-small">PRO</span><?php endif; ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('ダークモードを有効にすると、選択したテーマに関係なくチャットウィジェットがダークカラーで表示されます。', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('When dark mode is enabled, the chat widget displays in dark colors regardless of the selected theme.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <label class="<?php echo esc_attr(!$is_pro_active ? 'wpaic-pro-locked' : ''); ?>">
@@ -1151,7 +1151,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Page Type Display', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('チャットボットを表示するページの種類を選択します。チェックを外すとそのタイプのページでは非表示になります。', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('Select page types where the chatbot is displayed. Unchecking a type hides the chatbot on those pages.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <fieldset>
@@ -1182,7 +1182,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Include Only (IDs)', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('ここに ID を入力すると、そのページ/投稿でのみチャットボットが表示されます。空の場合はページタイプ設定に従います。', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('Enter IDs to show the chatbot only on those pages/posts. When empty, page type settings are used.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <input type="text" name="wpaic_settings[badge_include_ids]"
@@ -1194,7 +1194,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Exclude (IDs)', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('指定した ID のページ/投稿ではチャットボットが非表示になります。', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('The chatbot will be hidden on pages/posts with the specified IDs.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <input type="text" name="wpaic_settings[badge_exclude_ids]"
@@ -1974,13 +1974,13 @@ jQuery(document).ready(function($) {
         var fileInput = $('#wpaic-import-file')[0];
 
         if (!fileInput.files.length) {
-            $status.html('<span style="color: red;">' + (i18n.selectFile || 'Please select a file.') + '</span>');
+            $status.html('<span style="color: red;"></span>').find('span').text(i18n.selectFile || 'Please select a file.');
             return;
         }
 
         var file = fileInput.files[0];
         if (!file.name.endsWith('.json')) {
-            $status.html('<span style="color: red;">' + (i18n.invalidJson || 'Please select a JSON file.') + '</span>');
+            $status.html('<span style="color: red;"></span>').find('span').text(i18n.invalidJson || 'Please select a JSON file.');
             return;
         }
 
@@ -2006,23 +2006,23 @@ jQuery(document).ready(function($) {
                     },
                     success: function(response) {
                         if (response.success) {
-                            $status.html('<span style="color: green;">' + response.data + '</span>');
+                            $status.html('<span style="color: green;"></span>').find('span').text(response.data);
                             setTimeout(function() {
                                 location.reload();
                             }, 1500);
                         } else {
-                            $status.html('<span style="color: red;">' + response.data + '</span>');
+                            $status.html('<span style="color: red;"></span>').find('span').text(response.data);
                         }
                     },
                     error: function() {
-                        $status.html('<span style="color: red;">' + (i18n.importFailed || 'Import failed.') + '</span>');
+                        $status.html('<span style="color: red;"></span>').find('span').text(i18n.importFailed || 'Import failed.');
                     },
                     complete: function() {
                         $button.prop('disabled', false).text('<?php echo esc_js(__('Import Settings', 'rapls-ai-chatbot')); ?>');
                     }
                 });
             } catch (err) {
-                $status.html('<span style="color: red;">' + (i18n.invalidJson || 'Invalid JSON file.') + '</span>');
+                $status.html('<span style="color: red;"></span>').find('span').text(i18n.invalidJson || 'Invalid JSON file.');
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Import Settings', 'rapls-ai-chatbot')); ?>');
             }
         };
@@ -2038,7 +2038,7 @@ jQuery(document).ready(function($) {
 
         if (input !== 'reset') {
             if (input !== null) {
-                $status.html('<span style="color: red;">' + (i18n.resetTypeError || 'Please type "reset".') + '</span>');
+                $status.html('<span style="color: red;"></span>').find('span').text(i18n.resetTypeError || 'Please type "reset".');
             }
             return;
         }
@@ -2053,17 +2053,17 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    $status.html('<span style="color: green;">' + response.data + '</span>');
+                    $status.html('<span style="color: green;"></span>').find('span').text(response.data);
                     setTimeout(function() {
                         location.reload();
                     }, 1500);
                 } else {
-                    $status.html('<span style="color: red;">' + response.data + '</span>');
+                    $status.html('<span style="color: red;"></span>').find('span').text(response.data);
                 }
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
             },
             fail: function() {
-                $status.html('<span style="color: red;">' + (i18n.resetFailed || 'Reset failed.') + '</span>');
+                $status.html('<span style="color: red;"></span>').find('span').text(i18n.resetFailed || 'Reset failed.');
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
             },
             cancel: function() {
@@ -2082,12 +2082,12 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        // Create tag item
-        var $item = $('<div class="wpaic-excluded-page-item" data-page-id="' + pageId + '" style="display: inline-flex; align-items: center; background: #f0f0f1; border-radius: 4px; padding: 5px 10px; margin: 3px 5px 3px 0;">' +
-            '<span>' + pageTitle + '</span>' +
-            '<input type="hidden" name="wpaic_settings[excluded_pages][]" value="' + pageId + '">' +
-            '<button type="button" class="wpaic-remove-excluded-page" style="background: none; border: none; cursor: pointer; color: #a00; margin-left: 8px; font-size: 16px;">&times;</button>' +
-            '</div>');
+        // Create tag item (use DOM construction to prevent XSS from page titles)
+        var $item = $('<div class="wpaic-excluded-page-item" style="display: inline-flex; align-items: center; background: #f0f0f1; border-radius: 4px; padding: 5px 10px; margin: 3px 5px 3px 0;"></div>')
+            .attr('data-page-id', pageId);
+        $item.append($('<span></span>').text(pageTitle));
+        $item.append($('<input type="hidden" name="wpaic_settings[excluded_pages][]">').val(pageId));
+        $item.append('<button type="button" class="wpaic-remove-excluded-page" style="background: none; border: none; cursor: pointer; color: #a00; margin-left: 8px; font-size: 16px;">&times;</button>');
 
         $('#wpaic-excluded-pages-list').append($item);
 
@@ -2102,8 +2102,8 @@ jQuery(document).ready(function($) {
         var pageId = $item.data('page-id');
         var pageTitle = $item.find('span').text();
 
-        // Add back to select
-        $('#wpaic-page-selector').append('<option value="' + pageId + '">' + pageTitle + '</option>');
+        // Add back to select (use DOM construction to prevent XSS)
+        $('#wpaic-page-selector').append($('<option></option>').val(pageId).text(pageTitle));
 
         // Remove item
         $item.remove();
@@ -2169,9 +2169,10 @@ jQuery(document).ready(function($) {
         var isImage = /^(https?:\/\/|\/)/i.test(value) || /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(value);
 
         if (isImage) {
-            $preview.html('<img src="' + value + '" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">');
+            var $img = $('<img alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">').attr('src', value);
+            $preview.empty().append($img);
         } else {
-            $preview.html('<span style="font-size: 48px; line-height: 1;">' + value + '</span>');
+            $preview.empty().append($('<span style="font-size: 48px; line-height: 1;"></span>').text(value));
         }
     }
 

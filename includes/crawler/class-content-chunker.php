@@ -27,13 +27,6 @@ class WPAIC_Content_Chunker {
     }
 
     /**
-     * Set overlap size
-     */
-    public function set_overlap(int $overlap): void {
-        $this->overlap = $overlap;
-    }
-
-    /**
      * Split text into chunks
      */
     public function split(string $text, ?int $chunk_size = null): array {
@@ -153,33 +146,4 @@ class WPAIC_Content_Chunker {
         return $chunks;
     }
 
-    /**
-     * Create chunks with overlap
-     */
-    public function split_with_overlap(string $text, ?int $chunk_size = null): array {
-        $chunk_size = $chunk_size ?? $this->chunk_size;
-        $chunks = $this->split($text, $chunk_size);
-
-        // No processing needed if only one chunk
-        if (count($chunks) <= 1) {
-            return $chunks;
-        }
-
-        $overlapped_chunks = [];
-
-        for ($i = 0; $i < count($chunks); $i++) {
-            $chunk = $chunks[$i];
-
-            // Add end of previous chunk
-            if ($i > 0 && $this->overlap > 0) {
-                $prev_chunk = $chunks[$i - 1];
-                $overlap_text = wpaic_mb_substr($prev_chunk, -$this->overlap);
-                $chunk = $overlap_text . ' ... ' . $chunk;
-            }
-
-            $overlapped_chunks[] = $chunk;
-        }
-
-        return $overlapped_chunks;
-    }
 }

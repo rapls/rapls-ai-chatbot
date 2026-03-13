@@ -63,6 +63,17 @@ class WPAIC_Content_Index {
     }
 
     /**
+     * Delete by primary key (id)
+     */
+    public static function delete_by_id($id) {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->delete($table, ['id' => $id], ['%d']);
+    }
+
+    /**
      * Check if content hash exists
      */
     public static function hash_exists($post_id, $content_hash) {
@@ -77,17 +88,6 @@ class WPAIC_Content_Index {
         ));
 
         return $exists > 0;
-    }
-
-    /**
-     * Get list of indexed post IDs
-     */
-    public static function get_indexed_post_ids() {
-        global $wpdb;
-        $table = self::get_table_name();
-
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return $wpdb->get_col("SELECT DISTINCT post_id FROM `{$table}`");
     }
 
     /**

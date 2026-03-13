@@ -108,7 +108,10 @@ class WPAIC_Chatbot_Widget {
                 }
                 // Bot-specific primary color override
                 if (!empty($sc_bot_config['primary_color'])) {
-                    $primary_color = sanitize_hex_color($sc_bot_config['primary_color']);
+                    $sanitized = sanitize_hex_color($sc_bot_config['primary_color']);
+                    if ($sanitized) {
+                        $primary_color = $sanitized;
+                    }
                 }
                 // Bot-specific badge override
                 if (!empty($sc_bot_config['badge_icon_type']) && $sc_bot_config['badge_icon_type'] !== 'default') {
@@ -134,6 +137,10 @@ class WPAIC_Chatbot_Widget {
         }
 
         ob_start();
+        // Output bot-specific primary color override (shortcode runs after wp_head)
+        if (!empty($primary_color) && $primary_color !== ($settings['primary_color'] ?? '#007bff')) {
+            echo '<style>:root{--wpaic-primary:' . esc_attr($primary_color) . ';--wpaic-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
+        }
         echo '<div class="wpaic-inline" style="height:' . esc_attr($height) . '">';
         include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
         echo '</div>';
@@ -161,6 +168,22 @@ class WPAIC_Chatbot_Widget {
         if (empty($primary_color) || !preg_match('/^#[0-9a-fA-F]{3,6}$/', $primary_color)) {
             $primary_color = '#007bff';
         }
+
+        // Multi-bot: override primary color if a bot is assigned to this page
+        $page_id = get_queried_object_id();
+        if ($page_id) {
+            $bot_id = WPAIC_Pro_Features::get_instance()->get_bot_for_page($page_id);
+            if ($bot_id !== 'default') {
+                $bot_cfg = WPAIC_Pro_Features::get_instance()->resolve_bot_config($bot_id);
+                if ($bot_cfg && !empty($bot_cfg['primary_color'])) {
+                    $bot_color = sanitize_hex_color($bot_cfg['primary_color']);
+                    if ($bot_color) {
+                        $primary_color = $bot_color;
+                    }
+                }
+            }
+        }
+
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
         $margin_h = absint($settings['badge_margin_right'] ?? 20);
         $margin_v = absint($settings['badge_margin_bottom'] ?? 20);
@@ -302,7 +325,7 @@ class WPAIC_Chatbot_Widget {
             'conversation_sharing_enabled' => !empty($pro_features['conversation_sharing_enabled']),
             'offline_message'      => $this->get_offline_config($pro_features),
             'save_history'         => !empty($settings['save_history']),
-            'context_memory'       => !empty($pro_features['context_memory_enabled']),
+            'quick_replies'        => WPAIC_Pro_Features::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
             // wpaic_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
@@ -328,10 +351,21 @@ class WPAIC_Chatbot_Widget {
                     'rate_limited'           => __('Too many requests. Please try again in a moment.', 'rapls-ai-chatbot'),
                     'recaptcha_required'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'recaptcha_misconfigured' => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+                    'recaptcha_failed'       => __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'),
+                    'recaptcha_missing'      => __('Security verification failed. Please reload the page.', 'rapls-ai-chatbot'),
+                    'recaptcha_low_score'    => __('Security check failed.', 'rapls-ai-chatbot'),
+                    'recaptcha_unavailable'  => '__use_server_message__',
                     'origin_mismatch'        => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'honeypot_triggered'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'queue_full'             => '__use_server_message__',
                     'country_blocked'        => '__use_server_message__',
+                    'ip_blocked'             => '__use_server_message__',
+                    'ip_not_whitelisted'     => '__use_server_message__',
+                    'role_denied'            => __('Chat is not available for your account.', 'rapls-ai-chatbot'),
+                    'budget_exceeded'        => '__use_server_message__',
+                    'banned_words'           => '__use_server_message__',
+                    'spam_detected'          => '__use_server_message__',
+                    'invalid_message'        => __('Please enter a valid message.', 'rapls-ai-chatbot'),
                 ],
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
@@ -361,6 +395,7 @@ class WPAIC_Chatbot_Widget {
                 'sentiment_positive'     => __('Positive', 'rapls-ai-chatbot'),
                 'sentiment_negative'     => __('Negative', 'rapls-ai-chatbot'),
                 'out_of_stock'           => __('Out of stock', 'rapls-ai-chatbot'),
+                'related_knowledge'      => __('Related', 'rapls-ai-chatbot'),
                 'handoff_waiting'        => __('Waiting for support representative...', 'rapls-ai-chatbot'),
                 'handoff_pending'        => __('A support representative has been notified. Please wait...', 'rapls-ai-chatbot'),
                 'handoff_active'         => __('Connected with support', 'rapls-ai-chatbot'),
@@ -370,7 +405,12 @@ class WPAIC_Chatbot_Widget {
                 'operator_label'         => __('Support', 'rapls-ai-chatbot'),
                 'bookmark'               => __('Bookmark this message', 'rapls-ai-chatbot'),
                 'bookmarked'             => __('Bookmarked', 'rapls-ai-chatbot'),
+                'bookmark_nav'           => __('Navigate bookmarks', 'rapls-ai-chatbot'),
+                'bookmark_prev'          => __('Previous bookmark', 'rapls-ai-chatbot'),
+                'bookmark_next'          => __('Next bookmark', 'rapls-ai-chatbot'),
                 'search_placeholder'     => __('Search messages...', 'rapls-ai-chatbot'),
+                'search_prev'            => __('Previous match', 'rapls-ai-chatbot'),
+                'search_next'            => __('Next match', 'rapls-ai-chatbot'),
                 'share_conversation'     => __('Copy conversation', 'rapls-ai-chatbot'),
                 'share_copied'           => __('Conversation copied to clipboard', 'rapls-ai-chatbot'),
                 'placeholder'            => __('Type a message...', 'rapls-ai-chatbot'),
@@ -381,6 +421,10 @@ class WPAIC_Chatbot_Widget {
                 'dedup_truncated'        => __('Your message was received and processed. Please reload the page to see the response.', 'rapls-ai-chatbot'),
                 'dedup_stale'            => __('A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.', 'rapls-ai-chatbot'),
                 'dedup_truncated_no_history' => __('Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.', 'rapls-ai-chatbot'),
+                'scenario'               => __('Scenario', 'rapls-ai-chatbot'),
+                'scenario_completed'     => __('completed', 'rapls-ai-chatbot'),
+                'open'                   => __('Open', 'rapls-ai-chatbot'),
+                'api_error'              => __('API error', 'rapls-ai-chatbot'),
             ],
         ]);
     }
@@ -459,7 +503,10 @@ class WPAIC_Chatbot_Widget {
                     }
                     // Bot-specific primary color override
                     if (!empty($page_bot_config['primary_color'])) {
-                        $primary_color = sanitize_hex_color($page_bot_config['primary_color']);
+                        $sanitized = sanitize_hex_color($page_bot_config['primary_color']);
+                        if ($sanitized) {
+                            $primary_color = $sanitized;
+                        }
                     }
                     // Bot-specific badge override
                     if (!empty($page_bot_config['badge_icon_type']) && $page_bot_config['badge_icon_type'] !== 'default') {
@@ -477,6 +524,11 @@ class WPAIC_Chatbot_Widget {
                     );
                 }
             }
+        }
+
+        // Output bot-specific primary color override (after wp_head, so inline <style> is needed)
+        if (!empty($primary_color) && $primary_color !== ($settings['primary_color'] ?? '#007bff')) {
+            echo '<style>:root{--wpaic-primary:' . esc_attr($primary_color) . ';--wpaic-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
         }
 
         include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';

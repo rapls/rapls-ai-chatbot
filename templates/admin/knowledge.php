@@ -236,12 +236,12 @@ $is_pro = $pro_features->is_pro();
 
         <?php if ($is_pro && !empty($knowledge_list)): ?>
         <div class="wpaic-export-actions" style="margin-bottom: 15px;">
-            <button type="button" class="button wpaic-export-knowledge" data-format="csv">
-                <span class="dashicons dashicons-download" style="vertical-align: text-bottom;"></span>
+            <button type="button" class="button wpaic-export-knowledge" data-format="csv" style="display: inline-flex; align-items: center; gap: 4px;">
+                <span class="dashicons dashicons-download"></span>
                 <?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?>
             </button>
-            <button type="button" class="button wpaic-export-knowledge" data-format="json">
-                <span class="dashicons dashicons-download" style="vertical-align: text-bottom;"></span>
+            <button type="button" class="button wpaic-export-knowledge" data-format="json" style="display: inline-flex; align-items: center; gap: 4px;">
+                <span class="dashicons dashicons-download"></span>
                 <?php esc_html_e('Export JSON', 'rapls-ai-chatbot'); ?>
             </button>
             <span class="wpaic-export-knowledge-status"></span>
@@ -285,7 +285,7 @@ $is_pro = $pro_features->is_pro();
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <select class="wpaic-priority-select" data-id="<?php echo esc_attr($item['id']); ?>">
+                                <select class="wpaic-priority-select" data-id="<?php echo esc_attr($item['id']); ?>" aria-label="<?php esc_attr_e('Priority', 'rapls-ai-chatbot'); ?>">
                                     <option value="0" <?php selected($item['priority'] ?? 0, 0); ?>>0</option>
                                     <option value="25" <?php selected($item['priority'] ?? 0, 25); ?>>25</option>
                                     <option value="50" <?php selected($item['priority'] ?? 0, 50); ?>>50</option>
@@ -297,6 +297,7 @@ $is_pro = $pro_features->is_pro();
                                 <label class="wpaic-toggle">
                                     <input type="checkbox" class="wpaic-toggle-active"
                                            data-id="<?php echo esc_attr($item['id']); ?>"
+                                           aria-label="<?php esc_attr_e('Toggle active status', 'rapls-ai-chatbot'); ?>"
                                            <?php checked($item['is_active'], 1); ?>>
                                     <span class="wpaic-toggle-slider"></span>
                                 </label>
@@ -340,6 +341,9 @@ $is_pro = $pro_features->is_pro();
                             $base_url = admin_url('admin.php?page=wpaic-knowledge');
                             if (!empty($category)) {
                                 $base_url = add_query_arg('category', $category, $base_url);
+                            }
+                            if (!empty($status_filter)) {
+                                $base_url = add_query_arg('status', $status_filter, $base_url);
                             }
                             $base_url = add_query_arg([
                                 'orderby' => $orderby,
@@ -411,8 +415,27 @@ $is_pro = $pro_features->is_pro();
                 <p class="submit">
                     <button type="submit" class="button button-primary"><?php esc_html_e('Update', 'rapls-ai-chatbot'); ?></button>
                     <button type="button" class="button wpaic-modal-close"><?php esc_html_e('Cancel', 'rapls-ai-chatbot'); ?></button>
+                    <?php if ($is_pro): ?>
+                    <button type="button" class="button" id="wpaic-show-versions" style="float: right; display: inline-flex; align-items: center; gap: 4px;">
+                        <span class="dashicons dashicons-backup"></span>
+                        <?php esc_html_e('Version History', 'rapls-ai-chatbot'); ?>
+                    </button>
+                    <?php endif; ?>
                 </p>
             </form>
+            <?php if ($is_pro): ?>
+            <div id="wpaic-versions-panel" style="display: none; margin-top: 16px; border-top: 1px solid #ddd; padding-top: 16px;">
+                <h3 style="margin-top: 0;"><?php esc_html_e('Version History', 'rapls-ai-chatbot'); ?></h3>
+                <div id="wpaic-versions-list"></div>
+                <div id="wpaic-diff-panel" style="display: none; margin-top: 12px; border: 1px solid #ddd; background: #f9f9f9; border-radius: 4px;">
+                    <div style="padding: 8px 12px; background: #fff; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                        <strong id="wpaic-diff-title"></strong>
+                        <button type="button" class="button button-small" id="wpaic-diff-close">&times;</button>
+                    </div>
+                    <div id="wpaic-diff-content" style="padding: 12px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap;"></div>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -578,11 +601,11 @@ jQuery(document).ready(function($) {
                         location.reload();
                     }, 1000);
                 } else {
-                    $status.html('<span style="color: red;">' + response.data + '</span>');
+                    $status.html('<span style="color: red;"></span>').find('span').text(response.data);
                 }
             },
             error: function() {
-                $status.html('<span style="color: red;">' + (i18n.error || '<?php echo esc_js(__('An error occurred', 'rapls-ai-chatbot')); ?>') + '</span>');
+                $status.html('<span style="color: red;"></span>').find('span').text(i18n.error || '<?php echo esc_js(__('An error occurred', 'rapls-ai-chatbot')); ?>');
             },
             complete: function() {
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Add', 'rapls-ai-chatbot')); ?>');
@@ -621,17 +644,17 @@ jQuery(document).ready(function($) {
             timeout: 60000,
             success: function(response) {
                 if (response.success) {
-                    $status.html('<span style="color: green;">' + response.data.message + '</span>');
+                    $status.html('<span style="color: green;"></span>').find('span').text(response.data.message);
                     $form[0].reset();
                     setTimeout(function() {
                         location.reload();
                     }, 1000);
                 } else {
-                    $status.html('<span style="color: red;">' + (response.data || '<?php echo esc_js(__('Import failed', 'rapls-ai-chatbot')); ?>') + '</span>');
+                    $status.html('<span style="color: red;"></span>').find('span').text(response.data || '<?php echo esc_js(__('Import failed', 'rapls-ai-chatbot')); ?>');
                 }
             },
             error: function() {
-                $status.html('<span style="color: red;">' + (i18n.error || '<?php echo esc_js(__('An error occurred', 'rapls-ai-chatbot')); ?>') + '</span>');
+                $status.html('<span style="color: red;"></span>').find('span').text(i18n.error || '<?php echo esc_js(__('An error occurred', 'rapls-ai-chatbot')); ?>');
             },
             complete: function() {
                 $button.prop('disabled', false).text('<?php echo esc_js(__('Import', 'rapls-ai-chatbot')); ?>');
@@ -836,12 +859,12 @@ jQuery(document).ready(function($) {
             nonce: wpaicAdmin.nonce
         }, function(response) {
             if (response.success) {
-                $status.html('<span style="color:green;">' + response.data.message + '</span>');
+                $status.html('<span style="color:green;"></span>').find('span').text(response.data.message);
                 setTimeout(function() {
                     window.location.href = '<?php echo esc_url(admin_url('admin.php?page=wpaic-knowledge&status=draft')); ?>';
                 }, 1500);
             } else {
-                $status.html('<span style="color:red;">' + response.data + '</span>');
+                $status.html('<span style="color:red;"></span>').find('span').text(response.data);
             }
         }).fail(function() {
             $status.html('<span style="color:red;"><?php echo esc_js(__('An error occurred', 'rapls-ai-chatbot')); ?></span>');
@@ -866,8 +889,11 @@ jQuery(document).ready(function($) {
                 $row.find('.wpaic-approve-draft, .wpaic-reject-draft').remove();
                 $row.find('td:last').prepend('<button type="button" class="button button-small button-link-delete wpaic-delete-knowledge" data-id="' + id + '"><?php echo esc_js(__('Delete', 'rapls-ai-chatbot')); ?></button> ');
             } else {
-                alert(response.data);
+                alert(response.data || '<?php echo esc_js(__('Error', 'rapls-ai-chatbot')); ?>');
             }
+        }).fail(function(xhr) {
+            console.error('wpaic_approve_faq_draft failed:', xhr.status, xhr.responseText);
+            alert('AJAX error: ' + xhr.status);
         });
     });
 
@@ -890,9 +916,13 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 $row.fadeOut(300, function() { $(this).remove(); });
             } else {
-                alert(response.data);
+                alert(response.data || '<?php echo esc_js(__('Error', 'rapls-ai-chatbot')); ?>');
                 $row.css('opacity', '1');
             }
+        }).fail(function(xhr) {
+            console.error('wpaic_reject_faq_draft failed:', xhr.status, xhr.responseText);
+            alert('AJAX error: ' + xhr.status);
+            $row.css('opacity', '1');
         });
     });
 
@@ -922,6 +952,217 @@ jQuery(document).ready(function($) {
             setTimeout(function() { $status.text(''); }, 3000);
         }, 1500);
     });
+
+    // ── Version History (Pro) ──────────────────────────────────────────
+    <?php if ($is_pro): ?>
+
+    // Line-based diff (WordPress revision style: red=removed, green=added)
+    function wpaicLineDiff(oldText, newText) {
+        if (oldText === newText) {
+            return '<span style="color:#50575e;"><?php echo esc_js(__('No changes.', 'rapls-ai-chatbot')); ?></span>';
+        }
+        var esc = function(s) { return $('<span>').text(s).html(); };
+        var oldLines = oldText.split('\n');
+        var newLines = newText.split('\n');
+
+        // LCS (Longest Common Subsequence) to find matching lines
+        var m = oldLines.length, n = newLines.length;
+        var dp = [];
+        for (var i = 0; i <= m; i++) {
+            dp[i] = [];
+            for (var j = 0; j <= n; j++) {
+                if (i === 0 || j === 0) { dp[i][j] = 0; }
+                else if (oldLines[i - 1] === newLines[j - 1]) { dp[i][j] = dp[i - 1][j - 1] + 1; }
+                else { dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]); }
+            }
+        }
+
+        // Backtrack to build diff operations
+        var ops = [];
+        i = m; var j = n;
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+                ops.push({ type: 'equal', line: oldLines[i - 1] });
+                i--; j--;
+            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                ops.push({ type: 'add', line: newLines[j - 1] });
+                j--;
+            } else {
+                ops.push({ type: 'del', line: oldLines[i - 1] });
+                i--;
+            }
+        }
+        ops.reverse();
+
+        // Context diff: show only changed lines with up to 3 lines of surrounding context
+        var ctx = 3;
+        var show = [];
+        for (i = 0; i < ops.length; i++) { show[i] = (ops[i].type !== 'equal'); }
+        for (i = 0; i < ops.length; i++) {
+            if (ops[i].type !== 'equal') { continue; }
+            for (var k = Math.max(0, i - ctx); k <= Math.min(ops.length - 1, i + ctx); k++) {
+                if (ops[k].type !== 'equal') { show[i] = true; break; }
+            }
+        }
+
+        var html = '';
+        var inGap = false;
+        for (i = 0; i < ops.length; i++) {
+            if (!show[i]) {
+                if (!inGap) {
+                    html += '<div style="padding:1px 6px;color:#999;text-align:center;font-size:12px;">⋯</div>';
+                    inGap = true;
+                }
+                continue;
+            }
+            inGap = false;
+            var o = ops[i];
+            if (o.type === 'equal') {
+                html += '<div style="padding:1px 6px;color:#50575e;">&nbsp; ' + esc(o.line) + '</div>';
+            } else if (o.type === 'del') {
+                html += '<div style="padding:1px 6px;background:#fcdddd;"><del style="text-decoration:none;">− ' + esc(o.line) + '</del></div>';
+            } else {
+                html += '<div style="padding:1px 6px;background:#d4fcd5;"><ins style="text-decoration:none;">+ ' + esc(o.line) + '</ins></div>';
+            }
+        }
+        return html;
+    }
+
+    var _versionCache = [];
+
+    $('#wpaic-show-versions').on('click', function() {
+        var $panel = $('#wpaic-versions-panel');
+        var $list = $('#wpaic-versions-list');
+        var knowledgeId = $('#edit-knowledge-id').val();
+
+        if ($panel.is(':visible')) {
+            $panel.slideUp(200);
+            return;
+        }
+
+        $list.html('<p><span class="spinner is-active" style="float:none; margin:0 8px 0 0;"></span><?php echo esc_js(__('Loading...', 'rapls-ai-chatbot')); ?></p>');
+        $('#wpaic-diff-panel').hide();
+        $panel.slideDown(200);
+
+        $.post(wpaicAdmin.ajaxUrl, {
+            action: 'wpaic_get_knowledge_versions',
+            nonce: wpaicAdmin.nonce,
+            knowledge_id: knowledgeId
+        }, function(r) {
+            if (!r.success || !r.data.versions || r.data.versions.length === 0) {
+                $list.html('<p class="description"><?php echo esc_js(__('No version history found.', 'rapls-ai-chatbot')); ?></p>');
+                return;
+            }
+            _versionCache = r.data.versions;
+            var html = '<table class="widefat striped" style="max-width: 100%;"><thead><tr>'
+                + '<th style="width:50px;">#</th>'
+                + '<th style="width:120px;"><?php echo esc_js(__('Author', 'rapls-ai-chatbot')); ?></th>'
+                + '<th style="width:150px;"><?php echo esc_js(__('Date', 'rapls-ai-chatbot')); ?></th>'
+                + '<th style="width:180px;"><?php echo esc_js(__('Actions', 'rapls-ai-chatbot')); ?></th>'
+                + '</tr></thead><tbody>';
+
+            _versionCache.forEach(function(v, idx) {
+                html += '<tr>'
+                    + '<td>v' + v.version_number + '</td>'
+                    + '<td>' + $('<span>').text(v.created_by_name).html() + '</td>'
+                    + '<td>' + $('<span>').text(v.created_at).html() + '</td>'
+                    + '<td>'
+                    + '<button type="button" class="button button-small wpaic-preview-version" data-idx="' + idx + '"><?php echo esc_js(__('Diff', 'rapls-ai-chatbot')); ?></button> '
+                    + '<button type="button" class="button button-small wpaic-restore-version" data-id="' + v.id + '" data-version="' + v.version_number + '">↩ <?php echo esc_js(__('Restore', 'rapls-ai-chatbot')); ?></button>'
+                    + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            $list.html(html);
+        }).fail(function() {
+            $list.html('<p class="description" style="color:#d63638;"><?php echo esc_js(__('Failed to load version history.', 'rapls-ai-chatbot')); ?></p>');
+        });
+    });
+
+    // Diff preview — compare version content with current form content
+    $(document).on('click', '.wpaic-preview-version', function() {
+        var idx = $(this).data('idx');
+        var v = _versionCache[idx];
+        if (!v) { return; }
+
+        var currentContent = $('#edit-knowledge-content').val();
+        var oldContent = v.content;
+
+        $('#wpaic-diff-title').text('v' + v.version_number + ' → <?php echo esc_js(__('Current', 'rapls-ai-chatbot')); ?>');
+
+        var diffHtml = '';
+        // Title diff
+        var currentTitle = $('#edit-knowledge-title').val();
+        if (v.title !== currentTitle) {
+            diffHtml += '<div style="margin-bottom:8px;"><strong><?php echo esc_js(__('Title', 'rapls-ai-chatbot')); ?>:</strong><br>' + wpaicLineDiff(v.title, currentTitle) + '</div>';
+        }
+        // Content diff
+        diffHtml += '<div><strong><?php echo esc_js(__('Content', 'rapls-ai-chatbot')); ?>:</strong><br>' + wpaicLineDiff(oldContent, currentContent) + '</div>';
+        // Category diff
+        var currentCat = $('#edit-knowledge-category').val();
+        if (v.category !== currentCat) {
+            diffHtml += '<div style="margin-top:8px;"><strong><?php echo esc_js(__('Category', 'rapls-ai-chatbot')); ?>:</strong> ' + wpaicLineDiff(v.category || '(none)', currentCat || '(none)') + '</div>';
+        }
+
+        $('#wpaic-diff-content').html(diffHtml);
+        $('#wpaic-diff-panel').show();
+        // Auto-scroll modal body to show diff panel
+        var $modalBody = $('#wpaic-diff-panel').closest('.wpaic-modal-body');
+        if ($modalBody.length) {
+            $modalBody.animate({ scrollTop: $modalBody[0].scrollHeight }, 300);
+        }
+    });
+
+    $('#wpaic-diff-close').on('click', function() {
+        $('#wpaic-diff-panel').slideUp(200);
+    });
+
+    // Restore version — save to DB
+    $(document).on('click', '.wpaic-restore-version', function() {
+        var $btn = $(this);
+        var versionNum = $btn.data('version');
+        if (!confirm('<?php echo esc_js(__('Restore to version', 'rapls-ai-chatbot')); ?> v' + versionNum + '?')) {
+            return;
+        }
+        $btn.prop('disabled', true);
+        $.post(wpaicAdmin.ajaxUrl, {
+            action: 'wpaic_restore_knowledge_version',
+            nonce: wpaicAdmin.nonce,
+            version_id: $btn.data('id')
+        }, function(r) {
+            if (r.success) {
+                // Reload the edit form with restored data
+                var knowledgeId = $('#edit-knowledge-id').val();
+                $.post(wpaicAdmin.ajaxUrl, {
+                    action: 'wpaic_get_knowledge',
+                    nonce: wpaicAdmin.nonce,
+                    id: knowledgeId
+                }, function(kr) {
+                    if (kr.success) {
+                        $('#edit-knowledge-title').val(kr.data.title);
+                        $('#edit-knowledge-content').val(kr.data.content);
+                        $('#edit-knowledge-category').val(kr.data.category || '');
+                        $('#edit-knowledge-priority').val(kr.data.priority || 0);
+                    }
+                });
+                $('#wpaic-versions-panel').slideUp(200);
+                alert('<?php echo esc_js(__('Version restored successfully.', 'rapls-ai-chatbot')); ?>');
+                // Reload page to reflect changes in the table
+                location.reload();
+            } else {
+                alert(r.data || '<?php echo esc_js(__('Failed to restore version.', 'rapls-ai-chatbot')); ?>');
+                $btn.prop('disabled', false);
+            }
+        }).fail(function() {
+            alert('<?php echo esc_js(__('AJAX error.', 'rapls-ai-chatbot')); ?>');
+            $btn.prop('disabled', false);
+        });
+    });
+
+    // Hide versions panel when modal closes
+    $('.wpaic-modal-close').on('click', function() {
+        $('#wpaic-versions-panel').hide();
+    });
+    <?php endif; ?>
 
 });
 </script>

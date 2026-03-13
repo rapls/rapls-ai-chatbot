@@ -160,6 +160,7 @@ class WPAIC_Main {
         $this->loader->add_action('admin_init', $admin, 'register_settings');
         $this->loader->add_action('admin_init', $this, 'add_privacy_policy_content');
         $this->loader->add_action('admin_init', $this, 'maybe_upgrade_database');
+        $this->loader->add_action('admin_init', $admin, 'maybe_encrypt_plaintext_keys_on_init');
         $this->loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_styles');
         $this->loader->add_action('admin_enqueue_scripts', $admin, 'enqueue_scripts');
         $this->loader->add_filter('update_footer', $admin, 'admin_footer_build_info', 20);
@@ -275,6 +276,12 @@ class WPAIC_Main {
                 'display'  => __('Monthly', 'rapls-ai-chatbot'),
             ];
         }
+        if (!isset($schedules['wpaic_half_hourly'])) {
+            $schedules['wpaic_half_hourly'] = [
+                'interval' => 30 * MINUTE_IN_SECONDS,
+                'display'  => __('Every 30 minutes', 'rapls-ai-chatbot'),
+            ];
+        }
         return $schedules;
     }
 
@@ -311,7 +318,13 @@ class WPAIC_Main {
         global $wpdb;
 
         $settings = get_option('wpaic_settings', []);
-        $retention_days = isset($settings['retention_days']) ? (int) $settings['retention_days'] : 90;
+        $pro = $settings['pro_features'] ?? [];
+
+        if (!empty($pro['data_retention_enabled'])) {
+            $retention_days = max(1, (int) ($pro['data_retention_days'] ?? 365));
+        } else {
+            $retention_days = isset($settings['retention_days']) ? (int) $settings['retention_days'] : 90;
+        }
 
         if ($retention_days <= 0) {
             return;
