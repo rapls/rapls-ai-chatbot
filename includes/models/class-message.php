@@ -88,6 +88,7 @@ class WPAIC_Message {
         foreach ($messages as &$msg) {
             $msg['content'] = apply_filters('wpaic_message_content_load', $msg['content'], $msg);
         }
+        unset($msg);
 
         return array_reverse($messages);
     }
@@ -112,6 +113,7 @@ class WPAIC_Message {
         foreach ($messages as &$msg) {
             $msg['content'] = apply_filters('wpaic_message_content_load', $msg['content'], $msg);
         }
+        unset($msg);
 
         return array_reverse($messages);
     }

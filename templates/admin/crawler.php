@@ -19,7 +19,7 @@ $post_types = get_post_types(['public' => true], 'objects');
             <h2><?php esc_html_e('Learning Status', 'rapls-ai-chatbot'); ?></h2>
             <table class="wpaic-status-table">
                 <tr>
-                    <td><?php esc_html_e('Learning Feature', 'rapls-ai-chatbot'); ?></td>
+                    <td><?php esc_html_e('Site Learning', 'rapls-ai-chatbot'); ?></td>
                     <td>
                         <span class="status-badge status-<?php echo esc_attr( $status['enabled'] ? 'ok' : 'off' ); ?>">
                             <?php echo $status['enabled'] ? esc_html__('Enabled', 'rapls-ai-chatbot') : esc_html__('Disabled', 'rapls-ai-chatbot'); ?>
@@ -160,7 +160,7 @@ $post_types = get_post_types(['public' => true], 'objects');
 
                 <table class="form-table">
                     <tr>
-                        <th scope="row"><?php esc_html_e('Learning Feature', 'rapls-ai-chatbot'); ?></th>
+                        <th scope="row"><?php esc_html_e('Site Learning', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="wpaic_settings[crawler_enabled]" value="1"
@@ -229,7 +229,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                         <td>
                             <input type="number" name="wpaic_settings[crawler_max_results]"
                                    value="<?php echo esc_attr($settings['crawler_max_results'] ?? 3); ?>"
-                                   min="1" max="10" class="small-text">
+                                   min="1" max="20" class="small-text">
                             <p class="description"><?php esc_html_e('Maximum pages to reference when answering', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
@@ -339,8 +339,8 @@ $post_types = get_post_types(['public' => true], 'objects');
                      exposure in page source. The sanitize_settings() callback preserves
                      existing keys when blank values are submitted. -->
                 <input type="hidden" name="wpaic_settings[openai_model]" value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o-mini'); ?>">
-                <input type="hidden" name="wpaic_settings[claude_model]" value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-sonnet-4-20250514'); ?>">
-                <input type="hidden" name="wpaic_settings[gemini_model]" value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'); ?>">
+                <input type="hidden" name="wpaic_settings[claude_model]" value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'); ?>">
+                <input type="hidden" name="wpaic_settings[gemini_model]" value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash'); ?>">
                 <input type="hidden" name="wpaic_settings[openrouter_model]" value="<?php echo esc_attr($settings['openrouter_model'] ?? 'openrouter/auto'); ?>">
                 <input type="hidden" name="wpaic_settings[bot_name]" value="<?php echo esc_attr($settings['bot_name'] ?? 'Assistant'); ?>">
                 <input type="hidden" name="wpaic_settings[bot_avatar]" value="<?php echo esc_attr($settings['bot_avatar'] ?? '🤖'); ?>">
@@ -409,14 +409,19 @@ $post_types = get_post_types(['public' => true], 'objects');
                         <?php foreach ($indexed_list as $item): ?>
                             <tr data-post-id="<?php echo esc_attr($item['post_id']); ?>">
                                 <td>
-                                    <a href="<?php echo esc_url(get_edit_post_link($item['post_id'])); ?>">
+                                    <?php $edit_link = $item['post_id'] ? get_edit_post_link($item['post_id']) : ''; ?>
+                                    <?php if ($edit_link): ?>
+                                    <a href="<?php echo esc_url($edit_link); ?>">
                                         <?php echo esc_html($item['title']); ?>
                                     </a>
+                                    <?php else: ?>
+                                        <?php echo esc_html($item['title']); ?>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?php echo esc_html($item['post_type']); ?></td>
                                 <td>
                                     <a href="<?php echo esc_url($item['url']); ?>" target="_blank">
-                                        <?php echo esc_html(wp_trim_words($item['url'], 5)); ?>
+                                        <?php echo esc_html(mb_strlen($item['url']) > 50 ? mb_substr($item['url'], 0, 50) . '...' : $item['url']); ?>
                                     </a>
                                 </td>
                                 <td><?php echo esc_html(mysql2date('Y/m/d H:i', $item['indexed_at'])); ?></td>

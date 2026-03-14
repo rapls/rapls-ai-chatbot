@@ -140,13 +140,13 @@ function wpaic_create_ai_provider(array $settings, ?array $bot_config = null): W
         case 'claude':
             $provider = new WPAIC_Claude_Provider();
             $provider->set_api_key(wpaic_decrypt_api_key($settings['claude_api_key'] ?? ''));
-            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['claude_model'] ?? 'claude-sonnet-4-20250514'));
+            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'));
             break;
 
         case 'gemini':
             $provider = new WPAIC_Gemini_Provider();
             $provider->set_api_key(wpaic_decrypt_api_key($settings['gemini_api_key'] ?? ''));
-            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'));
+            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['gemini_model'] ?? 'gemini-2.0-flash'));
             break;
 
         case 'openrouter':
@@ -158,7 +158,7 @@ function wpaic_create_ai_provider(array $settings, ?array $bot_config = null): W
         default: // openai
             $provider = new WPAIC_OpenAI_Provider();
             $provider->set_api_key(wpaic_decrypt_api_key($settings['openai_api_key'] ?? ''));
-            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openai_model'] ?? 'gpt-4o'));
+            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openai_model'] ?? 'gpt-4o-mini'));
             break;
     }
 

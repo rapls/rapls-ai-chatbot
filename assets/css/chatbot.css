@@ -71,7 +71,7 @@
 }
 
 .chatbot-badge:focus {
-    outline: none;
+    outline: 2px solid transparent;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3), var(--wpaic-shadow);
 }
 
@@ -202,14 +202,38 @@
 }
 
 /* 上配置: リサイズハンドルを左下に移動 */
-.wp-ai-chatbot[data-position="top-right"] .chatbot-resize-handle,
-.wp-ai-chatbot[data-position="top-left"] .chatbot-resize-handle {
+.wp-ai-chatbot[data-position="top-right"] .chatbot-resize-handle {
     top: auto;
     bottom: 0;
     cursor: nesw-resize;
 }
+.wp-ai-chatbot[data-position="top-left"] .chatbot-resize-handle {
+    top: auto;
+    bottom: 0;
+    left: auto;
+    right: 0;
+    cursor: nwse-resize;
+}
+/* bottom-left: handle on right side */
+.wp-ai-chatbot[data-position="bottom-left"] .chatbot-resize-handle {
+    left: auto;
+    right: 0;
+    cursor: nesw-resize;
+}
 
-.wp-ai-chatbot[data-position="top-right"] .chatbot-resize-handle::before,
+.wp-ai-chatbot[data-position="top-right"] .chatbot-resize-handle::before {
+    top: auto;
+    bottom: 6px;
+    border-top: none;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.8);
+}
+.wp-ai-chatbot[data-position="top-left"] .chatbot-resize-handle::before,
+.wp-ai-chatbot[data-position="bottom-left"] .chatbot-resize-handle::before {
+    left: auto;
+    right: 6px;
+    border-left: none;
+    border-right: 3px solid rgba(255, 255, 255, 0.8);
+}
 .wp-ai-chatbot[data-position="top-left"] .chatbot-resize-handle::before {
     top: auto;
     bottom: 6px;
@@ -915,7 +939,7 @@
     resize: none;
     max-height: 100px;
     line-height: 1.4;
-    outline: none;
+    outline: 2px solid transparent;
     transition: border-color 0.2s, box-shadow 0.2s;
     background: #ffffff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
@@ -1158,6 +1182,13 @@
 /* ============================================
    モバイル対応
 ============================================ */
+@media (max-width: 768px) {
+    .chatbot-window {
+        min-width: 280px;
+        min-height: 350px;
+    }
+}
+
 @media (max-width: 480px) {
     .wp-ai-chatbot {
         bottom: 0;
@@ -1170,8 +1201,10 @@
     }
 
     .wp-ai-chatbot[data-state="open"] {
-        left: 0;
-        top: 0;
+        left: 0 !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
     }
 
     .wp-ai-chatbot[data-state="open"] .chatbot-window {
@@ -1208,6 +1241,13 @@
     .chatbot-typing span:nth-child(1) { opacity: 1; }
     .chatbot-typing span:nth-child(2) { opacity: 0.7; }
     .chatbot-typing span:nth-child(3) { opacity: 0.4; }
+
+    .chatbot-sentiment,
+    .chatbot-handoff-dot,
+    .chatbot-mic-btn.recording,
+    .chatbot-screenshot-btn.capturing {
+        animation: none;
+    }
 }
 
 /* ハイコントラストモード */
@@ -1221,9 +1261,6 @@
     }
 }
 
-/* ============================================
-   関連質問サジェスト (Pro)
-============================================ */
 /* ============================================
    関連ナレッジリンク (Pro)
 ============================================ */
@@ -1378,9 +1415,6 @@
     box-shadow: 0 0 6px rgba(102, 102, 102, 0.6);
 }
 
-/* ============================================
-   会話サマリー (Pro)
-============================================ */
 /* ============================================
    テーマスタイル
 ============================================ */
@@ -1673,7 +1707,7 @@
 .lead-field input:focus,
 .lead-field textarea:focus,
 .lead-field select:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--wpaic-primary);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
@@ -1828,7 +1862,7 @@
 }
 
 .wpaic-offline-input:focus {
-    outline: none;
+    outline: 2px solid transparent;
     border-color: var(--wpaic-bot-bg, #667eea);
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
 }
@@ -2055,6 +2089,8 @@ textarea.wpaic-offline-input {
     text-align: center;
     padding: 8px 16px;
     margin: 12px 0;
+    align-self: center;
+    max-width: 100%;
 }
 
 .chatbot-message--system .chatbot-message__content {
@@ -2070,6 +2106,13 @@ textarea.wpaic-offline-input {
 }
 
 /* オペレーターメッセージ */
+.chatbot-message--operator {
+    align-self: flex-start;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
 .chatbot-message--operator .chatbot-message__content {
     background: #e8f5e9;
     border-left: 3px solid #4caf50;
@@ -2308,7 +2351,7 @@ textarea.wpaic-offline-input {
     font-size: 13px;
     background: #fff;
     color: var(--wpaic-text, #333);
-    outline: none;
+    outline: 2px solid transparent;
     box-sizing: border-box;
 }
 

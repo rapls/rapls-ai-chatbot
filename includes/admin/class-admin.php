@@ -264,7 +264,7 @@ class WPAIC_Admin {
     public function sanitize_settings_values(array $settings, array $existing = []): array {
         // Numeric clamps (same ranges as sanitize_settings and REST controller)
         if (isset($settings['max_tokens'])) {
-            $settings['max_tokens'] = max(1, min(16384, absint($settings['max_tokens'])));
+            $settings['max_tokens'] = max(100, min(16384, absint($settings['max_tokens'])));
         }
         if (isset($settings['temperature'])) {
             $settings['temperature'] = max(0.0, min(2.0, floatval($settings['temperature'])));
@@ -276,7 +276,9 @@ class WPAIC_Admin {
             $settings['rate_limit'] = absint($settings['rate_limit']);
         }
         if (isset($settings['rate_limit_window'])) {
-            $settings['rate_limit_window'] = max(60, absint($settings['rate_limit_window']));
+            $valid_windows = [60, 300, 600, 1800, 3600, 10800, 21600, 43200, 86400];
+            $val = absint($settings['rate_limit_window']);
+            $settings['rate_limit_window'] = in_array($val, $valid_windows, true) ? $val : ($existing['rate_limit_window'] ?? 3600);
         }
         if (isset($settings['crawler_max_results'])) {
             $settings['crawler_max_results'] = max(1, min(20, absint($settings['crawler_max_results'])));
@@ -302,8 +304,16 @@ class WPAIC_Admin {
             }
         }
 
+        // Response language allowlist
+        if (isset($settings['response_language'])) {
+            $valid_langs = ['', 'auto', 'en', 'ja', 'zh', 'ko', 'es', 'fr', 'de', 'pt', 'it', 'ru', 'ar', 'th', 'vi'];
+            if (!in_array($settings['response_language'], $valid_langs, true)) {
+                $settings['response_language'] = $existing['response_language'] ?? '';
+            }
+        }
+
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -331,6 +341,39 @@ class WPAIC_Admin {
             $valid_emb_providers = ['auto', 'openai', 'gemini'];
             if (!in_array($settings['embedding_provider'], $valid_emb_providers, true)) {
                 $settings['embedding_provider'] = $existing['embedding_provider'] ?? 'auto';
+            }
+        }
+
+        // Additional numeric clamps
+        if (isset($settings['retention_days'])) {
+            $settings['retention_days'] = max(0, min(3650, absint($settings['retention_days'])));
+        }
+        if (isset($settings['crawler_chunk_size'])) {
+            $settings['crawler_chunk_size'] = max(100, min(10000, absint($settings['crawler_chunk_size'])));
+        }
+        if (isset($settings['recaptcha_threshold'])) {
+            $settings['recaptcha_threshold'] = max(0.1, min(1.0, floatval($settings['recaptcha_threshold'])));
+        }
+
+        // Additional allowlists
+        if (isset($settings['sources_display_mode'])) {
+            if (!in_array($settings['sources_display_mode'], ['none', 'matched', 'all'], true)) {
+                $settings['sources_display_mode'] = $existing['sources_display_mode'] ?? 'none';
+            }
+        }
+        if (isset($settings['recaptcha_fail_mode'])) {
+            if (!in_array($settings['recaptcha_fail_mode'], ['open', 'closed'], true)) {
+                $settings['recaptcha_fail_mode'] = $existing['recaptcha_fail_mode'] ?? 'open';
+            }
+        }
+        if (isset($settings['badge_position'])) {
+            if (!in_array($settings['badge_position'], ['bottom-right', 'bottom-left', 'top-right', 'top-left'], true)) {
+                $settings['badge_position'] = $existing['badge_position'] ?? 'bottom-right';
+            }
+        }
+        if (isset($settings['crawler_interval'])) {
+            if (!in_array($settings['crawler_interval'], ['hourly', 'twicedaily', 'daily', 'weekly', 'monthly'], true)) {
+                $settings['crawler_interval'] = $existing['crawler_interval'] ?? 'daily';
             }
         }
 
@@ -398,7 +441,7 @@ class WPAIC_Admin {
 
         $sanitized['openai_model'] = sanitize_text_field($input['openai_model'] ?? ($existing['openai_model'] ?? 'gpt-4o-mini'));
         $sanitized['claude_model'] = sanitize_text_field($input['claude_model'] ?? ($existing['claude_model'] ?? 'claude-haiku-4-5-20251001'));
-        $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash-exp'));
+        $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash'));
         $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model'] ?? ($existing['openrouter_model'] ?? 'openrouter/auto'));
 
         // Chatbot settings
@@ -425,11 +468,11 @@ class WPAIC_Admin {
         }
 
         $sanitized['system_prompt'] = sanitize_textarea_field($input['system_prompt'] ?? ($existing['system_prompt'] ?? ''));
-        $valid_langs = ['', 'auto', 'en', 'ja', 'zh', 'ko', 'es', 'fr', 'de', 'pt'];
+        $valid_langs = ['', 'auto', 'en', 'ja', 'zh', 'ko', 'es', 'fr', 'de', 'pt', 'it', 'ru', 'ar', 'th', 'vi'];
         $raw_lang = $input['response_language'] ?? ($existing['response_language'] ?? '');
         $sanitized['response_language'] = in_array($raw_lang, $valid_langs, true) ? $raw_lang : '';
         $sanitized['quota_error_message'] = sanitize_text_field($input['quota_error_message'] ?? ($existing['quota_error_message'] ?? ''));
-        $sanitized['max_tokens'] = max(1, min(16384, absint($input['max_tokens'] ?? ($existing['max_tokens'] ?? 1000))));
+        $sanitized['max_tokens'] = max(100, min(16384, absint($input['max_tokens'] ?? ($existing['max_tokens'] ?? 1000))));
         $sanitized['temperature'] = max(0.0, min(2.0, floatval($input['temperature'] ?? ($existing['temperature'] ?? 0.7))));
         $sanitized['message_history_count'] = max(1, min(50, absint($input['message_history_count'] ?? ($existing['message_history_count'] ?? 10))));
 
@@ -547,7 +590,7 @@ class WPAIC_Admin {
         } else {
             $sanitized['save_history'] = $existing['save_history'] ?? true;
         }
-        $sanitized['retention_days'] = max(1, min(3650, absint($input['retention_days'] ?? ($existing['retention_days'] ?? 90))));
+        $sanitized['retention_days'] = max(0, min(3650, absint($input['retention_days'] ?? ($existing['retention_days'] ?? 90))));
 
         // Web search setting (AI Settings tab)
         if ($settings_page_submitted) {
@@ -572,7 +615,9 @@ class WPAIC_Admin {
 
         // Rate limiting
         $sanitized['rate_limit'] = absint($input['rate_limit'] ?? ($existing['rate_limit'] ?? 20));
-        $sanitized['rate_limit_window'] = max(60, absint($input['rate_limit_window'] ?? ($existing['rate_limit_window'] ?? 3600)));
+        $valid_windows = [60, 300, 600, 1800, 3600, 10800, 21600, 43200, 86400];
+        $raw_window = absint($input['rate_limit_window'] ?? ($existing['rate_limit_window'] ?? 3600));
+        $sanitized['rate_limit_window'] = in_array($raw_window, $valid_windows, true) ? $raw_window : ($existing['rate_limit_window'] ?? 3600);
 
         // Cloudflare IP trust
         if ($settings_page_submitted) {
@@ -600,7 +645,7 @@ class WPAIC_Admin {
         }
         $sanitized['crawler_post_types'] = array_key_exists('crawler_post_types', $input)
             ? array_map('sanitize_text_field', $input['crawler_post_types'])
-            : ($existing['crawler_post_types'] ?? ['post', 'page']);
+            : ($existing['crawler_post_types'] ?? ['all']);
         $crawler_interval_raw = sanitize_text_field($input['crawler_interval'] ?? ($existing['crawler_interval'] ?? 'daily'));
         $sanitized['crawler_interval'] = in_array($crawler_interval_raw, ['hourly', 'twicedaily', 'daily', 'weekly', 'monthly'], true)
             ? $crawler_interval_raw
@@ -711,7 +756,8 @@ class WPAIC_Admin {
 
         // White label
         $sanitized['white_label_enabled'] = !empty($input['white_label_enabled']);
-        $sanitized['hide_powered_by'] = !empty($input['hide_powered_by']);
+        // hide_powered_by is on Display Settings tab, preserve existing value here
+        $sanitized['hide_powered_by'] = $existing['hide_powered_by'] ?? false;
         $sanitized['white_label_footer'] = sanitize_text_field($input['white_label_footer'] ?? ($existing['white_label_footer'] ?? ''));
         $sanitized['white_label_footer_url'] = esc_url_raw($input['white_label_footer_url'] ?? ($existing['white_label_footer_url'] ?? ''));
         $sanitized['white_label_footer_target'] = in_array($input['white_label_footer_target'] ?? '', ['_blank', '_self'], true) ? $input['white_label_footer_target'] : '_blank';
@@ -1664,96 +1710,19 @@ class WPAIC_Admin {
     }
 
     /**
-     * Decrypt API key
+     * Decrypt API key.
+     *
+     * Delegates to the global wpaic_decrypt_api_key() helper and sets
+     * a transient on failure so the admin notice can be displayed.
      */
     private function decrypt_api_key(string $encrypted): string {
-        if (empty($encrypted)) {
-            return '';
-        }
+        $decrypted = wpaic_decrypt_api_key($encrypted);
 
-        // Return as-is if not encrypted (check known API key prefixes)
-        if (strpos($encrypted, 'sk-') === 0 || strpos($encrypted, 'sk-ant-') === 0 || strpos($encrypted, 'AIza') === 0 || strpos($encrypted, 'sk-or-') === 0) {
-            return $encrypted;
-        }
-
-        if (!function_exists('openssl_decrypt')) {
-            return '';
-        }
-
-        $new_key = self::get_encryption_key();
-        $aad = self::get_encryption_aad();
-        $old_key = wp_salt('auth'); // Legacy: raw salt string
-
-        // AES-256-GCM (new format with tamper detection)
-        if (strpos($encrypted, 'encg:') === 0) {
-            $data = base64_decode(substr($encrypted, 5), true);
-            if ($data === false || strlen($data) <= 28) { // 12 (IV) + 16 (tag) = 28 minimum
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                return '';
-            }
-
-            $iv  = substr($data, 0, 12);
-            $tag = substr($data, 12, 16);
-            $encrypted_data = substr($data, 28);
-
-            // Try normalized key + AAD first (current format)
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
-
-            // Fallback: normalized key without AAD
-            if ($decrypted === false) {
-                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag);
-            }
-
-            // Fallback: legacy raw salt key without AAD
-            if ($decrypted === false) {
-                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $old_key, OPENSSL_RAW_DATA, $iv, $tag);
-            }
-
-            if ($decrypted === false) {
-                if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (GCM auth failed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                if (!get_transient('wpaic_api_key_decryption_failed')) {
-                    set_transient('wpaic_api_key_decryption_failed', true, HOUR_IN_SECONDS);
-                }
-                return '';
-            }
-
-            return $decrypted;
-        }
-
-        // AES-256-CBC (legacy format, no tamper detection)
-        $raw = $encrypted;
-        if (strpos($raw, 'enc:') === 0) {
-            $raw = substr($raw, 4);
-        }
-
-        $data = base64_decode($raw, true);
-
-        if ($data === false) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            return '';
-        }
-
-        $iv_length = openssl_cipher_iv_length('aes-256-cbc');
-        if (strlen($data) <= $iv_length) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            return '';
-        }
-
-        $iv = substr($data, 0, $iv_length);
-        $encrypted_data = substr($data, $iv_length);
-
-        // Try normalized key first, then legacy key
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
-        if ($decrypted === false) {
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
-        }
-
-        if ($decrypted === false) {
-            if (defined('WP_DEBUG') && WP_DEBUG) { error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key in settings.'); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        // Set transient on failure so admin notice is shown
+        if ($decrypted === '' && !empty($encrypted) && strpos($encrypted, 'sk-') !== 0 && strpos($encrypted, 'AIza') !== 0) {
             if (!get_transient('wpaic_api_key_decryption_failed')) {
                 set_transient('wpaic_api_key_decryption_failed', true, HOUR_IN_SECONDS);
             }
-            return '';
         }
 
         return $decrypted;
@@ -1774,8 +1743,13 @@ class WPAIC_Admin {
         <div class="notice notice-error">
             <p>
                 <strong><?php esc_html_e('Rapls AI Chatbot:', 'rapls-ai-chatbot'); ?></strong>
-                <?php esc_html_e('API key decryption failed. This may happen after a site migration or when WordPress security salts are changed. Please re-enter your API key in', 'rapls-ai-chatbot'); ?>
-                <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Settings', 'rapls-ai-chatbot'); ?></a>.
+                <?php
+                printf(
+                    /* translators: %s: link to settings page */
+                    esc_html__('API key decryption failed. This may happen after a site migration or when WordPress security salts are changed. Please re-enter your API key in %s.', 'rapls-ai-chatbot'),
+                    '<a href="' . esc_url($settings_url) . '">' . esc_html__('Settings', 'rapls-ai-chatbot') . '</a>'
+                );
+                ?>
             </p>
         </div>
         <?php
@@ -2248,8 +2222,11 @@ class WPAIC_Admin {
         $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
         $content = wp_kses_post(wp_unslash($_POST['content'] ?? ''));
         $category = sanitize_text_field(wp_unslash($_POST['category'] ?? ''));
-        $priority = absint(wp_unslash($_POST['priority'] ?? 0));
+        $priority = min(100, max(0, absint(wp_unslash($_POST['priority'] ?? 0))));
         $type = sanitize_text_field(wp_unslash($_POST['type'] ?? 'qa'));
+        if (!in_array($type, ['qa', 'template'], true)) {
+            $type = 'qa';
+        }
 
         if (empty($title) || empty($content)) {
             wp_send_json_error(__('Title and content are required.', 'rapls-ai-chatbot'));
@@ -2408,19 +2385,26 @@ class WPAIC_Admin {
         $id = absint(wp_unslash($_POST['id'] ?? 0));
         $title = sanitize_text_field(wp_unslash($_POST['title'] ?? ''));
         $content = wp_kses_post(wp_unslash($_POST['content'] ?? ''));
+        $type = sanitize_text_field(wp_unslash($_POST['type'] ?? ''));
         $category = sanitize_text_field(wp_unslash($_POST['category'] ?? ''));
-        $priority = absint(wp_unslash($_POST['priority'] ?? 0));
+        $priority = min(100, max(0, absint(wp_unslash($_POST['priority'] ?? 0))));
 
         if (!$id || empty($title) || empty($content)) {
             wp_send_json_error(__('Required fields are missing.', 'rapls-ai-chatbot'));
         }
 
-        $result = WPAIC_Knowledge::update($id, [
+        $update_data = [
             'title'    => $title,
             'content'  => $content,
             'category' => $category,
             'priority' => $priority,
-        ]);
+        ];
+
+        if (!empty($type) && in_array($type, ['qa', 'template'], true)) {
+            $update_data['type'] = $type;
+        }
+
+        $result = WPAIC_Knowledge::update($id, $update_data);
 
         if ($result !== false) {
             if (class_exists('WPAIC_Audit_Logger')) {
@@ -2666,7 +2650,7 @@ class WPAIC_Admin {
             'claude_api_key'        => '',
             'claude_model'          => 'claude-haiku-4-5-20251001',
             'gemini_api_key'        => '',
-            'gemini_model'          => 'gemini-2.0-flash-exp',
+            'gemini_model'          => 'gemini-2.0-flash',
             'openrouter_api_key'    => '',
             'openrouter_model'      => 'openrouter/auto',
 
@@ -3163,7 +3147,7 @@ class WPAIC_Admin {
             <h2><?php esc_html_e('Learning Status', 'rapls-ai-chatbot'); ?></h2>
             <table class="wpaic-status-table">
                 <tr>
-                    <td><?php esc_html_e('Learning Feature', 'rapls-ai-chatbot'); ?></td>
+                    <td><?php esc_html_e('Site Learning', 'rapls-ai-chatbot'); ?></td>
                     <td><span class="status-badge status-ok"><?php esc_html_e('Enabled', 'rapls-ai-chatbot'); ?></span></td>
                 </tr>
                 <tr>
@@ -3233,7 +3217,7 @@ class WPAIC_Admin {
             <h2><?php esc_html_e('Learning Settings', 'rapls-ai-chatbot'); ?></h2>
             <table class="form-table">
                 <tr>
-                    <th scope="row"><?php esc_html_e('Learning Feature', 'rapls-ai-chatbot'); ?></th>
+                    <th scope="row"><?php esc_html_e('Site Learning', 'rapls-ai-chatbot'); ?></th>
                     <td><label><input type="checkbox" checked disabled> <?php esc_html_e('Auto-learn site content', 'rapls-ai-chatbot'); ?></label></td>
                 </tr>
                 <tr>

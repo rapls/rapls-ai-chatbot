@@ -15,9 +15,9 @@ class WPAIC_Search_Engine {
     private static array $schema_cache = [];
 
     /**
-     * Cached FULLTEXT index availability (per request)
+     * Cached FULLTEXT index availability (per table, per request)
      */
-    private static ?bool $has_fulltext_index = null;
+    private static array $fulltext_cache = [];
 
     /**
      * Bot-specific knowledge category filter (empty = all categories)
@@ -82,22 +82,27 @@ class WPAIC_Search_Engine {
         $schema_version = (int) get_option('wpaic_knowledge_schema_version', 0);
         $has_priority  = $table_exists && $schema_version >= 2;
         $has_is_active = $table_exists && $schema_version >= 2;
+        $has_status    = $table_exists && $schema_version >= 2;
 
         // Fallback: check columns directly if migration hasn't run yet.
         // $table is whitelist-validated via get_knowledge_table() → wpaic_validated_table().
-        // Column names ('priority', 'is_active') are hardcoded literals — no external input.
+        // Column names ('priority', 'is_active', 'status') are hardcoded literals — no external input.
         if ($table_exists && $schema_version < 2) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $has_priority = !empty($wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'priority'"));
+            $has_priority = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'priority'"));
 
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-            $has_is_active = !empty($wpdb->get_results("SHOW COLUMNS FROM {$table} LIKE 'is_active'"));
+            $has_is_active = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'is_active'"));
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $has_status = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'status'"));
         }
 
         self::$schema_cache[$table] = [
             'exists'        => $table_exists,
             'has_priority'  => $has_priority,
             'has_is_active' => $has_is_active,
+            'has_status'    => $has_status,
         ];
 
         return self::$schema_cache[$table];
@@ -348,12 +353,16 @@ class WPAIC_Search_Engine {
             return [];
         }
 
-        $has_priority = $schema['has_priority'];
+        $has_priority  = $schema['has_priority'];
         $has_is_active = $schema['has_is_active'];
+        $has_status    = $schema['has_status'];
 
         $where_parts = [];
         if ($has_is_active) {
             $where_parts[] = 'is_active = 1';
+        }
+        if ($has_status) {
+            $where_parts[] = "status = 'published'";
         }
         // Bot-specific category filter
         if (!empty($this->knowledge_categories)) {
@@ -428,8 +437,8 @@ class WPAIC_Search_Engine {
      * Check if FULLTEXT index exists on the index table
      */
     private function has_fulltext_index(string $table): bool {
-        if (self::$has_fulltext_index !== null) {
-            return self::$has_fulltext_index;
+        if (isset(self::$fulltext_cache[$table])) {
+            return self::$fulltext_cache[$table];
         }
 
         global $wpdb;
@@ -438,9 +447,9 @@ class WPAIC_Search_Engine {
         // 'FULLTEXT' is a hardcoded literal — no external input in this query.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $indexes = $wpdb->get_results("SHOW INDEX FROM {$table} WHERE Index_type = 'FULLTEXT'", ARRAY_A);
-        self::$has_fulltext_index = !empty($indexes);
+        self::$fulltext_cache[$table] = !empty($indexes);
 
-        return self::$has_fulltext_index;
+        return self::$fulltext_cache[$table];
     }
 
     /**
@@ -474,7 +483,7 @@ class WPAIC_Search_Engine {
 
         // If FULLTEXT query caused a DB error, disable for this request and fall back to LIKE
         if ($results === null && !empty($wpdb->last_error)) {
-            self::$has_fulltext_index = false;
+            self::$fulltext_cache[$table] = false;
             return [];
         }
 
@@ -534,6 +543,7 @@ class WPAIC_Search_Engine {
         foreach ($grouped as &$item) {
             $item['score'] = $this->calculate_keyword_score($item, $keywords);
         }
+        unset($item);
 
         usort($grouped, fn($a, $b) => $b['score'] <=> $a['score']);
 
@@ -562,13 +572,17 @@ class WPAIC_Search_Engine {
             return [];
         }
 
-        $has_priority = $schema['has_priority'];
+        $has_priority  = $schema['has_priority'];
         $has_is_active = $schema['has_is_active'];
+        $has_status    = $schema['has_status'];
 
         // Build conditions
         $pre_conditions = [];
         if ($has_is_active) {
             $pre_conditions[] = 'is_active = 1';
+        }
+        if ($has_status) {
+            $pre_conditions[] = "status = 'published'";
         }
         // Bot-specific category filter
         if (!empty($this->knowledge_categories)) {
@@ -577,7 +591,7 @@ class WPAIC_Search_Engine {
         }
         $active_condition = !empty($pre_conditions) ? implode(' AND ', $pre_conditions) . ' AND' : '';
         $priority_column = $has_priority ? 'priority' : '0 as priority';
-        $order_by = $has_priority ? 'ORDER BY priority DESC' : '';
+        $order_by = $has_priority ? 'ORDER BY priority DESC, created_at DESC' : 'ORDER BY created_at DESC';
 
         $keywords = $this->extract_keywords($query);
 
@@ -644,9 +658,6 @@ class WPAIC_Search_Engine {
         }, $results);
     }
 
-    /**
-     * Extract keywords
-     */
     /**
      * Check if the query is a greeting/chitchat (not an information-seeking question)
      */
@@ -1001,7 +1012,7 @@ class WPAIC_Search_Engine {
             $question_semantic = $this->normalize_semantic($question_line);  // Semantic normalization
 
             // Semantic normalization exact match (highest priority)
-            if (!empty($question_semantic) && $question_semantic === $query_semantic) {
+            if (!empty($question_semantic) && !empty($query_semantic) && $question_semantic === $query_semantic) {
                 $score += 1000; // Semantic exact match
             }
             // Normalized text exact match

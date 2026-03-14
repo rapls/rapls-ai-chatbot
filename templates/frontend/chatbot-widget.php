@@ -29,7 +29,7 @@ if (!defined('ABSPATH')) {
     </button>
 
     <!-- チャットウィンドウ -->
-    <div class="chatbot-window" aria-hidden="true">
+    <div class="chatbot-window" role="dialog" aria-label="<?php esc_attr_e('Chat', 'rapls-ai-chatbot'); ?>" aria-hidden="true">
 
         <!-- ヘッダー -->
         <header class="chatbot-header">
@@ -59,7 +59,7 @@ if (!defined('ABSPATH')) {
         <!-- リード獲得フォーム（Pro機能） -->
         <div class="chatbot-lead-form" hidden>
             <div class="lead-form-content">
-                <h3 class="lead-form-title"></h3>
+                <h3 class="lead-form-title" hidden></h3>
                 <p class="lead-form-description"></p>
                 <form class="lead-form" novalidate>
                     <div class="lead-field lead-field-name" hidden>
@@ -93,7 +93,7 @@ if (!defined('ABSPATH')) {
         </div>
 
         <!-- タイピングインジケーター -->
-        <div class="chatbot-typing" hidden aria-label="<?php esc_attr_e('Typing', 'rapls-ai-chatbot'); ?>">
+        <div class="chatbot-typing" hidden role="status" aria-label="<?php esc_attr_e('Typing', 'rapls-ai-chatbot'); ?>">
             <span></span>
             <span></span>
             <span></span>
@@ -163,7 +163,7 @@ if (!defined('ABSPATH')) {
         <?php endif; ?>
 
         <?php if (empty($settings['pro_features']['white_label_enabled']) || empty($settings['pro_features']['hide_powered_by'])) : ?>
-        <div class="chatbot-footer-powered"><a href="https://raplsworks.com/rapls-ai-chatbot-guide/" target="_blank" rel="noopener noreferrer">Powered by Rapls Works</a></div>
+        <div class="chatbot-footer-powered"><a href="https://raplsworks.com/rapls-ai-chatbot-guide/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Powered by Rapls Works', 'rapls-ai-chatbot'); ?></a></div>
         <?php endif; ?>
 
     </div>

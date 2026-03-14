@@ -39,7 +39,7 @@ class WPAIC_Lead {
         $table = self::get_table_name();
         $charset_collate = $wpdb->get_charset_collate();
 
-        $sql = "CREATE TABLE IF NOT EXISTS `{$table}` (
+        $sql = "CREATE TABLE `{$table}` (
             id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             conversation_id BIGINT(20) UNSIGNED NOT NULL,
             name VARCHAR(255) DEFAULT NULL,
@@ -241,6 +241,7 @@ class WPAIC_Lead {
                 $lead['custom_fields'] = json_decode($lead['custom_fields'], true);
             }
         }
+        unset($lead);
 
         return $leads;
     }
@@ -308,8 +309,17 @@ class WPAIC_Lead {
      * Export leads for given filters
      */
     public static function export(array $filters = []): array {
-        $args = array_merge($filters, ['per_page' => 10000, 'page' => 1]);
-        return self::get_list($args);
+        $all = [];
+        $page = 1;
+        $per_page = 1000;
+        $max_pages = 1000;
+        do {
+            $args = array_merge($filters, ['per_page' => $per_page, 'page' => $page]);
+            $batch = self::get_list($args);
+            $all = array_merge($all, $batch);
+            $page++;
+        } while (count($batch) === $per_page && $page <= $max_pages);
+        return $all;
     }
 
     /**

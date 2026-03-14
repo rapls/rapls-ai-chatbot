@@ -47,7 +47,7 @@ class WPAIC_Chatbot_Widget {
         );
 
         $settings = get_option('wpaic_settings', []);
-        $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');
+        $bot_name = $settings['bot_name'] ?? 'Assistant';
         $bot_avatar_raw = $settings['bot_avatar'] ?? '🤖';
         $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
         $bot_avatar = $bot_avatar_is_image ? esc_url($bot_avatar_raw) : esc_html($bot_avatar_raw);
@@ -82,13 +82,14 @@ class WPAIC_Chatbot_Widget {
         $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
 
         // Multi-bot: shortcode bot attribute overrides widget settings (Pro)
+        $primary_color = '';
         $shortcode_bot_id = '';
         if (!empty($atts['bot'])) {
             $shortcode_bot_id = sanitize_key($atts['bot']);
             $sc_bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($shortcode_bot_id);
             if ($sc_bot_config) {
                 if (!empty($sc_bot_config['name'])) {
-                    $bot_name = esc_attr($sc_bot_config['name']);
+                    $bot_name = $sc_bot_config['name'];
                 }
                 if (!empty($sc_bot_config['avatar'])) {
                     $avatar_raw = $sc_bot_config['avatar'];
@@ -165,7 +166,7 @@ class WPAIC_Chatbot_Widget {
         // Apply custom colors
         $settings = get_option('wpaic_settings', []);
         $primary_color = $settings['primary_color'] ?? '#007bff';
-        if (empty($primary_color) || !preg_match('/^#[0-9a-fA-F]{3,6}$/', $primary_color)) {
+        if (empty($primary_color) || !preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $primary_color)) {
             $primary_color = '#007bff';
         }
 
@@ -260,7 +261,8 @@ class WPAIC_Chatbot_Widget {
             }
         }
 
-        $chatbot_js_ver = WPAIC_VERSION . '.' . filemtime(WPAIC_PLUGIN_DIR . 'assets/js/chatbot.js');
+        $chatbot_js_mtime = @filemtime(WPAIC_PLUGIN_DIR . 'assets/js/chatbot.js');
+        $chatbot_js_ver = WPAIC_VERSION . '.' . ($chatbot_js_mtime ?: '0');
         wp_enqueue_script(
             'wpaic-chatbot',
             WPAIC_PLUGIN_URL . 'assets/js/chatbot.js',
@@ -271,6 +273,8 @@ class WPAIC_Chatbot_Widget {
 
         $bot_avatar = $settings['bot_avatar'] ?? '🤖';
         $bot_avatar_is_image = filter_var($bot_avatar, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar);
+
+        $badge_position = $settings['badge_position'] ?? 'bottom-right';
 
         // Get pro_features settings
         $pro_features = $settings['pro_features'] ?? [];
@@ -324,6 +328,7 @@ class WPAIC_Chatbot_Widget {
             'chat_search_enabled'  => !empty($pro_features['chat_search_enabled']),
             'conversation_sharing_enabled' => !empty($pro_features['conversation_sharing_enabled']),
             'offline_message'      => $this->get_offline_config($pro_features),
+            'badge_position'       => $badge_position,
             'save_history'         => !empty($settings['save_history']),
             'quick_replies'        => WPAIC_Pro_Features::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
@@ -443,7 +448,7 @@ class WPAIC_Chatbot_Widget {
         }
 
         $settings = get_option('wpaic_settings', []);
-        $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');
+        $bot_name = $settings['bot_name'] ?? 'Assistant';
         $bot_avatar_raw = $settings['bot_avatar'] ?? '🤖';
         $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
         $bot_avatar = $bot_avatar_is_image ? esc_url($bot_avatar_raw) : esc_html($bot_avatar_raw);
@@ -476,6 +481,7 @@ class WPAIC_Chatbot_Widget {
         $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
 
         // Multi-bot: check page rules for bot assignment (Pro)
+        $primary_color = '';
         $page_id = get_queried_object_id();
         if ($page_id) {
             $page_bot_id = WPAIC_Pro_Features::get_instance()->get_bot_for_page($page_id);
@@ -483,7 +489,7 @@ class WPAIC_Chatbot_Widget {
                 $page_bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($page_bot_id);
                 if ($page_bot_config) {
                     if (!empty($page_bot_config['name'])) {
-                        $bot_name = esc_attr($page_bot_config['name']);
+                        $bot_name = $page_bot_config['name'];
                     }
                     if (!empty($page_bot_config['avatar'])) {
                         $avatar_raw = $page_bot_config['avatar'];
@@ -558,7 +564,7 @@ class WPAIC_Chatbot_Widget {
         header('Content-Security-Policy: frame-ancestors ' . $origins);
 
         $settings = get_option('wpaic_settings', []);
-        $bot_name = esc_attr($settings['bot_name'] ?? 'Assistant');
+        $bot_name = esc_html($settings['bot_name'] ?? 'Assistant');
         $bot_avatar_raw = $settings['bot_avatar'] ?? "\xF0\x9F\xA4\x96";
         $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
         $bot_avatar = $bot_avatar_is_image ? esc_url($bot_avatar_raw) : esc_html($bot_avatar_raw);
@@ -621,16 +627,17 @@ class WPAIC_Chatbot_Widget {
 <?php wp_footer(); ?>
 <script>
 (function(){
+    var origin=window.location.origin;
     // Notify parent frame that embed is ready
     if(window.parent!==window){
-        window.parent.postMessage({type:'wpaic:ready'},'*');
+        window.parent.postMessage({type:'wpaic:ready'},origin);
     }
     // Listen for close button and notify parent
     document.addEventListener('click',function(e){
         if(e.target.closest('.chatbot-close')){
             e.preventDefault();
             if(window.parent!==window){
-                window.parent.postMessage({type:'wpaic:close'},'*');
+                window.parent.postMessage({type:'wpaic:close'},origin);
             }
         }
     });
@@ -693,7 +700,8 @@ class WPAIC_Chatbot_Widget {
 
         // Legacy excluded pages (dropdown-based)
         if (!empty($settings['excluded_pages'])) {
-            if ($current_page_id && in_array($current_page_id, $settings['excluded_pages'], true)) {
+            $excluded = array_map('intval', (array) $settings['excluded_pages']);
+            if ($current_page_id && in_array($current_page_id, $excluded, true)) {
                 return false;
             }
         }

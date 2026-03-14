@@ -438,12 +438,18 @@ class WPAIC_Main {
      * Check and upgrade database if needed
      */
     public function maybe_upgrade_database() {
+        // Skip if maybe_upgrade() already ran column migrations this request
+        if (get_option('wpaic_version', '0') === WPAIC_VERSION) {
+            $db_version = get_option('wpaic_db_version', '0');
+            if (version_compare($db_version, WPAIC_VERSION, '<')) {
+                update_option('wpaic_db_version', WPAIC_VERSION);
+            }
+            return;
+        }
         $db_version = get_option('wpaic_db_version', '0');
-        $current_version = '1.3.3';
-
-        if (version_compare($db_version, $current_version, '<')) {
+        if (version_compare($db_version, WPAIC_VERSION, '<')) {
             $this->upgrade_database();
-            update_option('wpaic_db_version', $current_version);
+            update_option('wpaic_db_version', WPAIC_VERSION);
         }
     }
 

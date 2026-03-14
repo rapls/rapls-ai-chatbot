@@ -23,6 +23,13 @@ class WPAIC_Content_Index {
         global $wpdb;
         $table = self::get_table_name();
 
+        $required = ['post_id', 'post_type', 'title', 'content', 'content_hash', 'url'];
+        foreach ($required as $key) {
+            if (!isset($data[$key])) {
+                return false;
+            }
+        }
+
         $insert_data = [
             'post_id'      => $data['post_id'],
             'post_type'    => $data['post_type'],

@@ -289,6 +289,11 @@ class WPAIC_REST_Controller {
                     'default'           => 'default',
                     'sanitize_callback' => 'sanitize_key',
                 ],
+                'client_request_id' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
             ],
         ]);
 
@@ -377,6 +382,7 @@ class WPAIC_REST_Controller {
                 'feedback' => [
                     'required'          => true,
                     'type'              => 'integer',
+                    'sanitize_callback' => 'intval',
                 ],
                 'session_id' => [
                     'required'          => true,
@@ -730,7 +736,7 @@ class WPAIC_REST_Controller {
             $pro_features_check = WPAIC_Pro_Features::get_instance();
             $pro_settings_check = get_option('wpaic_settings', [])['pro_features'] ?? [];
             $screenshot_allowed = !empty($pro_settings_check['screen_sharing_enabled']) && $pro_features_check->is_pro();
-            if (!$screenshot_allowed && (!$pro_features_check->is_pro() || !method_exists($pro_features_check, 'is_multimodal_enabled') || !$pro_features_check->is_multimodal_enabled())) {
+            if (!$screenshot_allowed && (!$pro_features_check->is_pro() || !$pro_features_check->is_multimodal_enabled())) {
                 return new WP_REST_Response([
                     'success'    => false,
                     'error'      => __('Image upload is not available.', 'rapls-ai-chatbot'),
@@ -1022,8 +1028,9 @@ class WPAIC_REST_Controller {
 
         if (empty($api_key)) {
             return new WP_REST_Response([
-                'success' => false,
-                'error'   => __('AI API key is not configured. Please configure it in the admin settings.', 'rapls-ai-chatbot'),
+                'success'    => false,
+                'error'      => __('AI API key is not configured. Please configure it in the admin settings.', 'rapls-ai-chatbot'),
+                'error_code' => 'api_key_missing',
             ], 400);
         }
 
@@ -1042,8 +1049,9 @@ class WPAIC_REST_Controller {
 
                 if (!$conversation) {
                     return new WP_REST_Response([
-                        'success' => false,
-                        'error'   => __('Failed to create conversation session.', 'rapls-ai-chatbot'),
+                        'success'    => false,
+                        'error'      => __('Failed to create conversation session.', 'rapls-ai-chatbot'),
+                        'error_code' => 'conversation_failed',
                     ], 500);
                 }
                 $conversation_id = $conversation['id'];
@@ -1083,7 +1091,7 @@ class WPAIC_REST_Controller {
                 return $this->no_cache(new WP_REST_Response([
                     'success' => true,
                     'data'    => [
-                        'message_id'  => (string) $unavail_msg_id,
+                        'message_id'  => $unavail_msg_id,
                         'content'     => $unavailable_message,
                         'is_auto'     => true,
                         'sources'     => [],
@@ -1319,7 +1327,9 @@ class WPAIC_REST_Controller {
                 $lang_names = [
                     'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
                     'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
-                    'de' => 'German', 'pt' => 'Portuguese',
+                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
+                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
+                    'vi' => 'Vietnamese',
                 ];
                 $lang_name = $lang_names[$response_lang] ?? $response_lang;
                 $system_prompt .= "\n\nIMPORTANT: Always respond in {$lang_name}.";
@@ -1584,12 +1594,13 @@ class WPAIC_REST_Controller {
 
             // Build response data
             $response_data = [
-                'message_id'  => $resp_msg_id,
-                'content'     => $response['content'],
-                'tokens_used' => $response['tokens_used'],
-                'sources'     => $sources,
+                'message_id'    => $resp_msg_id,
+                'content'       => $response['content'],
+                'tokens_used'   => $response['tokens_used'],
+                'tokens_billed' => $response['tokens_used'],
+                'sources'       => $sources,
                 'remaining_messages' => $remaining_messages === PHP_INT_MAX ? null : $remaining_messages,
-                'session_id'  => $session_id,
+                'session_id'    => $session_id,
             ];
 
             // Include resolved bot_id when multi-bot is active
@@ -1874,7 +1885,7 @@ class WPAIC_REST_Controller {
 
         switch ($provider) {
             case 'openai':
-                $model = $settings['openai_model'] ?? 'gpt-4o';
+                $model = $settings['openai_model'] ?? 'gpt-4o-mini';
                 // GPT-4.1 and o-series have 128K+ context
                 if (strpos($model, 'gpt-4.1') === 0 || preg_match('/^o[1-9]/', $model)) {
                     return 40000;
@@ -1902,7 +1913,7 @@ class WPAIC_REST_Controller {
                 return 40000;
 
             case 'gemini':
-                $model = $settings['gemini_model'] ?? 'gemini-2.0-flash-exp';
+                $model = $settings['gemini_model'] ?? 'gemini-2.0-flash';
                 // Gemini 2.0 Flash Lite: smaller context
                 if (strpos($model, 'flash-lite') !== false) {
                     return 15000;
@@ -2075,10 +2086,11 @@ class WPAIC_REST_Controller {
     }
 
     /**
-     * Extract text content from uploaded plain text file data URI.
+     * Save a base64-encoded image to the WordPress media library.
      *
-     * @param string $data_uri Base64 data URI (data:text/...;base64,...)
-     * @return string Extracted text content or empty string on failure
+     * @param string $base64_data Base64 data URI (data:image/...;base64,...)
+     * @param int    $conversation_id Conversation ID for filename.
+     * @return string Attachment URL or empty string on failure.
      */
     private function save_image_to_media(string $base64_data, int $conversation_id): string {
         if (!preg_match('/^data:image\/(jpeg|jpg|png|gif|webp);base64,/', $base64_data, $matches)) {
@@ -2088,7 +2100,7 @@ class WPAIC_REST_Controller {
         $comma_pos = strpos($base64_data, ',');
         // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
         $decoded = base64_decode(substr($base64_data, $comma_pos + 1), true);
-        if (!$decoded || strlen($decoded) > 5 * 1024 * 1024) {
+        if (!$decoded || strlen($decoded) > 2 * 1024 * 1024) {
             return '';
         }
 
@@ -2486,14 +2498,20 @@ class WPAIC_REST_Controller {
         // If IP detection fails, fall back to session-based rate limiting
         // to prevent unlimited access from unknown-IP environments
         if (empty($ip)) {
+            // Use session cookie, X-WPAIC-Session header, or global fallback key
+            $fallback_id = '';
             if (isset($_COOKIE['wpaic_session_id'])) {
-                $session_key = 'wpaic_noip_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) . wp_salt()), 0, 32);
-                $noip_count = (int) get_transient($session_key);
-                if ($noip_count >= $limit) {
-                    return __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
-                }
-                set_transient($session_key, $noip_count + 1, $window);
+                $fallback_id = sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id']));
+            } elseif (!empty($_SERVER['HTTP_X_WPAIC_SESSION'])) {
+                $fallback_id = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
             }
+            $rate_id = $fallback_id ?: 'global_noip';
+            $session_key = 'wpaic_noip_' . substr(hash('sha256', $rate_id . wp_salt()), 0, 32);
+            $noip_count = (int) get_transient($session_key);
+            if ($noip_count >= $limit) {
+                return __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
+            }
+            set_transient($session_key, $noip_count + 1, $window);
             return true;
         }
 
@@ -2616,7 +2634,7 @@ class WPAIC_REST_Controller {
                 $ip = $this->get_client_ip();
                 if ($ip !== '') {
                     // Rate-cap: 1 write/minute per IP to prevent abuse via crafted _ts values.
-                    $ip_hash = substr(md5($ip), 0, 12);
+                    $ip_hash = substr(hash('sha256', $ip . wp_salt()), 0, 12);
                     $cap_key = 'wpaic_fts_cap_' . $ip_hash;
                     if (get_transient($cap_key)) {
                         return; // Already recorded for this IP within the window
@@ -2844,22 +2862,9 @@ class WPAIC_REST_Controller {
      * @param string          $captcha_action   reCAPTCHA action name (e.g. 'offline', 'lead').
      * @param bool            $allow_no_headers If true, allow requests with no Origin/Referer.
      *                                          Use for endpoints where other auth (session, nonce)
-     *                                          compensates. Currently no caller sets this to true;
-     *                                          offline-message relies on require_captcha instead.
+     *                                          compensates. Used by offline-message endpoint
+     *                                          where reCAPTCHA + per-IP limits compensate.
      * @return true|WP_REST_Response True if all checks pass, or error response.
-     */
-    /**
-     * Multi-layer guard for public POST endpoints.
-     *
-     * Defense chain (all layers run unconditionally unless noted):
-     *   1. Same-origin check (Origin/Referer header validation)
-     *   2. No-headers policy (reject, allow, or require-captcha based on context)
-     *   3. IP-based rate limiting (uses get_client_ip() — proxy-safe via trusted-proxy chain)
-     *   4. Honeypot field (always runs; bots auto-fill hidden field)
-     *   5. Timing check (always runs; <5s submit = bot)
-     *   6. reCAPTCHA (only when require_captcha=true; endpoint won't work if not configured)
-     *
-     * @see get_client_ip() for proxy/XFF trust chain validation
      */
     private function guard_public_post(
         WP_REST_Request $request,
@@ -3583,8 +3588,8 @@ class WPAIC_REST_Controller {
      */
     public function regenerate_response(WP_REST_Request $request): WP_REST_Response {
         // Regeneration requires stored messages
-        $regen_settings = get_option('wpaic_settings', []);
-        if (empty($regen_settings['save_history'])) {
+        $settings = get_option('wpaic_settings', []);
+        if (empty($settings['save_history'])) {
             return new WP_REST_Response([
                 'success' => false,
                 'error'   => __('Response regeneration is not available when conversation history is disabled.', 'rapls-ai-chatbot'),
@@ -3716,7 +3721,6 @@ class WPAIC_REST_Controller {
 
         try {
             // Get AI provider (respect per-page bot_config if multi-bot is active)
-            $settings = get_option('wpaic_settings', []);
             $bot_config = null;
             $pro = WPAIC_Pro_Features::get_instance();
             if ($pro->is_pro() && !empty($settings['pro_features']['multi_bot_enabled'])) {
@@ -3772,7 +3776,9 @@ class WPAIC_REST_Controller {
                 $lang_names = [
                     'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
                     'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
-                    'de' => 'German', 'pt' => 'Portuguese',
+                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
+                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
+                    'vi' => 'Vietnamese',
                 ];
                 $lang_name = $lang_names[$response_lang] ?? $response_lang;
                 $system_prompt .= "\n\nIMPORTANT: Always respond in {$lang_name}.";
@@ -3815,8 +3821,7 @@ class WPAIC_REST_Controller {
             $random_style = $variation_styles[array_rand($variation_styles)];
 
             // Add stronger instruction to system prompt
-            $regen_settings = get_option('wpaic_settings', []);
-            $regen_template = $regen_settings['regenerate_prompt'] ?? '[REGENERATION REQUEST #{variation_number}]: The user wants a DIFFERENT answer. FORBIDDEN: Do not start with "{forbidden_start}". {style}. Create a completely new response with different wording. IMPORTANT: Do NOT use headings, labels, or section markers like【】or brackets. Write in natural flowing paragraphs. Complete all sentences fully.';
+            $regen_template = $settings['regenerate_prompt'] ?? '[REGENERATION REQUEST #{variation_number}]: The user wants a DIFFERENT answer. FORBIDDEN: Do not start with "{forbidden_start}". {style}. Create a completely new response with different wording. IMPORTANT: Do NOT use headings, labels, or section markers like【】or brackets. Write in natural flowing paragraphs. Complete all sentences fully.';
             $regenerate_instruction = "\n\n" . str_replace(
                 ['{variation_number}', '{forbidden_start}', '{style}'],
                 [$variation_number, function_exists('mb_substr') ? mb_substr($forbidden_start, 0, 50) : substr($forbidden_start, 0, 50), $random_style],
@@ -3856,7 +3861,7 @@ class WPAIC_REST_Controller {
 
             // Add user request for different answer with random element
             // Use microtime for unique identifier
-            $unique_id = substr(md5(microtime(true) . wp_rand()), 0, 6);
+            $unique_id = substr(hash('sha256', microtime(true) . wp_rand()), 0, 6);
             $regenerate_request = sprintf(
                 /* translators: 1: style instruction, 2: unique request ID */
                 __('Please give me a different answer. %1$s. Do not use any headings or special formatting. Write naturally and complete all sentences. [ID:%2$s]', 'rapls-ai-chatbot'),
@@ -3870,11 +3875,18 @@ class WPAIC_REST_Controller {
 
             // Call AI with higher temperature for more variety
             // Use higher max_tokens for regeneration to avoid truncation
-            $max_tokens = max(($settings['max_tokens'] ?? 1000), 2000);
-            $response = $provider->send_message($ai_messages, [
+            $max_tokens = min(max(($settings['max_tokens'] ?? 1000), 2000), 16000);
+            $send_options = [
                 'max_tokens'  => $max_tokens,
                 'temperature' => 1.0, // Maximum temperature for variety
-            ]);
+            ];
+
+            // Web search support (same as send_message)
+            if (!empty($settings['web_search_enabled'])) {
+                $send_options['web_search'] = true;
+            }
+
+            $response = $provider->send_message($ai_messages, $send_options);
 
             /**
              * Filter the AI response before display.
@@ -4021,6 +4033,15 @@ class WPAIC_REST_Controller {
             ], 403);
         }
 
+        // Check budget limit
+        if ($pro_features->check_budget_limit()) {
+            return new WP_REST_Response([
+                'success'    => false,
+                'error'      => $pro_features->get_budget_block_message(),
+                'error_code' => 'budget_exceeded',
+            ], 429);
+        }
+
         $session_id = sanitize_text_field($request->get_param('session_id'));
 
         // Session ownership already verified by check_session_permission()
@@ -4062,8 +4083,7 @@ class WPAIC_REST_Controller {
             $provider = $this->get_ai_provider();
 
             // Generate summary
-            $sum_settings = get_option('wpaic_settings', []);
-            $summary_prompt = $sum_settings['summary_prompt'] ?? __('Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:', 'rapls-ai-chatbot');
+            $summary_prompt = $settings['summary_prompt'] ?? __('Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:', 'rapls-ai-chatbot');
 
             $response = $provider->send_message([
                 ['role' => 'user', 'content' => $summary_prompt . "\n\n" . $conversation_text]
@@ -4100,6 +4120,14 @@ class WPAIC_REST_Controller {
             // Check Pro license
             $pro_features = WPAIC_Pro_Features::get_instance();
             if (!$pro_features->is_pro()) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'data'    => ['suggestions' => []],
+                ], 200);
+            }
+
+            // Check budget limit
+            if ($pro_features->check_budget_limit()) {
                 return new WP_REST_Response([
                     'success' => true,
                     'data'    => ['suggestions' => []],

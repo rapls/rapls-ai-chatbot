@@ -73,13 +73,12 @@ class WPAIC_Abilities_Bridge {
         $tools = $this->registry->list_tools();
 
         // Read-only tools get readonly annotation
+        // Tool names here use hyphens (converted from underscores via str_replace below)
         $readonly_tools = [
             'get-site-info',
             'search-knowledge',
             'list-conversations',
             'get-conversation',
-            'get-analytics',
-            'search-products',
         ];
 
         foreach ($tools as $schema) {

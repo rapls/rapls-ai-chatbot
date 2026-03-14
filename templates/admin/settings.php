@@ -145,11 +145,11 @@ if (!defined('ABSPATH')) {
                             <td>
                                 <?php $claude_vision_models = $claude_provider->get_vision_models(); ?>
                                 <select name="wpaic_settings[claude_model]" id="wpaic-claude-model"
-                                    data-initial-value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-sonnet-4-20250514'); ?>">
+                                    data-initial-value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'); ?>">
                                     <?php foreach ($claude_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
                                             data-vision="<?php echo esc_attr(in_array($value, $claude_vision_models, true) ? '1' : '0'); ?>"
-                                            <?php selected($settings['claude_model'] ?? 'claude-sonnet-4-20250514', $value); ?>>
+                                            <?php selected($settings['claude_model'] ?? 'claude-haiku-4-5-20251001', $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -195,11 +195,11 @@ if (!defined('ABSPATH')) {
                             <td>
                                 <?php $gemini_vision_models = $gemini_provider->get_vision_models(); ?>
                                 <select name="wpaic_settings[gemini_model]" id="wpaic-gemini-model"
-                                    data-initial-value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash-exp'); ?>">
+                                    data-initial-value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash'); ?>">
                                     <?php foreach ($gemini_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
                                             data-vision="<?php echo esc_attr(in_array($value, $gemini_vision_models, true) ? '1' : '0'); ?>"
-                                            <?php selected($settings['gemini_model'] ?? 'gemini-2.0-flash-exp', $value); ?>>
+                                            <?php selected($settings['gemini_model'] ?? 'gemini-2.0-flash', $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -655,6 +655,11 @@ if (!defined('ABSPATH')) {
                                 <option value="fr" <?php selected($settings['response_language'] ?? '', 'fr'); ?>>Français</option>
                                 <option value="de" <?php selected($settings['response_language'] ?? '', 'de'); ?>>Deutsch</option>
                                 <option value="pt" <?php selected($settings['response_language'] ?? '', 'pt'); ?>>Português</option>
+                                <option value="it" <?php selected($settings['response_language'] ?? '', 'it'); ?>>Italiano</option>
+                                <option value="ru" <?php selected($settings['response_language'] ?? '', 'ru'); ?>>Русский</option>
+                                <option value="ar" <?php selected($settings['response_language'] ?? '', 'ar'); ?>>العربية</option>
+                                <option value="th" <?php selected($settings['response_language'] ?? '', 'th'); ?>>ไทย</option>
+                                <option value="vi" <?php selected($settings['response_language'] ?? '', 'vi'); ?>>Tiếng Việt</option>
                             </select>
                             <p class="description"><?php esc_html_e('Choose the language for AI responses. "Auto-detect" will respond in the same language as the user\'s message.', 'rapls-ai-chatbot'); ?></p>
                         </td>
@@ -699,7 +704,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <input type="number" name="wpaic_settings[max_tokens]" id="wpaic_max_tokens"
                                    value="<?php echo esc_attr($settings['max_tokens'] ?? 1000); ?>"
-                                   min="100" max="4000" class="small-text">
+                                   min="100" max="16384" class="small-text">
                             <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_max_tokens" data-default="1000">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
@@ -1245,7 +1250,8 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Footer', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[hide_powered_by]" value="1" <?php checked(!empty($pro_settings['hide_powered_by'])); ?>>
+                                <?php $pro_settings_footer = $settings['pro_features'] ?? []; ?>
+                                <input type="checkbox" name="wpaic_settings[hide_powered_by]" value="1" <?php checked(!empty($pro_settings_footer['hide_powered_by'])); ?>>
                                 <?php esc_html_e('Hide footer', 'rapls-ai-chatbot'); ?>
                             </label>
                         </td>
@@ -1354,8 +1360,8 @@ if (!defined('ABSPATH')) {
                         <td>
                             <input type="number" name="wpaic_settings[recaptcha_threshold]"
                                    value="<?php echo esc_attr($settings['recaptcha_threshold'] ?? 0.5); ?>"
-                                   min="0" max="1" step="0.1" class="small-text">
-                            <p class="description"><?php esc_html_e('0.0-1.0 (default: 0.5). Requests below this score will be blocked.', 'rapls-ai-chatbot'); ?></p>
+                                   min="0.1" max="1" step="0.1" class="small-text">
+                            <p class="description"><?php esc_html_e('0.1-1.0 (default: 0.5). Requests below this score will be blocked.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -1400,7 +1406,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <input type="number" name="wpaic_settings[retention_days]"
                                    value="<?php echo esc_attr($settings['retention_days'] ?? 90); ?>"
-                                   min="0" class="small-text"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
+                                   min="0" max="3650" class="small-text"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
                             <p class="description"><?php esc_html_e('0 for unlimited retention', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>

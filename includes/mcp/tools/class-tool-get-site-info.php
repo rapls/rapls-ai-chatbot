@@ -91,13 +91,13 @@ class WPAIC_MCP_Tool_Get_Site_Info {
 
         switch ($provider) {
             case 'claude':
-                return $settings['claude_model'] ?? 'claude-sonnet-4-20250514';
+                return $settings['claude_model'] ?? 'claude-haiku-4-5-20251001';
             case 'gemini':
-                return $settings['gemini_model'] ?? 'gemini-2.0-flash-exp';
+                return $settings['gemini_model'] ?? 'gemini-2.0-flash';
             case 'openrouter':
                 return $settings['openrouter_model'] ?? 'openrouter/auto';
             default:
-                return $settings['openai_model'] ?? 'gpt-4o';
+                return $settings['openai_model'] ?? 'gpt-4o-mini';
         }
     }
 }

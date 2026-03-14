@@ -52,13 +52,13 @@ class WPAIC_MCP_Tool_Get_Conversation {
         $conversation_id = absint($args['conversation_id'] ?? 0);
 
         if ($conversation_id < 1) {
-            return ['error' => 'conversation_id is required.'];
+            return ['error' => __('conversation_id is required.', 'rapls-ai-chatbot')];
         }
 
         $conversation = WPAIC_Conversation::get_by_id($conversation_id);
 
         if (!$conversation) {
-            return ['error' => 'Conversation not found.'];
+            return ['error' => __('Conversation not found.', 'rapls-ai-chatbot')];
         }
 
         $messages = WPAIC_Message::get_by_conversation($conversation_id, 200);

@@ -63,7 +63,7 @@ class WPAIC_MCP_Tool_Registry {
 
         try {
             return call_user_func($this->tools[$name]['handler'], $args);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return new WP_Error('tool_error', $e->getMessage());
         }
     }

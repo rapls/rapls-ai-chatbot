@@ -52,6 +52,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
 
         $image_data = $options['image'] ?? '';
         $file_data = $options['file'] ?? '';
+        $file_name = $options['file_name'] ?? '';
 
         // Find last user message index for image/file injection
         $last_user_idx = -1;
@@ -92,6 +93,9 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
                             $fmime = $fm[1];
                             $fb64 = $fm[2];
                         }
+                        if (!empty($file_name)) {
+                            $parts[] = ['text' => sprintf('Uploaded file: %s', $file_name)];
+                        }
                         $parts[] = ['inline_data' => ['mime_type' => $fmime, 'data' => $fb64]];
                     }
                 }
@@ -107,7 +111,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             'contents' => $contents,
             'generationConfig' => [
                 'maxOutputTokens' => $options['max_tokens'] ?? 1000,
-                'temperature'     => $options['temperature'] ?? 0.7,
+                'temperature'     => (float) ($options['temperature'] ?? 0.7),
             ],
         ];
 
@@ -166,6 +170,9 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         $data = json_decode($response_body, true);
 
         if ($response_code !== 200) {
+            if (!is_array($data)) {
+                throw new Exception(esc_html__('Gemini API error: ', 'rapls-ai-chatbot') . esc_html(wp_remote_retrieve_response_message($response)), (int) $response_code);
+            }
             $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
             $error_status = $data['error']['status'] ?? '';
 
@@ -183,7 +190,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
 
             // Authentication errors
             if ($response_code === 401 || $response_code === 403) {
-                throw new Exception(esc_html__('Gemini API key is invalid or does not have permission to use this model.', 'rapls-ai-chatbot'));
+                throw new Exception(esc_html__('Gemini API key is invalid or does not have permission to use this model.', 'rapls-ai-chatbot'), (int) $response_code);
             }
 
             // Check for quota/billing errors
@@ -193,14 +200,20 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
                 stripos($error_message, 'billing') !== false ||
                 stripos($error_message, 'exceeded') !== false ||
                 stripos($error_message, 'exhausted') !== false) {
-                throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+                $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+                $retry_after = wp_remote_retrieve_header($response, 'retry-after');
+                if (is_numeric($retry_after) && (int) $retry_after > 0) {
+                    $ex->set_retry_after((int) $retry_after);
+                }
+                throw $ex;
             }
 
             // Invalid parameter errors
             if ($response_code === 400 || $error_status === 'INVALID_ARGUMENT') {
                 throw new Exception(
                     /* translators: 1: model name, 2: error message */
-                    sprintf(esc_html__('Gemini API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
+                    sprintf(esc_html__('Gemini API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message)),
+                    400
                 );
             }
 
@@ -208,7 +221,8 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             if ($response_code === 404 || $error_status === 'NOT_FOUND') {
                 throw new Exception(
                     /* translators: %s: model name */
-                    sprintf(esc_html__('Gemini model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model))
+                    sprintf(esc_html__('Gemini model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model)),
+                    404
                 );
             }
 
@@ -216,11 +230,12 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             if ($response_code >= 500) {
                 throw new Exception(
                     /* translators: %d: HTTP status code */
-                    sprintf(esc_html__('Gemini server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), (int) $response_code)
+                    sprintf(esc_html__('Gemini server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), (int) $response_code),
+                    (int) $response_code
                 );
             }
 
-            throw new Exception(esc_html__('Gemini API error: ', 'rapls-ai-chatbot') . esc_html($error_message));
+            throw new Exception(esc_html__('Gemini API error: ', 'rapls-ai-chatbot') . esc_html($error_message), (int) $response_code);
         }
 
         // Extract content from response
@@ -243,6 +258,9 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         if ($grounding && isset($grounding['groundingChunks']) && is_array($grounding['groundingChunks'])) {
             $seen = [];
             foreach ($grounding['groundingChunks'] as $chunk) {
+                if (!isset($chunk['web'])) {
+                    continue;
+                }
                 $url = $chunk['web']['uri'] ?? '';
                 if (!empty($url) && !isset($seen[$url])) {
                     $seen[$url] = true;
@@ -465,7 +483,8 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             return false;
         }
 
-        $url = $this->api_url . 'gemini-1.5-flash:generateContent?key=' . $this->api_key;
+        $validate_model = $this->model ?: 'gemini-2.0-flash';
+        $url = $this->api_url . rawurlencode($validate_model) . ':generateContent?key=' . $this->api_key;
 
         $response = wp_remote_post($url, [
             'headers' => [

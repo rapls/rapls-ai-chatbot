@@ -264,6 +264,7 @@ class WPAIC_Cost_Calculator {
             $model['cost_formatted'] = self::format_cost($cost);
             $total_cost += $cost;
         }
+        unset($model);
 
         return [
             'daily_stats'  => $daily_stats,

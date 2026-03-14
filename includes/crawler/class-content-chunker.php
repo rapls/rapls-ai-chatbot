@@ -23,7 +23,7 @@ class WPAIC_Content_Chunker {
      * Set chunk size
      */
     public function set_chunk_size(int $size): void {
-        $this->chunk_size = $size;
+        $this->chunk_size = max($this->overlap + 1, $size);
     }
 
     /**
@@ -136,11 +136,12 @@ class WPAIC_Content_Chunker {
         $chunks = [];
         $length = wpaic_mb_strlen($text);
         $position = 0;
+        $step = max(1, $chunk_size - $this->overlap);
 
         while ($position < $length) {
             $chunk = wpaic_mb_substr($text, $position, $chunk_size);
             $chunks[] = $chunk;
-            $position += $chunk_size - $this->overlap;
+            $position += $step;
         }
 
         return $chunks;

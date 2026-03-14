@@ -33,6 +33,20 @@ class WPAIC_Conversation {
             return $conversation;
         }
 
+        // Reactivate closed/ended conversation for the same session (e.g., after cron auto-close)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $closed = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM `{$table}` WHERE session_id = %s AND status = 'closed' ORDER BY created_at DESC LIMIT 1",
+            $session_id
+        ), ARRAY_A);
+
+        if ($closed) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $wpdb->update($table, ['status' => 'active'], ['id' => $closed['id']], ['%s'], ['%d']);
+            $closed['status'] = 'active';
+            return $closed;
+        }
+
         // Create new
         // Use visitor_ip from $data if provided (caller should pass get_client_ip() result),
         // otherwise fall back to REMOTE_ADDR
@@ -90,6 +104,11 @@ class WPAIC_Conversation {
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert($table, $insert_data, $formats);
         wpaic_log_db_error('Conversation::create');
+
+        if ($wpdb->insert_id === 0) {
+            // Concurrent insert may have succeeded — retry lookup
+            return self::get_by_session($session_id);
+        }
 
         $new_conversation = self::get_by_id($wpdb->insert_id);
         if ($new_conversation) {
@@ -212,8 +231,9 @@ class WPAIC_Conversation {
             ));
         }
 
+        // Exclude archived by default to match get_list() behavior
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}`");
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE status != 'archived'");
     }
 
     /**

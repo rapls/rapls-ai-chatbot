@@ -117,7 +117,7 @@ class WPAIC_Knowledge {
         wpaic_log_db_error('Knowledge::create');
 
         if ($result === false) {
-            return new WP_Error('db_error', 'Failed to save to database.');
+            return new WP_Error('db_error', __('Failed to save to database.', 'rapls-ai-chatbot'));
         }
 
         return self::get_by_id($wpdb->insert_id);

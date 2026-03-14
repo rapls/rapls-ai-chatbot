@@ -601,11 +601,11 @@ class WPAIC_Activator {
             // AI settings
             'ai_provider'     => 'openai',
             'openai_api_key'  => '',
-            'openai_model'    => 'gpt-4o',
+            'openai_model'    => 'gpt-4o-mini',
             'claude_api_key'  => '',
-            'claude_model'    => 'claude-sonnet-4-20250514',
+            'claude_model'    => 'claude-haiku-4-5-20251001',
             'gemini_api_key'  => '',
-            'gemini_model'    => 'gemini-2.0-flash-exp',
+            'gemini_model'    => 'gemini-2.0-flash',
 
             // Chatbot settings
             'bot_name'        => 'Assistant',
@@ -626,7 +626,7 @@ class WPAIC_Activator {
                 'th' => 'สวัสดีครับ! มีอะไรให้ช่วยไหมครับ?',
                 'vi' => 'Xin chào! Tôi có thể giúp gì cho bạn?',
             ],
-            'system_prompt'   => 'You are a helpful assistant. Please answer user questions politely.',
+            'system_prompt'   => "You are a knowledgeable assistant for this website. Follow these rules:\n\n1. ACCURACY: When reference information is provided, treat it as the primary and most reliable source. Base your answers on this information first.\n2. HONESTY: If the provided information does not cover the user's question, clearly state that you don't have specific information about it, then offer general guidance if appropriate.\n3. NO FABRICATION: Never invent facts, URLs, prices, dates, or specific details that are not in the provided reference information.\n4. CONCISENESS: Provide clear, focused answers. Avoid unnecessary repetition or filler.\n5. LANGUAGE: Always respond in the same language the user writes in.\n6. TONE: Be professional, friendly, and helpful.",
             'quota_error_message' => 'Currently recharging. Please try again later.',
             'max_tokens'      => 1000,
             'temperature'     => 0.7,
@@ -634,7 +634,7 @@ class WPAIC_Activator {
             // Context prompts
             'knowledge_exact_prompt' => "=== STRICT INSTRUCTIONS ===\nAn EXACT MATCH has been found for the user's question.\nYou MUST:\n1. Use ONLY the Answer provided below\n2. DO NOT add any information not in this Answer\n3. DO NOT combine with other sources\n4. Respond naturally using this Answer's content\n\n=== ANSWER TO USE ===\n{context}\n=== END ===",
             'knowledge_qa_prompt' => "=== CRITICAL INSTRUCTIONS ===\nBelow is a FAQ database. When the user asks a question:\n1. FIRST, look for [BEST MATCH] - this is the most relevant Q&A for the user's question\n2. If [BEST MATCH] exists, use that Answer to respond\n3. If no [BEST MATCH], find the Question that matches or is similar to the user's question\n4. Return the corresponding Answer from the FAQ\n5. DO NOT make up answers - ONLY use the information provided below\n\nIMPORTANT: The Answer after [BEST MATCH] is your primary response source.\n\n=== FAQ DATABASE ===\n{context}\n=== END FAQ DATABASE ===",
-            'site_context_prompt' => "[IMPORTANT: Reference Information]\nYou MUST use the following information as the primary source when answering. If the answer can be found in this information, use it. Only use your general knowledge if the reference information does not cover the topic.\n\n{context}",
+            'site_context_prompt' => "[IMPORTANT: Reference Information]\nYou MUST use the following information as the primary source when answering. If the answer can be found in this information, use it directly.\nIf the reference information does NOT contain the answer, clearly state that you don't have specific information about it. Do NOT guess or fabricate details.\n\n{context}",
 
             // Display settings
             'badge_margin_right'  => 20,

@@ -57,16 +57,33 @@ class WPAIC_MCP_Tool_Send_Message {
         $session_id = sanitize_text_field($args['session_id'] ?? '');
 
         if (empty($message)) {
-            return ['error' => 'Message is required.'];
+            return ['error' => __('Message is required.', 'rapls-ai-chatbot')];
         }
 
         $max_length = (int) apply_filters('wpaic_max_message_length', 8000);
         $msg_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
         if ($msg_length > $max_length) {
-            return ['error' => 'Message exceeds maximum length.'];
+            return ['error' => __('Message exceeds maximum length.', 'rapls-ai-chatbot')];
         }
 
         $settings = get_option('wpaic_settings', []);
+
+        // Check banned words (Pro feature)
+        $pro_features = WPAIC_Pro_Features::get_instance();
+        if ($pro_features->contains_banned_words($message)) {
+            return ['error' => $pro_features->get_banned_words_message()];
+        }
+
+        // Check message limit
+        $limit_check = $pro_features->check_message_limit();
+        if (is_wp_error($limit_check)) {
+            return ['error' => $limit_check->get_error_message()];
+        }
+
+        // Check budget cap (Pro feature)
+        if ($pro_features->check_budget_limit()) {
+            return ['error' => $pro_features->get_budget_block_message()];
+        }
 
         // Create or get session
         if (empty($session_id)) {
@@ -78,7 +95,7 @@ class WPAIC_MCP_Tool_Send_Message {
         ]);
 
         if (!$conversation) {
-            return ['error' => 'Failed to create conversation.'];
+            return ['error' => __('Failed to create conversation.', 'rapls-ai-chatbot')];
         }
 
         $conversation_id = (int) $conversation['id'];
@@ -103,24 +120,7 @@ class WPAIC_MCP_Tool_Send_Message {
         $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
 
         if (!empty($related_content)) {
-            $context = '';
-            foreach ($related_content as $item) {
-                $title   = $item['title'] ?? '';
-                $content = $item['content'] ?? '';
-                $url     = $item['url'] ?? '';
-
-                if (!empty($title) || !empty($content)) {
-                    $context .= "---\n";
-                    if (!empty($title)) {
-                        $context .= $title . "\n";
-                    }
-                    $context .= $content . "\n";
-                    if (!empty($url)) {
-                        $sources[] = $url;
-                    }
-                }
-            }
-
+            $context = $search_engine->build_context($related_content, 50000, $message);
             $context = apply_filters('wpaic_context', $context, $message);
 
             if (!empty($context)) {
@@ -128,6 +128,13 @@ class WPAIC_MCP_Tool_Send_Message {
                     'role'    => 'system',
                     'content' => __('Use the following reference information to answer the question:', 'rapls-ai-chatbot') . "\n\n" . $context,
                 ];
+            }
+
+            // Collect sources
+            foreach ($related_content as $item) {
+                if (!empty($item['url'])) {
+                    $sources[] = $item['url'];
+                }
             }
         }
 
@@ -142,10 +149,6 @@ class WPAIC_MCP_Tool_Send_Message {
         // Get AI provider
         $provider = $this->get_ai_provider($settings);
 
-        if (is_wp_error($provider)) {
-            return ['error' => $provider->get_error_message()];
-        }
-
         // Send to AI
         $options = [];
         if (!empty($settings['max_tokens'])) {
@@ -157,8 +160,8 @@ class WPAIC_MCP_Tool_Send_Message {
 
         try {
             $ai_response = $provider->send_message($ai_messages, $options);
-        } catch (\Exception $e) {
-            return ['error' => 'AI provider error: ' . $e->getMessage()];
+        } catch (\Throwable $e) {
+            return ['error' => __('AI provider error:', 'rapls-ai-chatbot') . ' ' . $e->getMessage()];
         }
 
         $response_content = $ai_response['content'] ?? '';

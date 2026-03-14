@@ -72,14 +72,31 @@ class WPAIC_MCP_Tool_List_Conversations {
 
         $conversations = WPAIC_Conversation::get_list($list_args);
 
+        // Batch message counts in a single query to avoid N+1
+        $conv_ids = array_map(function ($c) { return (int) $c['id']; }, $conversations);
+        $message_counts = [];
+        if (!empty($conv_ids)) {
+            global $wpdb;
+            $msg_table = trim(wpaic_validated_table('aichat_messages'), '`');
+            $placeholders = implode(',', array_fill(0, count($conv_ids), '%d'));
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $rows = $wpdb->get_results($wpdb->prepare(
+                "SELECT conversation_id, COUNT(*) AS cnt FROM `{$msg_table}` WHERE conversation_id IN ({$placeholders}) GROUP BY conversation_id",
+                ...$conv_ids
+            ));
+            foreach ($rows as $row) {
+                $message_counts[(int) $row->conversation_id] = (int) $row->cnt;
+            }
+        }
+
         $formatted = [];
         foreach ($conversations as $conv) {
-            $message_count = WPAIC_Message::get_count_by_conversation((int) $conv['id']);
+            $cid = (int) $conv['id'];
             $formatted[] = [
-                'id'            => (int) $conv['id'],
+                'id'            => $cid,
                 'session_id'    => $conv['session_id'] ?? '',
                 'status'        => $conv['status'] ?? 'active',
-                'message_count' => $message_count,
+                'message_count' => $message_counts[$cid] ?? 0,
                 'page_url'      => $conv['page_url'] ?? '',
                 'created_at'    => $conv['created_at'] ?? '',
             ];

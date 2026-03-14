@@ -65,15 +65,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     }
 
     /**
-     * Check if reasoning model (includes legacy reasoning models)
+     * Check if reasoning model (legacy models like o1-mini match 'o1' prefix)
      */
     private function is_reasoning_model(): bool {
         foreach ($this->reasoning_models as $rm) {
-            if (strpos($this->model, $rm) === 0) {
-                return true;
-            }
-        }
-        foreach ($this->legacy_reasoning_models as $rm) {
             if (strpos($this->model, $rm) === 0) {
                 return true;
             }
@@ -329,13 +324,13 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                 $body['max_completion_tokens'] = $configured_max;
             }
         } else {
-            $body['max_tokens'] = $options['max_tokens'] ?? 1000;
+            $body['max_tokens'] = $configured_max;
         }
 
         // Specify temperature except for GPT-5 series and reasoning models
         // GPT-5 and o series only support temperature=1
         if (!$is_reasoning && !$this->is_gpt5_model()) {
-            $body['temperature'] = $options['temperature'] ?? 0.7;
+            $body['temperature'] = (float) ($options['temperature'] ?? 0.7);
         }
 
         if ($this->should_log()) {
@@ -395,10 +390,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
                     }
                     switch ($part['type']) {
                         case 'text':
-                            $converted[] = ['type' => 'input_text', 'text' => $part['text']];
+                            $converted[] = ['type' => 'input_text', 'text' => $part['text'] ?? ''];
                             break;
                         case 'image_url':
-                            $converted[] = ['type' => 'input_image', 'image_url' => $part['image_url']['url']];
+                            $converted[] = ['type' => 'input_image', 'image_url' => $part['image_url']['url'] ?? ''];
                             break;
                         case 'input_text':
                         case 'input_image':
@@ -441,7 +436,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         }
 
         if (!$this->is_reasoning_model() && !$this->is_gpt5_model()) {
-            $body['temperature'] = $options['temperature'] ?? 0.7;
+            $body['temperature'] = (float) ($options['temperature'] ?? 0.7);
         }
 
         if ($this->should_log()) {
@@ -678,7 +673,8 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         // Standard Chat Completions format: choices[0].message.content
         if (isset($data['choices'][0]['message']['content'])) {
-            $content = $data['choices'][0]['message']['content'];
+            $raw = $data['choices'][0]['message']['content'];
+            $content = is_string($raw) ? $raw : (is_array($raw) ? wp_json_encode($raw) : '');
         }
         // Responses API format: output[].content[].text + annotations
         elseif (isset($data['output'])) {
@@ -1007,13 +1003,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $name = $id;
         // Extract date suffix
         if (preg_match('/^(.+?)(-\d{4}-\d{2}-\d{2})$/', $name, $m)) {
-            $base = strtoupper(str_replace('-', '-', $m[1]));
-            $base = str_replace('GPT-', 'GPT-', $base);
+            $base = strtoupper($m[1]);
             return $base . ' (' . ltrim($m[2], '-') . ')';
         }
-        $name = strtoupper($name);
-        $name = str_replace('GPT-', 'GPT-', $name);
-        return $name;
+        return strtoupper($name);
     }
 
     /**
@@ -1123,11 +1116,12 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Find the last user message and convert to vision format
         for ($i = count($messages) - 1; $i >= 0; $i--) {
             if ($messages[$i]['role'] === 'user') {
-                $text = $messages[$i]['content'];
-                $messages[$i]['content'] = [
-                    ['type' => 'text', 'text' => $text],
-                    ['type' => 'image_url', 'image_url' => ['url' => $image_data]],
-                ];
+                $existing = $messages[$i]['content'];
+                $parts = is_array($existing)
+                    ? $existing
+                    : [['type' => 'text', 'text' => $existing]];
+                $parts[] = ['type' => 'image_url', 'image_url' => ['url' => $image_data]];
+                $messages[$i]['content'] = $parts;
                 break;
             }
         }
@@ -1189,7 +1183,13 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         // Append to last user message
         for ($i = count($messages) - 1; $i >= 0; $i--) {
             if ($messages[$i]['role'] === 'user') {
-                if (is_string($messages[$i]['content'])) {
+                if (is_array($messages[$i]['content'])) {
+                    // Multimodal content array — append as text block
+                    $messages[$i]['content'][] = [
+                        'type' => 'text',
+                        'text' => "\n\n---\n" . $text,
+                    ];
+                } elseif (is_string($messages[$i]['content'])) {
                     $messages[$i]['content'] .= "\n\n---\n" . $text;
                 }
                 break;

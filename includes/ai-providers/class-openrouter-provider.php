@@ -49,15 +49,48 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
             throw new Exception(esc_html__('OpenRouter API key is not configured.', 'rapls-ai-chatbot'));
         }
 
+        // Inject file as text into the last user message (no native file support)
+        if (!empty($options['file'])) {
+            $file_name = $options['file_name'] ?? '';
+            $file_data = $options['file'];
+            $comma_pos = strpos($file_data, ',');
+            if ($comma_pos !== false) {
+                // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+                $decoded = base64_decode(substr($file_data, $comma_pos + 1), true);
+                if ($decoded !== false) {
+                    $text = wp_check_invalid_utf8($decoded, true);
+                    if (!empty(trim($text))) {
+                        $max = 30000;
+                        $text = function_exists('mb_substr') ? mb_substr($text, 0, $max) : substr($text, 0, $max);
+                        $file_text = sprintf("Content of uploaded file (%s):\n%s", $file_name, $text);
+                        for ($i = count($messages) - 1; $i >= 0; $i--) {
+                            if ($messages[$i]['role'] === 'user') {
+                                if (is_array($messages[$i]['content'])) {
+                                    $messages[$i]['content'][] = ['type' => 'text', 'text' => "\n\n---\n" . $file_text];
+                                } elseif (is_string($messages[$i]['content'])) {
+                                    $messages[$i]['content'] .= "\n\n---\n" . $file_text;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // Inject image into the last user message (OpenAI vision format)
         if (!empty($options['image'])) {
             for ($i = count($messages) - 1; $i >= 0; $i--) {
                 if ($messages[$i]['role'] === 'user') {
                     $text = $messages[$i]['content'];
-                    $messages[$i]['content'] = [
-                        ['type' => 'text', 'text' => $text],
-                        ['type' => 'image_url', 'image_url' => ['url' => $options['image']]],
-                    ];
+                    if (is_string($text)) {
+                        $messages[$i]['content'] = [
+                            ['type' => 'text', 'text' => $text],
+                            ['type' => 'image_url', 'image_url' => ['url' => $options['image']]],
+                        ];
+                    } elseif (is_array($text)) {
+                        $messages[$i]['content'][] = ['type' => 'image_url', 'image_url' => ['url' => $options['image']]];
+                    }
                     break;
                 }
             }
@@ -72,9 +105,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
             $body['max_tokens'] = (int) $options['max_tokens'];
         }
 
-        if (isset($options['temperature'])) {
-            $body['temperature'] = (float) $options['temperature'];
-        }
+        $body['temperature'] = (float) ($options['temperature'] ?? 0.7);
 
         // Web search tool (OpenAI-compatible)
         if (!empty($options['web_search'])) {
@@ -131,6 +162,9 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
      * @throws Exception|WPAIC_Quota_Exceeded_Exception
      */
     private function handle_api_error(int $response_code, ?array $data, $raw_response = null): void {
+        if (!is_array($data)) {
+            throw new Exception(esc_html__('OpenRouter API error: ', 'rapls-ai-chatbot') . esc_html(wp_remote_retrieve_response_message($raw_response)), $response_code);
+        }
         $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
         $error_code = $data['error']['code'] ?? '';
 
@@ -200,7 +234,8 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
         $content = '';
 
         if (isset($data['choices'][0]['message']['content'])) {
-            $content = $data['choices'][0]['message']['content'];
+            $raw = $data['choices'][0]['message']['content'];
+            $content = is_string($raw) ? $raw : (is_array($raw) ? wp_json_encode($raw) : '');
         }
 
         $input_tokens = $data['usage']['prompt_tokens'] ?? 0;

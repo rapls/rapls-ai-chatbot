@@ -58,7 +58,7 @@ class WPAIC_MCP_Tool_Search_Knowledge {
         $limit = absint($args['limit'] ?? 5);
 
         if (empty($query)) {
-            return ['results' => [], 'error' => 'Query is required.'];
+            return ['error' => __('Query is required.', 'rapls-ai-chatbot')];
         }
 
         if ($limit < 1 || $limit > 50) {

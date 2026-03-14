@@ -108,15 +108,7 @@ class WPAIC_MCP_Server {
         $settings = get_option('wpaic_settings', []);
         $stored_hash = $settings['mcp_api_key_hash'] ?? '';
 
-        if (empty($stored_hash)) {
-            return new WP_Error(
-                'rest_forbidden',
-                __('MCP API key has not been configured.', 'rapls-ai-chatbot'),
-                ['status' => 401]
-            );
-        }
-
-        if (!wp_check_password($provided_key, $stored_hash)) {
+        if (empty($stored_hash) || !wp_check_password($provided_key, $stored_hash)) {
             return new WP_Error(
                 'rest_forbidden',
                 __('Invalid MCP API key.', 'rapls-ai-chatbot'),
@@ -162,7 +154,7 @@ class WPAIC_MCP_Server {
 
             case 'notifications/initialized':
                 // Client acknowledgment — no response needed for notifications
-                return new WP_REST_Response('', 204);
+                return new WP_REST_Response(null, 202);
 
             case 'tools/list':
                 return $this->handle_tools_list($id);
@@ -235,6 +227,19 @@ class WPAIC_MCP_Server {
             $error_code = $result->get_error_code();
             $jsonrpc_code = $error_code === 'tool_not_found' ? -32602 : -32603;
             return $this->jsonrpc_error($id, $jsonrpc_code, $result->get_error_message());
+        }
+
+        // Tool-level errors: return as MCP isError result instead of success
+        if (is_array($result) && isset($result['error']) && !isset($result['content'])) {
+            return $this->jsonrpc_success($id, [
+                'content' => [
+                    [
+                        'type' => 'text',
+                        'text' => $result['error'],
+                    ],
+                ],
+                'isError' => true,
+            ]);
         }
 
         return $this->jsonrpc_success($id, [

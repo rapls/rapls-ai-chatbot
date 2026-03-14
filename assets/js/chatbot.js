@@ -241,7 +241,7 @@
         createResizeHandle: function() {
             // No resize handle in inline mode (container sized by CSS)
             if (this.config.inlineMode) {
-                this.resizeHandle = document.createElement('div');
+                this.resizeHandle = null;
                 return;
             }
             this.resizeHandle = document.createElement('div');
@@ -329,6 +329,7 @@
             }
 
             // フォーム送信
+            if (!this.inputForm || !this.inputTextarea) return;
             this.inputForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -369,16 +370,18 @@
             });
 
             // リサイズハンドルのイベント
-            this.resizeHandle.addEventListener('mousedown', function(e) {
-                e.preventDefault();
-                self.startResize(e.clientX, e.clientY);
-            });
+            if (this.resizeHandle) {
+                this.resizeHandle.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    self.startResize(e.clientX, e.clientY);
+                });
 
-            this.resizeHandle.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                var touch = e.touches[0];
-                self.startResize(touch.clientX, touch.clientY);
-            }, { passive: false });
+                this.resizeHandle.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    var touch = e.touches[0];
+                    self.startResize(touch.clientX, touch.clientY);
+                }, { passive: false });
+            }
         },
 
         /**
@@ -391,6 +394,7 @@
 
             var startWidth = this.window.offsetWidth;
             var startHeight = this.window.offsetHeight;
+            var position = this.config.badge_position || 'bottom-right';
 
             var onMouseMove = function(e) {
                 if (!self.isResizing) return;
@@ -399,9 +403,18 @@
                 var clientX = e.clientX || (e.touches && e.touches[0].clientX);
                 var clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
-                // 左上からリサイズするので、差分を反転
-                var deltaX = startX - clientX;
-                var deltaY = startY - clientY;
+                // Determine delta direction based on widget position
+                var deltaX, deltaY;
+                if (position.indexOf('left') !== -1) {
+                    deltaX = clientX - startX; // drag right to expand
+                } else {
+                    deltaX = startX - clientX; // drag left to expand
+                }
+                if (position.indexOf('top') !== -1) {
+                    deltaY = clientY - startY; // drag down to expand
+                } else {
+                    deltaY = startY - clientY; // drag up to expand
+                }
 
                 var newWidth = Math.max(300, Math.min(startWidth + deltaX, window.innerWidth * 0.9));
                 var newHeight = Math.max(400, Math.min(startHeight + deltaY, window.innerHeight * 0.9));
@@ -453,7 +466,8 @@
             if (this.config.embedMode) {
                 this.stopHandoffPolling();
                 if (window.parent !== window) {
-                    window.parent.postMessage({type: 'wpaic:close'}, '*');
+                    var targetOrigin = this.config.embed_origin || window.location.origin;
+                    window.parent.postMessage({type: 'wpaic:close'}, targetOrigin);
                 }
                 return;
             }
@@ -588,13 +602,14 @@
             wpaicLsRemove('wpaic_session');
             wpaicLsRemove('wpaic_session_token');
 
-            // すべてのリード送信済みフラグをクリア
+            // すべてのリード送信済みフラグをクリア（クリーンアップは常に許可）
             try {
-                Object.keys(sessionStorage).forEach(function(key) {
-                    if (key.startsWith('wpaic_lead_submitted_')) {
-                        wpaicSsRemove(key);
+                var ssKeys = Object.keys(sessionStorage);
+                for (var si = 0; si < ssKeys.length; si++) {
+                    if (ssKeys[si].indexOf('wpaic_lead_submitted_') === 0) {
+                        wpaicSsRemove(ssKeys[si]);
                     }
-                });
+                }
             } catch (e) {
                 // sessionStorage unavailable (e.g., Safari private mode)
             }
@@ -623,7 +638,8 @@
                     this.inputTextarea.focus();
                 }
                 // 履歴がなく、メッセージもない場合のみウェルカムメッセージを表示
-                if (!this.historyLoaded && this.messagesEl.children.length === 0) {
+                // ウェルカムスクリーンが表示中の場合はスキップ（重複防止）
+                if (!this.historyLoaded && this.messagesEl.children.length === 0 && !this._welcomeScreenActive) {
                     this.showWelcomeMessage();
                 }
                 // 一番下までスクロール
@@ -734,7 +750,7 @@
                         // Remove quick replies after click
                         if (container.parentNode) container.parentNode.removeChild(container);
                         // Set input and submit
-                        self.inputEl.value = text;
+                        if (self.inputTextarea) self.inputTextarea.value = text;
                         self.handleSubmit();
                     };
                     container.appendChild(btn);
@@ -821,7 +837,7 @@
                 .catch(function(error) {
                     // Skip if already handled (e.g. recaptcha_not_ready)
                     if (error === 'recaptcha_not_ready') return;
-                    console.error('Chat error:', error);
+                    if (self.config.debug) console.error('Chat error:', error);
 
                     // Error code → message map (populated from PHP i18n), then HTTP status fallback
                     var _s = self.config.strings || {};
@@ -864,7 +880,7 @@
                     if (!self._responseDelayPending) {
                         self.setLoading(false);
                     }
-                    self.inputTextarea.focus();
+                    if (self.inputTextarea) self.inputTextarea.focus();
                 });
         },
 
@@ -980,28 +996,10 @@
                 return;
             }
 
-            // Pro版のエンドポイントを直接呼び出す（Free版では404になるが無視）
-            var url = this.config.api_base + '/save-context';
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': this.config.nonce
-                },
-                body: JSON.stringify({
-                    session_id: this.sessionId
-                })
-            })
-            .then(function(response) {
-                // レスポンスがJSONでない場合は無視（Pro版未インストール等）
-                var contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return null;
-                }
-                return response.json();
-            })
-            .catch(function() {
+            // Pro版のエンドポイントを呼び出す（Free版では404になるが無視）
+            this.apiRequest('POST', '/save-context', {
+                session_id: this.sessionId
+            }).catch(function() {
                 // エラーは無視（コンテキスト保存は重要ではない）
             });
         },
@@ -1045,21 +1043,12 @@
             var self = this;
             if (!this.sessionId) return;
 
-            var url = this.config.api_base + '/handoff-status/' + encodeURIComponent(this.sessionId);
+            var endpoint = '/handoff-status/' + encodeURIComponent(this.sessionId);
             if (this.lastOperatorMessageId) {
-                url += '?last_message_id=' + this.lastOperatorMessageId;
+                endpoint += '?last_message_id=' + this.lastOperatorMessageId;
             }
 
-            fetch(url, {
-                method: 'GET',
-                headers: { 'X-WP-Nonce': this.config.nonce }
-            })
-            .then(function(response) {
-                if (!response.ok) return null;
-                var ct = response.headers.get('content-type');
-                if (!ct || !ct.includes('application/json')) return null;
-                return response.json();
-            })
+            this.apiRequest('GET', endpoint)
             .then(function(result) {
                 if (!result || !result.success) return;
                 var data = result.data || {};
@@ -1178,20 +1167,8 @@
             // Call server to reset handoff
             if (!this.sessionId) return;
 
-            fetch(this.config.api_base + '/handoff-cancel', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': this.config.nonce
-                },
-                body: JSON.stringify({ session_id: this.sessionId })
-            })
-            .then(function(r) {
-                var ct = r.headers.get('content-type');
-                if (!ct || !ct.includes('application/json')) return null;
-                return r.json();
-            })
-            .then(function(result) {
+            this.apiRequest('POST', '/handoff-cancel', { session_id: this.sessionId })
+            .then(function() {
                 self.handoffStatus = null;
                 self.showHandoffIndicator(null);
                 self.addSystemMessage(s.handoff_cancelled || 'Returned to AI chat.');
@@ -1217,7 +1194,7 @@
 
             // grecaptchaが利用可能かチェック
             if (typeof grecaptcha === 'undefined' || !grecaptcha.execute) {
-                console.warn('reCAPTCHA is not loaded');
+                if (self.config.debug) console.warn('reCAPTCHA is not loaded');
                 return Promise.resolve('');
             }
 
@@ -1229,12 +1206,12 @@
                                 resolve(token);
                             })
                             .catch(function(error) {
-                                console.error('reCAPTCHA error:', error);
+                                if (self.config.debug) console.error('reCAPTCHA error:', error);
                                 resolve(''); // エラーでも送信は続行
                             });
                     });
                 } catch (e) {
-                    console.error('reCAPTCHA exception:', e);
+                    if (self.config.debug) console.error('reCAPTCHA exception:', e);
                     resolve('');
                 }
             });
@@ -1510,9 +1487,11 @@
                     rkBtn.className = 'chatbot-related-knowledge__item';
                     rkBtn.textContent = rk.title;
                     rkBtn.addEventListener('click', function() {
+                        if (!self.inputTextarea) return;
                         self.inputTextarea.value = rk.title;
-                        self.autoResizeTextarea();
-                        self.handleSubmit(new Event('submit'));
+                        self.inputTextarea.style.height = 'auto';
+                        self.inputTextarea.style.height = Math.min(self.inputTextarea.scrollHeight, 100) + 'px';
+                        self.handleSubmit();
                     });
                     rkContainer.appendChild(rkBtn);
                 });
@@ -1609,7 +1588,9 @@
                         optBtn.textContent = opt;
                         optBtn.onclick = function() {
                             optionsEl.remove();
-                            self.inputTextarea.value = opt;
+                            if (self.inputTextarea) {
+                                self.inputTextarea.value = opt;
+                            }
                             self.handleSubmit();
                         };
                         optionsEl.appendChild(optBtn);
@@ -1732,30 +1713,18 @@
             // Add selection to clicked button
             btnEl.classList.add('chatbot-feedback-btn--selected');
 
-            fetch(this.config.restUrl + 'feedback', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': this.config.nonce
-                },
-                body: JSON.stringify({
-                    message_id: messageId,
-                    feedback: feedback,
-                    session_id: this.sessionId,
-                }),
-            })
-            .then(function(response) {
-                var ct = response.headers.get('content-type');
-                if (!ct || !ct.includes('application/json')) { return null; }
-                return response.json();
+            this.apiRequest('POST', '/feedback', {
+                message_id: messageId,
+                feedback: feedback,
+                session_id: this.sessionId,
             })
             .then(function(data) {
-                if (data && !data.success) {
+                if (data && !data.success && self.config.debug) {
                     console.error('Feedback error:', data.error);
                 }
             })
             .catch(function(error) {
-                console.error('Feedback error:', error);
+                if (self.config.debug) console.error('Feedback error:', error);
             });
         },
 
@@ -1773,23 +1742,9 @@
             // Add loading class to message
             messageEl.classList.add('chatbot-message--regenerating');
 
-            fetch(this.config.restUrl + 'regenerate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce': this.config.nonce
-                },
-                body: JSON.stringify({
-                    message_id: messageId,
-                    session_id: this.sessionId,
-                }),
-            })
-            .then(function(response) {
-                var ct = response.headers.get('content-type');
-                if (!ct || !ct.includes('application/json')) {
-                    throw new Error('Non-JSON response');
-                }
-                return response.json();
+            this.apiRequest('POST', '/regenerate', {
+                message_id: messageId,
+                session_id: this.sessionId,
             })
             .then(function(data) {
                 self.setLoading(false);
@@ -1798,6 +1753,7 @@
                 if (data.success) {
                     // Update message content
                     var contentEl = messageEl.querySelector('.chatbot-message__content');
+                    if (!contentEl) return;
                     var actionsEl = contentEl.querySelector('.chatbot-message__actions');
 
                     var formatted = self.formatBotMessage(data.data.content);
@@ -1993,13 +1949,13 @@
                     // Update message ID
                     messageEl.setAttribute('data-message-id', data.data.message_id);
                 } else {
-                    console.error('Regenerate error:', data.error);
+                    if (self.config.debug) console.error('Regenerate error:', data.error);
                 }
             })
             .catch(function(error) {
                 self.setLoading(false);
                 messageEl.classList.remove('chatbot-message--regenerating');
-                console.error('Regenerate error:', error);
+                if (self.config.debug) console.error('Regenerate error:', error);
             });
         },
 
@@ -2013,24 +1969,13 @@
                 return;
             }
 
-            fetch(this.config.restUrl + 'suggestions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': this.config.nonce },
-                body: JSON.stringify({ session_id: this.sessionId }),
-            })
-            .then(function(response) {
-                var contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return null;
-                }
-                return response.json();
-            })
+            this.apiRequest('POST', '/suggestions', { session_id: this.sessionId })
             .then(function(data) {
                 if (data && data.success && data.data && data.data.suggestions && data.data.suggestions.length > 0) {
                     self.showSuggestions(data.data.suggestions);
                 }
             })
-            .catch(function(error) {
+            .catch(function() {
                 // Silently ignore errors
             });
         },
@@ -2063,7 +2008,9 @@
                 btn.textContent = suggestion;
                 btn.onclick = function() {
                     suggestionsEl.remove();
-                    self.inputTextarea.value = suggestion;
+                    if (self.inputTextarea) {
+                        self.inputTextarea.value = suggestion;
+                    }
                     self.handleSubmit();
                 };
                 buttonsEl.appendChild(btn);
@@ -2104,9 +2051,12 @@
             });
 
             // Hide on blur
+            var blurTimer = null;
             this.inputTextarea.addEventListener('blur', function() {
-                setTimeout(function() {
+                if (blurTimer) clearTimeout(blurTimer);
+                blurTimer = setTimeout(function() {
                     self.autocompleteEl.hidden = true;
+                    blurTimer = null;
                 }, 200);
             });
         },
@@ -2146,9 +2096,11 @@
                 item.className = 'chatbot-autocomplete__item';
                 item.textContent = suggestion;
                 item.onclick = function() {
-                    self.inputTextarea.value = suggestion;
+                    if (self.inputTextarea) {
+                        self.inputTextarea.value = suggestion;
+                        self.inputTextarea.focus();
+                    }
                     self.autocompleteEl.hidden = true;
-                    self.inputTextarea.focus();
                 };
                 self.autocompleteEl.appendChild(item);
             });
@@ -2372,6 +2324,9 @@
                                 }, 'image/jpeg', 0.7);
                                 URL.revokeObjectURL(img.src);
                             };
+                            img.onerror = function() {
+                                URL.revokeObjectURL(img.src);
+                            };
                             img.src = URL.createObjectURL(blob);
                             return;
                         }
@@ -2441,8 +2396,9 @@
                     // video element フォールバック
                     var video = document.createElement('video');
                     video.srcObject = stream;
+                    video.onerror = function() { track.stop(); };
                     video.onloadedmetadata = function() {
-                        video.play();
+                        video.play().catch(function() {});
                         var canvas = document.createElement('canvas');
                         canvas.width = video.videoWidth;
                         canvas.height = video.videoHeight;
@@ -2664,28 +2620,13 @@
                 return Promise.resolve();
             }
 
-            var url = this.config.api_base + '/lead-config';
-
-            return fetch(url, {
-                method: 'GET',
-                headers: {
-                    'X-WP-Nonce': this.config.nonce
-                }
-            })
-            .then(function(response) {
-                // レスポンスがJSONかチェック
-                var contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    return null;
-                }
-                return response.json();
-            })
+            return this.apiRequest('GET', '/lead-config')
             .then(function(data) {
                 if (data && data.success && data.data && data.data.enabled) {
                     self.leadConfig = data.data;
                 }
             })
-            .catch(function(error) {
+            .catch(function() {
                 // エラーは静かに処理（リードフォームなしで続行）
             });
         },
@@ -2735,7 +2676,10 @@
             // タイトルと説明を設定
             var titleEl = this.leadFormEl.querySelector('.lead-form-title');
             var descEl = this.leadFormEl.querySelector('.lead-form-description');
-            if (titleEl) titleEl.textContent = config.title || '';
+            if (titleEl) {
+                titleEl.textContent = config.title || '';
+                titleEl.hidden = !config.title;
+            }
             if (descEl) descEl.textContent = config.description || '';
 
             // フィールドを設定
@@ -2746,7 +2690,9 @@
             // Remove previously injected custom fields (re-show safety)
             var oldCustom = formEl ? formEl.querySelectorAll('.lead-field-custom') : [];
             for (var oc = 0; oc < oldCustom.length; oc++) {
-                oldCustom[oc].parentNode.removeChild(oldCustom[oc]);
+                if (oldCustom[oc].parentNode) {
+                    oldCustom[oc].parentNode.removeChild(oldCustom[oc]);
+                }
             }
 
             for (var fieldName in fields) {
@@ -2944,8 +2890,6 @@
                 submitBtn.textContent = (self.config.strings && self.config.strings.sending) || 'Sending...';
             }
 
-            var url = this.config.api_base + '/lead';
-
             // reCAPTCHAトークンを取得してから送信
             this.getRecaptchaToken('lead').then(function(token) {
                 if (token) {
@@ -2963,21 +2907,7 @@
                     return Promise.reject('recaptcha_not_ready');
                 }
 
-                return fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': self.config.nonce
-                    },
-                    body: JSON.stringify(formData)
-                });
-            })
-            .then(function(response) {
-                var contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error((self.config.strings && self.config.strings.server_error) || 'A server error occurred.');
-                }
-                return response.json();
+                return self.apiRequest('POST', '/lead', formData);
             })
             .then(function(data) {
                 if (data.success) {
@@ -2987,7 +2917,7 @@
                     self.showChat();
                 } else {
                     var errMsg = data.error || (self.config.strings && self.config.strings.send_failed) || 'Failed to send.';
-                    if (data.debug) {
+                    if (self.config.debug && data.debug) {
                         console.error('Server error debug:', data.debug);
                     }
                     throw new Error(errMsg);
@@ -2996,7 +2926,7 @@
             .catch(function(error) {
                 // Skip if already handled (e.g. recaptcha_not_ready)
                 if (error === 'recaptcha_not_ready') return;
-                console.error('Lead submit error:', error);
+                if (self.config.debug) console.error('Lead submit error:', error);
                 if (errorEl) {
                     errorEl.textContent = error.message || (self.config.strings && self.config.strings.send_failed) || 'Failed to send.';
                     errorEl.hidden = false;
@@ -3010,9 +2940,6 @@
             });
         },
 
-        /**
-         * メールバリデーション
-         */
         /**
          * Setup voice input (STT) and text-to-speech (TTS)
          */
@@ -3127,7 +3054,15 @@
         speakText: function(text) {
             if (!this.ttsEnabled || !this.ttsActive) return;
             // Strip markdown/HTML for cleaner speech
-            var clean = text.replace(/[#*_`~\[\]()>|\\-]/g, '').replace(/<[^>]*>/g, '').trim();
+            var clean = text
+                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // [text](url) → text
+                .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')  // ![alt](url) → alt
+                .replace(/```[\s\S]*?```/g, '')             // code blocks
+                .replace(/`([^`]+)`/g, '$1')                // inline code
+                .replace(/<[^>]*>/g, '')                     // HTML tags
+                .replace(/[#*_~>|]/g, '')                    // remaining markdown chars
+                .replace(/\n{2,}/g, '. ')                    // paragraphs to pauses
+                .trim();
             if (!clean) return;
             // Limit to first 500 chars to avoid long speeches
             if (clean.length > 500) {
@@ -3140,9 +3075,6 @@
         },
 
         /**
-         * Initialize offline message form if outside business hours
-         */
-        /**
          * Initialize welcome screen (Pro)
          */
         initWelcomeScreen: function() {
@@ -3150,11 +3082,13 @@
             var self = this;
             var title = this.config.welcome_screen_title || '';
             var message = this.config.welcome_screen_message || '';
-            var buttons = this.config.welcome_screen_buttons || [];
             if (!title && !message) return;
 
             this._welcomeScreenActive = true;
             this._welcomeShown = false;
+            // Guard against double-wrapping if initWelcomeScreen is called twice
+            if (this._welcomeOpenWrapped) return;
+            this._welcomeOpenWrapped = true;
             var origOpen = this.open.bind(this);
             this.open = function() {
                 origOpen();
@@ -3198,7 +3132,9 @@
                     btnEl.textContent = btn;
                     btnEl.onclick = function() {
                         self._dismissWelcomeScreen();
-                        self.inputTextarea.value = btn;
+                        if (self.inputTextarea) {
+                            self.inputTextarea.value = btn;
+                        }
                         self.handleSubmit();
                     };
                     btnsEl.appendChild(btnEl);
@@ -3210,7 +3146,7 @@
                 var startBtn = document.createElement('button');
                 startBtn.type = 'button';
                 startBtn.className = 'chatbot-welcome-btn';
-                startBtn.textContent = (this.config.strings && this.config.strings.start_chat) || this.config.start_chat_label || 'Start Chat';
+                startBtn.textContent = (this.config.strings && this.config.strings.start_chat) || 'Start Chat';
                 startBtn.onclick = function() {
                     self._dismissWelcomeScreen();
                 };
@@ -3401,9 +3337,13 @@
                 self._droppedTimer = null;
             }
 
-            var name = form.querySelector('[name="name"]').value;
-            var email = form.querySelector('[name="email"]').value;
-            var message = form.querySelector('[name="message"]').value;
+            var nameEl = form.querySelector('[name="name"]');
+            var emailEl = form.querySelector('[name="email"]');
+            var messageEl = form.querySelector('[name="message"]');
+
+            var name = nameEl ? nameEl.value : '';
+            var email = emailEl ? emailEl.value : '';
+            var message = messageEl ? messageEl.value : '';
 
             if (!email || !message) return;
 
@@ -3411,7 +3351,7 @@
             // Uses sessionStorage so the guard survives page reloads within the same tab.
             var dedupKey = email + '|' + message;
             try {
-                var lastDedup = JSON.parse(sessionStorage.getItem('wpaic_offline_dedup') || '{}');
+                var lastDedup = JSON.parse(wpaicSsGet('wpaic_offline_dedup') || '{}');
                 if (lastDedup.k === dedupKey && lastDedup.t && (Date.now() - lastDedup.t) < 30000) {
                     return;
                 }
@@ -3453,21 +3393,7 @@
                     return Promise.reject('recaptcha_not_ready');
                 }
 
-                return fetch(config.restUrl + 'offline-message', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-WP-Nonce': config.nonce
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-            })
-            .then(function(response) {
-                var ct = response.headers.get('content-type');
-                if (!ct || !ct.includes('application/json')) {
-                    throw new Error('Non-JSON response');
-                }
-                return response.json();
+                return self.apiRequest('POST', '/offline-message', requestBody);
             })
             .then(function(data) {
                 if (data.success && data._dropped) {
@@ -3482,7 +3408,7 @@
                         statusEl.className = 'wpaic-offline-status wpaic-offline-error';
                     }, 3000);
                 } else if (data.success) {
-                    try { sessionStorage.setItem('wpaic_offline_dedup', JSON.stringify({ k: dedupKey, t: Date.now() })); } catch (e) { /* ignore */ }
+                    try { wpaicSsSet('wpaic_offline_dedup', JSON.stringify({ k: dedupKey, t: Date.now() })); } catch (e) { /* ignore */ }
                     statusEl.textContent = data.data.message || _s.message_sent || 'Message sent!';
                     statusEl.className = 'wpaic-offline-status wpaic-offline-success';
                     form.reset();
@@ -3506,7 +3432,7 @@
          * Generate a unique request ID for deduplication.
          */
         generateRequestId: function() {
-            return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+            return Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 11);
         },
 
         /**
@@ -4203,7 +4129,7 @@
             var messagesEl = this.window.querySelector('.chatbot-messages');
             var searchBar = this.window.querySelector('.chatbot-search-bar');
             var insertBeforeEl = searchBar || messagesEl;
-            if (insertBeforeEl) {
+            if (insertBeforeEl && insertBeforeEl.parentNode) {
                 insertBeforeEl.parentNode.insertBefore(navBar, insertBeforeEl);
             }
 
@@ -4318,7 +4244,10 @@
                 var text = '';
                 for (var i = 0; i < messages.length; i++) {
                     var msg = messages[i];
-                    var role = msg.classList.contains('chatbot-message--user') ? 'User' : 'AI';
+                    var role = 'AI';
+                    if (msg.classList.contains('chatbot-message--user')) role = 'User';
+                    else if (msg.classList.contains('chatbot-message--operator')) role = 'Operator';
+                    else if (msg.classList.contains('chatbot-message--system')) role = 'System';
                     var contentEl = msg.querySelector('.chatbot-message__content');
                     if (contentEl) {
                         text += role + ': ' + contentEl.textContent.trim() + '\n\n';

@@ -9,7 +9,6 @@ if (!defined('ABSPATH')) {
 
 $total_pages = ceil($total / 20);
 $is_pro_active = get_option('wpaic_pro_active');
-$has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date_from ?? '') !== '' || ($date_to ?? '') !== '';
 ?>
 <style>
 .wpaic-handoff-badge {
@@ -170,7 +169,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                     $lead = WPAIC_Lead::get_by_conversation($conv['id']);
                     ?>
                     <tr data-id="<?php echo esc_attr($conv['id']); ?>">
-                        <td><input type="checkbox" class="wpaic-conv-checkbox" value="<?php echo esc_attr($conv['id']); ?>" aria-label="<?php /* translators: %d: conversation ID */ printf(esc_attr__('Select conversation %d', 'rapls-ai-chatbot'), (int) $conv['id']); ?>"></td>
+                        <td><input type="checkbox" class="wpaic-conv-checkbox" value="<?php echo esc_attr($conv['id']); ?>" aria-label="<?php /* translators: %d: conversation ID */ echo esc_attr(sprintf(__('Select conversation %d', 'rapls-ai-chatbot'), (int) $conv['id'])); ?>"></td>
                         <td><?php echo esc_html($conv['id']); ?></td>
                         <td>
                             <code class="wpaic-copy-session" title="<?php echo esc_attr($conv['session_id']); ?>" style="cursor: pointer;"><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
@@ -201,7 +200,7 @@ $has_filters = ($search ?? '') !== '' || ($status_filter ?? '') !== '' || ($date
                         <td>
                             <?php if (!empty($conv['page_url'])): ?>
                                 <a href="<?php echo esc_url($conv['page_url']); ?>" target="_blank" title="<?php echo esc_attr($conv['page_url']); ?>">
-                                    <?php echo esc_html(wp_trim_words($conv['page_url'], 5)); ?>
+                                    <?php echo esc_html(mb_strlen($conv['page_url']) > 50 ? mb_substr($conv['page_url'], 0, 50) . '...' : $conv['page_url']); ?>
                                 </a>
                             <?php else: ?>
                                 <em>-</em>
@@ -902,7 +901,9 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     $row.find('.status-badge').attr('class', 'status-badge status-archived').text('<?php echo esc_js(__('Archived', 'rapls-ai-chatbot')); ?>');
-                    $btn.remove();
+                    $btn.replaceWith(
+                        '<button type="button" class="button button-small wpaic-unarchive-conversation" data-id="' + id + '"><?php echo esc_js(__('Restore', 'rapls-ai-chatbot')); ?></button>'
+                    );
                 } else {
                     alert(response.data || '<?php echo esc_js(__('Failed to archive.', 'rapls-ai-chatbot')); ?>');
                     $btn.prop('disabled', false);

@@ -18,7 +18,7 @@ if (class_exists('WPAIC_Pro_Features', false)) {
 class WPAIC_Pro_Features {
 
     /**
-     * Feature constants
+     * Feature constants (used by Pro plugin via is_feature_available)
      */
     const FEATURE_MESSAGE_LIMIT = 'message_limit';
     const FEATURE_LEAD_CAPTURE = 'lead_capture';
@@ -174,8 +174,8 @@ class WPAIC_Pro_Features {
                 'company' => ['enabled' => false, 'required' => false, 'label' => 'Company', 'type' => 'text'],
             ],
             'lead_custom_fields' => [],
-            'lead_form_title' => 'Before we start',
-            'lead_form_description' => 'Please enter your information',
+            'lead_form_title' => __('Before we start', 'rapls-ai-chatbot'),
+            'lead_form_description' => __('Please enter your information', 'rapls-ai-chatbot'),
             'lead_notification_enabled' => false,
             'lead_notification_email' => '',
 
@@ -224,28 +224,28 @@ class WPAIC_Pro_Features {
                 'sunday' => ['enabled' => false, 'start' => '10:00', 'end' => '17:00'],
             ],
             'business_hours_timezone' => 'Asia/Tokyo',
-            'outside_hours_message' => 'We are currently outside business hours. Please leave a message and we will get back to you.',
+            'outside_hours_message' => __('We are currently outside business hours. Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
 
             // Holidays
             'holidays_enabled' => false,
             'holidays' => [],
-            'holiday_message' => 'We are closed today. Please contact us on the next business day.',
+            'holiday_message' => __('We are closed today. Please contact us on the next business day.', 'rapls-ai-chatbot'),
 
             // Content filters
             'banned_words_enabled' => false,
             'banned_words' => '',
-            'banned_words_message' => 'Your message contains prohibited content.',
+            'banned_words_message' => __('Your message contains prohibited content.', 'rapls-ai-chatbot'),
 
             // IP blocking
             'ip_block_enabled' => false,
             'blocked_ips' => '',
-            'ip_block_message' => 'Access denied.',
+            'ip_block_message' => __('Access denied.', 'rapls-ai-chatbot'),
 
             // Enhanced Rate Limiting
             'enhanced_rate_limit_enabled' => false,
             'rate_limit_per_minute' => 5,
             'rate_limit_per_hour' => 30,
-            'rate_limit_message' => 'Too many messages. Please wait a moment before sending again.',
+            'rate_limit_message' => __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot'),
 
             // AI Enhancement
             'related_suggestions_enabled' => false,
@@ -281,7 +281,7 @@ class WPAIC_Pro_Features {
             'handoff_keywords' => '',
             'handoff_auto_keywords_ja' => '人間と話したい,オペレーター,サポートに繋いで,担当者',
             'handoff_email' => '',
-            'handoff_message' => 'I understand this may need human assistance. A support representative will contact you soon.',
+            'handoff_message' => __('I understand this may need human assistance. A support representative will contact you soon.', 'rapls-ai-chatbot'),
             'handoff_notification_method' => 'email',
             'handoff_slack_webhook_url' => '',
             'handoff_auto_detect' => true,
@@ -289,7 +289,7 @@ class WPAIC_Pro_Features {
 
             'survey_enabled' => false,
             'survey_trigger' => 'end',
-            'survey_question' => 'How would you rate this conversation?',
+            'survey_question' => __('How would you rate this conversation?', 'rapls-ai-chatbot'),
             'survey_options' => [],
 
             'conversation_tags_enabled' => false,
@@ -300,7 +300,7 @@ class WPAIC_Pro_Features {
             'bots' => [],
 
             'operator_mode_enabled' => false,
-            'operator_takeover_message' => 'You are now connected with a support representative.',
+            'operator_takeover_message' => __('You are now connected with a support representative.', 'rapls-ai-chatbot'),
 
             'faq_auto_generation_enabled' => false,
             'faq_min_occurrences' => 3,
@@ -318,7 +318,7 @@ class WPAIC_Pro_Features {
             'budget_alert_threshold' => 10.00,
             'budget_limit_enabled' => false,
             'budget_limit_amount' => 50.00,
-            'budget_block_message' => 'The AI service is temporarily unavailable due to usage limits. Please try again later.',
+            'budget_block_message' => __('The AI service is temporarily unavailable due to usage limits. Please try again later.', 'rapls-ai-chatbot'),
 
             // Monthly Report
             'monthly_report_enabled' => false,
@@ -382,8 +382,8 @@ class WPAIC_Pro_Features {
 
             // Offline Messages
             'offline_message_enabled' => false,
-            'offline_form_title' => 'We are currently offline',
-            'offline_form_description' => 'Please leave a message and we will get back to you.',
+            'offline_form_title' => __('We are currently offline', 'rapls-ai-chatbot'),
+            'offline_form_description' => __('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
             'offline_notification_email' => '',
             'offline_notification_enabled' => false,
 
@@ -940,5 +940,47 @@ class WPAIC_Pro_Features {
      */
     public function merge_knowledge_entries(array $ids, int $primary_id): bool {
         return false;
+    }
+
+    /**
+     * Stub: Get context memory retention days
+     */
+    public function get_context_memory_days(): int {
+        return 30;
+    }
+
+    /**
+     * Stub: Get active prompt template text
+     */
+    public function get_active_prompt_template_text(): ?string {
+        return null;
+    }
+
+    /**
+     * Stub: Calculate spam score for a message
+     */
+    public function calculate_spam_score(string $message): int {
+        return 0;
+    }
+
+    /**
+     * Stub: Mask PII in content
+     */
+    public function mask_pii(string $content): string {
+        return $content;
+    }
+
+    /**
+     * Stub: Send Slack notification
+     */
+    public function send_slack_notification(string $event, array $data): void {
+        // No-op in Free version
+    }
+
+    /**
+     * Stub: Send lead data to Google Sheets
+     */
+    public function send_to_google_sheets(array $lead_data): void {
+        // No-op in Free version
     }
 }

@@ -191,6 +191,12 @@ if (is_multisite()) {
     wpaic_uninstall_site();
 }
 
+// Network-level cleanup (multisite only)
+if (is_multisite()) {
+    delete_site_option('wpaic_ms_activate_errors');
+    delete_site_transient('wpaic_ms_activate_errors_last');
+}
+
 // completed_at = "script reached this line" (best-effort).
 // It does NOT guarantee every DB operation above succeeded —
 // individual DROP/DELETE may have silently failed at the DB level.

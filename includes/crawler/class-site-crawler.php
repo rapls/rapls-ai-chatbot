@@ -77,6 +77,11 @@ class WPAIC_Site_Crawler {
         }
         set_transient(self::LOCK_KEY, time(), self::LOCK_TIMEOUT);
 
+        // Signal to content extractor that we are in crawl context (avoid shortcode side effects)
+        if (!defined('WPAIC_CRAWLING')) {
+            define('WPAIC_CRAWLING', true);
+        }
+
         try {
             // Reset incremental progress so we start fresh
             delete_option(self::PROGRESS_KEY);
@@ -157,6 +162,9 @@ class WPAIC_Site_Crawler {
      * Run one incremental batch.
      */
     private function run_incremental_crawl(array $settings): array {
+        if (!defined('WPAIC_CRAWLING')) {
+            define('WPAIC_CRAWLING', true);
+        }
         $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
         $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
         $batch_size = 100;
@@ -288,8 +296,8 @@ class WPAIC_Site_Crawler {
         $content_hash = hash('sha256', $content);
 
         // Skip if no changes (differential crawl)
-        $crawl_settings = get_option('wpaic_settings', []);
-        $diff_crawl = $crawl_settings['pro_features']['diff_crawl_enabled'] ?? true;
+        $settings = get_option('wpaic_settings', []);
+        $diff_crawl = $settings['pro_features']['diff_crawl_enabled'] ?? true;
         if ($diff_crawl && WPAIC_Content_Index::hash_exists($post->ID, $content_hash)) {
             return 'skipped';
         }
@@ -302,7 +310,6 @@ class WPAIC_Site_Crawler {
         WPAIC_Content_Index::delete_by_post_id($post->ID);
 
         // Split into chunks
-        $settings = get_option('wpaic_settings', []);
         $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
         $this->chunker->set_chunk_size($chunk_size);
         $chunks = $this->chunker->split($content);
@@ -311,7 +318,7 @@ class WPAIC_Site_Crawler {
         global $wpdb;
         $chunk_ids = [];
         foreach ($chunks as $index => $chunk) {
-            WPAIC_Content_Index::create([
+            $insert_result = WPAIC_Content_Index::create([
                 'post_id'      => $post->ID,
                 'post_type'    => $post->post_type,
                 'title'        => $post->post_title,
@@ -320,7 +327,11 @@ class WPAIC_Site_Crawler {
                 'chunk_index'  => $index,
                 'url'          => get_permalink($post->ID),
             ]);
-            $chunk_ids[] = $wpdb->insert_id;
+            if ($insert_result && $wpdb->insert_id > 0) {
+                $chunk_ids[] = $wpdb->insert_id;
+            } else {
+                wpaic_rate_limited_log('crawler_insert_fail', 'WPAIC Crawler: Failed to insert chunk ' . $index . ' for post ' . $post->ID);
+            }
         }
 
         // Generate embeddings if configured
@@ -392,6 +403,12 @@ class WPAIC_Site_Crawler {
             $post_types = array_values($post_types);
         }
         if (!in_array($post->post_type, $post_types, true)) {
+            return;
+        }
+
+        // Respect exclude IDs setting
+        $exclude_ids = array_map('absint', $settings['crawler_exclude_ids'] ?? []);
+        if (in_array($post_id, $exclude_ids, true)) {
             return;
         }
 

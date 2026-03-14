@@ -20,8 +20,13 @@ class WPAIC_Content_Extractor {
             $content = $this->process_blocks($content);
         }
 
-        // Expand shortcodes
-        $content = do_shortcode($content);
+        // Expand shortcodes in a safe context (disable side-effect-prone shortcodes during crawl)
+        $is_crawling = defined('WPAIC_CRAWLING') && WPAIC_CRAWLING;
+        if (!$is_crawling) {
+            $content = do_shortcode($content);
+        } else {
+            $content = strip_shortcodes($content);
+        }
 
         // Check if enhanced extraction is enabled (Pro feature)
         $settings = get_option('wpaic_settings', []);
@@ -57,7 +62,28 @@ class WPAIC_Content_Extractor {
      * Process Gutenberg blocks
      */
     private function process_blocks(string $content): string {
-        // Render blocks
+        $is_crawling = defined('WPAIC_CRAWLING') && WPAIC_CRAWLING;
+
+        // During crawl, only serialize block content without rendering (avoids side effects)
+        if ($is_crawling) {
+            $blocks = parse_blocks($content);
+            $output = '';
+            foreach ($blocks as $block) {
+                if (!empty($block['innerHTML'])) {
+                    $output .= $block['innerHTML'];
+                }
+                if (!empty($block['innerBlocks'])) {
+                    foreach ($block['innerBlocks'] as $inner) {
+                        if (!empty($inner['innerHTML'])) {
+                            $output .= $inner['innerHTML'];
+                        }
+                    }
+                }
+            }
+            return $output;
+        }
+
+        // Normal rendering (not during crawl)
         $blocks = parse_blocks($content);
         $output = '';
 
@@ -108,11 +134,12 @@ class WPAIC_Content_Extractor {
         $html = '<html><head><meta charset="UTF-8"></head><body>' . $content . '</body></html>';
 
         $doc = new DOMDocument();
-        libxml_use_internal_errors(true);
+        $prev_libxml_errors = libxml_use_internal_errors(true);
         // Use mb_encode_numericentity instead of deprecated HTML-ENTITIES (PHP 8.2+)
         $converted = mb_encode_numericentity($html, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8');
         $doc->loadHTML($converted, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         libxml_clear_errors();
+        libxml_use_internal_errors($prev_libxml_errors);
 
         $body = $doc->getElementsByTagName('body')->item(0);
         if (!$body) {

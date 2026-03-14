@@ -89,14 +89,14 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             } else {
                 $content = $msg['content'];
 
+                // Inject file first, then image, so content order is: document, image, text
+                if ($idx === $last_user_idx && !empty($file_data)) {
+                    $content = $this->build_document_content($content, $file_data, $file_name);
+                }
+
                 // Inject image into the last user message for vision
                 if ($idx === $last_user_idx && !empty($image_data)) {
                     $content = $this->build_vision_content($content, $image_data);
-                }
-
-                // Inject file into the last user message for document analysis
-                if ($idx === $last_user_idx && !empty($file_data)) {
-                    $content = $this->build_document_content($content, $file_data, $file_name);
                 }
 
                 $chat_messages[] = [
@@ -157,6 +157,9 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         $data = json_decode($response_body, true);
 
         if ($response_code !== 200) {
+            if (!is_array($data)) {
+                throw new Exception(esc_html__('Claude API error: ', 'rapls-ai-chatbot') . esc_html(wp_remote_retrieve_response_message($response)), (int) $response_code);
+            }
             $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
             $error_type = $data['error']['type'] ?? '';
 
@@ -174,7 +177,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
 
             // Authentication errors
             if ($response_code === 401 || $error_type === 'authentication_error') {
-                throw new Exception(esc_html__('Claude API key is invalid or has been revoked.', 'rapls-ai-chatbot'));
+                throw new Exception(esc_html__('Claude API key is invalid or has been revoked.', 'rapls-ai-chatbot'), 401);
             }
 
             // Check for quota/billing errors
@@ -184,14 +187,20 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                 stripos($error_message, 'quota') !== false ||
                 stripos($error_message, 'billing') !== false ||
                 stripos($error_message, 'exceeded') !== false) {
-                throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+                $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+                $retry_after = wp_remote_retrieve_header($response, 'retry-after');
+                if (is_numeric($retry_after) && (int) $retry_after > 0) {
+                    $ex->set_retry_after((int) $retry_after);
+                }
+                throw $ex;
             }
 
             // Invalid parameter errors
             if ($response_code === 400 || $error_type === 'invalid_request_error') {
                 throw new Exception(
                     /* translators: 1: model name, 2: error message */
-                    sprintf(esc_html__('Claude API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message))
+                    sprintf(esc_html__('Claude API parameter error (model: %1$s): %2$s. Please try selecting a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model), esc_html($error_message)),
+                    400
                 );
             }
 
@@ -199,7 +208,8 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             if ($response_code === 404) {
                 throw new Exception(
                     /* translators: %s: model name */
-                    sprintf(esc_html__('Claude model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model))
+                    sprintf(esc_html__('Claude model "%s" not found. It may have been deprecated or renamed. Please select a different model in Settings.', 'rapls-ai-chatbot'), esc_html($this->model)),
+                    404
                 );
             }
 
@@ -207,18 +217,19 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             if ($response_code >= 500) {
                 throw new Exception(
                     /* translators: %d: HTTP status code */
-                    sprintf(esc_html__('Claude server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), (int) $response_code)
+                    sprintf(esc_html__('Claude server error (HTTP %d). The service may be temporarily unavailable. Please try again later.', 'rapls-ai-chatbot'), (int) $response_code),
+                    (int) $response_code
                 );
             }
 
-            throw new Exception(esc_html__('Claude API error: ', 'rapls-ai-chatbot') . esc_html($error_message));
+            throw new Exception(esc_html__('Claude API error: ', 'rapls-ai-chatbot') . esc_html($error_message), (int) $response_code);
         }
 
         $content = '';
         $web_sources = [];
         if (isset($data['content']) && is_array($data['content'])) {
             foreach ($data['content'] as $block) {
-                if (($block['type'] ?? '') === 'text') {
+                if (($block['type'] ?? '') === 'text' && isset($block['text'])) {
                     $content .= $block['text'];
                     // Extract web search citations
                     if (isset($block['citations']) && is_array($block['citations'])) {
@@ -334,7 +345,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                     'Content-Type'      => 'application/json',
                 ],
                 'body'    => wp_json_encode([
-                    'model'      => 'claude-haiku-4-5-20251001',
+                    'model'      => $this->model ?: 'claude-haiku-4-5-20251001',
                     'max_tokens' => 10,
                     'messages'   => [
                         ['role' => 'user', 'content' => 'Hi']
@@ -377,14 +388,21 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
 
         $text = is_array($content) ? $content : [['type' => 'text', 'text' => $content]];
 
-        array_unshift($text, [
+        $doc_block = [
             'type'   => 'document',
             'source' => [
                 'type'       => 'base64',
                 'media_type' => $media_type,
                 'data'       => $base64,
             ],
-        ]);
+        ];
+
+        // Include file name as document title for better AI context
+        if (!empty($file_name)) {
+            $doc_block['title'] = $file_name;
+        }
+
+        array_unshift($text, $doc_block);
 
         return $text;
     }
@@ -393,7 +411,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
      * Build vision content array for Claude API.
      * Converts text + image data URL to Claude's multimodal content format.
      */
-    private function build_vision_content(string $text, string $image_data): array {
+    private function build_vision_content($text, string $image_data): array {
         // Parse data URI: data:image/jpeg;base64,/9j/4AAQ...
         $media_type = 'image/jpeg';
         $base64 = $image_data;
@@ -403,15 +421,23 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             $base64 = $m[2];
         }
 
-        return [
-            [
-                'type'   => 'image',
-                'source' => [
-                    'type'       => 'base64',
-                    'media_type' => $media_type,
-                    'data'       => $base64,
-                ],
+        $image_block = [
+            'type'   => 'image',
+            'source' => [
+                'type'       => 'base64',
+                'media_type' => $media_type,
+                'data'       => $base64,
             ],
+        ];
+
+        // If $text is already a multimodal content array (e.g. from build_document_content), prepend image
+        if (is_array($text)) {
+            array_unshift($text, $image_block);
+            return $text;
+        }
+
+        return [
+            $image_block,
             [
                 'type' => 'text',
                 'text' => $text,

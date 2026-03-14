@@ -285,12 +285,16 @@ $is_pro = $pro_features->is_pro();
                                 <?php endif; ?>
                             </td>
                             <td>
+                                <?php $current_priority = (int) ($item['priority'] ?? 0); ?>
                                 <select class="wpaic-priority-select" data-id="<?php echo esc_attr($item['id']); ?>" aria-label="<?php esc_attr_e('Priority', 'rapls-ai-chatbot'); ?>">
-                                    <option value="0" <?php selected($item['priority'] ?? 0, 0); ?>>0</option>
-                                    <option value="25" <?php selected($item['priority'] ?? 0, 25); ?>>25</option>
-                                    <option value="50" <?php selected($item['priority'] ?? 0, 50); ?>>50</option>
-                                    <option value="75" <?php selected($item['priority'] ?? 0, 75); ?>>75</option>
-                                    <option value="100" <?php selected($item['priority'] ?? 0, 100); ?>>100</option>
+                                    <?php if (!in_array($current_priority, [0, 25, 50, 75, 100], true)): ?>
+                                    <option value="<?php echo esc_attr($current_priority); ?>" selected><?php echo esc_html($current_priority); ?></option>
+                                    <?php endif; ?>
+                                    <option value="0" <?php selected($current_priority, 0); ?>>0</option>
+                                    <option value="25" <?php selected($current_priority, 25); ?>>25</option>
+                                    <option value="50" <?php selected($current_priority, 50); ?>>50</option>
+                                    <option value="75" <?php selected($current_priority, 75); ?>>75</option>
+                                    <option value="100" <?php selected($current_priority, 100); ?>>100</option>
                                 </select>
                             </td>
                             <td>
@@ -392,6 +396,17 @@ $is_pro = $pro_features->is_pro();
                             <textarea id="edit-knowledge-content" name="content" rows="15" class="large-text" required></textarea>
                         </td>
                     </tr>
+                    <?php if ($is_pro): ?>
+                    <tr>
+                        <th><label for="edit-knowledge-type"><?php esc_html_e('Type', 'rapls-ai-chatbot'); ?></label></th>
+                        <td>
+                            <select id="edit-knowledge-type" name="type">
+                                <option value="qa"><?php esc_html_e('Q&A', 'rapls-ai-chatbot'); ?></option>
+                                <option value="template"><?php esc_html_e('Template', 'rapls-ai-chatbot'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                     <tr>
                         <th><label for="edit-knowledge-category"><?php esc_html_e('Category', 'rapls-ai-chatbot'); ?></label></th>
                         <td>
@@ -745,6 +760,7 @@ jQuery(document).ready(function($) {
                     $('#edit-knowledge-id').val(data.id);
                     $('#edit-knowledge-title').val(data.title);
                     $('#edit-knowledge-content').val(data.content);
+                    $('#edit-knowledge-type').val(data.type || 'qa');
                     $('#edit-knowledge-category').val(data.category || '');
                     $('#edit-knowledge-priority').val(data.priority || 0);
                     $('#wpaic-edit-modal').show();
@@ -772,6 +788,7 @@ jQuery(document).ready(function($) {
                 id: $('#edit-knowledge-id').val(),
                 title: $('#edit-knowledge-title').val(),
                 content: $('#edit-knowledge-content').val(),
+                type: $('#edit-knowledge-type').val(),
                 category: $('#edit-knowledge-category').val(),
                 priority: $('#edit-knowledge-priority').val() || 0
             },
