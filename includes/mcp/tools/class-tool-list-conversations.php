@@ -79,7 +79,7 @@ class WPAIC_MCP_Tool_List_Conversations {
             global $wpdb;
             $msg_table = trim(wpaic_validated_table('aichat_messages'), '`');
             $placeholders = implode(',', array_fill(0, count($conv_ids), '%d'));
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $rows = $wpdb->get_results($wpdb->prepare(
                 "SELECT conversation_id, COUNT(*) AS cnt FROM `{$msg_table}` WHERE conversation_id IN ({$placeholders}) GROUP BY conversation_id",
                 ...$conv_ids

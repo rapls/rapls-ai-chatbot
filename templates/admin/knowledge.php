@@ -21,23 +21,6 @@ $is_pro = $pro_features->is_pro();
         <?php esc_html_e('Upload text or files to teach the chatbot custom knowledge. The learned content will be used as reference when answering user questions.', 'rapls-ai-chatbot'); ?>
     </p>
 
-    <?php if (!$is_pro): ?>
-    <div class="notice notice-info" style="margin: 10px 0 15px;">
-        <p>
-            <?php
-            printf(
-                /* translators: 1: current FAQ count, 2: FAQ limit */
-                esc_html__('FAQ entries: %1$d / %2$d (Free version limit)', 'rapls-ai-chatbot'),
-                absint($faq_count),
-                absint($faq_limit)
-            );
-            ?>
-            <?php if ($faq_limit_reached): ?>
-                — <strong><?php esc_html_e('Limit reached. Upgrade to Pro for unlimited entries.', 'rapls-ai-chatbot'); ?></strong>
-            <?php endif; ?>
-        </p>
-    </div>
-    <?php endif; ?>
 
     <div class="wpaic-knowledge-grid">
         <!-- Add Text Form -->

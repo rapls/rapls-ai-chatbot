@@ -27,10 +27,10 @@ class WPAIC_Pro_Features {
     const FEATURE_WEBHOOK = 'webhook';
 
     /**
-     * Free version limits
+     * Free version limits (no artificial limits — users pay their own API costs)
      */
-    const FREE_MESSAGE_LIMIT = 500;
-    const FREE_FAQ_LIMIT = 20;
+    const FREE_MESSAGE_LIMIT = PHP_INT_MAX;
+    const FREE_FAQ_LIMIT = PHP_INT_MAX;
 
     /**
      * Singleton instance (protected for Pro override)

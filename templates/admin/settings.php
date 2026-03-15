@@ -12,7 +12,7 @@ if (!defined('ABSPATH')) {
         <?php esc_html_e('AI Chatbot - Settings', 'rapls-ai-chatbot'); ?>
         <?php if (defined('WPAIC_VERSION')) : ?>
         <span style="font-size:12px;font-weight:normal;color:#666;margin-left:8px;">
-            v<?php echo esc_html(WPAIC_VERSION); ?><?php if (defined('WPAIC_BUILD') && WPAIC_BUILD) : ?> (<?php echo esc_html(strpos(WPAIC_BUILD, 'Format') === false ? WPAIC_BUILD : 'dev'); ?>)<?php endif; ?>
+            v<?php echo esc_html(WPAIC_VERSION); ?><?php if (defined('WPAIC_BUILD') && WPAIC_BUILD && strpos(WPAIC_BUILD, 'Format') === false) : ?> (<?php echo esc_html(WPAIC_BUILD); ?>)<?php endif; ?>
         </span>
         <?php endif; ?>
     </h1>
@@ -36,8 +36,8 @@ if (!defined('ABSPATH')) {
                 <a href="#tab-ai" class="nav-tab nav-tab-active"><?php esc_html_e('AI Settings', 'rapls-ai-chatbot'); ?></a>
                 <a href="#tab-chat" class="nav-tab"><?php esc_html_e('Chat Settings', 'rapls-ai-chatbot'); ?></a>
                 <a href="#tab-display" class="nav-tab"><?php esc_html_e('Display Settings', 'rapls-ai-chatbot'); ?></a>
-                <a href="#tab-recaptcha" class="nav-tab"><?php esc_html_e('reCAPTCHA', 'rapls-ai-chatbot'); ?></a>
-                <a href="#tab-advanced" class="nav-tab"><?php esc_html_e('Advanced', 'rapls-ai-chatbot'); ?></a>
+                <a href="#tab-security" class="nav-tab"><?php esc_html_e('Security', 'rapls-ai-chatbot'); ?></a>
+                <a href="#tab-data" class="nav-tab"><?php esc_html_e('Data Management', 'rapls-ai-chatbot'); ?></a>
             </nav>
 
             <!-- AI Settings -->
@@ -1246,16 +1246,6 @@ if (!defined('ABSPATH')) {
                             <p class="description"><?php esc_html_e('Select specific pages to hide the chatbot (dropdown-based). For posts, use Exclude IDs above.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Footer', 'rapls-ai-chatbot'); ?></th>
-                        <td>
-                            <label>
-                                <?php $pro_settings_footer = $settings['pro_features'] ?? []; ?>
-                                <input type="checkbox" name="wpaic_settings[hide_powered_by]" value="1" <?php checked(!empty($pro_settings_footer['hide_powered_by'])); ?>>
-                                <?php esc_html_e('Hide footer', 'rapls-ai-chatbot'); ?>
-                            </label>
-                        </td>
-                    </tr>
                 </table>
 
                 <hr style="margin: 20px 0;">
@@ -1306,15 +1296,17 @@ if (!defined('ABSPATH')) {
                 </table>
             </div>
 
-            <!-- reCAPTCHA Settings -->
-            <div id="tab-recaptcha" class="tab-content">
+            <!-- Security Settings -->
+            <div id="tab-security" class="tab-content">
                 <div class="wpaic-tab-header">
-                    <h2><?php esc_html_e('reCAPTCHA Settings', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-recaptcha">
+                    <h2><?php esc_html_e('Security Settings', 'rapls-ai-chatbot'); ?></h2>
+                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-security">
                         <span class="dashicons dashicons-image-rotate"></span>
                         <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
                     </button>
                 </div>
+
+                <h3><?php esc_html_e('reCAPTCHA', 'rapls-ai-chatbot'); ?></h3>
                 <p class="description">
                     <?php esc_html_e('Use Google reCAPTCHA v3 to prevent spam.', 'rapls-ai-chatbot'); ?>
                     <a href="https://www.google.com/recaptcha/admin" target="_blank"><?php esc_html_e('Get keys from Google reCAPTCHA Admin Console', 'rapls-ai-chatbot'); ?></a>
@@ -1378,51 +1370,11 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                 </table>
-            </div>
 
-            <!-- Advanced Settings -->
-            <div id="tab-advanced" class="tab-content">
-                <div class="wpaic-tab-header">
-                    <h2><?php esc_html_e('Advanced Settings', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-advanced">
-                        <span class="dashicons dashicons-image-rotate"></span>
-                        <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
-                    </button>
-                </div>
+                <hr style="margin: 30px 0;">
 
+                <h3><?php esc_html_e('Access Control', 'rapls-ai-chatbot'); ?></h3>
                 <table class="form-table">
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Save History', 'rapls-ai-chatbot'); ?></th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="wpaic_settings[save_history]" value="1"
-                                    <?php checked($settings['save_history'] ?? true); ?>>
-                                <?php esc_html_e('Save conversation history', 'rapls-ai-chatbot'); ?>
-                            </label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('History Retention', 'rapls-ai-chatbot'); ?></th>
-                        <td>
-                            <input type="number" name="wpaic_settings[retention_days]"
-                                   value="<?php echo esc_attr($settings['retention_days'] ?? 90); ?>"
-                                   min="0" max="3650" class="small-text"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
-                            <p class="description"><?php esc_html_e('0 for unlimited retention', 'rapls-ai-chatbot'); ?></p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php esc_html_e('Delete Data on Uninstall', 'rapls-ai-chatbot'); ?></th>
-                        <td>
-                            <label>
-                                <input type="checkbox" name="wpaic_settings[delete_data_on_uninstall]" value="1"
-                                    <?php checked($settings['delete_data_on_uninstall'] ?? false); ?>>
-                                <?php esc_html_e('Delete all conversation history, knowledge base, leads, and other plugin data when the plugin is uninstalled', 'rapls-ai-chatbot'); ?>
-                            </label>
-                            <p class="description" style="color: #d63638;">
-                                <?php esc_html_e('Warning: This action is irreversible. If disabled, plugin settings will still be removed but database tables (conversations, knowledge base, leads) will be preserved.', 'rapls-ai-chatbot'); ?>
-                            </p>
-                        </td>
-                    </tr>
                     <tr>
                         <th scope="row"><?php esc_html_e('Consent Strict Mode', 'rapls-ai-chatbot'); ?></th>
                         <td>
@@ -1878,10 +1830,57 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                 </table>
+            </div>
+
+            <!-- Data Management -->
+            <div id="tab-data" class="tab-content">
+                <div class="wpaic-tab-header">
+                    <h2><?php esc_html_e('Data Management', 'rapls-ai-chatbot'); ?></h2>
+                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-data">
+                        <span class="dashicons dashicons-image-rotate"></span>
+                        <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
+                    </button>
+                </div>
+
+                <h3><?php esc_html_e('Conversation History', 'rapls-ai-chatbot'); ?></h3>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Save History', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[save_history]" value="1"
+                                    <?php checked($settings['save_history'] ?? true); ?>>
+                                <?php esc_html_e('Save conversation history', 'rapls-ai-chatbot'); ?>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('History Retention', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <input type="number" name="wpaic_settings[retention_days]"
+                                   value="<?php echo esc_attr($settings['retention_days'] ?? 90); ?>"
+                                   min="0" max="3650" class="small-text"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
+                            <p class="description"><?php esc_html_e('0 for unlimited retention', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Delete Data on Uninstall', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="wpaic_settings[delete_data_on_uninstall]" value="1"
+                                    <?php checked($settings['delete_data_on_uninstall'] ?? false); ?>>
+                                <?php esc_html_e('Delete all conversation history, knowledge base, leads, and other plugin data when the plugin is uninstalled', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description" style="color: #d63638;">
+                                <?php esc_html_e('Warning: This action is irreversible. If disabled, plugin settings will still be removed but database tables (conversations, knowledge base, leads) will be preserved.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
 
                 <hr style="margin: 30px 0;">
 
-                <h2><?php esc_html_e('Import/Export Settings', 'rapls-ai-chatbot'); ?></h2>
+                <h3><?php esc_html_e('Import/Export Settings', 'rapls-ai-chatbot'); ?></h3>
                 <p class="description"><?php esc_html_e('Export or import all settings as a JSON file.', 'rapls-ai-chatbot'); ?></p>
 
                 <table class="form-table">

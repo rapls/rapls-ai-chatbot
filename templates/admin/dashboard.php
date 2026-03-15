@@ -10,26 +10,17 @@ if (!defined('ABSPATH')) {
 <div class="wrap wpaic-admin">
     <h1><?php esc_html_e('AI Chatbot - Dashboard', 'rapls-ai-chatbot'); ?></h1>
 
-    <?php if (!$is_unlimited && $remaining_messages <= 0): ?>
-    <!-- Message Limit Reached Warning -->
-    <div class="notice notice-error">
-        <p>
-            <strong><?php esc_html_e('Monthly AI response limit reached.', 'rapls-ai-chatbot'); ?></strong>
-            <?php esc_html_e('The chatbot can no longer generate AI responses this month. Upgrade to Pro for unlimited responses.', 'rapls-ai-chatbot'); ?>
-            <a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" class="button button-primary" style="margin-left: 10px;">
-                <?php esc_html_e('Get Pro Version', 'rapls-ai-chatbot'); ?>
-            </a>
-        </p>
-    </div>
-    <?php elseif (!get_option('wpaic_pro_active')): ?>
-    <!-- Pro Version Notice -->
+    <?php if (!get_option('wpaic_pro_active')): ?>
+    <!-- Pro Version Notice (single, dismissible) -->
     <div class="notice notice-info is-dismissible">
         <p>
-            <strong><?php esc_html_e('Upgrade to Pro', 'rapls-ai-chatbot'); ?>:</strong>
-            <?php esc_html_e('Unlock lead capture, analytics, webhooks, and more features.', 'rapls-ai-chatbot'); ?>
-            <a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" class="button button-primary" style="margin-left: 10px;">
-                <?php esc_html_e('Get Pro Version', 'rapls-ai-chatbot'); ?>
-            </a>
+            <?php
+            printf(
+                /* translators: %s: URL to Pro page */
+                esc_html__('Unlock analytics, lead capture, scenarios, and more with %s.', 'rapls-ai-chatbot'),
+                '<a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank">Pro</a>'
+            );
+            ?>
         </p>
     </div>
     <?php endif; ?>
@@ -95,30 +86,6 @@ if (!defined('ABSPATH')) {
             </div>
             <?php endif; endif; ?>
 
-            <?php if (!$is_unlimited): ?>
-            <div class="wpaic-stat-card <?php echo esc_attr($remaining_messages <= 0 ? 'wpaic-stat-card-critical' : ($remaining_messages <= ceil($message_limit * 0.2) ? 'wpaic-stat-card-warning' : '')); ?>">
-                <div class="stat-icon">🎯</div>
-                <div class="stat-content">
-                    <div class="stat-value"><?php echo esc_html($used_messages . ' / ' . $message_limit); ?></div>
-                    <div class="stat-label"><?php esc_html_e('Monthly AI Responses', 'rapls-ai-chatbot'); ?></div>
-                    <?php if ($remaining_messages <= 0): ?>
-                        <div class="stat-sub" style="color: #d63638; font-size: 12px; margin-top: 4px;">
-                            <?php esc_html_e('Limit reached', 'rapls-ai-chatbot'); ?>
-                        </div>
-                    <?php else: ?>
-                        <div class="stat-sub" style="color: #666; font-size: 12px; margin-top: 4px;">
-                            <?php
-                            printf(
-                                /* translators: %d: number of remaining messages */
-                                esc_html__('%d remaining', 'rapls-ai-chatbot'),
-                                absint($remaining_messages)
-                            );
-                            ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endif; ?>
         </div>
 
         <!-- Status Panel -->

@@ -1,6 +1,6 @@
 === Rapls AI Chatbot ===
 
-Contributors: raplsworks
+Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
@@ -15,28 +15,29 @@ AI-powered chatbot for WordPress. Supports OpenAI, Claude, Gemini, and OpenRoute
 
 == Description ==
 
-Rapls AI Chatbot is a powerful AI chatbot plugin that integrates seamlessly with your WordPress site. It supports multiple AI providers including OpenAI (GPT-5, GPT-4o), Anthropic Claude, Google Gemini, and OpenRouter, allowing you to choose the best AI for your needs.
+Rapls AI Chatbot is a powerful AI chatbot plugin that integrates seamlessly with your WordPress site. It supports multiple AI providers including OpenAI (GPT-5, GPT-4o), Anthropic Claude (Opus 4.6, Sonnet 4.5), Google Gemini (3 Pro, 2.5 Pro), and OpenRouter (100+ models), allowing you to choose the best AI for your needs.
 
-The free version is fully functional — no Pro add-on required for core AI chat features, site learning, knowledge base, web search, and 6 built-in themes.
+The free version is fully functional — no Pro add-on required for core AI chat features, site learning, knowledge base, web search, MCP server, Gutenberg block, and 6 built-in themes.
 
 = Key Features =
 
-* **Multiple AI Providers** - Support for OpenAI, Anthropic Claude, Google Gemini, and OpenRouter (100+ models)
-* **Web Search** - AI automatically searches the web when knowledge base lacks a sufficient answer
-* **Gutenberg Block** - Insert AI Chatbot block in the block editor with height, theme, and bot-id settings; SSR support
-* **MCP Server** - 7 built-in tools via JSON-RPC 2.0 for AI agent integration (Claude Desktop, Cursor, VS Code)
-* **WordPress Abilities API** - Auto-register MCP tools as WordPress Abilities for MCP Adapter discovery
-* **Response Language Auto-detect** - Automatically detect browser language for welcome message and AI responses
-* **Site Learning** - Automatically learn from your website content (posts, pages, custom post types)
-* **Vector Embedding RAG** - Hybrid search combining keyword (40%) and vector similarity (60%) for accurate retrieval
-* **Custom Knowledge Base** - Add custom Q&A pairs, free-form content, PDF/DOCX uploads
-* **Cross-site Embed** - Embed the chatbot on external sites via iframe
-* **Conversation History** - Save and review all chat conversations
-* **Usage Statistics** - Track token usage and estimated API costs with visual charts
-* **Feedback & Regeneration** - Users can rate responses and request regeneration
-* **Fully Customizable** - Customize appearance, behavior, and AI responses
-* **6 Built-in Themes** - Default, Simple, Classic, Light, Minimal, Flat
-* **Multilingual** - Japanese translation included, easily translatable
+* **Multiple AI Providers** — OpenAI, Anthropic Claude, Google Gemini, and OpenRouter (100+ models via single API key)
+* **Web Search** — AI automatically searches the web when the knowledge base lacks a sufficient answer, using each provider's built-in capability (OpenAI web_search_preview, Claude web_search, Gemini google_search)
+* **Site Learning** — Crawl and index your website content (posts, pages, custom post types, WooCommerce products) for context-aware responses
+* **Vector Embedding RAG** — Hybrid search combining keyword matching (40%) and vector similarity (60%) for accurate retrieval
+* **Custom Knowledge Base** — Add Q&A pairs, free-form content, PDF/DOCX uploads with priority levels and draft/published workflow
+* **MCP Server** — 7 built-in tools via JSON-RPC 2.0 for AI agent integration (Claude Desktop, Cursor, VS Code)
+* **WordPress Abilities API** — Auto-register MCP tools as WordPress Abilities for discovery by MCP Adapters
+* **Gutenberg Block** — Insert AI Chatbot block in the block editor with height, theme, and bot-id settings; SSR support
+* **Response Language Auto-detect** — Automatically detect browser language for welcome message and AI responses
+* **Cross-site Embed** — Embed the chatbot on external sites via iframe or script loader
+* **Conversation History** — Save and review all chat conversations with configurable retention
+* **Usage Statistics** — Track token usage and estimated API costs with visual charts and provider breakdown
+* **Feedback & Regeneration** — Users can rate responses (thumbs up/down) and request regeneration
+* **6 Built-in Themes** — Default, Simple, Classic, Light, Minimal, Flat
+* **Security** — reCAPTCHA v3, rate limiting, consent mode, Cloudflare support, security diagnostics
+* **Settings Import/Export** — Backup and restore all settings as JSON
+* **Multilingual** — Japanese translation included; welcome messages configurable in 13 languages
 
 = Supported AI Models =
 
@@ -44,16 +45,16 @@ The free version is fully functional — no Pro add-on required for core AI chat
 * GPT-5.2, GPT-5.1, GPT-5 series (Latest generation)
 * GPT-4.1 series (Long context, 1M tokens)
 * GPT-4o, GPT-4o-mini (Multimodal)
-* o1, o3, o4-mini (Reasoning Models)
+* o1, o3, o4-mini (Reasoning models)
 
 **Anthropic Claude:**
-* Claude Opus 4.6 (Most Powerful)
-* Claude Sonnet 4.5 (Recommended, Fast and Powerful)
-* Claude Haiku 4.5 (Recommended, Fastest)
+* Claude Opus 4.6 (Most powerful)
+* Claude Sonnet 4.5 (Recommended — fast and powerful)
+* Claude Haiku 4.5 (Recommended — fastest)
 * Claude Opus 4.5, Opus 4.1, Sonnet 4, 3.7 Sonnet
 
 **Google Gemini:**
-* Gemini 3 Pro/Flash (Preview, Latest)
+* Gemini 3 Pro/Flash (Preview, latest)
 * Gemini 2.5 Pro/Flash (Recommended)
 * Gemini 2.0 Flash (Stable)
 * Gemini 1.5 Pro/Flash (Legacy)
@@ -61,128 +62,69 @@ The free version is fully functional — no Pro add-on required for core AI chat
 **OpenRouter:**
 * Access 100+ models from multiple providers through a single API key
 
+= Dashboard =
+
+The dashboard provides an at-a-glance overview of your chatbot's activity:
+
+* Statistics cards: total conversations, today's messages, indexed pages, knowledge entries, monthly AI responses with usage limit
+* Status indicators: AI provider, site learning, conversation history
+* API usage statistics (past 30 days): total tokens, input/output tokens, estimated cost, daily usage chart, provider breakdown
+
+= Settings (5 Tabs) =
+
+**AI Settings** — Configure your AI provider, model, and API key. Enable vector search (RAG) with embedding provider. Set up MCP server with API key generation and Claude Desktop configuration example.
+
+**Chat Settings** — Customize bot name, avatar (emoji or image), welcome messages (13 languages: English, Japanese, Chinese, Korean, Spanish, French, German, Portuguese, Italian, Russian, Arabic, Thai, Vietnamese), system prompt, response language, message history count, feedback buttons, and API quota error message. Advanced: context prompts for knowledge matching, Q&A format, and site learning; feature prompts for regeneration instructions, good/bad example learning, and conversation summary.
+
+**Display Settings** — Choose from 6 free themes (Default, Simple, Classic, Light, Minimal, Flat). Configure badge position (4-corner grid), margins, primary/secondary colors, mobile display, Markdown rendering, typing indicator, maximum input length, page exclusion, footer text, and cross-site embed options (script or iframe).
+
+**Security Settings** — Enable reCAPTCHA v3 with site key, secret key, and score threshold. Configure access control: consent strict mode, rate limiting, Cloudflare integration, reverse proxy trust, reCAPTCHA failure mode. View security diagnostics (read-only): allowed origins, trusted proxies, IP detection, API key status, WP Consent API, rate limiting, reCAPTCHA, SSL/TLS, CSRF.
+
+**Data Management** — Enable/disable conversation history with configurable retention period. Import/export settings (optionally including knowledge base). Reset all settings to defaults.
+
+= Knowledge Base =
+
+* Add entries as text: title, content, category, priority level
+* File import: .txt, .csv, .md, .pdf, .docx (server-side parsing)
+* Statistics: total entries, active, inactive, categories
+* Filter by status: all, published, draft
+* Sortable table: ID, title, category, type, priority, updated date
+* Unlimited entries
+
 = Site Learning =
 
-The plugin can automatically crawl and index your website content, allowing the chatbot to answer questions based on your actual content. This includes:
+The plugin crawls and indexes your published content for context-aware AI responses:
 
 * Posts and Pages
 * Custom Post Types
 * WooCommerce Products
 * Any public content
 
-= Custom Knowledge Base =
-
-Create a custom knowledge base with:
-
-* Q&A format data for FAQ-style responses
-* Free-form content for general information
-* PDF and DOCX file uploads (server-side parsing)
-* Priority levels to control response relevance
-* Draft/published status workflow
-* Import/Export functionality (CSV/JSON)
-
-= Usage Statistics & Cost Tracking =
-
-Monitor your AI usage with:
-
-* Daily token usage charts
-* Model-by-model breakdown
-* Estimated costs in USD and JPY
-* Input/Output token tracking
-* One-click statistics reset
+With vector embedding enabled, hybrid search combines keyword matching (40%) and vector similarity (60%) for better retrieval accuracy.
 
 = Free vs Pro =
 
-The free version is fully functional. Upgrade with the optional Pro add-on to unlock 80+ advanced features.
+The free version is fully functional with no artificial limits — you pay only your own AI API costs. An optional Pro add-on is available for business-oriented features.
 
-* **Free** — Great for personal blogs and small sites
-* **Pro** — Built for business sites, customer support, and lead generation
+* **Free** — Full AI chat, unlimited responses, unlimited knowledge base, 6 themes, MCP server, Gutenberg block
+* **Pro** — Adds analytics, lead capture, scenarios, operator mode, WooCommerce, LINE, and more
 
-**AI Chat Core**
+**What Free includes:**
 
-* ✅ Free: OpenAI, Claude, Gemini, OpenRouter — all providers supported
-* ✅ Free: Web search integration (AI searches the web automatically)
-* ✅ Free: Custom system prompt with accuracy defaults
-* ✅ Free: Customizable feature prompts (regeneration, feedback, summary)
-* ✅ Free: Knowledge base (up to 20 entries, PDF/DOCX upload)
-* ✅ Free: Monthly 500 AI responses (FAQ fallback after limit)
-* ⭐ Pro: Unlimited AI responses
-* ⭐ Pro: Unlimited knowledge base entries
+* All 4 AI providers (OpenAI, Claude, Gemini, OpenRouter)
+* Unlimited AI responses and knowledge base entries
+* Web search, site learning with vector RAG
+* MCP server, Gutenberg block, cross-site embed
+* 6 themes, feedback, regeneration, reCAPTCHA, security diagnostics
 
-**Site Learning**
+**What Pro adds:**
 
-* ✅ Free: Manual content indexing with vector embedding RAG
-* ⭐ Pro: Scheduled automatic crawling
-* ⭐ Pro: Differential crawl (changed pages only)
-
-**Appearance**
-
-* ✅ Free: 6 themes (Default, Simple, Classic, Light, Minimal, Flat)
-* ⭐ Pro: 10 additional themes (Modern, Gradient, Dark, Glass, Rounded, Ocean, Sunset, Forest, Neon, Elegant)
-* ⭐ Pro: Dark mode, seasonal themes, custom fonts
-* ⭐ Pro: Fullscreen mode, welcome screen
-* ⭐ Pro: White label / custom branding
-
-**Analytics & Insights**
-
-* ✅ Free: Token usage & cost tracking
-* ⭐ Pro: Conversation analytics dashboard
-* ⭐ Pro: AI quality score & churn/bounce analysis
-* ⭐ Pro: FAQ ranking & auto-generation
-* ⭐ Pro: Satisfaction score tracking
-* ⭐ Pro: Real-time conversation monitor
-* ⭐ Pro: Knowledge gap detection
-* ⭐ Pro: Monthly email reports
-* ⭐ Pro: Print/PDF analytics report
-* ⭐ Pro: Conversion tracking (goal URL patterns)
-
-**Lead Capture**
-
-* ⭐ Pro: Customizable lead forms with custom fields
-* ⭐ Pro: CSV/JSON export (conversations, leads, knowledge)
-* ⭐ Pro: Webhook integration (HMAC-signed)
-* ⭐ Pro: Google Sheets export
-
-**AI Enhancements**
-
-* ✅ Free: Feedback (thumbs up/down)
-* ✅ Free: Response regeneration
-* ⭐ Pro: Multimodal (image upload)
-* ⭐ Pro: Voice input (STT) and text-to-speech (TTS)
-* ⭐ Pro: Sentiment analysis
-* ⭐ Pro: Cross-session context memory
-* ⭐ Pro: Related questions & autocomplete
-* ⭐ Pro: Conversation summary
-* ⭐ Pro: AI content editor sidebar (Gutenberg)
-* ⭐ Pro: AI Forms builder (shortcode-based)
-* ⭐ Pro: Response edit suggestions
-
-**Automation & Operations**
-
-* ⭐ Pro: Conversation scenarios (multi-step guided flows)
-* ⭐ Pro: Action handler (intent-driven redirects, emails, webhooks)
-* ⭐ Pro: Business hours scheduling & holiday calendar
-* ⭐ Pro: Human handoff / Operator mode
-* ⭐ Pro: Multiple chatbots (per-page routing)
-* ⭐ Pro: API cost alerts & budget limits
-* ⭐ Pro: Queue management (concurrent request control)
-* ⭐ Pro: Booking integration (Calendly, Cal.com)
-
-**Integrations**
-
-* ⭐ Pro: WooCommerce product cards in chat
-* ⭐ Pro: LINE Messaging API
-* ⭐ Pro: Slack notifications
-* ⭐ Pro: Google Sheets export
-
-**Security & Compliance**
-
-* ⭐ Pro: Response caching (reduce API costs 30-50%)
-* ⭐ Pro: AES-256-GCM data encryption at rest
-* ⭐ Pro: PII masking, spam detection, country blocking
-* ⭐ Pro: Vulnerability scanning
-* ⭐ Pro: Audit logs (admin action tracking, CSV export)
-* ⭐ Pro: Settings change history, rollback, staging mode
+* Analytics dashboard with satisfaction scores, FAQ ranking, and PDF export
+* Lead capture forms, CSV/JSON export, webhooks, Google Sheets
+* Conversation scenarios, business hours, human handoff, operator mode
+* WooCommerce product cards, LINE Messaging API, Slack notifications
+* 10 additional themes, dark mode, voice input/TTS, multimodal
+* Response caching, encryption, audit logs, and more
 
 Learn more at [raplsworks.com](https://raplsworks.com/rapls-ai-chatbot-pro)
 
@@ -205,17 +147,26 @@ You'll need an API key from at least one AI provider:
 * **Google Gemini:** Get your key at [aistudio.google.com](https://aistudio.google.com/)
 * **OpenRouter:** Get your key at [openrouter.ai](https://openrouter.ai/)
 
+= MCP Server Setup =
+
+1. Go to AI Chatbot > Settings > AI Settings
+2. Enable MCP and click "Generate API Key"
+3. Copy the endpoint URL and API key
+4. Add the configuration to your AI agent (Claude Desktop, Cursor, or VS Code)
+
+The plugin provides 7 MCP tools: get_site_info, search_content, get_knowledge, manage_knowledge, get_conversations, get_settings, search_products (Pro).
+
 
 
 == Screenshots ==
 
-1. Dashboard - Overview of conversations, messages, and usage statistics with cost tracking
-2. Settings - Configure AI provider, model selection, and chat behavior
-3. Site Learning - Automatic content indexing and manual learning controls
-4. Knowledge Base - Custom Q&A management with priority levels and PDF/DOCX upload
-5. Conversation History - View and manage all chat conversations
-6. Chatbot Widget - Clean, modern chat interface on your website
-7. Analytics Dashboard (Pro) - Conversation insights, satisfaction tracking, and FAQ analysis
+1. Dashboard — Overview of conversations, messages, and usage statistics with cost tracking
+2. Settings — Configure AI provider, model selection, and chat behavior
+3. Site Learning — Automatic content indexing and manual learning controls
+4. Knowledge Base — Custom Q&A management with priority levels and PDF/DOCX upload
+5. Conversation History — View and manage all chat conversations
+6. Chatbot Widget — Clean, modern chat interface on your website
+7. Analytics Dashboard (Pro) — Conversation insights, satisfaction tracking, and FAQ analysis
 
 
 
@@ -224,10 +175,10 @@ You'll need an API key from at least one AI provider:
 = Which AI provider should I choose? =
 
 Each provider has different strengths:
-* **OpenAI GPT-4o-mini** - Best balance of cost and performance for most use cases
-* **Claude Sonnet 4.5** - Excellent for nuanced, helpful responses
-* **Gemini 2.5 Flash** - Fast and cost-effective, good for high-volume sites
-* **OpenRouter** - Access to 100+ models from multiple providers with a single API key
+* **OpenAI GPT-4o-mini** — Best balance of cost and performance for most use cases
+* **Claude Sonnet 4.5** — Excellent for nuanced, helpful responses
+* **Gemini 2.5 Flash** — Fast and cost-effective, good for high-volume sites
+* **OpenRouter** — Access to 100+ models from multiple providers with a single API key
 
 = How much does it cost to use? =
 
@@ -248,23 +199,33 @@ The plugin crawls your published content and creates a searchable index. When us
 
 When the knowledge base and site content don't have a sufficient answer, the AI can automatically search the web for up-to-date information. This uses each provider's built-in web search capability (OpenAI web_search_preview, Claude web_search, Gemini google_search). Web sources are displayed with a globe icon.
 
+= What is the MCP Server? =
+
+MCP (Model Context Protocol) allows external AI agents like Claude Desktop, Cursor, and VS Code to interact with your chatbot's data. The plugin provides 7 built-in tools for searching content, managing knowledge, and viewing conversations. Tools are also registered as WordPress Abilities for auto-discovery.
+
 = Can I embed the chatbot on external sites? =
 
 Yes. The plugin provides a cross-site embed page (`?wpaic_embed=1`) and a loader script (`assets/js/embed-loader.js`) for easy integration on any external website via iframe.
 
+= Can I use the Gutenberg block? =
+
+Yes. Search for "AI Chatbot" in the block editor to insert the chatbot block. Configure height, theme, and bot-id settings. Server-side rendering (SSR) is supported.
+
 = Can I customize the chatbot appearance? =
 
 Yes. You can customize:
-* Bot name and avatar
-* Primary color and theme (6 built-in themes)
-* Welcome message
-* Badge position and margins
+* Bot name and avatar (emoji or image)
+* Primary and secondary colors
+* Theme (6 built-in themes)
+* Welcome message (13 languages)
+* Badge position, margins, and icon
 * Mobile visibility
 * Excluded pages
+* Typing indicator and Markdown rendering
 
 = Is conversation history saved? =
 
-Yes, by default. You can disable this in settings. Saved conversations can be viewed and deleted from the admin panel.
+Yes, by default. You can disable this in Settings > Data Management. Saved conversations are auto-deleted after the configured retention period (default: 90 days).
 
 = Does it work with page builders? =
 
@@ -272,19 +233,19 @@ Yes, the chatbot widget works with any theme and page builder including Elemento
 
 = Can I use custom system prompts? =
 
-Yes. Configure your own system prompt to define the AI's personality, behavior, and response style. The `wpaic_system_prompt` filter is also available for programmatic customization.
+Yes. Configure your own system prompt to define the AI's personality, behavior, and response style. The `wpaic_system_prompt` filter is also available for programmatic customization. Advanced feature prompts (regeneration, feedback learning, summary) are also customizable.
 
 = What happens if I exceed my API quota? =
 
-The plugin displays a customizable error message when quota limits are reached.
+The plugin displays a customizable error message when your AI provider's quota limits are reached. There is no artificial response limit in the plugin itself.
 
 = What is the Pro add-on? =
 
-The Pro add-on is a separate plugin that extends this free version with 80+ advanced features including analytics, lead capture, business hours, conversation scenarios, WooCommerce integration, LINE integration, and more. The free version works fully on its own.
+The Pro add-on is a separate plugin that adds business-oriented features such as analytics, lead capture, conversation scenarios, operator mode, WooCommerce integration, and LINE integration. The free version is fully functional on its own with no artificial limits.
 
 = What happens to my data when I uninstall? =
 
-By default, the plugin keeps your settings and conversation data so you can re-install without losing anything. To delete all data on uninstall, enable "Delete data on uninstall" in the plugin settings. Temporary cache and diagnostic counters are always removed regardless of this setting. On multisite, each site has its own setting — there is no network-level override.
+By default, the plugin keeps your settings and conversation data so you can re-install without losing anything. To delete all data on uninstall, enable "Delete data on uninstall" in Settings > Data Management. Temporary cache and diagnostic counters are always removed regardless of this setting. On multisite, each site has its own setting.
 
 = How can I adjust multisite uninstall performance? =
 
@@ -397,12 +358,13 @@ The plugin provides hooks and filters for customization:
 
 = Available Filters =
 
-* `wpaic_system_prompt` - Modify the system prompt sent to AI
-* `wpaic_context` - Modify the context from site learning
-* `wpaic_ai_response` - Filter the AI response before display
-* `wpaic_chatbot_enabled` - Control chatbot visibility programmatically
-* `wpaic_allowed_origins` - Add allowed origin hosts for same-origin check
-* `wpaic_chat_response_data` - Filter chat response data before returning to client
+* `wpaic_system_prompt` — Modify the system prompt sent to AI
+* `wpaic_context` — Modify the context from site learning
+* `wpaic_ai_response` — Filter the AI response before display
+* `wpaic_chatbot_enabled` — Control chatbot visibility programmatically
+* `wpaic_allowed_origins` — Add allowed origin hosts for same-origin check
+* `wpaic_chat_response_data` — Filter chat response data before returning to client
+* `wpaic_gpt5_token_multiplier` — GPT-5 reasoning token multiplier (default: 4, range: 1-8)
 
 = Example: Custom System Prompt =
 
@@ -432,46 +394,40 @@ The plugin registers REST API endpoints under the `wp-ai-chatbot/v1` namespace:
 
 **Free:**
 
-* `GET /wp-ai-chatbot/v1/session` - Get or create a chat session
-* `POST /wp-ai-chatbot/v1/chat` - Send a message and receive AI response
-* `GET /wp-ai-chatbot/v1/history/{session_id}` - Get conversation history
-* `POST /wp-ai-chatbot/v1/feedback` - Rate a response (thumbs up/down)
-* `POST /wp-ai-chatbot/v1/regenerate` - Regenerate AI response
-* `GET /wp-ai-chatbot/v1/message-limit` - Check message limits
+* `GET /wp-ai-chatbot/v1/session` — Get or create a chat session
+* `POST /wp-ai-chatbot/v1/chat` — Send a message and receive AI response
+* `GET /wp-ai-chatbot/v1/history/{session_id}` — Get conversation history
+* `POST /wp-ai-chatbot/v1/feedback` — Rate a response (thumbs up/down)
+* `POST /wp-ai-chatbot/v1/regenerate` — Regenerate AI response
+* `GET /wp-ai-chatbot/v1/message-limit` — Check message limits
+* `POST /wp-ai-chatbot/v1/lead` — Submit lead form
+* `GET /wp-ai-chatbot/v1/lead-config` — Lead form configuration
 
-**Pro add-on (registered only when Pro is active):**
-
-* `GET /wp-ai-chatbot/v1/summary/{session_id}` - Conversation summary
-* `POST /wp-ai-chatbot/v1/suggestions` - Related question suggestions
-* `POST /wp-ai-chatbot/v1/autocomplete` - Input autocomplete
-* `POST /wp-ai-chatbot/v1/offline-message` - Submit offline message
-* `POST /wp-ai-chatbot/v1/conversion` - Track conversion event
-* `GET /wp-ai-chatbot/v1/templates` - Get answer templates
-* `POST /wp-ai-chatbot/v1/ai-generate` - AI content generation (editor sidebar)
-* `POST /wp-ai-chatbot/v1/ai-form-submit` - AI Forms submission
-* `POST /wp-ai-chatbot/v1/line-webhook` - LINE Messaging API webhook
+The Pro add-on registers additional endpoints for analytics, scenarios, LINE, and more. See the Pro documentation for details.
 
 = Database Tables =
 
 The plugin creates the following database tables:
 
-* `{prefix}_aichat_conversations` - Chat sessions
-* `{prefix}_aichat_messages` - Individual messages with token tracking
-* `{prefix}_aichat_index` - Site learning content index
-* `{prefix}_aichat_knowledge` - Custom knowledge base entries
-* `{prefix}_aichat_leads` - Lead capture data
-* `{prefix}_aichat_user_context` - Cross-session context memory (Pro)
-* `{prefix}_aichat_audit_log` - Administrative action audit trail (Pro)
+* `{prefix}_aichat_conversations` — Chat sessions
+* `{prefix}_aichat_messages` — Individual messages with token tracking
+* `{prefix}_aichat_index` — Site learning content index
+* `{prefix}_aichat_knowledge` — Custom knowledge base entries
+* `{prefix}_aichat_leads` — Lead capture data
 
 = Uninstallation =
 
-When uninstalled, the plugin removes all database tables, options, and transients. Conversation history will be permanently deleted.
+When uninstalled with "Delete data on uninstall" enabled, the plugin removes all database tables, options, and transients. Without this setting, data is preserved for re-installation.
 
 
 
 == Development ==
 
 Release ZIPs are CI-verified for packaging correctness. If you encounter unexpected files in a release, please report via the support forum.
+
+= Credits =
+
+* [Chart.js](https://www.chartjs.org/) (MIT License) — Used for usage statistics charts
 
 == Changelog ==
 

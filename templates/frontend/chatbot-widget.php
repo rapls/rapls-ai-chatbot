@@ -148,6 +148,7 @@ if (!defined('ABSPATH')) {
         </form>
 
         <?php
+        // Pro white-label footer (opt-in via Pro settings)
         $wl_footer = $settings['pro_features']['white_label_footer'] ?? '';
         if ($wl_footer !== '' && WPAIC_Pro_Features::get_instance()->is_pro()) :
             $wl_url = $settings['pro_features']['white_label_footer_url'] ?? '';
@@ -160,10 +161,6 @@ if (!defined('ABSPATH')) {
                 <?php echo esc_html($wl_footer); ?>
             <?php endif; ?>
         </div>
-        <?php endif; ?>
-
-        <?php if (empty($settings['pro_features']['white_label_enabled']) || empty($settings['pro_features']['hide_powered_by'])) : ?>
-        <div class="chatbot-footer-powered"><a href="https://raplsworks.com/rapls-ai-chatbot-guide/" target="_blank" rel="noopener noreferrer"><?php echo esc_html__('Powered by Rapls Works', 'rapls-ai-chatbot'); ?></a></div>
         <?php endif; ?>
 
     </div>

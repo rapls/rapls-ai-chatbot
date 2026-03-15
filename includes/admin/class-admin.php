@@ -180,24 +180,7 @@ class WPAIC_Admin {
      * Show admin notice when message limit is reached
      */
     public function message_limit_notice(): void {
-        $pro = WPAIC_Pro_Features::get_instance();
-        if ($pro->get_message_limit() === PHP_INT_MAX) {
-            return;
-        }
-        if ($pro->get_remaining_messages() > 0) {
-            return;
-        }
-        ?>
-        <div class="notice notice-error">
-            <p>
-                <strong><?php esc_html_e('AI Chatbot:', 'rapls-ai-chatbot'); ?></strong>
-                <?php esc_html_e('Monthly AI response limit reached. The chatbot can no longer generate AI responses this month.', 'rapls-ai-chatbot'); ?>
-                <a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank">
-                    <?php esc_html_e('Upgrade to Pro for unlimited responses', 'rapls-ai-chatbot'); ?>
-                </a>
-            </p>
-        </div>
-        <?php
+        // No artificial limits — users pay their own API costs.
     }
 
     /**
@@ -707,12 +690,6 @@ class WPAIC_Admin {
             $sanitized['pro_features']['enhanced_content_extraction'] = !empty($input['enhanced_content_extraction']);
         }
 
-        // "Hide Powered By" checkbox (on Display Settings tab, outside pro_features form)
-        // Detect Display tab submission via widget_theme (always present on that tab)
-        if (array_key_exists('widget_theme', $input)) {
-            $sanitized['pro_features']['hide_powered_by'] = !empty($input['hide_powered_by']);
-        }
-
         return $sanitized;
     }
 
@@ -756,8 +733,6 @@ class WPAIC_Admin {
 
         // White label
         $sanitized['white_label_enabled'] = !empty($input['white_label_enabled']);
-        // hide_powered_by is on Display Settings tab, preserve existing value here
-        $sanitized['hide_powered_by'] = $existing['hide_powered_by'] ?? false;
         $sanitized['white_label_footer'] = sanitize_text_field($input['white_label_footer'] ?? ($existing['white_label_footer'] ?? ''));
         $sanitized['white_label_footer_url'] = esc_url_raw($input['white_label_footer_url'] ?? ($existing['white_label_footer_url'] ?? ''));
         $sanitized['white_label_footer_target'] = in_array($input['white_label_footer_target'] ?? '', ['_blank', '_self'], true) ? $input['white_label_footer_target'] : '_blank';
@@ -1773,7 +1748,7 @@ class WPAIC_Admin {
         if ($build && strpos($build, 'Format') === false) {
             $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION) . ' build ' . esc_html($build);
         } else {
-            $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION) . ' (dev)';
+            $text .= ' | Rapls AI Chatbot v' . esc_html(WPAIC_VERSION);
         }
         return $text;
     }
@@ -3044,6 +3019,37 @@ class WPAIC_Admin {
     }
 
     /**
+     * Generate a smooth cubic bezier SVG path through given points.
+     *
+     * @param array $pts Array of [x, y] coordinate pairs.
+     * @return string SVG path d attribute value.
+     */
+    private function svg_smooth_curve( array $pts ): string {
+        $n = count( $pts );
+        if ( $n < 2 ) {
+            return '';
+        }
+        $d = 'M' . $pts[0][0] . ',' . $pts[0][1];
+        if ( 2 === $n ) {
+            $d .= ' L' . $pts[1][0] . ',' . $pts[1][1];
+            return $d;
+        }
+        $tension = 0.15;
+        for ( $i = 0; $i < $n - 1; $i++ ) {
+            $p0 = $pts[ max( 0, $i - 1 ) ];
+            $p1 = $pts[ $i ];
+            $p2 = $pts[ $i + 1 ];
+            $p3 = $pts[ min( $n - 1, $i + 2 ) ];
+            $cp1x = round( $p1[0] + ( $p2[0] - $p0[0] ) * $tension, 1 );
+            $cp1y = round( $p1[1] + ( $p2[1] - $p0[1] ) * $tension, 1 );
+            $cp2x = round( $p2[0] - ( $p3[0] - $p1[0] ) * $tension, 1 );
+            $cp2y = round( $p2[1] - ( $p3[1] - $p1[1] ) * $tension, 1 );
+            $d .= ' C' . $cp1x . ',' . $cp1y . ' ' . $cp2x . ',' . $cp2y . ' ' . $p2[0] . ',' . $p2[1];
+        }
+        return $d;
+    }
+
+    /**
      * Shared CSS for all preview pages
      */
     private function render_pro_preview_styles(): void {
@@ -3321,9 +3327,9 @@ class WPAIC_Admin {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>Sample Page</td><td>page</td><td>/sample-page/</td><td>2026/02/13 09:00</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
-                    <tr><td>Hello World</td><td>post</td><td>/hello-world/</td><td>2026/02/13 09:00</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
-                    <tr><td>About Us</td><td>page</td><td>/about/</td><td>2026/02/12 14:30</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
+                    <tr><td><?php esc_html_e('Sample Page', 'rapls-ai-chatbot'); ?></td><td>page</td><td>/sample-page/</td><td>2026/02/13 09:00</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
+                    <tr><td><?php esc_html_e('Hello World', 'rapls-ai-chatbot'); ?></td><td>post</td><td>/hello-world/</td><td>2026/02/13 09:00</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
+                    <tr><td><?php esc_html_e('About Us', 'rapls-ai-chatbot'); ?></td><td>page</td><td>/about/</td><td>2026/02/12 14:30</td><td style="white-space: nowrap;"><button class="button button-small" disabled>🗑️</button> <button class="button button-small" disabled>🚫</button></td></tr>
                 </tbody>
             </table>
         </div>
@@ -3397,9 +3403,9 @@ class WPAIC_Admin {
             <input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('Search messages', 'rapls-ai-chatbot'); ?>">
             <select disabled>
                 <option><?php esc_html_e('All Statuses', 'rapls-ai-chatbot'); ?></option>
-                <option>Active</option>
-                <option>Closed</option>
-                <option>Archived</option>
+                <option><?php esc_html_e('Active', 'rapls-ai-chatbot'); ?></option>
+                <option><?php esc_html_e('Closed', 'rapls-ai-chatbot'); ?></option>
+                <option><?php esc_html_e('Archived', 'rapls-ai-chatbot'); ?></option>
             </select>
             <label style="font-size: 13px; color: #666;"><?php esc_html_e('From:', 'rapls-ai-chatbot'); ?></label>
             <input type="date" disabled>
@@ -3416,7 +3422,7 @@ class WPAIC_Admin {
                 <button class="button" disabled><?php esc_html_e('Reset All User Sessions', 'rapls-ai-chatbot'); ?></button>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <select disabled><option>CSV</option><option>JSON</option></select>
+                <select disabled><option><?php esc_html_e('CSV', 'rapls-ai-chatbot'); ?></option><option><?php esc_html_e('JSON', 'rapls-ai-chatbot'); ?></option></select>
                 <input type="date" disabled>
                 <input type="date" disabled>
                 <button class="button" disabled><?php esc_html_e('Export', 'rapls-ai-chatbot'); ?> <span style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-left: 4px;">PRO</span></button>
@@ -3447,7 +3453,7 @@ class WPAIC_Admin {
                     <td style="text-align: center;">6</td>
                     <td>Taro Yamada<br><small>taro@example.com</small></td>
                     <td>/</td>
-                    <td><span style="background: #e7f5e7; color: #00a32a; padding: 2px 8px; border-radius: 3px; font-size: 12px;">active</span></td>
+                    <td><span style="background: #e7f5e7; color: #00a32a; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Active', 'rapls-ai-chatbot'); ?></span></td>
                     <td>2026/02/13 10:00</td>
                     <td>2026/02/13 10:15</td>
                     <td>
@@ -3462,7 +3468,7 @@ class WPAIC_Admin {
                     <td style="text-align: center;">4</td>
                     <td>&mdash;</td>
                     <td>/about/</td>
-                    <td><span style="background: #f0f0f1; color: #50575e; padding: 2px 8px; border-radius: 3px; font-size: 12px;">closed</span></td>
+                    <td><span style="background: #f0f0f1; color: #50575e; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Closed', 'rapls-ai-chatbot'); ?></span></td>
                     <td>2026/02/12 15:30</td>
                     <td>2026/02/12 15:45</td>
                     <td>
@@ -3477,7 +3483,7 @@ class WPAIC_Admin {
                     <td style="text-align: center;">8</td>
                     <td>Hanako Suzuki<br><small>hanako@example.com</small></td>
                     <td>/contact/</td>
-                    <td><span style="background: #f0f0f1; color: #50575e; padding: 2px 8px; border-radius: 3px; font-size: 12px;">closed</span></td>
+                    <td><span style="background: #f0f0f1; color: #50575e; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Closed', 'rapls-ai-chatbot'); ?></span></td>
                     <td>2026/02/11 09:15</td>
                     <td>2026/02/11 09:30</td>
                     <td>
@@ -3579,103 +3585,206 @@ class WPAIC_Admin {
         );
         ?>
         <!-- Period Selector -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <select disabled>
-                <option><?php esc_html_e('Last 7 days', 'rapls-ai-chatbot'); ?></option>
-                <option selected><?php esc_html_e('Last 30 days', 'rapls-ai-chatbot'); ?></option>
-                <option><?php esc_html_e('Last 90 days', 'rapls-ai-chatbot'); ?></option>
-            </select>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin: 20px 0; background: #fff; padding: 15px 20px; border: 1px solid #c3c4c7; border-radius: 4px;">
+            <div>
+                <label><?php esc_html_e('Period:', 'rapls-ai-chatbot'); ?></label>
+                <select disabled style="margin-left: 10px;">
+                    <option><?php esc_html_e('Last 7 days', 'rapls-ai-chatbot'); ?></option>
+                    <option selected><?php esc_html_e('Last 30 days', 'rapls-ai-chatbot'); ?></option>
+                    <option><?php esc_html_e('Last 90 days', 'rapls-ai-chatbot'); ?></option>
+                </select>
+            </div>
             <div style="display: flex; gap: 8px;">
-                <button class="button" disabled><span class="dashicons dashicons-printer" style="vertical-align: middle;"></span> <?php esc_html_e('Print / PDF', 'rapls-ai-chatbot'); ?></button>
-                <button class="button button-primary" disabled><span class="dashicons dashicons-download" style="vertical-align: middle;"></span> <?php esc_html_e('Download PDF', 'rapls-ai-chatbot'); ?></button>
+                <button class="button" disabled>
+                    <span class="dashicons dashicons-printer" style="vertical-align: text-bottom;"></span>
+                    <?php esc_html_e('Print / PDF', 'rapls-ai-chatbot'); ?>
+                </button>
+                <button class="button button-primary" disabled>
+                    <span class="dashicons dashicons-download" style="vertical-align: text-bottom;"></span>
+                    <?php esc_html_e('Download PDF', 'rapls-ai-chatbot'); ?>
+                </button>
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #2271b1;">128</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Conversations', 'rapls-ai-chatbot'); ?></div>
-                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 12%</div>
+        <!-- Stats Cards (8 cards matching Pro layout: icon box + value + label + delta) -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+            <!-- Conversations -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-format-chat" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">128</div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('Conversations', 'rapls-ai-chatbot'); ?></div>
+                    <div style="font-size: 12px; font-weight: 600; color: #00a32a; margin-top: 3px;">&#9650; 12%</div>
+                </div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #00a32a;">512</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Messages', 'rapls-ai-chatbot'); ?></div>
-                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 8%</div>
+            <!-- Messages -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-email-alt" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">512</div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('Messages', 'rapls-ai-chatbot'); ?></div>
+                    <div style="font-size: 12px; font-weight: 600; color: #00a32a; margin-top: 3px;">&#9650; 8%</div>
+                </div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #dba617;">4.0</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Avg Messages', 'rapls-ai-chatbot'); ?></div>
-                <div style="font-size: 11px; color: #d63638; margin-top: 4px;">▼ 5%</div>
+            <!-- Avg Messages/Conv -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-chart-line" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">4.0</div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('Avg Messages/Conv', 'rapls-ai-chatbot'); ?></div>
+                    <div style="font-size: 12px; font-weight: 600; color: #d63638; margin-top: 3px;">&#9660; 5%</div>
+                </div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #00a32a;">85%</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Satisfaction', 'rapls-ai-chatbot'); ?></div>
-                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 3%</div>
+            <!-- Satisfaction Rate -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-thumbs-up" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">85%</div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('Satisfaction Rate', 'rapls-ai-chatbot'); ?></div>
+                    <div style="font-size: 12px; font-weight: 600; color: #00a32a; margin-top: 3px;">&#9650; 3%</div>
+                </div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #667eea;">2.4%</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Conversion Rate', 'rapls-ai-chatbot'); ?></div>
-                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 0.5%</div>
+            <!-- Estimated Cost -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-money-alt" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">$1.24</div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('Estimated Cost', 'rapls-ai-chatbot'); ?></div>
+                    <div style="color: #646970; font-size: 12px; margin-top: 3px;">18,420 <?php esc_html_e('tokens', 'rapls-ai-chatbot'); ?></div>
+                </div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #1d2327;">$1.24</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('Estimated Cost', 'rapls-ai-chatbot'); ?></div>
-                <div style="font-size: 11px; color: #666; margin-top: 4px;">18,420 tokens</div>
+            <!-- AI Quality Score -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-awards" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">78<span style="font-size: 14px;">/100</span></div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('AI Quality Score', 'rapls-ai-chatbot'); ?></div>
+                    <div style="color: #646970; font-size: 11px; margin-top: 3px;"><?php
+                        printf(
+                            /* translators: 1: feedback rate, 2: response rate */
+                            esc_html__('FB: %1$s%% | Resp: %2$s%%', 'rapls-ai-chatbot'),
+                            '9.8',
+                            '95'
+                        );
+                    ?></div>
+                </div>
             </div>
-            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; text-align: center;">
-                <div style="font-size: 32px; font-weight: bold; color: #00a32a;">78</div>
-                <div style="color: #666; font-size: 13px;"><?php esc_html_e('AI Quality Score', 'rapls-ai-chatbot'); ?> /100</div>
-                <div style="font-size: 11px; color: #00a32a; margin-top: 4px;">▲ 5</div>
+            <!-- Bounce Rate -->
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; display: flex; align-items: flex-start; gap: 15px;">
+                <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <span class="dashicons dashicons-migrate" style="font-size: 24px; width: 24px; height: 24px;"></span>
+                </div>
+                <div>
+                    <div style="font-size: 28px; font-weight: 700; color: #1d2327; line-height: 1;">15%</div>
+                    <div style="color: #646970; font-size: 13px; margin-top: 5px;"><?php esc_html_e('Bounce Rate', 'rapls-ai-chatbot'); ?></div>
+                    <div style="color: #646970; font-size: 11px; margin-top: 3px;"><?php
+                        printf(
+                            /* translators: 1: avg conversation depth, 2: return visitor rate */
+                            esc_html__('Depth: %1$s | Return: %2$s%%', 'rapls-ai-chatbot'),
+                            '3.2',
+                            '24'
+                        );
+                    ?></div>
+                </div>
             </div>
         </div>
 
-        <!-- Chart Placeholder -->
-        <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <h3 style="margin-top: 0;"><?php esc_html_e('Daily Conversations', 'rapls-ai-chatbot'); ?></h3>
-            <div style="height: 200px; background: linear-gradient(to bottom, #f8f9fa, #fff); border-radius: 4px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px 10px 0;">
-                <?php for ($i = 0; $i < 14; $i++): $h = rand(20, 100); ?>
-                <div style="width: 5%; height: <?php echo esc_attr($h); ?>%; background: linear-gradient(to top, #667eea, #a8b5f0); border-radius: 3px 3px 0 0;"></div>
-                <?php endfor; ?>
-            </div>
-        </div>
-
-        <!-- Satisfaction Trend + Hourly Activity -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <!-- Conversation Drop-off Distribution (2/3 width like Pro) -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-                <h3 style="margin-top: 0;"><?php esc_html_e('Satisfaction Trend', 'rapls-ai-chatbot'); ?></h3>
-                <div style="height: 150px; display: flex; align-items: flex-end; justify-content: space-around; padding: 10px 5px 0;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Conversation Drop-off Distribution', 'rapls-ai-chatbot'); ?></h3>
+                <div style="height: 200px; background: linear-gradient(to bottom, #f8f9fa, #fff); border-radius: 4px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px 10px 0;">
                     <?php
-                    $satisfaction_values = array(78, 82, 80, 85, 83, 88, 85);
-                    foreach ($satisfaction_values as $val): ?>
-                    <div style="width: 10%; height: <?php echo esc_attr($val); ?>%; background: linear-gradient(to top, #00a32a, #72d572); border-radius: 3px 3px 0 0; position: relative;">
-                        <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #666;"><?php echo esc_html($val); ?>%</span>
+                    $dropoff = array(40, 25, 15, 10, 5, 3, 2);
+                    $dropoff_max = max($dropoff);
+                    foreach ($dropoff as $idx => $val):
+                        $pct = round($val / $dropoff_max * 100);
+                    ?>
+                    <div style="width: 10%; height: <?php echo esc_attr($pct); ?>%; background: rgba(239, 68, 68, 0.6); border: 1px solid #ef4444; border-radius: 3px 3px 0 0; position: relative;">
+                        <span style="position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #666;"><?php echo esc_html($val); ?></span>
                     </div>
                     <?php endforeach; ?>
                 </div>
                 <div style="display: flex; justify-content: space-around; font-size: 11px; color: #999; margin-top: 5px;">
+                    <?php for ($i = 1; $i <= 7; $i++): ?>
+                    <span><?php echo esc_html($i); ?> <?php esc_html_e('msgs', 'rapls-ai-chatbot'); ?></span>
+                    <?php endfor; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row: Daily Conversations (2fr) + Hourly Distribution (1fr) -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Daily Conversations', 'rapls-ai-chatbot'); ?></h3>
+                <?php
+                $daily_vals = array(5, 8, 12, 7, 15, 10, 18, 14, 20, 16, 22, 13, 19, 11);
+                $daily_max = max($daily_vals);
+                $daily_count = count($daily_vals);
+                $svg_w = 560;
+                $svg_h = 180;
+                $pad_x = 10;
+                $pad_y = 10;
+                $chart_w = $svg_w - 2 * $pad_x;
+                $chart_h = $svg_h - 2 * $pad_y;
+                $pts = array();
+                foreach ($daily_vals as $i => $v) {
+                    $pts[] = array(
+                        round($pad_x + ($daily_count > 1 ? $i / ($daily_count - 1) * $chart_w : 0), 1),
+                        round($pad_y + $chart_h - ($daily_max > 0 ? $v / $daily_max * $chart_h : 0), 1),
+                    );
+                }
+                $curve_d = $this->svg_smooth_curve($pts);
+                $bottom_y = round($pad_y + $chart_h, 1);
+                $fill_d = $curve_d . ' L' . $pts[count($pts) - 1][0] . ',' . $bottom_y . ' L' . $pts[0][0] . ',' . $bottom_y . ' Z';
+                ?>
+                <div style="height: 200px; background: linear-gradient(to bottom, #f8f9fa, #fff); border-radius: 4px; padding: 10px;">
+                    <svg viewBox="0 0 <?php echo esc_attr($svg_w); ?> <?php echo esc_attr($svg_h); ?>" style="width: 100%; height: 100%;" preserveAspectRatio="none">
+                        <path d="<?php echo esc_attr($fill_d); ?>" fill="rgba(102, 126, 234, 0.1)" />
+                        <path d="<?php echo esc_attr($curve_d); ?>" fill="none" stroke="#667eea" stroke-width="2" />
+                        <?php foreach ($pts as $pt): ?>
+                        <circle cx="<?php echo esc_attr($pt[0]); ?>" cy="<?php echo esc_attr($pt[1]); ?>" r="3" fill="#667eea" />
+                        <?php endforeach; ?>
+                    </svg>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-top: 5px;">
                     <?php
-                    $days = array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun');
-                    foreach ($days as $day): ?>
-                    <span><?php echo esc_html($day); ?></span>
-                    <?php endforeach; ?>
+                    $base_date = strtotime('-' . ($daily_count - 1) . ' days');
+                    for ($i = 0; $i < $daily_count; $i++):
+                        $d = gmdate('n/j', $base_date + $i * 86400);
+                    ?>
+                    <span><?php echo esc_html($d); ?></span>
+                    <?php endfor; ?>
                 </div>
             </div>
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-                <h3 style="margin-top: 0;"><?php esc_html_e('Hourly Activity', 'rapls-ai-chatbot'); ?></h3>
-                <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Hourly Distribution', 'rapls-ai-chatbot'); ?></h3>
+                <div style="height: 200px; display: flex; align-items: flex-end; gap: 2px; padding: 10px 0 0;">
                     <?php
                     $hours = array(2, 1, 0, 1, 3, 8, 15, 22, 25, 30, 28, 20, 18, 22, 25, 20, 15, 12, 8, 5, 4, 3, 2, 1);
                     $max_h = max($hours);
                     foreach ($hours as $idx => $count):
-                        $intensity = $max_h > 0 ? round($count / $max_h * 100) : 0;
-                        $bg = $intensity > 70 ? '#667eea' : ($intensity > 40 ? '#a8b5f0' : ($intensity > 10 ? '#d4dbf9' : '#f0f0f1'));
+                        $pct = $max_h > 0 ? round($count / $max_h * 100) : 0;
                     ?>
-                    <div style="height: 24px; background: <?php echo esc_attr($bg); ?>; border-radius: 3px;" title="<?php echo esc_attr($idx); ?>:00 - <?php echo esc_attr($count); ?> <?php esc_attr_e('conversations', 'rapls-ai-chatbot'); ?>"></div>
+                    <div style="flex: 1; height: <?php echo esc_attr($pct); ?>%; background: #764ba2; border-radius: 2px 2px 0 0;" title="<?php echo esc_attr($idx); ?>:00 - <?php echo esc_attr($count); ?> <?php esc_attr_e('conversations', 'rapls-ai-chatbot'); ?>"></div>
                     <?php endforeach; ?>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-top: 5px;">
-                    <span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>23:00</span>
+                <div style="display: flex; justify-content: space-between; font-size: 9px; color: #999; margin-top: 5px;">
+                    <?php for ($h = 0; $h < 24; $h++): ?>
+                    <span><?php echo esc_html($h); ?></span>
+                    <?php endfor; ?>
                 </div>
             </div>
         </div>
@@ -3683,113 +3792,300 @@ class WPAIC_Admin {
         <!-- Two Column: Top Questions + Top Pages -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-                <h3 style="margin-top: 0;"><?php esc_html_e('Frequently Asked Questions', 'rapls-ai-chatbot'); ?></h3>
-                <table class="wp-list-table widefat fixed striped">
-                    <thead><tr><th>#</th><th><?php esc_html_e('Question', 'rapls-ai-chatbot'); ?></th><th style="width: 60px;"><?php esc_html_e('Count', 'rapls-ai-chatbot'); ?></th></tr></thead>
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Frequently Asked Questions', 'rapls-ai-chatbot'); ?></h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;">#</th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Question', 'rapls-ai-chatbot'); ?></th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600; cursor: pointer;"><?php esc_html_e('Count', 'rapls-ai-chatbot'); ?> &#9660;</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr><td>1</td><td>How do I reset my password?</td><td>24</td></tr>
-                        <tr><td>2</td><td>What are your business hours?</td><td>18</td></tr>
-                        <tr><td>3</td><td>How to contact support?</td><td>12</td></tr>
+                        <tr><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">1</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('How do I reset my password?', 'rapls-ai-chatbot'); ?></td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>24</strong></td></tr>
+                        <tr><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">2</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('What are your business hours?', 'rapls-ai-chatbot'); ?></td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>18</strong></td></tr>
+                        <tr><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">3</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('How to contact support?', 'rapls-ai-chatbot'); ?></td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>12</strong></td></tr>
                     </tbody>
                 </table>
             </div>
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-                <h3 style="margin-top: 0;"><?php esc_html_e('Top Pages', 'rapls-ai-chatbot'); ?></h3>
-                <table class="wp-list-table widefat fixed striped">
-                    <thead><tr><th>#</th><th><?php esc_html_e('Page', 'rapls-ai-chatbot'); ?></th><th style="width: 60px;"><?php esc_html_e('Count', 'rapls-ai-chatbot'); ?></th></tr></thead>
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Top Pages', 'rapls-ai-chatbot'); ?></h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;">#</th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Page', 'rapls-ai-chatbot'); ?></th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600; cursor: pointer;"><?php esc_html_e('Conversations', 'rapls-ai-chatbot'); ?> &#9660;</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr><td>1</td><td>/</td><td>45</td></tr>
-                        <tr><td>2</td><td>/pricing/</td><td>32</td></tr>
-                        <tr><td>3</td><td>/contact/</td><td>21</td></tr>
+                        <tr><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">1</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">https://example.com/</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>45</strong></td></tr>
+                        <tr><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">2</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">https://example.com/pricing/</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>32</strong></td></tr>
+                        <tr><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">3</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">https://example.com/contact/</td><td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>21</strong></td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Feedback Analytics -->
-        <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <h3 style="margin-top: 0;"><?php esc_html_e('Feedback Analytics', 'rapls-ai-chatbot'); ?></h3>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
-                <div style="background: #edf7ed; border-radius: 8px; padding: 15px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #00a32a;">👍 42</div>
-                    <div style="color: #666; font-size: 12px;"><?php esc_html_e('Positive', 'rapls-ai-chatbot'); ?></div>
-                </div>
-                <div style="background: #fce8e6; border-radius: 8px; padding: 15px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #d63638;">👎 8</div>
-                    <div style="color: #666; font-size: 12px;"><?php esc_html_e('Negative', 'rapls-ai-chatbot'); ?></div>
-                </div>
-                <div style="background: #f0f6fc; border-radius: 8px; padding: 15px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #2271b1;">💬 50</div>
-                    <div style="color: #666; font-size: 12px;"><?php esc_html_e('Total Feedback', 'rapls-ai-chatbot'); ?></div>
-                </div>
-                <div style="background: #fef8ee; border-radius: 8px; padding: 15px; text-align: center;">
-                    <div style="font-size: 24px; font-weight: bold; color: #dba617;">📈 9.8%</div>
-                    <div style="color: #666; font-size: 12px;"><?php esc_html_e('Feedback Rate', 'rapls-ai-chatbot'); ?></div>
+        <!-- Device Statistics -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Device Statistics', 'rapls-ai-chatbot'); ?></h3>
+                <div style="display: flex; gap: 30px; padding: 20px 0;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <span class="dashicons dashicons-desktop" style="font-size: 32px; width: 32px; height: 32px; color: #667eea;"></span>
+                        <span style="color: #646970; font-size: 12px;"><?php esc_html_e('Desktop', 'rapls-ai-chatbot'); ?></span>
+                        <span style="font-size: 18px; font-weight: 600; color: #1d2327;">62%</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <span class="dashicons dashicons-smartphone" style="font-size: 32px; width: 32px; height: 32px; color: #667eea;"></span>
+                        <span style="color: #646970; font-size: 12px;"><?php esc_html_e('Mobile', 'rapls-ai-chatbot'); ?></span>
+                        <span style="font-size: 18px; font-weight: 600; color: #1d2327;">32%</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <span class="dashicons dashicons-tablet" style="font-size: 32px; width: 32px; height: 32px; color: #667eea;"></span>
+                        <span style="color: #646970; font-size: 12px;"><?php esc_html_e('Tablet', 'rapls-ai-chatbot'); ?></span>
+                        <span style="font-size: 18px; font-weight: 600; color: #1d2327;">6%</span>
+                    </div>
                 </div>
             </div>
-            <!-- Satisfaction Bar -->
-            <div style="height: 24px; border-radius: 12px; overflow: hidden; display: flex; margin-bottom: 10px;">
-                <div style="width: 84%; background: #00a32a; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: bold;">84%</div>
-                <div style="width: 16%; background: #d63638; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: bold;">16%</div>
+        </div>
+
+        <!-- Country Statistics -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;">
+                    <span class="dashicons dashicons-admin-site-alt3" style="color: #6366f1; vertical-align: text-bottom;"></span>
+                    <?php esc_html_e('Country Statistics', 'rapls-ai-chatbot'); ?>
+                </h3>
+                <div style="padding: 10px 0;">
+                    <?php
+                    $sample_countries = array(
+                        array('flag' => "\xF0\x9F\x87\xAF\xF0\x9F\x87\xB5", 'name' => __('Japan', 'rapls-ai-chatbot'), 'count' => 85, 'pct' => 66.4),
+                        array('flag' => "\xF0\x9F\x87\xBA\xF0\x9F\x87\xB8", 'name' => __('United States', 'rapls-ai-chatbot'), 'count' => 22, 'pct' => 17.2),
+                        array('flag' => "\xF0\x9F\x87\xAC\xF0\x9F\x87\xA7", 'name' => __('United Kingdom', 'rapls-ai-chatbot'), 'count' => 11, 'pct' => 8.6),
+                        array('flag' => "\xF0\x9F\x87\xA9\xF0\x9F\x87\xAA", 'name' => __('Germany', 'rapls-ai-chatbot'), 'count' => 6, 'pct' => 4.7),
+                        array('flag' => "\xF0\x9F\x87\xAB\xF0\x9F\x87\xB7", 'name' => __('France', 'rapls-ai-chatbot'), 'count' => 4, 'pct' => 3.1),
+                    );
+                    foreach ($sample_countries as $country):
+                    ?>
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 6px 0;">
+                        <span style="min-width: 140px; font-size: 13px; color: #1d2327;"><?php echo esc_html($country['flag'] . ' ' . $country['name']); ?></span>
+                        <div style="flex: 1; height: 18px; background: #f0f0f1; border-radius: 9px; overflow: hidden;">
+                            <div style="height: 100%; width: <?php echo esc_attr($country['pct']); ?>%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 9px; min-width: 2px;"></div>
+                        </div>
+                        <span style="min-width: 90px; text-align: right; font-size: 12px; color: #646970; white-space: nowrap;"><?php echo esc_html($country['count']); ?> (<?php echo esc_html($country['pct']); ?>%)</span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
 
         <!-- Usage & Cost -->
         <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px;">
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-                <h3 style="margin-top: 0;"><?php esc_html_e('Daily Cost Trend', 'rapls-ai-chatbot'); ?></h3>
-                <div style="height: 150px; background: linear-gradient(to bottom, #f8f9fa, #fff); border-radius: 4px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px 10px 0;">
-                    <?php for ($i = 0; $i < 14; $i++): $h = rand(10, 80); ?>
-                    <div style="width: 5%; height: <?php echo esc_attr($h); ?>%; background: linear-gradient(to top, #dba617, #f0d060); border-radius: 3px 3px 0 0;"></div>
+                <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;">
+                    <span class="dashicons dashicons-chart-area" style="color: #f59e0b; vertical-align: text-bottom;"></span>
+                    <?php esc_html_e('Daily Cost Trend', 'rapls-ai-chatbot'); ?>
+                </h3>
+                <?php
+                $cost_vals = array(5, 12, 8, 15, 10, 18, 7, 20, 14, 22, 16, 11, 19, 13);
+                $cost_max = max($cost_vals);
+                $cost_count = count($cost_vals);
+                $csv_w = 560;
+                $csv_h = 180;
+                $cpad_x = 10;
+                $cpad_y = 10;
+                $cchart_w = $csv_w - 2 * $cpad_x;
+                $cchart_h = $csv_h - 2 * $cpad_y;
+                $cpts = array();
+                foreach ($cost_vals as $i => $v) {
+                    $cpts[] = array(
+                        round($cpad_x + ($cost_count > 1 ? $i / ($cost_count - 1) * $cchart_w : 0), 1),
+                        round($cpad_y + $cchart_h - ($cost_max > 0 ? $v / $cost_max * $cchart_h : 0), 1),
+                    );
+                }
+                $cost_curve_d = $this->svg_smooth_curve($cpts);
+                $cbottom_y = round($cpad_y + $cchart_h, 1);
+                $cost_fill_d = $cost_curve_d . ' L' . $cpts[count($cpts) - 1][0] . ',' . $cbottom_y . ' L' . $cpts[0][0] . ',' . $cbottom_y . ' Z';
+                ?>
+                <div style="height: 200px; background: linear-gradient(to bottom, #f8f9fa, #fff); border-radius: 4px; padding: 10px;">
+                    <svg viewBox="0 0 <?php echo esc_attr($csv_w); ?> <?php echo esc_attr($csv_h); ?>" style="width: 100%; height: 100%;" preserveAspectRatio="none">
+                        <path d="<?php echo esc_attr($cost_fill_d); ?>" fill="rgba(245, 158, 11, 0.1)" />
+                        <path d="<?php echo esc_attr($cost_curve_d); ?>" fill="none" stroke="#f59e0b" stroke-width="2" />
+                        <?php foreach ($cpts as $pt): ?>
+                        <circle cx="<?php echo esc_attr($pt[0]); ?>" cy="<?php echo esc_attr($pt[1]); ?>" r="3" fill="#f59e0b" />
+                        <?php endforeach; ?>
+                    </svg>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-top: 5px;">
+                    <?php
+                    $cost_base = strtotime('-' . ($cost_count - 1) . ' days');
+                    for ($i = 0; $i < $cost_count; $i++):
+                        $d = gmdate('n/j', $cost_base + $i * 86400);
+                    ?>
+                    <span><?php echo esc_html($d); ?></span>
                     <?php endfor; ?>
                 </div>
             </div>
             <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h3 style="margin: 0;"><?php esc_html_e('Cost Breakdown by Model', 'rapls-ai-chatbot'); ?></h3>
-                    <button class="button button-small" disabled><?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?></button>
-                </div>
-                <table class="wp-list-table widefat fixed striped" style="font-size: 12px;">
-                    <thead><tr><th><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th><th style="width: 50px;"><?php esc_html_e('Msgs', 'rapls-ai-chatbot'); ?></th><th style="width: 70px;"><?php esc_html_e('Tokens', 'rapls-ai-chatbot'); ?></th><th style="width: 60px;"><?php esc_html_e('Cost', 'rapls-ai-chatbot'); ?></th></tr></thead>
+                <h3 style="display: flex; align-items: center; justify-content: space-between; margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;">
+                    <span>
+                        <span class="dashicons dashicons-money-alt" style="color: #f59e0b; vertical-align: text-bottom;"></span>
+                        <?php esc_html_e('Cost Breakdown by Model', 'rapls-ai-chatbot'); ?>
+                    </span>
+                    <button class="button button-small" disabled>
+                        <span class="dashicons dashicons-download" style="vertical-align: text-bottom; font-size: 16px;"></span>
+                        <?php esc_html_e('Export CSV', 'rapls-ai-chatbot'); ?>
+                    </button>
+                </h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Messages', 'rapls-ai-chatbot'); ?></th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Tokens', 'rapls-ai-chatbot'); ?></th>
+                            <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Cost', 'rapls-ai-chatbot'); ?></th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr><td>gpt-4o</td><td>320</td><td>12,800</td><td>$0.89</td></tr>
-                        <tr><td>gpt-4o-mini</td><td>192</td><td>5,620</td><td>$0.35</td></tr>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><code style="font-size: 12px;">gpt-4o</code></td>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">320</td>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">12,800</td>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>$0.89</strong></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><code style="font-size: 12px;">gpt-4o-mini</code></td>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">192</td>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">5,620</td>
+                            <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>$0.35</strong></td>
+                        </tr>
                     </tbody>
-                    <tfoot><tr style="font-weight: bold;"><td><?php esc_html_e('Total', 'rapls-ai-chatbot'); ?></td><td>512</td><td>18,420</td><td>$1.24</td></tr></tfoot>
+                    <tfoot>
+                        <tr style="font-weight: 700; border-top: 2px solid #c3c4c7;">
+                            <td style="padding: 10px 8px; padding-top: 12px; font-size: 13px;"><?php esc_html_e('Total', 'rapls-ai-chatbot'); ?></td>
+                            <td style="padding: 10px 8px; padding-top: 12px; font-size: 13px;">512</td>
+                            <td style="padding: 10px 8px; padding-top: 12px; font-size: 13px;">18,420</td>
+                            <td style="padding: 10px 8px; padding-top: 12px; font-size: 13px;">$1.24</td>
+                        </tr>
+                    </tfoot>
                 </table>
+            </div>
+        </div>
+
+        <!-- Feedback Analytics -->
+        <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;">
+                <span class="dashicons dashicons-thumbs-up" style="color: #667eea; vertical-align: text-bottom;"></span>
+                <?php esc_html_e('Feedback Analytics', 'rapls-ai-chatbot'); ?>
+            </h3>
+
+            <!-- Feedback Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; padding: 18px 12px; border-radius: 8px; border: 1px solid #bbf7d0; background: #f0fdf4;">
+                    <span style="font-size: 28px; display: block; margin-bottom: 6px;">&#128077;</span>
+                    <div style="font-size: 24px; font-weight: 700; color: #1d2327; line-height: 1.2;">42</div>
+                    <div style="font-size: 12px; color: #646970; margin-top: 4px;"><?php echo esc_html(_x('Positive', 'feedback', 'rapls-ai-chatbot')); ?></div>
+                </div>
+                <div style="text-align: center; padding: 18px 12px; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2;">
+                    <span style="font-size: 28px; display: block; margin-bottom: 6px;">&#128078;</span>
+                    <div style="font-size: 24px; font-weight: 700; color: #1d2327; line-height: 1.2;">8</div>
+                    <div style="font-size: 12px; color: #646970; margin-top: 4px;"><?php echo esc_html(_x('Negative', 'feedback', 'rapls-ai-chatbot')); ?></div>
+                </div>
+                <div style="text-align: center; padding: 18px 12px; border-radius: 8px; border: 1px solid #bae6fd; background: #f0f9ff;">
+                    <span style="font-size: 28px; display: block; margin-bottom: 6px;">&#128172;</span>
+                    <div style="font-size: 24px; font-weight: 700; color: #1d2327; line-height: 1.2;">50</div>
+                    <div style="font-size: 12px; color: #646970; margin-top: 4px;"><?php esc_html_e('Total Feedback', 'rapls-ai-chatbot'); ?></div>
+                </div>
+                <div style="text-align: center; padding: 18px 12px; border-radius: 8px; border: 1px solid #e9d5ff; background: #faf5ff;">
+                    <span style="font-size: 28px; display: block; margin-bottom: 6px;">&#128200;</span>
+                    <div style="font-size: 24px; font-weight: 700; color: #1d2327; line-height: 1.2;">9.8%</div>
+                    <div style="font-size: 12px; color: #646970; margin-top: 4px;"><?php esc_html_e('Feedback Rate', 'rapls-ai-chatbot'); ?></div>
+                </div>
+            </div>
+            <!-- Satisfaction Bar -->
+            <div style="margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 6px;">
+                    <span>&#128077; 84%</span>
+                    <span>&#128078; 16%</span>
+                </div>
+                <div style="height: 24px; background: #fecaca; border-radius: 12px; overflow: hidden;">
+                    <div style="height: 100%; width: 84%; background: linear-gradient(90deg, #22c55e, #4ade80); border-radius: 12px 0 0 12px; min-width: 2px;"></div>
+                </div>
+            </div>
+            <!-- Daily Feedback Trend -->
+            <div style="margin-top: 20px;">
+                <h4 style="margin: 0 0 10px; font-size: 13px; color: #646970;"><?php esc_html_e('Daily Feedback Trend', 'rapls-ai-chatbot'); ?></h4>
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 10px; font-size: 12px;">
+                    <span><span style="display: inline-block; width: 12px; height: 12px; background: rgba(34, 197, 94, 0.7); border: 1px solid #22c55e; border-radius: 2px; vertical-align: middle; margin-right: 4px;"></span><?php echo esc_html(_x('Positive', 'feedback', 'rapls-ai-chatbot')); ?></span>
+                    <span><span style="display: inline-block; width: 12px; height: 12px; background: rgba(239, 68, 68, 0.7); border: 1px solid #ef4444; border-radius: 2px; vertical-align: middle; margin-right: 4px;"></span><?php echo esc_html(_x('Negative', 'feedback', 'rapls-ai-chatbot')); ?></span>
+                </div>
+                <div style="height: 150px; display: flex; align-items: flex-end; justify-content: space-around; gap: 4px; padding: 10px 0 0;">
+                    <?php
+                    $fb_positive = array(3, 5, 4, 6, 3, 7, 5, 4, 6, 3, 5, 4, 7, 5);
+                    $fb_negative = array(1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0);
+                    $fb_max = max(array_map(function($p, $n) { return $p + $n; }, $fb_positive, $fb_negative));
+                    foreach ($fb_positive as $idx => $pos):
+                        $neg = $fb_negative[$idx];
+                        $total_pct = $fb_max > 0 ? round(($pos + $neg) / $fb_max * 100) : 0;
+                        $pos_pct = ($pos + $neg) > 0 ? round($pos / ($pos + $neg) * 100) : 0;
+                    ?>
+                    <div style="flex: 1; height: <?php echo esc_attr($total_pct); ?>%; display: flex; flex-direction: column; justify-content: flex-end;">
+                        <div style="height: <?php echo esc_attr(100 - $pos_pct); ?>%; background: rgba(239, 68, 68, 0.7); border: 1px solid #ef4444; border-radius: 2px 2px 0 0; min-height: <?php echo $neg > 0 ? '2px' : '0'; ?>;"></div>
+                        <div style="height: <?php echo esc_attr($pos_pct); ?>%; background: rgba(34, 197, 94, 0.7); border: 1px solid #22c55e;"></div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-top: 5px;">
+                    <?php
+                    $fb_count = count($fb_positive);
+                    $fb_base = strtotime('-' . ($fb_count - 1) . ' days');
+                    for ($i = 0; $i < $fb_count; $i++):
+                        $d = gmdate('n/j', $fb_base + $i * 86400);
+                    ?>
+                    <span><?php echo esc_html($d); ?></span>
+                    <?php endfor; ?>
+                </div>
             </div>
         </div>
 
         <!-- Knowledge Gaps -->
         <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <h3 style="margin-top: 0;">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;">
+                <span class="dashicons dashicons-lightbulb" style="color: #f59e0b; vertical-align: text-bottom;"></span>
                 <?php esc_html_e('Knowledge Gaps', 'rapls-ai-chatbot'); ?>
-                <span style="background: #fce8e6; color: #c5221f; padding: 2px 10px; border-radius: 10px; font-size: 13px; margin-left: 8px;">5</span>
+                <span style="font-weight: 400; font-size: 12px; color: #646970; margin-left: 8px;">
+                    <?php esc_html_e('Frequently asked questions not covered by your knowledge base', 'rapls-ai-chatbot'); ?>
+                </span>
             </h3>
-            <p class="description"><?php esc_html_e('Frequently asked questions not covered by your knowledge base', 'rapls-ai-chatbot'); ?></p>
-            <table class="wp-list-table widefat fixed striped">
+            <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e('Question', 'rapls-ai-chatbot'); ?></th>
-                        <th style="width: 100px;"><?php esc_html_e('Times Asked', 'rapls-ai-chatbot'); ?></th>
-                        <th style="width: 120px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;">#</th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Question', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600; width: 80px;"><?php esc_html_e('Times Asked', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600; width: 120px;"><?php esc_html_e('Action', 'rapls-ai-chatbot'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Do you offer a free trial?</td>
-                        <td>8</td>
-                        <td><button class="button button-small" disabled><?php esc_html_e('Add to KB', 'rapls-ai-chatbot'); ?></button></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">1</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('Do you offer a free trial?', 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>8</strong></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><button class="button button-small" disabled><?php esc_html_e('Add to KB', 'rapls-ai-chatbot'); ?></button></td>
                     </tr>
                     <tr>
-                        <td>Can I integrate with Slack?</td>
-                        <td>5</td>
-                        <td><button class="button button-small" disabled><?php esc_html_e('Add to KB', 'rapls-ai-chatbot'); ?></button></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">2</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('Can I integrate with Slack?', 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>5</strong></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><button class="button button-small" disabled><?php esc_html_e('Add to KB', 'rapls-ai-chatbot'); ?></button></td>
                     </tr>
                     <tr>
-                        <td>What payment methods do you accept?</td>
-                        <td>3</td>
-                        <td><button class="button button-small" disabled><?php esc_html_e('Add to KB', 'rapls-ai-chatbot'); ?></button></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">3</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('What payment methods do you accept?', 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><strong>3</strong></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><button class="button button-small" disabled><?php esc_html_e('Add to KB', 'rapls-ai-chatbot'); ?></button></td>
                     </tr>
                 </tbody>
             </table>
@@ -3797,50 +4093,31 @@ class WPAIC_Admin {
 
         <!-- Negative Feedback -->
         <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-            <h3 style="margin-top: 0;"><?php esc_html_e('Negative Feedback (Needs Improvement)', 'rapls-ai-chatbot'); ?></h3>
-            <table class="wp-list-table widefat fixed striped">
+            <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #1d2327;"><?php esc_html_e('Negative Feedback (Needs Improvement)', 'rapls-ai-chatbot'); ?></h3>
+            <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e('User Question', 'rapls-ai-chatbot'); ?></th>
-                        <th><?php esc_html_e('Bot Answer (excerpt)', 'rapls-ai-chatbot'); ?></th>
-                        <th style="width: 140px;"><?php esc_html_e('Date', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('User Question', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Bot Answer (excerpt)', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Page', 'rapls-ai-chatbot'); ?></th>
+                        <th style="padding: 10px 8px; text-align: left; border-bottom: 1px solid #f0f0f1; font-size: 13px; background: #f6f7f7; font-weight: 600;"><?php esc_html_e('Date', 'rapls-ai-chatbot'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>How much does the Pro version cost?</td>
-                        <td style="color: #666;">I'm sorry, I don't have specific pricing information...</td>
-                        <td>2026-02-13</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('How much does the Pro version cost?', 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e("I'm sorry, I don't have specific pricing information...", 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">/pricing/</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">2026-02-13</td>
                     </tr>
                     <tr>
-                        <td>Can I cancel my subscription?</td>
-                        <td style="color: #666;">Based on general practices, most services allow...</td>
-                        <td>2026-02-12</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('Can I cancel my subscription?', 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;"><?php esc_html_e('Based on general practices, most services allow...', 'rapls-ai-chatbot'); ?></td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">/faq/</td>
+                        <td style="padding: 10px 8px; border-bottom: 1px solid #f0f0f1; font-size: 13px;">2026-02-12</td>
                     </tr>
                 </tbody>
             </table>
-        </div>
-
-        <!-- Device Stats -->
-        <div style="background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px;">
-            <h3 style="margin-top: 0;"><?php esc_html_e('Device Statistics', 'rapls-ai-chatbot'); ?></h3>
-            <div style="display: flex; gap: 30px;">
-                <div style="text-align: center;">
-                    <span class="dashicons dashicons-desktop" style="font-size: 32px; width: 32px; height: 32px; color: #2271b1;"></span>
-                    <div style="font-size: 20px; font-weight: bold;">62%</div>
-                    <div style="color: #666; font-size: 13px;">Desktop</div>
-                </div>
-                <div style="text-align: center;">
-                    <span class="dashicons dashicons-smartphone" style="font-size: 32px; width: 32px; height: 32px; color: #00a32a;"></span>
-                    <div style="font-size: 20px; font-weight: bold;">32%</div>
-                    <div style="color: #666; font-size: 13px;">Mobile</div>
-                </div>
-                <div style="text-align: center;">
-                    <span class="dashicons dashicons-tablet" style="font-size: 32px; width: 32px; height: 32px; color: #dba617;"></span>
-                    <div style="font-size: 20px; font-weight: bold;">6%</div>
-                    <div style="color: #666; font-size: 13px;">Tablet</div>
-                </div>
-            </div>
         </div>
         <?php
         // Close preview and wrapper divs manually to insert features list outside the faded area
@@ -3863,24 +4140,8 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Churn & bounce analysis', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Monthly email reports', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Conversion tracking analytics', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Country statistics', 'rapls-ai-chatbot'); ?></li>
                 </ul>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-                    <div style="background: #f0f6fc; border-radius: 6px; padding: 12px; text-align: center;">
-                        <span class="dashicons dashicons-format-chat" style="font-size: 24px; width: 24px; height: 24px; color: #2271b1;"></span>
-                        <div style="font-size: 20px; font-weight: 700; color: #1d2327; margin-top: 4px;">128</div>
-                        <div style="font-size: 12px; color: #50575e;"><?php esc_html_e('Conversations', 'rapls-ai-chatbot'); ?></div>
-                    </div>
-                    <div style="background: #edf7ed; border-radius: 6px; padding: 12px; text-align: center;">
-                        <span class="dashicons dashicons-thumbs-up" style="font-size: 24px; width: 24px; height: 24px; color: #00a32a;"></span>
-                        <div style="font-size: 20px; font-weight: 700; color: #1d2327; margin-top: 4px;">85%</div>
-                        <div style="font-size: 12px; color: #50575e;"><?php esc_html_e('Satisfaction', 'rapls-ai-chatbot'); ?></div>
-                    </div>
-                    <div style="background: #fef8ee; border-radius: 6px; padding: 12px; text-align: center;">
-                        <span class="dashicons dashicons-chart-bar" style="font-size: 24px; width: 24px; height: 24px; color: #dba617;"></span>
-                        <div style="font-size: 20px; font-weight: 700; color: #1d2327; margin-top: 4px;">4.0</div>
-                        <div style="font-size: 12px; color: #50575e;"><?php esc_html_e('Avg Messages', 'rapls-ai-chatbot'); ?></div>
-                    </div>
-                </div>
             </div>
         </div><!-- .wrap -->
         <?php
@@ -3943,6 +4204,7 @@ class WPAIC_Admin {
                     <th><?php esc_html_e('Email', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 110px;"><?php esc_html_e('Phone', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 120px;"><?php esc_html_e('Company', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 80px;"><?php esc_html_e('Type', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 100px;"><?php esc_html_e('Conversation', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 140px;"><?php esc_html_e('Date', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 80px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
@@ -3954,6 +4216,7 @@ class WPAIC_Admin {
                     <td><a href="#">taro@example.com</a></td>
                     <td><a href="#">090-1234-5678</a></td>
                     <td>Example Inc.</td>
+                    <td><span style="background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></span></td>
                     <td><button class="button button-small" disabled>#1</button></td>
                     <td>2026/02/13 10:30</td>
                     <td><button class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button></td>
@@ -3963,6 +4226,7 @@ class WPAIC_Admin {
                     <td><a href="#">hanako@example.com</a></td>
                     <td><a href="#">080-9876-5432</a></td>
                     <td>Test Corp.</td>
+                    <td><span style="background: #fef3e2; color: #e65100; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Offline', 'rapls-ai-chatbot'); ?></span></td>
                     <td><button class="button button-small" disabled>#2</button></td>
                     <td>2026/02/12 14:20</td>
                     <td><button class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button></td>
@@ -3972,6 +4236,7 @@ class WPAIC_Admin {
                     <td><a href="#">ichiro@example.com</a></td>
                     <td>&mdash;</td>
                     <td>&mdash;</td>
+                    <td><span style="background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></span></td>
                     <td><button class="button button-small" disabled>#3</button></td>
                     <td>2026/02/11 16:45</td>
                     <td><button class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button></td>
@@ -4046,11 +4311,11 @@ class WPAIC_Admin {
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
             <select disabled>
                 <option><?php esc_html_e('All Actions', 'rapls-ai-chatbot'); ?></option>
-                <option>Settings Updated</option>
-                <option>Knowledge Created</option>
-                <option>Conversations Exported</option>
-                <option>Lead Exported</option>
-                <option>License Activated</option>
+                <option><?php esc_html_e('Settings Updated', 'rapls-ai-chatbot'); ?></option>
+                <option><?php esc_html_e('Knowledge Created', 'rapls-ai-chatbot'); ?></option>
+                <option><?php esc_html_e('Conversations Exported', 'rapls-ai-chatbot'); ?></option>
+                <option><?php esc_html_e('Lead Exported', 'rapls-ai-chatbot'); ?></option>
+                <option><?php esc_html_e('License Activated', 'rapls-ai-chatbot'); ?></option>
             </select>
             <input type="date" disabled>
             <input type="date" disabled>
@@ -4073,35 +4338,35 @@ class WPAIC_Admin {
             <tbody>
                 <tr>
                     <td>2026/02/20 10:30</td>
-                    <td><span style="background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Settings Updated</span></td>
+                    <td><span style="background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Settings Updated', 'rapls-ai-chatbot'); ?></span></td>
                     <td>admin</td>
                     <td>&mdash;</td>
                     <td><?php esc_html_e('Pro settings saved', 'rapls-ai-chatbot'); ?></td>
                 </tr>
                 <tr>
                     <td>2026/02/19 15:20</td>
-                    <td><span style="background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Knowledge Created</span></td>
+                    <td><span style="background: #e6f4ea; color: #137333; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Knowledge Created', 'rapls-ai-chatbot'); ?></span></td>
                     <td>admin</td>
                     <td>KB #12</td>
                     <td><?php esc_html_e('FAQ entry added: "How to reset password?"', 'rapls-ai-chatbot'); ?></td>
                 </tr>
                 <tr>
                     <td>2026/02/18 09:00</td>
-                    <td><span style="background: #fef7e0; color: #b06000; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Conversations Exported</span></td>
+                    <td><span style="background: #fef7e0; color: #b06000; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Conversations Exported', 'rapls-ai-chatbot'); ?></span></td>
                     <td>admin</td>
                     <td>&mdash;</td>
-                    <td>format: CSV, count: 48</td>
+                    <td><?php esc_html_e('Exported 48 conversations as CSV', 'rapls-ai-chatbot'); ?></td>
                 </tr>
                 <tr>
                     <td>2026/02/17 14:45</td>
-                    <td><span style="background: #fef7e0; color: #b06000; padding: 2px 8px; border-radius: 3px; font-size: 12px;">Lead Exported</span></td>
+                    <td><span style="background: #fef7e0; color: #b06000; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('Lead Exported', 'rapls-ai-chatbot'); ?></span></td>
                     <td>admin</td>
                     <td>&mdash;</td>
-                    <td>format: JSON, count: 15</td>
+                    <td><?php esc_html_e('Exported 15 leads as JSON', 'rapls-ai-chatbot'); ?></td>
                 </tr>
                 <tr>
                     <td>2026/02/15 11:00</td>
-                    <td><span style="background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 3px; font-size: 12px;">License Activated</span></td>
+                    <td><span style="background: #e8f0fe; color: #1967d2; padding: 2px 8px; border-radius: 3px; font-size: 12px;"><?php esc_html_e('License Activated', 'rapls-ai-chatbot'); ?></span></td>
                     <td>admin</td>
                     <td>&mdash;</td>
                     <td><?php esc_html_e('License activated successfully', 'rapls-ai-chatbot'); ?></td>
@@ -4183,6 +4448,10 @@ class WPAIC_Admin {
                                 <span class="dashicons dashicons-chart-bar"></span>
                                 <?php esc_html_e('Management', 'rapls-ai-chatbot'); ?>
                             </a>
+                            <a href="#" class="wpaic-tab-group" data-group="system">
+                                <span class="dashicons dashicons-admin-tools"></span>
+                                <?php esc_html_e('System', 'rapls-ai-chatbot'); ?>
+                            </a>
                         </nav>
                         <!-- Sub-tabs per group -->
                         <nav class="wpaic-sub-tabs" data-for="customer">
@@ -4190,39 +4459,45 @@ class WPAIC_Admin {
                             <a href="#tab-offline" class="wpaic-sub-tab" data-tab="tab-offline"><?php esc_html_e('Offline', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-conversion" class="wpaic-sub-tab" data-tab="tab-conversion"><?php esc_html_e('Conversion', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-ui" class="wpaic-sub-tab" data-tab="tab-ui"><?php esc_html_e('UI', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-badge" class="wpaic-sub-tab" data-tab="tab-badge"><?php esc_html_e('Badge Icon', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-white-label" class="wpaic-sub-tab" data-tab="tab-white-label"><?php esc_html_e('Footer & CSS', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-chat-features" class="wpaic-sub-tab" data-tab="tab-chat-features"><?php esc_html_e('Chat Features', 'rapls-ai-chatbot'); ?></a>
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="ai" style="display:none;">
                             <a href="#tab-ai" class="wpaic-sub-tab" data-tab="tab-ai"><?php esc_html_e('AI Enhancement', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-prompts" class="wpaic-sub-tab" data-tab="tab-prompts"><?php esc_html_e('AI Prompts', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-content" class="wpaic-sub-tab" data-tab="tab-content"><?php esc_html_e('Content Filters', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-external-learning" class="wpaic-sub-tab" data-tab="tab-external-learning"><?php esc_html_e('External Learning', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-test-mode" class="wpaic-sub-tab" data-tab="tab-test-mode"><?php esc_html_e('Test Mode', 'rapls-ai-chatbot'); ?></a>
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="operations" style="display:none;">
                             <a href="#tab-business" class="wpaic-sub-tab" data-tab="tab-business"><?php esc_html_e('Business Hours', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-handoff" class="wpaic-sub-tab" data-tab="tab-handoff"><?php esc_html_e('Handoff', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-ai-forms" class="wpaic-sub-tab" data-tab="tab-ai-forms"><?php esc_html_e('AI Forms', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-badge" class="wpaic-sub-tab" data-tab="tab-badge"><?php esc_html_e('Badge Icon', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-content" class="wpaic-sub-tab" data-tab="tab-content"><?php esc_html_e('Moderation', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-actions" class="wpaic-sub-tab" data-tab="tab-actions"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-scenarios" class="wpaic-sub-tab" data-tab="tab-scenarios"><?php esc_html_e('Scenarios', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-chatbots" class="wpaic-sub-tab" data-tab="tab-chatbots"><?php esc_html_e('Chatbots', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-screen-sharing" class="wpaic-sub-tab" data-tab="tab-screen-sharing"><?php esc_html_e('Screen Sharing', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-bots" class="wpaic-sub-tab" data-tab="tab-bots"><?php esc_html_e('Chatbots', 'rapls-ai-chatbot'); ?></a>
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="integrations" style="display:none;">
                             <a href="#tab-webhook" class="wpaic-sub-tab" data-tab="tab-webhook"><?php esc_html_e('Webhook', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-line" class="wpaic-sub-tab" data-tab="tab-line"><?php esc_html_e('LINE', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-integrations" class="wpaic-sub-tab" data-tab="tab-integrations"><?php esc_html_e('Integrations', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-integrations" class="wpaic-sub-tab" data-tab="tab-integrations"><?php esc_html_e('Slack & Sheets', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-booking" class="wpaic-sub-tab" data-tab="tab-booking"><?php esc_html_e('Booking', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-cache" class="wpaic-sub-tab" data-tab="tab-cache"><?php esc_html_e('Cache', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-queue" class="wpaic-sub-tab" data-tab="tab-queue"><?php esc_html_e('Queue', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-security" class="wpaic-sub-tab" data-tab="tab-security"><?php esc_html_e('Security', 'rapls-ai-chatbot'); ?></a>
                         </nav>
                         <nav class="wpaic-sub-tabs" data-for="management" style="display:none;">
                             <a href="#tab-budget" class="wpaic-sub-tab" data-tab="tab-budget"><?php esc_html_e('Usage & Budget', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-role-access" class="wpaic-sub-tab" data-tab="tab-role-access"><?php esc_html_e('Role Access', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-roles" class="wpaic-sub-tab" data-tab="tab-roles"><?php esc_html_e('Role Access', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-maintenance" class="wpaic-sub-tab" data-tab="tab-maintenance"><?php esc_html_e('Backup', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-history" class="wpaic-sub-tab" data-tab="tab-history"><?php esc_html_e('Change History', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-encryption" class="wpaic-sub-tab" data-tab="tab-encryption"><?php esc_html_e('Encryption', 'rapls-ai-chatbot'); ?></a>
-                            <a href="#tab-security-scan" class="wpaic-sub-tab" data-tab="tab-security-scan"><?php esc_html_e('Security Scan', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-change-history" class="wpaic-sub-tab" data-tab="tab-change-history"><?php esc_html_e('Change History', 'rapls-ai-chatbot'); ?></a>
                             <a href="#tab-license" class="wpaic-sub-tab" data-tab="tab-license"><?php esc_html_e('License', 'rapls-ai-chatbot'); ?></a>
+                        </nav>
+                        <nav class="wpaic-sub-tabs" data-for="system" style="display:none;">
+                            <a href="#tab-cache" class="wpaic-sub-tab" data-tab="tab-cache"><?php esc_html_e('Cache', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-queue" class="wpaic-sub-tab" data-tab="tab-queue"><?php esc_html_e('Queue', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-performance" class="wpaic-sub-tab" data-tab="tab-performance"><?php esc_html_e('Performance', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-security" class="wpaic-sub-tab" data-tab="tab-security"><?php esc_html_e('Security', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-encryption" class="wpaic-sub-tab" data-tab="tab-encryption"><?php esc_html_e('Encryption', 'rapls-ai-chatbot'); ?></a>
+                            <a href="#tab-vulnerability" class="wpaic-sub-tab" data-tab="tab-vulnerability"><?php esc_html_e('Security Scan', 'rapls-ai-chatbot'); ?></a>
                         </nav>
 
                         <!-- Lead Capture Tab -->
@@ -4251,6 +4526,12 @@ class WPAIC_Admin {
                                     <th scope="row"><?php esc_html_e('Form Title', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('Enter form title...', 'rapls-ai-chatbot'); ?>">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Form Description', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea class="large-text" rows="2" disabled></textarea>
                                     </td>
                                 </tr>
                                 <tr>
@@ -4293,12 +4574,41 @@ class WPAIC_Admin {
                                     </td>
                                 </tr>
                                 <tr>
+                                    <th scope="row"><?php esc_html_e('Custom Fields', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
+                                            <input type="text" disabled style="width: 140px;" placeholder="<?php esc_attr_e('Label', 'rapls-ai-chatbot'); ?>">
+                                            <select disabled style="width: 110px;">
+                                                <option>Text</option>
+                                                <option>Email</option>
+                                                <option>Tel</option>
+                                                <option>Textarea</option>
+                                                <option>Select</option>
+                                            </select>
+                                            <label style="white-space: nowrap;">
+                                                <input type="checkbox" disabled>
+                                                <?php esc_html_e('Required', 'rapls-ai-chatbot'); ?>
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th scope="row"><?php esc_html_e('Email Notification', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <label>
                                             <input type="checkbox" disabled>
                                             <?php esc_html_e('Send email notification for new leads', 'rapls-ai-chatbot'); ?>
                                         </label>
+                                        <br><br>
+                                        <input type="email" class="regular-text" disabled placeholder="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Leave empty to use admin email.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Email Subject Prefix', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="regular-text" disabled placeholder="Rapls AI Chatbot">
+                                        <p class="description"><?php esc_html_e('Prefix used in the subject line of all notification emails. e.g., [Rapls AI Chatbot] New lead captured', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                             </table>
@@ -4404,15 +4714,37 @@ class WPAIC_Admin {
                                         <textarea class="large-text" rows="2" disabled placeholder="<?php esc_attr_e('Thank you for your message. We are currently outside of business hours...', 'rapls-ai-chatbot'); ?>"></textarea>
                                     </td>
                                 </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Holidays', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Enable holiday schedule', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Holiday Dates', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea rows="5" class="large-text" disabled placeholder="2026-01-01&#10;2026-03-21"></textarea>
+                                        <p class="description"><?php esc_html_e('One date per line (YYYY-MM-DD format).', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Holiday Message', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea rows="2" class="large-text" disabled></textarea>
+                                    </td>
+                                </tr>
                             </table>
                             <p class="submit">
                                 <button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button>
                             </p>
                         </div>
 
-                        <!-- Content Filters Tab -->
+                        <!-- Moderation Tab -->
                         <div id="tab-content" class="tab-content">
-                            <h2><?php esc_html_e('Content Filters', 'rapls-ai-chatbot'); ?></h2>
+                            <h2><?php esc_html_e('Moderation', 'rapls-ai-chatbot'); ?></h2>
                             <table class="form-table">
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Banned Words', 'rapls-ai-chatbot'); ?></th>
@@ -4443,7 +4775,15 @@ class WPAIC_Admin {
                                             <input type="checkbox" disabled>
                                             <?php esc_html_e('Enable enhanced rate limiting', 'rapls-ai-chatbot'); ?>
                                         </label>
-                                        <p class="description"><?php esc_html_e('Two-tier throttling (burst + sustained) to prevent spam.', 'rapls-ai-chatbot'); ?></p>
+                                        <p class="description">
+                                            <?php esc_html_e('Per-minute/per-hour two-tier throttling to prevent spam. Overrides all basic rate limits when enabled.', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                        <p class="description" style="margin-top:4px;padding:8px 12px;background:#f0f0f1;border-radius:4px;">
+                                            <strong><?php esc_html_e('Basic rate limit (applied when this is OFF):', 'rapls-ai-chatbot'); ?></strong><br>
+                                            <?php esc_html_e('1. Burst: 3 requests / 10 sec (hardcoded)', 'rapls-ai-chatbot'); ?><br>
+                                            <?php esc_html_e('2. Sustained: 20 requests / 1 hour per IP (changeable in Settings > Security)', 'rapls-ai-chatbot'); ?><br>
+                                            <?php esc_html_e('3. Global IP cap: 2x the sustained limit', 'rapls-ai-chatbot'); ?>
+                                        </p>
                                         <br>
                                         <label><?php esc_html_e('Max messages per minute', 'rapls-ai-chatbot'); ?>
                                             <input type="number" value="5" disabled style="width: 80px;">
@@ -4490,6 +4830,23 @@ class WPAIC_Admin {
                                     </td>
                                 </tr>
                                 <tr>
+                                    <th scope="row"><?php esc_html_e('Events', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('New conversation', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('New message', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Lead captured', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Handoff requested', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Handoff resolved', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Offline message', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('AI API error', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Budget alert', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Rate limit exceeded', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Banned word detected', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('reCAPTCHA failure (frequent)', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Select which events trigger webhook notifications.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th scope="row"></th>
                                     <td>
                                         <button type="button" class="button" disabled><?php esc_html_e('Test Webhook', 'rapls-ai-chatbot'); ?></button>
@@ -4506,15 +4863,6 @@ class WPAIC_Admin {
                             <h2><?php esc_html_e('AI Enhancement', 'rapls-ai-chatbot'); ?></h2>
                             <table class="form-table">
                                 <tr>
-                                    <th scope="row"><?php esc_html_e('Feedback Buttons', 'rapls-ai-chatbot'); ?></th>
-                                    <td>
-                                        <label>
-                                            <input type="checkbox" disabled>
-                                            <?php esc_html_e('Show feedback buttons (thumbs up/down) on bot messages', 'rapls-ai-chatbot'); ?>
-                                        </label>
-                                    </td>
-                                </tr>
-                                <tr>
                                     <th scope="row"><?php esc_html_e('Related Suggestions', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <label>
@@ -4529,6 +4877,15 @@ class WPAIC_Admin {
                                         <label>
                                             <input type="checkbox" disabled>
                                             <?php esc_html_e('Show autocomplete suggestions while typing', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Regenerate Button', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" checked disabled>
+                                            <?php esc_html_e('Show regenerate button on bot messages', 'rapls-ai-chatbot'); ?>
                                         </label>
                                     </td>
                                 </tr>
@@ -4587,6 +4944,79 @@ class WPAIC_Admin {
                                         </label>
                                     </td>
                                 </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('File Upload', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Allow users to upload files (PDF, Word, etc.)', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                        <div style="margin-top: 8px;">
+                                            <label>
+                                                <?php esc_html_e('Max file size (KB):', 'rapls-ai-chatbot'); ?>
+                                                <input type="number" value="5120" style="width: 100px;" disabled>
+                                            </label>
+                                        </div>
+                                        <div style="margin-top: 8px;">
+                                            <label><?php esc_html_e('Allowed file types:', 'rapls-ai-chatbot'); ?></label><br>
+                                            <label style="margin-right: 15px;">
+                                                <input type="checkbox" checked disabled> PDF
+                                            </label>
+                                            <label style="margin-right: 15px;">
+                                                <input type="checkbox" checked disabled> DOC
+                                            </label>
+                                            <label style="margin-right: 15px;">
+                                                <input type="checkbox" checked disabled> DOCX
+                                            </label>
+                                            <label style="margin-right: 15px;">
+                                                <input type="checkbox" checked disabled> TXT
+                                            </label>
+                                            <label style="margin-right: 15px;">
+                                                <input type="checkbox" checked disabled> CSV
+                                            </label>
+                                            <label>
+                                                <input type="checkbox" disabled> XLSX
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Voice Input', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Enable microphone button for speech-to-text input', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                        <p class="description"><?php esc_html_e('Uses browser Web Speech API. Works in Chrome, Edge, and Safari. Not supported in Firefox.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Text-to-Speech', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Enable TTS toggle button to read bot responses aloud', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                        <p class="description"><?php esc_html_e('Uses browser SpeechSynthesis API. Users can toggle on/off in chat header.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('TTS Language', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="regular-text" disabled placeholder="ja">
+                                        <p class="description"><?php esc_html_e('Language code for text-to-speech and voice input (e.g., ja, en-US). Leave empty to auto-detect from site language.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('AI Content Generation', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Enable AI Assistant sidebar in the block editor', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                        <p class="description"><?php esc_html_e('Adds an AI sidebar panel to the WordPress editor for draft generation, text improvement, translation, and SEO metadata.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
                             </table>
                             <p class="submit">
                                 <button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button>
@@ -4601,8 +5031,12 @@ class WPAIC_Admin {
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Sentiment Detection Prompt', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <textarea class="large-text" rows="3" disabled placeholder="Analyze the sentiment..."></textarea>
-                                        <p class="description"><?php esc_html_e('Prompt for detecting user sentiment. Use {message} as placeholder for user message.', 'rapls-ai-chatbot'); ?></p>
+                                        <textarea class="large-text" rows="3" disabled placeholder="<?php esc_attr_e('Analyze the sentiment...', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        <p class="description">
+                                            <?php esc_html_e('Prompt for detecting user sentiment.', 'rapls-ai-chatbot'); ?><br>
+                                            <code>{message}</code> — <?php esc_html_e('User message', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                        <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
                                     </td>
                                 </tr>
                                 <tr>
@@ -4610,35 +5044,72 @@ class WPAIC_Admin {
                                     <td>
                                         <p class="description" style="margin-bottom: 10px;"><?php esc_html_e('These prompts are appended to the system prompt based on detected sentiment.', 'rapls-ai-chatbot'); ?></p>
                                         <?php
-                                        $tones = ['Frustrated', 'Confused', 'Urgent', 'Positive', 'Negative'];
-                                        foreach ($tones as $tone): ?>
+                                        $tones = [
+                                            'Frustrated' => __('Frustrated', 'rapls-ai-chatbot'),
+                                            'Confused'   => __('Confused', 'rapls-ai-chatbot'),
+                                            'Urgent'     => __('Urgent', 'rapls-ai-chatbot'),
+                                            'Positive'   => __('Positive', 'rapls-ai-chatbot'),
+                                            'Negative'   => __('Negative', 'rapls-ai-chatbot'),
+                                        ];
+                                        foreach ($tones as $key => $label): ?>
                                         <div style="margin-bottom: 8px;">
-                                            <label style="display: block; font-weight: 600; margin-bottom: 4px;"><?php echo esc_html($tone); ?></label>
+                                            <label style="display: block; font-weight: 600; margin-bottom: 4px;"><?php echo esc_html($label); ?></label>
                                             <textarea class="large-text" rows="2" disabled></textarea>
+                                            <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
                                         </div>
                                         <?php endforeach; ?>
                                     </td>
                                 </tr>
                                 <tr>
+                                    <th scope="row"><?php esc_html_e('FAQ Generation Prompt', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea class="large-text" rows="5" disabled></textarea>
+                                        <p class="description">
+                                            <?php esc_html_e('Prompt for generating FAQ answers from knowledge gaps.', 'rapls-ai-chatbot'); ?><br>
+                                            <code>{question}</code> — <?php esc_html_e('Unanswered user question', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                        <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th scope="row"><?php esc_html_e('Related Suggestions Prompt', 'rapls-ai-chatbot'); ?></th>
-                                    <td><textarea class="large-text" rows="3" disabled></textarea></td>
+                                    <td>
+                                        <textarea class="large-text" rows="3" disabled></textarea>
+                                        <p class="description"><?php esc_html_e('Prompt for generating related question suggestions. No placeholders needed (the conversation is appended automatically).', 'rapls-ai-chatbot'); ?></p>
+                                        <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Conversation Summary Prompt', 'rapls-ai-chatbot'); ?></th>
-                                    <td><textarea class="large-text" rows="3" disabled></textarea></td>
+                                    <td>
+                                        <textarea class="large-text" rows="3" disabled></textarea>
+                                        <p class="description"><?php esc_html_e('Prompt for generating conversation summaries. No placeholders needed (the conversation is appended automatically).', 'rapls-ai-chatbot'); ?></p>
+                                        <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Context Extraction Prompt', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <textarea class="large-text" rows="3" disabled></textarea>
-                                        <p class="description"><?php esc_html_e('Prompt for extracting user context from conversations. Use {conversation} as placeholder.', 'rapls-ai-chatbot'); ?></p>
+                                        <p class="description">
+                                            <?php esc_html_e('Prompt for extracting user context from conversations.', 'rapls-ai-chatbot'); ?><br>
+                                            <code>{conversation}</code> — <?php esc_html_e('Full conversation text', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                        <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Context Memory Template', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <textarea class="large-text" rows="3" disabled></textarea>
-                                        <p class="description"><?php esc_html_e('Template for injecting user context into system prompt. Placeholders: {summary}, {topics}, {preferences}, {last_date}', 'rapls-ai-chatbot'); ?></p>
+                                        <p class="description">
+                                            <?php esc_html_e('Template for injecting user context into system prompt.', 'rapls-ai-chatbot'); ?><br>
+                                            <code>{summary}</code> — <?php esc_html_e('Conversation summary', 'rapls-ai-chatbot'); ?>&ensp;
+                                            <code>{topics}</code> — <?php esc_html_e('Discussed topics', 'rapls-ai-chatbot'); ?>&ensp;
+                                            <code>{preferences}</code> — <?php esc_html_e('User preferences', 'rapls-ai-chatbot'); ?>&ensp;
+                                            <code>{last_date}</code> — <?php esc_html_e('Last interaction date', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                        <p><button type="button" class="button button-small" disabled><?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?></button></p>
                                     </td>
                                 </tr>
                             </table>
@@ -4651,49 +5122,127 @@ class WPAIC_Admin {
                         <div id="tab-budget" class="tab-content">
                             <h2><?php esc_html_e('Usage & Budget', 'rapls-ai-chatbot'); ?></h2>
                             <!-- Current Month Usage -->
-                            <div style="background: #f0f6fc; border: 1px solid #c3c4c7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                            <div style="background: #f0f0f1; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                                 <h3 style="margin-top: 0;"><?php esc_html_e('Current Month Usage', 'rapls-ai-chatbot'); ?></h3>
-                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 24px; font-weight: bold; color: #2271b1;">$12.50</div>
-                                        <div style="color: #666; font-size: 13px;"><?php esc_html_e('Estimated Cost', 'rapls-ai-chatbot'); ?></div>
+                                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">$12.50</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Estimated Cost (USD)', 'rapls-ai-chatbot'); ?></div>
                                     </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 24px; font-weight: bold; color: #00a32a;">256</div>
-                                        <div style="color: #666; font-size: 13px;"><?php esc_html_e('AI Responses', 'rapls-ai-chatbot'); ?></div>
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">256</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('AI Responses', 'rapls-ai-chatbot'); ?></div>
                                     </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 24px; font-weight: bold; color: #dba617;">128K</div>
-                                        <div style="color: #666; font-size: 13px;"><?php esc_html_e('Total Tokens', 'rapls-ai-chatbot'); ?></div>
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">128,000</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Total Tokens', 'rapls-ai-chatbot'); ?></div>
                                     </div>
                                 </div>
-                                <div style="background: #fff; border-radius: 4px; height: 24px; overflow: hidden;">
-                                    <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: 25%; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: bold;">25%</div>
+                                <div style="margin-top: 15px;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                                        <span><?php esc_html_e('Budget Usage', 'rapls-ai-chatbot'); ?></span>
+                                        <span>25%</span>
+                                    </div>
+                                    <div style="background: #ddd; border-radius: 4px; height: 8px; overflow: hidden;">
+                                        <div style="background: #22c55e; height: 100%; width: 25%; border-radius: 4px; transition: width 0.3s;"></div>
+                                    </div>
                                 </div>
-                                <p style="font-size: 12px; color: #666; margin: 5px 0 0;">$12.50 / $50.00 <?php esc_html_e('budget used', 'rapls-ai-chatbot'); ?></p>
                             </div>
                             <table class="form-table">
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Cost Alert', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <label><input type="checkbox" checked disabled> <?php esc_html_e('Send alert when cost exceeds threshold', 'rapls-ai-chatbot'); ?></label>
-                                        <br><br>
-                                        <input type="number" value="30" disabled style="width: 100px;"> USD
+                                        <label>
+                                            <input type="checkbox" checked disabled>
+                                            <?php esc_html_e('Send email alert when monthly cost exceeds threshold', 'rapls-ai-chatbot'); ?>
+                                        </label>
                                     </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Alert Email', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="email" class="regular-text" disabled value="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Leave empty to use admin email.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Alert Threshold (USD)', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="number" value="10.00" disabled style="width: 120px;">
+                                        <p class="description"><?php esc_html_e('Alert sent once per month when cost exceeds this amount.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" colspan="2"><hr></th>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Budget Limit', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <label><input type="checkbox" checked disabled> <?php esc_html_e('Block AI responses when budget exceeded', 'rapls-ai-chatbot'); ?></label>
-                                        <br><br>
-                                        <input type="number" value="50" disabled style="width: 100px;"> USD
-                                        <br><br>
-                                        <textarea class="large-text" rows="2" disabled placeholder="<?php esc_attr_e('Message shown when budget is exceeded...', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        <label>
+                                            <input type="checkbox" checked disabled>
+                                            <?php esc_html_e('Block AI responses when monthly cost exceeds limit', 'rapls-ai-chatbot'); ?>
+                                        </label>
                                     </td>
                                 </tr>
                                 <tr>
+                                    <th scope="row"><?php esc_html_e('Limit Amount (USD)', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="number" value="50.00" disabled style="width: 120px;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Block Message', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea class="large-text" rows="2" disabled><?php esc_html_e('The AI service is temporarily unavailable due to usage limits. Please try again later.', 'rapls-ai-chatbot'); ?></textarea>
+                                        <p class="description"><?php esc_html_e('Message shown to visitors when budget limit is reached.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" colspan="2"><hr></th>
+                                </tr>
+                                <tr>
                                     <th scope="row"><?php esc_html_e('Monthly Report', 'rapls-ai-chatbot'); ?></th>
-                                    <td><label><input type="checkbox" checked disabled> <?php esc_html_e('Send monthly usage report via email', 'rapls-ai-chatbot'); ?></label></td>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" checked disabled>
+                                            <?php esc_html_e('Send monthly usage report by email', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Report Email', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="email" class="regular-text" disabled value="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Leave empty to use admin email. Report sent on the 1st of each month.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" colspan="2"><hr></th>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Summary Report', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Send periodic summary report by email', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Frequency', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <select disabled>
+                                            <option value="daily"><?php esc_html_e('Daily', 'rapls-ai-chatbot'); ?></option>
+                                            <option value="weekly" selected><?php esc_html_e('Weekly', 'rapls-ai-chatbot'); ?></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Summary Email', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="email" class="regular-text" disabled value="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Daily reports sent at 09:00, weekly reports sent every Monday at 09:00.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
                                 </tr>
                             </table>
                             <p class="submit">
@@ -4704,6 +5253,7 @@ class WPAIC_Admin {
                         <!-- Badge Icon Tab -->
                         <div id="tab-badge" class="tab-content">
                             <h2><?php esc_html_e('Badge Icon', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Customize the floating chat button icon displayed on your site.', 'rapls-ai-chatbot'); ?></p>
                             <table class="form-table">
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Icon Type', 'rapls-ai-chatbot'); ?></th>
@@ -4711,15 +5261,15 @@ class WPAIC_Admin {
                                         <fieldset>
                                             <label style="display: block; margin-bottom: 8px;">
                                                 <input type="radio" checked disabled>
-                                                <?php esc_html_e('Default', 'rapls-ai-chatbot'); ?>
+                                                <?php esc_html_e('Default (speech bubble)', 'rapls-ai-chatbot'); ?>
                                             </label>
                                             <label style="display: block; margin-bottom: 8px;">
                                                 <input type="radio" disabled>
-                                                <?php esc_html_e('Preset', 'rapls-ai-chatbot'); ?>
+                                                <?php esc_html_e('Preset icon', 'rapls-ai-chatbot'); ?>
                                             </label>
                                             <label style="display: block; margin-bottom: 8px;">
                                                 <input type="radio" disabled>
-                                                <?php esc_html_e('Custom Image', 'rapls-ai-chatbot'); ?>
+                                                <?php esc_html_e('Custom image', 'rapls-ai-chatbot'); ?>
                                             </label>
                                             <label style="display: block; margin-bottom: 8px;">
                                                 <input type="radio" disabled>
@@ -4737,30 +5287,40 @@ class WPAIC_Admin {
                         <!-- Offline Messages Tab -->
                         <div id="tab-offline" class="tab-content">
                             <h2><?php esc_html_e('Offline Messages', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Show a contact form when the chatbot is outside business hours. Messages are saved as leads.', 'rapls-ai-chatbot'); ?></p>
                             <table class="form-table">
                                 <tr>
-                                    <th scope="row"><?php esc_html_e('Enable Offline Messages', 'rapls-ai-chatbot'); ?></th>
+                                    <th scope="row"><?php esc_html_e('Enable Offline Form', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <label>
                                             <input type="checkbox" disabled>
-                                            <?php esc_html_e('Show contact form when outside business hours', 'rapls-ai-chatbot'); ?>
+                                            <?php esc_html_e('Show offline message form outside business hours', 'rapls-ai-chatbot'); ?>
                                         </label>
+                                        <p class="description"><?php esc_html_e('Requires Business Hours to be enabled. When outside business hours, visitors will see a contact form instead of the chat.', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Form Title', 'rapls-ai-chatbot'); ?></th>
-                                    <td><input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('We are currently offline', 'rapls-ai-chatbot'); ?>"></td>
+                                    <td><input type="text" class="regular-text" disabled value="<?php esc_attr_e('We are currently offline', 'rapls-ai-chatbot'); ?>"></td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Form Description', 'rapls-ai-chatbot'); ?></th>
-                                    <td><textarea class="large-text" rows="2" disabled placeholder="<?php esc_attr_e('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'); ?>"></textarea></td>
+                                    <td><textarea class="large-text" rows="2" disabled><?php esc_html_e('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'); ?></textarea></td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Email Notification', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <label><input type="checkbox" disabled> <?php esc_html_e('Send email notification for offline messages', 'rapls-ai-chatbot'); ?></label>
-                                        <br><br>
-                                        <input type="email" class="regular-text" disabled placeholder="admin@example.com">
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Send email notification when offline message is received', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Notification Email', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="email" class="regular-text" disabled value="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Leave empty to use admin email.', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                             </table>
@@ -4772,22 +5332,32 @@ class WPAIC_Admin {
                         <!-- Conversion Tracking Tab -->
                         <div id="tab-conversion" class="tab-content">
                             <h2><?php esc_html_e('Conversion Tracking', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Track conversions from chatbot conversations. When a user navigates to a goal URL after chatting, it is recorded as a conversion.', 'rapls-ai-chatbot'); ?></p>
                             <table class="form-table">
                                 <tr>
-                                    <th scope="row"><?php esc_html_e('Enable Conversion Tracking', 'rapls-ai-chatbot'); ?></th>
+                                    <th scope="row"><?php esc_html_e('Enable Tracking', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <label>
                                             <input type="checkbox" disabled>
-                                            <?php esc_html_e('Track conversions from chatbot conversations', 'rapls-ai-chatbot'); ?>
+                                            <?php esc_html_e('Enable conversion tracking', 'rapls-ai-chatbot'); ?>
                                         </label>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Conversion Goals', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <p class="description"><?php esc_html_e('Define URL patterns that count as conversions (e.g., /thank-you, /order-complete).', 'rapls-ai-chatbot'); ?></p>
-                                        <br>
-                                        <textarea class="large-text" rows="3" disabled placeholder="/thank-you&#10;/order-complete&#10;/signup-success"></textarea>
+                                        <div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                                                <input type="text" disabled value="Purchase" style="width: 200px;">
+                                                <input type="text" class="regular-text" disabled value="/thank-you">
+                                            </div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                                                <input type="text" disabled value="Signup" style="width: 200px;">
+                                                <input type="text" class="regular-text" disabled value="/signup-success">
+                                            </div>
+                                        </div>
+                                        <button type="button" class="button button-secondary" disabled>+ <?php esc_html_e('Add Goal', 'rapls-ai-chatbot'); ?></button>
+                                        <p class="description"><?php esc_html_e('URL patterns can be plain text (substring match) or regular expressions. Example: /thank-you, /order-complete, ^https://.*\/checkout\/success', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                             </table>
@@ -4799,42 +5369,54 @@ class WPAIC_Admin {
                         <!-- Response Cache Tab -->
                         <div id="tab-cache" class="tab-content">
                             <h2><?php esc_html_e('Response Cache', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Cache AI responses to reduce API costs. When the same question is asked, the cached answer is returned without calling the AI API.', 'rapls-ai-chatbot'); ?></p>
+                            <div style="background: #f0f0f1; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                                <h3 style="margin-top: 0;"><?php esc_html_e('Cache Statistics (Last 30 Days)', 'rapls-ai-chatbot'); ?></h3>
+                                <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">33%</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Cache Hit Rate', 'rapls-ai-chatbot'); ?></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">8</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Cache Hits', 'rapls-ai-chatbot'); ?></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">12,400</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Saved Tokens', 'rapls-ai-chatbot'); ?></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1d2327;">24</div>
+                                        <div style="color: #646970; font-size: 13px;"><?php esc_html_e('Total Requests', 'rapls-ai-chatbot'); ?></div>
+                                    </div>
+                                </div>
+                            </div>
                             <table class="form-table">
                                 <tr>
-                                    <th scope="row"><?php esc_html_e('Enable Response Cache', 'rapls-ai-chatbot'); ?></th>
+                                    <th scope="row"><?php esc_html_e('Enable Cache', 'rapls-ai-chatbot'); ?></th>
                                     <td>
                                         <label>
                                             <input type="checkbox" disabled>
                                             <?php esc_html_e('Cache AI responses to reduce API costs', 'rapls-ai-chatbot'); ?>
                                         </label>
-                                        <p class="description"><?php esc_html_e('Similar questions will receive cached responses instead of calling the AI API.', 'rapls-ai-chatbot'); ?></p>
+                                        <p class="description"><?php esc_html_e('When enabled, identical questions will return the cached answer without calling the AI API. Responses with negative feedback are excluded from cache.', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><?php esc_html_e('Cache TTL', 'rapls-ai-chatbot'); ?></th>
+                                    <th scope="row"><?php esc_html_e('Cache TTL (Days)', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <input type="number" value="7" disabled style="width: 80px;"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
+                                        <input type="number" value="7" disabled style="width: 80px;">
+                                        <p class="description"><?php esc_html_e('Number of days to keep cached responses. After this period, a fresh AI response will be generated.', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><?php esc_html_e('Cache Statistics', 'rapls-ai-chatbot'); ?></th>
+                                    <th scope="row"><?php esc_html_e('Clear Cache', 'rapls-ai-chatbot'); ?></th>
                                     <td>
-                                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 400px;">
-                                            <div style="background: #f0f6fc; border-radius: 6px; padding: 10px; text-align: center;">
-                                                <div style="font-size: 20px; font-weight: bold;">24</div>
-                                                <div style="font-size: 12px; color: #666;"><?php esc_html_e('Cached', 'rapls-ai-chatbot'); ?></div>
-                                            </div>
-                                            <div style="background: #edf7ed; border-radius: 6px; padding: 10px; text-align: center;">
-                                                <div style="font-size: 20px; font-weight: bold;">8</div>
-                                                <div style="font-size: 12px; color: #666;"><?php esc_html_e('Hits', 'rapls-ai-chatbot'); ?></div>
-                                            </div>
-                                            <div style="background: #fef8ee; border-radius: 6px; padding: 10px; text-align: center;">
-                                                <div style="font-size: 20px; font-weight: bold;">33%</div>
-                                                <div style="font-size: 12px; color: #666;"><?php esc_html_e('Hit Rate', 'rapls-ai-chatbot'); ?></div>
-                                            </div>
-                                        </div>
-                                        <br>
-                                        <button type="button" class="button" disabled><?php esc_html_e('Clear Cache', 'rapls-ai-chatbot'); ?></button>
+                                        <button type="button" class="button button-secondary" disabled style="display: inline-flex; align-items: center; gap: 4px;">
+                                            <span class="dashicons dashicons-trash"></span>
+                                            <?php esc_html_e('Clear All Cache', 'rapls-ai-chatbot'); ?>
+                                        </button>
+                                        <p class="description"><?php esc_html_e('Invalidate all cached responses. New AI responses will be generated for all questions.', 'rapls-ai-chatbot'); ?></p>
                                     </td>
                                 </tr>
                             </table>
@@ -4846,6 +5428,7 @@ class WPAIC_Admin {
                         <!-- Backup & Restore Tab -->
                         <div id="tab-maintenance" class="tab-content">
                             <h2><?php esc_html_e('Backup & Restore Settings', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Export or import all plugin settings. API keys are excluded from exports for security.', 'rapls-ai-chatbot'); ?></p>
                             <table class="form-table">
                                 <tr>
                                     <th scope="row"><?php esc_html_e('Export Settings', 'rapls-ai-chatbot'); ?></th>
@@ -4891,6 +5474,1007 @@ class WPAIC_Admin {
                                 <button type="button" class="button button-primary" disabled><?php esc_html_e('Activate License', 'rapls-ai-chatbot'); ?></button>
                             </p>
                         </div>
+
+                        <!-- UI Tab -->
+                        <div id="tab-ui" class="tab-content">
+                            <h2><?php esc_html_e('UI Enhancements', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Fullscreen Mode', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Show fullscreen toggle button in chat header', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Welcome Screen', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Show welcome screen when chat opens', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top: 8px;">
+                                            <input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('Welcome title', 'rapls-ai-chatbot'); ?>" style="margin-bottom: 4px;"><br>
+                                            <textarea class="large-text" rows="2" disabled placeholder="<?php esc_attr_e('Welcome message', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        </div>
+                                        <p class="description"><?php esc_html_e('Quick start buttons (comma-separated):', 'rapls-ai-chatbot'); ?></p>
+                                        <input type="text" class="large-text" disabled placeholder="<?php esc_attr_e('e.g., Product info, Pricing, Support', 'rapls-ai-chatbot'); ?>">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Response Delay', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Add typing delay before showing AI response', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top: 4px;">
+                                            <input type="number" value="500" disabled min="100" max="3000" step="100" style="width: 80px;"> ms
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Notification Sound', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Play sound when bot responds', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Tooltips', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Show tooltips on icon buttons', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Custom Font', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <select disabled>
+                                            <option><?php esc_html_e('Default (System)', 'rapls-ai-chatbot'); ?></option>
+                                            <optgroup label="<?php esc_attr_e('Sans Serif', 'rapls-ai-chatbot'); ?>">
+                                                <option>Inter</option>
+                                                <option>Roboto</option>
+                                                <option>Poppins</option>
+                                                <option>Open Sans</option>
+                                                <option>Lato</option>
+                                                <option>Montserrat</option>
+                                                <option>Nunito</option>
+                                                <option>Raleway</option>
+                                                <option>DM Sans</option>
+                                                <option>Source Sans 3</option>
+                                            </optgroup>
+                                            <optgroup label="<?php esc_attr_e('Rounded', 'rapls-ai-chatbot'); ?>">
+                                                <option>Nunito Sans</option>
+                                                <option>Quicksand</option>
+                                                <option>Varela Round</option>
+                                            </optgroup>
+                                            <optgroup label="<?php esc_attr_e('Serif', 'rapls-ai-chatbot'); ?>">
+                                                <option>Merriweather</option>
+                                                <option>Playfair Display</option>
+                                                <option>Lora</option>
+                                            </optgroup>
+                                            <optgroup label="<?php esc_attr_e('Monospace', 'rapls-ai-chatbot'); ?>">
+                                                <option>JetBrains Mono</option>
+                                                <option>Fira Code</option>
+                                            </optgroup>
+                                            <optgroup label="<?php esc_attr_e('Japanese', 'rapls-ai-chatbot'); ?>">
+                                                <option>Noto Sans JP</option>
+                                                <option>M PLUS Rounded 1c</option>
+                                                <option>Zen Maru Gothic</option>
+                                                <option>Kosugi Maru</option>
+                                                <option>Sawarabi Gothic</option>
+                                            </optgroup>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Seasonal Theme', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <select disabled>
+                                            <option><?php esc_html_e('None', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Spring (Cherry Blossom)', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Summer (Ocean)', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Autumn (Leaves)', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Winter (Snow)', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Christmas', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Halloween', 'rapls-ai-chatbot'); ?></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Footer & CSS Tab -->
+                        <div id="tab-white-label" class="tab-content">
+                            <h2><?php esc_html_e('Footer & CSS', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Customize footer branding and chatbot appearance with CSS.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Footer Message', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('e.g., Powered by Your Company', 'rapls-ai-chatbot'); ?>" style="margin-bottom: 4px;">
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <input type="url" class="regular-text" disabled placeholder="<?php esc_attr_e('Link URL (optional)', 'rapls-ai-chatbot'); ?>">
+                                            <select disabled style="width: auto;">
+                                                <option><?php esc_html_e('New tab', 'rapls-ai-chatbot'); ?></option>
+                                                <option><?php esc_html_e('Same tab', 'rapls-ai-chatbot'); ?></option>
+                                            </select>
+                                        </div>
+                                        <p class="description"><?php esc_html_e('Displayed at the bottom of the chatbot window. Leave empty to hide. URL adds a link to the text.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Custom CSS', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <textarea class="large-text code" rows="8" disabled placeholder="<?php esc_attr_e('e.g., .wp-ai-chatbot .chatbot-header { background: #333; }', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        <p class="description"><?php esc_html_e('Add custom CSS to further customize the chatbot appearance.', 'rapls-ai-chatbot'); ?></p>
+                                        <details style="margin-top:10px;">
+                                            <summary style="cursor:pointer;color:#2271b1;font-size:13px;"><?php esc_html_e('CSS Selector Reference', 'rapls-ai-chatbot'); ?></summary>
+                                            <table class="widefat striped" style="margin-top:8px;max-width:700px;">
+                                                <thead><tr>
+                                                    <th style="width:45%;"><?php esc_html_e('Selector', 'rapls-ai-chatbot'); ?></th>
+                                                    <th><?php esc_html_e('Description', 'rapls-ai-chatbot'); ?></th>
+                                                </tr></thead>
+                                                <tbody>
+                                                    <tr><td><code>.wp-ai-chatbot</code></td><td><?php esc_html_e('Root container', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-badge</code></td><td><?php esc_html_e('Floating open button', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-window</code></td><td><?php esc_html_e('Chat window', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-header</code></td><td><?php esc_html_e('Header bar (bot name, avatar)', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-header .bot-name</code></td><td><?php esc_html_e('Bot name text', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-header .bot-avatar</code></td><td><?php esc_html_e('Bot avatar', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-messages</code></td><td><?php esc_html_e('Messages area', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.message.bot</code></td><td><?php esc_html_e('Bot message bubble', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.message.user</code></td><td><?php esc_html_e('User message bubble', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.message .content</code></td><td><?php esc_html_e('Message text content', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-input</code></td><td><?php esc_html_e('Input area (form)', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-input textarea</code></td><td><?php esc_html_e('Text input field', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-input button[type="submit"]</code></td><td><?php esc_html_e('Send button', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-footer-branding</code></td><td><?php esc_html_e('Footer message area', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-welcome-screen</code></td><td><?php esc_html_e('Welcome screen overlay', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-close</code></td><td><?php esc_html_e('Close button', 'rapls-ai-chatbot'); ?></td></tr>
+                                                    <tr><td><code>.chatbot-typing</code></td><td><?php esc_html_e('Typing indicator', 'rapls-ai-chatbot'); ?></td></tr>
+                                                </tbody>
+                                            </table>
+                                        </details>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Chat Features Tab -->
+                        <div id="tab-chat-features" class="tab-content">
+                            <h2><?php esc_html_e('Chat Features', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Bookmarks', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Allow users to bookmark messages', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Users can bookmark important messages for later reference. Bookmarks are stored in the browser.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Search', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable in-chat message search', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Adds a search bar to find messages within the conversation.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Sharing', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Allow users to copy conversation to clipboard', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Adds a button in the chat header to copy the entire conversation as text.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Screen Sharing', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable screen sharing / screenshot capture', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Allow operators to request screenshots from users for better support.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- External Learning Tab -->
+                        <div id="tab-external-learning" class="tab-content">
+                            <h2><?php esc_html_e('External Learning', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Crawl external URLs for RAG context', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('In addition to your WordPress content, the chatbot will also learn from external web pages.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('URLs', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea class="large-text" rows="4" disabled placeholder="https://example.com/page1&#10;https://example.com/page2"></textarea>
+                                        <p class="description"><?php esc_html_e('Enter one URL per line. Content will be crawled and indexed during scheduled site learning.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Test Mode Tab -->
+                        <div id="tab-test-mode" class="tab-content">
+                            <h2><?php esc_html_e('Test Mode', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable test mode', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description" style="color:#d63638;"><?php esc_html_e('When enabled, the chatbot returns a fixed response without calling the AI API. Disable before going live.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Test Response', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea class="large-text" rows="3" disabled placeholder="<?php esc_attr_e('This is a test response. The AI API is not being called.', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        <p class="description"><?php esc_html_e('The response returned to all users when test mode is active.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Handoff Tab -->
+                        <div id="tab-handoff" class="tab-content">
+                            <h2><?php esc_html_e('Live Agent Handoff', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('When a visitor requests human support, the AI conversation is escalated to a live operator. Configure keywords, notifications, and auto-close settings.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Handoff', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Enable live agent handoff', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Auto-detect Keywords', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Automatically detect handoff requests from keywords', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Keywords (EN)', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="large-text" disabled placeholder="talk to human, agent, support, operator">
+                                        <p class="description"><?php esc_html_e('Comma-separated keywords that trigger handoff (English).', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Keywords (JA)', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="large-text" disabled placeholder="<?php esc_attr_e('human talk, operator, connect to support, representative', 'rapls-ai-chatbot'); ?>">
+                                        <p class="description"><?php esc_html_e('Comma-separated keywords that trigger handoff (Japanese).', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Handoff Message', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea class="large-text" rows="3" disabled placeholder="<?php esc_attr_e('I understand this may need human assistance. A support representative will contact you soon.', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        <p class="description"><?php esc_html_e('Message shown to the visitor when handoff is triggered.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Notification Method', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <select disabled>
+                                            <option><?php esc_html_e('Email', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Slack', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Both', 'rapls-ai-chatbot'); ?></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Notification Email', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="email" class="regular-text" disabled placeholder="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Leave blank to use the site admin email.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Slack Webhook URL', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="url" class="large-text" disabled placeholder="https://hooks.slack.com/services/...">
+                                        <p class="description"><?php esc_html_e('Slack Incoming Webhook URL for handoff notifications.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Auto-close (minutes)', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="number" class="small-text" disabled value="30">
+                                        <p class="description"><?php esc_html_e('Automatically close handoff sessions after this many minutes of inactivity. Set to a high number to disable.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- AI Forms Tab -->
+                        <div id="tab-ai-forms" class="tab-content">
+                            <h2><?php esc_html_e('AI Forms', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable AI Forms', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable AI-powered forms in chat', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                            </table>
+                            <p class="description"><?php esc_html_e('Create custom forms that use AI to process user inputs. Build intake forms, surveys, and data collection workflows.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Actions Tab -->
+                        <div id="tab-actions" class="tab-content">
+                            <h2><?php esc_html_e('Actions / Intent Recognition', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('AI detects user intents in conversation and triggers predefined actions.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Actions', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable action recognition', 'rapls-ai-chatbot'); ?></label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <div style="border: 1px solid #c3c4c7; border-radius: 4px; padding: 12px; margin-bottom: 12px; background: #f6f7f7;">
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center;">
+                                                <input type="text" disabled value="<?php esc_attr_e('Contact Sales', 'rapls-ai-chatbot'); ?>" style="width: 180px;">
+                                                <label style="display: inline-flex; align-items: center; gap: 4px;">
+                                                    <input type="checkbox" checked disabled>
+                                                    <?php esc_html_e('Enabled', 'rapls-ai-chatbot'); ?>
+                                                </label>
+                                                <button type="button" class="button" disabled>&times;</button>
+                                            </div>
+                                            <div style="margin-bottom: 8px;">
+                                                <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #646970;"><?php esc_html_e('AI Description', 'rapls-ai-chatbot'); ?></label>
+                                                <input type="text" disabled class="large-text" value="<?php esc_attr_e('User wants to contact the sales team or make a purchase inquiry', 'rapls-ai-chatbot'); ?>">
+                                            </div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center;">
+                                                <label style="font-size: 12px; color: #646970;"><?php esc_html_e('Trigger:', 'rapls-ai-chatbot'); ?></label>
+                                                <select disabled>
+                                                    <option><?php esc_html_e('Keywords', 'rapls-ai-chatbot'); ?></option>
+                                                    <option><?php esc_html_e('AI Detection', 'rapls-ai-chatbot'); ?></option>
+                                                </select>
+                                                <input type="text" disabled placeholder="<?php esc_attr_e('Keywords (comma-separated)', 'rapls-ai-chatbot'); ?>" style="width: 250px;">
+                                            </div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center;">
+                                                <label style="font-size: 12px; color: #646970;"><?php esc_html_e('Action Type:', 'rapls-ai-chatbot'); ?></label>
+                                                <select disabled>
+                                                    <option><?php esc_html_e('Redirect URL', 'rapls-ai-chatbot'); ?></option>
+                                                    <option><?php esc_html_e('Link Buttons', 'rapls-ai-chatbot'); ?></option>
+                                                    <option><?php esc_html_e('Email Notification', 'rapls-ai-chatbot'); ?></option>
+                                                    <option><?php esc_html_e('Webhook', 'rapls-ai-chatbot'); ?></option>
+                                                </select>
+                                            </div>
+                                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                <input type="text" disabled placeholder="<?php esc_attr_e('URL (https://...)', 'rapls-ai-chatbot'); ?>" class="regular-text">
+                                                <input type="text" disabled placeholder="<?php esc_attr_e('Button label', 'rapls-ai-chatbot'); ?>" style="width: 150px;">
+                                            </div>
+                                        </div>
+                                        <button type="button" class="button button-secondary" disabled>+ <?php esc_html_e('Add Action', 'rapls-ai-chatbot'); ?></button>
+                                        <p class="description"><?php esc_html_e('Maximum 10 actions. Each action adds approximately 50 tokens to the system prompt.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Scenarios Tab -->
+                        <div id="tab-scenarios" class="tab-content">
+                            <h2><?php esc_html_e('Conversation Scenarios', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Create guided conversation flows that walk users through structured multi-step interactions such as bookings, surveys, or lead qualification.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Scenarios', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable conversation scenarios', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Guide users through structured conversation flows triggered by keywords, AI detection, or quick reply buttons.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Scenarios', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <div style="border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; margin-bottom: 16px; background: #f6f7f7;">
+                                            <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;">
+                                                <input type="text" disabled value="<?php esc_attr_e('Booking Flow', 'rapls-ai-chatbot'); ?>" style="width: 200px; font-weight: 600;">
+                                                <label style="display: inline-flex; align-items: center; gap: 4px;">
+                                                    <input type="checkbox" checked disabled>
+                                                    <?php esc_html_e('Enabled', 'rapls-ai-chatbot'); ?>
+                                                </label>
+                                                <button type="button" class="button" disabled>&times;</button>
+                                            </div>
+                                            <div style="margin-bottom: 10px;">
+                                                <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #646970;"><?php esc_html_e('Description', 'rapls-ai-chatbot'); ?></label>
+                                                <input type="text" disabled class="large-text" value="<?php esc_attr_e('Guide users through a booking process', 'rapls-ai-chatbot'); ?>">
+                                            </div>
+                                            <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
+                                                <label style="font-size: 12px; color: #646970;"><?php esc_html_e('Trigger:', 'rapls-ai-chatbot'); ?></label>
+                                                <select disabled>
+                                                    <option><?php esc_html_e('Keyword', 'rapls-ai-chatbot'); ?></option>
+                                                    <option><?php esc_html_e('AI Detection', 'rapls-ai-chatbot'); ?></option>
+                                                    <option><?php esc_html_e('Quick Reply', 'rapls-ai-chatbot'); ?></option>
+                                                </select>
+                                            </div>
+                                            <label style="display: block; margin-bottom: 6px; font-size: 12px; color: #646970; font-weight: 600;"><?php esc_html_e('Steps', 'rapls-ai-chatbot'); ?></label>
+                                            <div style="border: 1px solid #dcdcde; border-radius: 3px; padding: 10px; margin-bottom: 8px; background: #fff;">
+                                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                                                    <span style="font-weight: 600; color: #646970; min-width: 20px;">1.</span>
+                                                    <select disabled>
+                                                        <option><?php esc_html_e('Message', 'rapls-ai-chatbot'); ?></option>
+                                                        <option><?php esc_html_e('Input', 'rapls-ai-chatbot'); ?></option>
+                                                        <option><?php esc_html_e('Condition', 'rapls-ai-chatbot'); ?></option>
+                                                        <option><?php esc_html_e('Action', 'rapls-ai-chatbot'); ?></option>
+                                                    </select>
+                                                </div>
+                                                <textarea rows="2" class="large-text" disabled placeholder="<?php esc_attr_e('Message text (supports {field_name} placeholders)', 'rapls-ai-chatbot'); ?>"></textarea>
+                                            </div>
+                                            <button type="button" class="button button-small" disabled>+ <?php esc_html_e('Add Step', 'rapls-ai-chatbot'); ?></button>
+                                        </div>
+                                        <button type="button" class="button button-secondary" disabled>+ <?php esc_html_e('Add Scenario', 'rapls-ai-chatbot'); ?></button>
+                                        <p class="description"><?php esc_html_e('Maximum 10 scenarios with up to 20 steps each.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Chatbots Tab -->
+                        <div id="tab-bots" class="tab-content">
+                            <h2><?php esc_html_e('Multi-Bot Management', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Create purpose-specific chatbots (e.g., Sales, Support, FAQ) with individual AI settings, prompts, and page assignments.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Multi-Bot', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable multiple chatbot configurations', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('When disabled, only the default global chatbot is used.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <h3><?php esc_html_e('Chatbot List', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="wp-list-table widefat fixed striped">
+                                <thead>
+                                    <tr>
+                                        <th style="width:20%;"><?php esc_html_e('Name', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="width:12%;"><?php esc_html_e('Slug', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="width:12%;"><?php esc_html_e('Provider', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="width:15%;"><?php esc_html_e('Pages', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="width:10%;"><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="width:20%;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong><?php esc_html_e('Default Bot', 'rapls-ai-chatbot'); ?></strong></td>
+                                        <td><code>default</code></td>
+                                        <td>OpenAI</td>
+                                        <td><?php esc_html_e('All Pages', 'rapls-ai-chatbot'); ?></td>
+                                        <td><span style="color: #00a32a;">&#9679; <?php esc_html_e('Active', 'rapls-ai-chatbot'); ?></span></td>
+                                        <td>
+                                            <button type="button" class="button button-small" disabled><?php esc_html_e('Edit', 'rapls-ai-chatbot'); ?></button>
+                                            <button type="button" class="button button-small" disabled><?php esc_html_e('Delete', 'rapls-ai-chatbot'); ?></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p style="margin-top: 12px;">
+                                <button type="button" class="button button-primary" disabled>+ <?php esc_html_e('Add New Bot', 'rapls-ai-chatbot'); ?></button>
+                            </p>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- LINE Tab -->
+                        <div id="tab-line" class="tab-content">
+                            <h2><?php esc_html_e('LINE Messaging API', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable LINE', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label>
+                                            <input type="checkbox" disabled>
+                                            <?php esc_html_e('Receive and reply to LINE messages via AI', 'rapls-ai-chatbot'); ?>
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Channel Secret', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="regular-text" disabled placeholder="<?php esc_attr_e('From LINE Developers Console', 'rapls-ai-chatbot'); ?>">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Channel Access Token', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="large-text" disabled placeholder="<?php esc_attr_e('Long-lived channel access token', 'rapls-ai-chatbot'); ?>">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Webhook URL', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <code>https://example.com/wp-json/wp-ai-chatbot/v1/line-webhook</code>
+                                        <p class="description"><?php esc_html_e('Set this URL in your LINE Developers Console > Messaging API > Webhook URL.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Slack & Sheets Tab -->
+                        <div id="tab-integrations" class="tab-content">
+                            <h2><?php esc_html_e('Slack & Sheets', 'rapls-ai-chatbot'); ?></h2>
+
+                            <h3><?php esc_html_e('Slack', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Slack', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Send notifications to Slack', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Slack Webhook URL', 'rapls-ai-chatbot'); ?></th>
+                                    <td><input type="url" class="large-text" disabled placeholder="https://hooks.slack.com/services/..."></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Slack Events', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('New conversation', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('New message', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Lead captured', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Handoff requested', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Handoff resolved', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Offline message', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('AI API error', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Budget alert', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Rate limit exceeded', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Banned word detected', 'rapls-ai-chatbot'); ?></label><br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('reCAPTCHA failure (frequent)', 'rapls-ai-chatbot'); ?></label>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <h3><?php esc_html_e('Google Sheets', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Google Sheets', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Export lead data to Google Sheets via Apps Script webhook', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Apps Script Web App URL', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="url" class="large-text" disabled placeholder="https://script.google.com/macros/s/.../exec">
+                                        <p class="description"><?php esc_html_e('Deploy a Google Apps Script as web app to receive lead data via POST.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Booking Tab -->
+                        <div id="tab-booking" class="tab-content">
+                            <h2><?php esc_html_e('Booking Integration', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Connect with booking/calendar systems to enable appointment scheduling via chatbot.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable booking integration', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Provider', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <select disabled>
+                                            <option><?php esc_html_e('Select provider...', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Booking Page URL', 'rapls-ai-chatbot'); ?></option>
+                                            <option>Calendly</option>
+                                            <option>Cal.com</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Booking URL', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="url" class="regular-text" disabled placeholder="https://calendly.com/...">
+                                        <p class="description"><?php esc_html_e('URL to your booking page. Shown when booking intent is detected.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Trigger Keywords', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="text" class="large-text" disabled placeholder="book,appointment,schedule,reserve,予約">
+                                        <p class="description"><?php esc_html_e('Comma-separated keywords that trigger booking suggestions.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Role Access Tab -->
+                        <div id="tab-roles" class="tab-content">
+                            <h2><?php esc_html_e('Role-Based Access Control', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Control chat access and message limits per WordPress user role.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Role Access', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable role-based access control', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Default Policy', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <select disabled>
+                                            <option><?php esc_html_e('Allow', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Deny', 'rapls-ai-chatbot'); ?></option>
+                                        </select>
+                                        <p class="description"><?php esc_html_e('Applied to guest (not logged-in) users and roles not listed below.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <h3><?php esc_html_e('Role Settings', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="widefat striped" style="max-width: 700px;">
+                                <thead>
+                                    <tr>
+                                        <th><?php esc_html_e('Role', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: center;"><?php esc_html_e('Chat Allowed', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: center;"><?php esc_html_e('Monthly Limit', 'rapls-ai-chatbot'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong><?php esc_html_e('Administrator', 'rapls-ai-chatbot'); ?></strong> <code style="font-size: 11px; color: #888; margin-left: 4px;">administrator</code></td>
+                                        <td style="text-align: center;"><input type="checkbox" checked disabled></td>
+                                        <td style="text-align: center;"><input type="number" value="0" disabled style="width: 80px; text-align: center;" placeholder="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong><?php esc_html_e('Editor', 'rapls-ai-chatbot'); ?></strong> <code style="font-size: 11px; color: #888; margin-left: 4px;">editor</code></td>
+                                        <td style="text-align: center;"><input type="checkbox" checked disabled></td>
+                                        <td style="text-align: center;"><input type="number" value="500" disabled style="width: 80px; text-align: center;" placeholder="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong><?php esc_html_e('Subscriber', 'rapls-ai-chatbot'); ?></strong> <code style="font-size: 11px; color: #888; margin-left: 4px;">subscriber</code></td>
+                                        <td style="text-align: center;"><input type="checkbox" checked disabled></td>
+                                        <td style="text-align: center;"><input type="number" value="100" disabled style="width: 80px; text-align: center;" placeholder="0"></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong><?php esc_html_e('Guest', 'rapls-ai-chatbot'); ?></strong> <code style="font-size: 11px; color: #888; margin-left: 4px;">guest</code></td>
+                                        <td style="text-align: center;" colspan="2"><em><?php esc_html_e('Default policy applies', 'rapls-ai-chatbot'); ?></em></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Change History Tab -->
+                        <div id="tab-change-history" class="tab-content">
+                            <h2><?php esc_html_e('Change History & Staging', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Change History', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Record settings change history', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Max History Entries', 'rapls-ai-chatbot'); ?></th>
+                                    <td><input type="number" value="50" disabled class="small-text" min="10" max="200"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Rollback', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Allow rollback to previous settings versions', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Staging Mode', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable staging mode (save changes for review before publishing)', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Approval Workflow', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Require admin approval for settings changes (non-admin users)', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Approval Email', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="email" class="regular-text" disabled placeholder="admin@example.com">
+                                        <p class="description"><?php esc_html_e('Email to notify when changes are pending approval.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Multisite', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable multisite support', 'rapls-ai-chatbot'); ?></label>
+                                        <br>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Use network-wide settings (overrides per-site settings)', 'rapls-ai-chatbot'); ?></label>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Queue Tab -->
+                        <div id="tab-queue" class="tab-content">
+                            <h2><?php esc_html_e('Queue Management', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Control concurrent AI requests to prevent overload during high traffic.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable request queue', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Max Concurrent', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <input type="number" value="5" disabled class="small-text" min="1" max="50">
+                                        <p class="description"><?php esc_html_e('Maximum number of simultaneous AI requests.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Priority for Logged-in Users', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Give logged-in users priority in queue', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Queue Status', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <p><?php
+                                            /* translators: 1: processing count, 2: max count, 3: pending count */
+                                            printf(esc_html__('Processing: %1$d / %2$d | Pending: %3$d', 'rapls-ai-chatbot'), 2, 5, 0);
+                                        ?></p>
+                                        <button type="button" class="button button-secondary" disabled><?php esc_html_e('Reset Queue', 'rapls-ai-chatbot'); ?></button>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Performance Tab -->
+                        <div id="tab-performance" class="tab-content">
+                            <h2><?php esc_html_e('Performance', 'rapls-ai-chatbot'); ?></h2>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Similar Cache', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable similar question caching', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Cache responses for similar questions (normalized matching). Requires response caching to be enabled.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Batch Processing', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable batch embedding processing', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Process knowledge base embeddings in batch for improved performance.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Performance Monitoring', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Track API response times and performance metrics', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top:10px;padding:12px;background:#f6f7f7;border-radius:6px;">
+                                            <strong><?php esc_html_e('Current Stats', 'rapls-ai-chatbot'); ?></strong>
+                                            <table style="margin-top:6px;font-size:13px;">
+                                                <tr><td style="padding:2px 12px 2px 0;color:#646970;"><?php esc_html_e('Total API Requests', 'rapls-ai-chatbot'); ?></td><td>0</td></tr>
+                                                <tr><td style="padding:2px 12px 2px 0;color:#646970;"><?php esc_html_e('Avg Response Time', 'rapls-ai-chatbot'); ?></td><td>0 ms</td></tr>
+                                                <tr><td style="padding:2px 12px 2px 0;color:#646970;"><?php esc_html_e('Max Response Time', 'rapls-ai-chatbot'); ?></td><td>0 ms</td></tr>
+                                                <tr><td style="padding:2px 12px 2px 0;color:#646970;"><?php esc_html_e('Min Response Time', 'rapls-ai-chatbot'); ?></td><td>0 ms</td></tr>
+                                                <tr><td style="padding:2px 12px 2px 0;color:#646970;"><?php esc_html_e('Last Updated', 'rapls-ai-chatbot'); ?></td><td>-</td></tr>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div id="tab-security" class="tab-content">
+                            <h2><?php esc_html_e('Security', 'rapls-ai-chatbot'); ?></h2>
+
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Country Blocking', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Block chat access by country', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top: 4px;">
+                                            <textarea class="regular-text" rows="2" disabled placeholder="<?php esc_attr_e('Country codes, one per line (e.g., CN, RU)', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        </div>
+                                        <input type="text" class="large-text" disabled placeholder="<?php esc_attr_e('Block message', 'rapls-ai-chatbot'); ?>" style="margin-top: 4px;">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('IP Whitelist', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Only allow whitelisted IPs', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top: 4px;">
+                                            <textarea class="regular-text" rows="3" disabled placeholder="<?php esc_attr_e('Allowed IPs, one per line (supports CIDR)', 'rapls-ai-chatbot'); ?>"></textarea>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('PII Masking', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Mask personal information in stored messages', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Masks email addresses, phone numbers, and credit card numbers in conversation logs.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Data Retention', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Automatically delete old conversations', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top: 4px;">
+                                            <input type="number" value="365" disabled min="30" max="3650" style="width: 80px;"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Security Headers', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Add security headers to REST API responses', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Adds X-Content-Type-Options, X-Frame-Options, and Referrer-Policy headers.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Spam Detection', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable spam message detection', 'rapls-ai-chatbot'); ?></label>
+                                        <p class="description"><?php esc_html_e('Scores messages based on repetition, link density, and suspicious patterns.', 'rapls-ai-chatbot'); ?></p>
+                                        <div style="margin-top: 4px;">
+                                            <label><?php esc_html_e('Threshold:', 'rapls-ai-chatbot'); ?>
+                                            <input type="number" value="3" disabled min="1" max="10" style="width: 60px;">
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Allowed Extra Origins', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <textarea class="large-text" rows="3" disabled placeholder="https://example.com"></textarea>
+                                        <p class="description"><?php esc_html_e('One origin per line. These origins will be allowed for cross-origin API requests.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Encryption Tab -->
+                        <div id="tab-encryption" class="tab-content">
+                            <h2><?php esc_html_e('Encryption', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Encrypt sensitive data stored in the database for enhanced security.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable data encryption at rest', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Fields to Encrypt', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <input type="text" disabled value="messages,leads" class="regular-text">
+                                        <p class="description"><?php esc_html_e('Comma-separated: messages, leads, context', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Encryption Method', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <p><strong>AES-256-GCM</strong> — <?php esc_html_e('Authenticated encryption with tamper detection', 'rapls-ai-chatbot'); ?></p>
+                                        <p class="description">
+                                            <?php esc_html_e('Encryption key is derived from WordPress auth salt. Ensure wp-config.php salts are backed up.', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Migration', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <p class="description" style="margin-bottom:10px;"><?php esc_html_e('Encrypt or decrypt all existing messages in the database. This processes messages in batches.', 'rapls-ai-chatbot'); ?></p>
+                                        <button type="button" class="button" disabled><?php esc_html_e('Encrypt All Messages', 'rapls-ai-chatbot'); ?></button>
+                                        <button type="button" class="button" disabled style="margin-left:8px;"><?php esc_html_e('Decrypt All Messages', 'rapls-ai-chatbot'); ?></button>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
+
+                        <!-- Security Scan Tab -->
+                        <div id="tab-vulnerability" class="tab-content">
+                            <h2><?php esc_html_e('Security Scan', 'rapls-ai-chatbot'); ?></h2>
+                            <p class="description"><?php esc_html_e('Scan plugin settings for potential security vulnerabilities.', 'rapls-ai-chatbot'); ?></p>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable Scheduled Scan', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable scheduled vulnerability scanning', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Schedule', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <select disabled>
+                                            <option><?php esc_html_e('Daily', 'rapls-ai-chatbot'); ?></option>
+                                            <option selected><?php esc_html_e('Weekly', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Monthly', 'rapls-ai-chatbot'); ?></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Run Scan Now', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <button type="button" class="button button-secondary" disabled style="display: inline-flex; align-items: center; gap: 4px;">
+                                            <span class="dashicons dashicons-shield"></span>
+                                            <?php esc_html_e('Run Security Scan', 'rapls-ai-chatbot'); ?>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Knowledge Advanced Features -->
+                            <hr>
+                            <h3><?php esc_html_e('Knowledge: Advanced Features', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Knowledge Versioning', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Track version history for knowledge entries', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Knowledge Expiration', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <label><input type="checkbox" disabled> <?php esc_html_e('Enable automatic expiration of knowledge entries', 'rapls-ai-chatbot'); ?></label>
+                                        <div style="margin-top: 4px;">
+                                            <label><?php esc_html_e('Expire after:', 'rapls-ai-chatbot'); ?>
+                                            <input type="number" disabled value="90" min="7" max="3650" style="width: 80px;"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Auto Priority', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Automatically adjust knowledge priority based on usage frequency', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Related Links', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Show related knowledge links in AI responses', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Intent Classification', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Classify user intent to improve knowledge retrieval accuracy', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Custom Intents', 'rapls-ai-chatbot'); ?></th>
+                                    <td>
+                                        <textarea disabled rows="5" class="large-text code" placeholder='{"purchase": ["buy", "price", "購入"], "support": ["help", "問題"]}'></textarea>
+                                        <p class="description">
+                                            <?php esc_html_e('JSON format: {"intent_name": ["keyword1", "keyword2"]}. Custom intents take priority over built-in patterns.', 'rapls-ai-chatbot'); ?>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Similar Question Merge -->
+                            <hr>
+                            <h3><?php esc_html_e('Knowledge: Similar Question Merge', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable similar question detection and merge', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Similarity Threshold', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <input type="number" disabled value="80" min="50" max="100" class="small-text">
+                                        <span>%</span>
+                                        <p class="description"><?php esc_html_e('Minimum similarity percentage to suggest merge (50-100%).', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Multi-bot Coordination -->
+                            <hr>
+                            <h3><?php esc_html_e('Multi-bot Coordination', 'rapls-ai-chatbot'); ?></h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><?php esc_html_e('Enable', 'rapls-ai-chatbot'); ?></th>
+                                    <td><label><input type="checkbox" disabled> <?php esc_html_e('Enable coordination between multiple chatbots', 'rapls-ai-chatbot'); ?></label></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label><?php esc_html_e('Routing Mode', 'rapls-ai-chatbot'); ?></label></th>
+                                    <td>
+                                        <select disabled>
+                                            <option selected><?php esc_html_e('Manual (page rules)', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('AI Intent-based routing', 'rapls-ai-chatbot'); ?></option>
+                                            <option><?php esc_html_e('Round-robin', 'rapls-ai-chatbot'); ?></option>
+                                        </select>
+                                        <p class="description"><?php esc_html_e('How to route conversations to different bots.', 'rapls-ai-chatbot'); ?></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            <p class="submit"><button type="button" class="button button-primary" disabled><?php esc_html_e('Save Settings', 'rapls-ai-chatbot'); ?></button></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4917,7 +6501,7 @@ class WPAIC_Admin {
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('WooCommerce Integration & Product Cards', 'rapls-ai-chatbot'); ?></li>
                 </ul>
                 <ul style="margin: 0;">
-                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Content Filters (Banned Words, IP/Country Blocking, Spam)', 'rapls-ai-chatbot'); ?></li>
+                    <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Moderation (Banned Words, IP/Country Blocking, Spam)', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Response Cache (API Cost Reduction)', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Multiple Chatbots (per-page) & Multi-bot Coordination', 'rapls-ai-chatbot'); ?></li>
                     <li><span class="dashicons dashicons-yes"></span> <?php esc_html_e('Booking Integration (Calendly, Cal.com)', 'rapls-ai-chatbot'); ?></li>

@@ -41,7 +41,7 @@ class WPAIC_Conversation {
         ), ARRAY_A);
 
         if ($closed) {
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $wpdb->update($table, ['status' => 'active'], ['id' => $closed['id']], ['%s'], ['%d']);
             $closed['status'] = 'active';
             return $closed;

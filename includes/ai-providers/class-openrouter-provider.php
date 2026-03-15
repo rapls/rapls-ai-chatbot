@@ -163,7 +163,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
      */
     private function handle_api_error(int $response_code, ?array $data, $raw_response = null): void {
         if (!is_array($data)) {
-            throw new Exception(esc_html__('OpenRouter API error: ', 'rapls-ai-chatbot') . esc_html(wp_remote_retrieve_response_message($raw_response)), $response_code);
+            throw new Exception(esc_html__('OpenRouter API error: ', 'rapls-ai-chatbot') . esc_html(wp_remote_retrieve_response_message($raw_response)), (int) $response_code);
         }
         $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
         $error_code = $data['error']['code'] ?? '';
