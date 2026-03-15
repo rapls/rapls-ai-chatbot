@@ -1115,7 +1115,7 @@ class WPAIC_REST_Controller {
                 $faq_answer = $this->extract_faq_answer($faq_results, $message);
 
                 if (empty($faq_answer)) {
-                    $faq_answer = __('The monthly AI response limit has been reached. For more advanced usage, please consider the Pro version.', 'rapls-ai-chatbot');
+                    $faq_answer = __('Unable to generate an AI response at this time. Please try again later.', 'rapls-ai-chatbot');
                 }
 
                 // Save synthetic assistant message (only when history is enabled)
