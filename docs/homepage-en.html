@@ -1,0 +1,960 @@
+<!-- Rapls AI Chatbot - Plugin Homepage (English) -->
+
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Hide unnecessary elements + Custom styles -->
+<style>
+.breadcrumb.breadcrumb-page.pbp-main-top,
+.article-header.entry-header {
+    display: none !important;
+}
+
+/* Base styles */
+* { box-sizing: border-box; }
+
+.wpaic-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Icon boxes */
+.wpaic-icon-box {
+    width: 70px;
+    height: 70px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    margin-bottom: 18px;
+    font-size: 30px;
+}
+.wpaic-icon-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+.wpaic-icon-light {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    color: #667eea;
+}
+.wpaic-icon-gold {
+    background: linear-gradient(135deg, #f0c67420 0%, #d4a01720 100%);
+    color: #d4a017;
+}
+
+/* Cards */
+.wpaic-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 30px;
+    transition: all 0.3s ease;
+}
+.wpaic-card:hover {
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+    transform: translateY(-3px);
+}
+
+/* Pro cards */
+.wpaic-pro-card {
+    background: white;
+    border: 1px solid #f0c67440;
+    border-radius: 16px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+.wpaic-pro-card:hover {
+    box-shadow: 0 8px 30px rgba(240, 198, 116, 0.2);
+    transform: translateY(-3px);
+    border-color: #f0c674;
+}
+
+/* Buttons */
+.wpaic-btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+.wpaic-btn-white {
+    display: inline-block;
+    background: white;
+    color: #667eea;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.wpaic-btn-outline {
+    display: inline-block;
+    background: transparent;
+    color: white;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    border: 2px solid white;
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-outline:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+}
+.wpaic-btn-gold {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0c674 0%, #d4a017 100%);
+    color: #1a1a2e;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1em;
+    box-shadow: 0 4px 20px rgba(240, 198, 116, 0.4);
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(240, 198, 116, 0.5);
+}
+
+/* Badges */
+.wpaic-badge-new {
+    display: inline-block;
+    background: #ef4444;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.65em;
+    font-weight: 700;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+.wpaic-badge-pro {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0c674, #d4a017);
+    color: #1a1a2e;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.65em;
+    font-weight: 700;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+/* Table */
+.wpaic-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+}
+.wpaic-table th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e5e7eb;
+}
+.wpaic-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #555;
+}
+.wpaic-table tr:hover td {
+    background: #f8fafc;
+}
+
+/* Scroll animations */
+.wpaic-fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: wpaicFadeIn 0.6s ease forwards;
+}
+@keyframes wpaicFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section spacing */
+.wpaic-section-gap {
+    margin-bottom: 100px;
+}
+
+/* Checklist */
+.wpaic-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.wpaic-checklist li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    color: #555;
+    line-height: 1.6;
+}
+.wpaic-pricing-card .wpaic-checklist li {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .wpaic-hero-title { font-size: 2em !important; }
+    .wpaic-hero-sub { font-size: 1.1em !important; }
+    .wpaic-section-title { font-size: 1.6em !important; }
+    .wpaic-flex-reverse { flex-direction: column !important; }
+    .wpaic-hide-mobile { display: none !important; }
+    .wpaic-pricing-grid { flex-direction: column !important; align-items: center !important; }
+    .wpaic-pricing-card { max-width: 100% !important; min-width: unset !important; }
+}
+
+/* Navigation */
+.wpaic-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 30px;
+    padding: 10px;
+}
+.wpaic-nav a {
+    color: #667eea;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.wpaic-nav a:hover {
+    background: #667eea10;
+    border-color: #667eea40;
+}
+
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+</style>
+
+<!-- Language Switcher -->
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;">
+    <a href="/rapls-ai-chatbot-ja/" style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">JA</a>
+    <a href="/rapls-ai-chatbot-en/" style="color: #667eea; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px;">EN</a>
+</div>
+
+<!-- Navigation -->
+<div class="wpaic-nav">
+    <a href="#features">Features</a>
+    <a href="#comparison">Free vs Pro</a>
+    <a href="#pro-features">Pro Features</a>
+    <a href="#models">AI Models</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#use-cases">Use Cases</a>
+    <a href="#developers">Developers</a>
+    <a href="#faq">FAQ</a>
+</div>
+<div class="wpaic-nav" style="margin-top: -20px; margin-bottom: 30px;">
+    <a href="/rapls-ai-chatbot-free-manual-en/" style="background: linear-gradient(135deg, #667eea10, #764ba210); border-color: #667eea40; font-weight: 600;"><i class="fas fa-book-open" style="margin-right: 5px;"></i>Free Manual</a>
+    <a href="/rapls-ai-chatbot-manual-pro-en/" style="background: linear-gradient(135deg, #f0c67410, #d4a01710); border-color: #f0c67440; color: #d4a017; font-weight: 600;"><i class="fas fa-crown" style="margin-right: 5px;"></i>Pro Manual</a>
+</div>
+
+<!-- =============================================== -->
+<!-- Hero Section -->
+<!-- =============================================== -->
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 100px 20px 80px; text-align: center; border-radius: 24px; margin-bottom: 80px; position: relative; overflow: hidden;">
+    <!-- Background pattern -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%); pointer-events: none;"></div>
+    <div style="position: relative; z-index: 1;">
+        <div style="margin-bottom: 30px; position: relative; display: inline-block;">
+            <i class="fas fa-robot" style="font-size: 4.5em; opacity: 0.95;"></i>
+        </div>
+        <p class="wpaic-hero-title" style="font-size: 3.2em; margin-bottom: 15px; font-weight: 800; letter-spacing: -0.02em;">AI Chatbot for WordPress</p>
+        <p class="wpaic-hero-sub" style="font-size: 1.5em; margin-bottom: 15px; opacity: 0.95; font-weight: 400;">Supports OpenAI, Claude, Gemini, and OpenRouter &mdash; Free & Pro</p>
+        <p style="font-size: 1.05em; margin-bottom: 45px; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">AI learns your site content and answers visitor questions 24/7. Vector RAG, Web Search, and MCP Server included.</p>
+        <div>
+            <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" class="wpaic-btn-white"><i class="fas fa-download" style="margin-right: 8px;"></i>Download Free</a>
+            <a href="/rapls-ai-chatbot-free-manual-en/" class="wpaic-btn-outline"><i class="fas fa-book-open" style="margin-right: 8px;"></i>Manual</a>
+            <a href="https://buy.stripe.com/test_cNi7sN0NF7oJ16p6yae7m02" target="_blank" class="wpaic-btn-gold"><i class="fas fa-crown" style="margin-right: 8px;"></i>Buy Pro -- $29</a>
+        </div>
+        <p style="margin-top: 20px; opacity: 0.7; font-size: 0.85em;">Available on WordPress.org Plugin Directory | GPL v2+</p>
+    </div>
+</div>
+<style>@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }</style>
+
+
+<!-- =============================================== -->
+<!-- Feature Highlights (6 cards) -->
+<!-- =============================================== -->
+<div id="features" class="wpaic-section wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">Key Features</p>
+        <p style="color: #666; font-size: 1.1em;">Powerful features available even in the free version</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px;">
+
+        <!-- Card 1: 4 AI Providers -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">4 AI Providers</p>
+            <p style="color: #666; line-height: 1.7;">OpenAI GPT-5 series, Claude Opus 4.6 / Sonnet 4.5, Gemini 3 / 2.5, and OpenRouter with 100+ models. Choose the best AI for your needs and budget.</p>
+        </div>
+
+        <!-- Card 2: Web Search -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-globe"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">Web Search<span class="wpaic-badge-new">NEW</span></p>
+            <p style="color: #666; line-height: 1.7;">When the knowledge base lacks information, AI automatically searches the web. Uses provider-native search with no additional API key required.</p>
+        </div>
+
+        <!-- Card 3: Vector RAG -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-magnifying-glass-plus"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">Vector RAG<span class="wpaic-badge-new">NEW</span></p>
+            <p style="color: #666; line-height: 1.7;">Hybrid search combining FULLTEXT (40%) and vector search (60%) for highly accurate contextual understanding and responses.</p>
+        </div>
+
+        <!-- Card 4: Gutenberg Block -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-cube"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">Gutenberg Block</p>
+            <p style="color: #666; line-height: 1.7;">Fully integrated with the block editor. SSR (server-side rendering) support for easy chatbot placement within posts and pages.</p>
+        </div>
+
+        <!-- Card 5: MCP Server -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-plug"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">MCP Server<span class="wpaic-badge-new">NEW</span></p>
+            <p style="color: #666; line-height: 1.7;">Built-in MCP Server with 7 tools. Operate WordPress directly from Claude Desktop, Cursor, or VS Code.</p>
+        </div>
+
+        <!-- Card 6: 6 Themes -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-palette"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">6 Free Themes</p>
+            <p style="color: #666; line-height: 1.7;">Default, Simple, Classic, Light, Minimal, and Flat themes included. Customize to match your site's design.</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Free vs Pro Comparison -->
+<!-- =============================================== -->
+<div id="comparison" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">Free vs Pro Comparison</p>
+        <p style="color: #666; font-size: 1.1em;">Choose the plan that fits your needs</p>
+    </div>
+
+    <div style="max-width: 900px; margin: 0 auto; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb;">
+        <table class="wpaic-table">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">Feature</th>
+                    <th style="width: 30%; text-align: center;">Free</th>
+                    <th style="width: 30%; text-align: center; background: linear-gradient(135deg, #f0c67415, #d4a01715);"><i class="fas fa-crown" style="color: #d4a017; margin-right: 4px;"></i>Pro</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>AI Responses</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>Knowledge Base</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>Themes</strong></td>
+                    <td style="text-align: center;">6 themes</td>
+                    <td style="text-align: center; font-weight: 600; color: #d4a017;">16 themes + dark mode</td>
+                </tr>
+                <tr>
+                    <td><strong>Analytics</strong></td>
+                    <td style="text-align: center;">Basic stats</td>
+                    <td style="text-align: center; font-weight: 600; color: #d4a017;">Full dashboard</td>
+                </tr>
+                <tr>
+                    <td><strong>Lead Capture</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>WooCommerce</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>Conversation Scenarios</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>LINE / Voice / Encryption</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>Total Features</strong></td>
+                    <td style="text-align: center;">Core features</td>
+                    <td style="text-align: center; font-weight: 600; color: #d4a017;">80+ features</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Pro Features Showcase (10 cards) -->
+<!-- =============================================== -->
+<div id="pro-features" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #f0c674, #d4a017); color: #1a1a2e; padding: 6px 20px; border-radius: 9999px; font-size: 0.85em; font-weight: 700; margin-bottom: 15px;">
+            <i class="fas fa-crown" style="margin-right: 6px;"></i>PRO ADD-ON
+        </div>
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">80+ Pro Features</p>
+        <p style="color: #666; font-size: 1.1em;">Everything your business needs</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1100px; margin: 0 auto;">
+
+        <!-- Pro 1: Analytics -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Analytics Dashboard</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Conversation analytics, satisfaction scores, FAQ ranking, time/device analysis, PDF and email reports</p>
+        </div>
+
+        <!-- Pro 2: Lead Capture -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-address-card"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Lead Capture & Webhooks</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Custom forms, CSV/JSON export, webhook integration, Slack notifications, Google Sheets</p>
+        </div>
+
+        <!-- Pro 3: Business Hours & Handoff -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-headset"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Business Hours & Handoff</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Business hours settings, holiday support, operator mode, offline messages, real-time monitor</p>
+        </div>
+
+        <!-- Pro 4: Scenarios -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-route"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Conversation Scenarios</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Multi-step dialog flows, trigger settings, conditional branching, action execution</p>
+        </div>
+
+        <!-- Pro 5: WooCommerce -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">WooCommerce Integration</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Auto-crawl product data, display product cards in chat, conversion tracking</p>
+        </div>
+
+        <!-- Pro 6: LINE -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fab fa-line"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">LINE Messaging API</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Run AI chatbot on LINE. Rich menu support, auto message type detection</p>
+        </div>
+
+        <!-- Pro 7: Voice -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Voice Input (STT) & Text-to-Speech (TTS)</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Send messages by voice, play AI responses aloud. Hands-free operation</p>
+        </div>
+
+        <!-- Pro 8: Security -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Security (AES-256-GCM)</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Data encryption at rest, PII masking, audit logs, IP blocking, vulnerability scanning, spam detection</p>
+        </div>
+
+        <!-- Pro 9: Themes -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-swatchbook"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">10 Pro Themes + Dark Mode</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Modern, Glass, Neon and more. Dark mode, custom fonts, seasonal themes</p>
+        </div>
+
+        <!-- Pro 10: Caching -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">Response Caching</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Save 30-50% on API costs for repeated questions. SHA-256 hash, TTL settings, cache statistics</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Supported AI Models -->
+<!-- =============================================== -->
+<div id="models" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">Supported AI Models</p>
+        <p style="color: #666; font-size: 1.1em;">4 providers, 100+ models to choose from</p>
+    </div>
+
+    <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px;">
+
+        <!-- OpenAI -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #10a37f;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #10a37f; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">OpenAI</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>GPT-5.2</strong> / <strong>GPT-5.1</strong> / <strong>GPT-5</strong> / GPT-5-mini / <span style="color: #667eea;">GPT-4o (recommended)</span> / <span style="color: #667eea;">GPT-4o-mini (budget pick)</span> / GPT-4.1 / o4-mini / o3 / o3-mini / o1
+            </p>
+        </div>
+
+        <!-- Claude -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #d4a574;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #d4a574; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">Anthropic Claude</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>Opus 4.6</strong> <span style="color: #667eea;">(top performance)</span> / <span style="color: #667eea;">Sonnet 4.5 (recommended)</span> / <span style="color: #667eea;">Haiku 4.5 (fastest)</span> / Opus 4.5 / Sonnet 4 / 3.7 Sonnet
+            </p>
+        </div>
+
+        <!-- Gemini -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #4285f4;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #4285f4; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-gem"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">Google Gemini</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>3 Pro Preview</strong> / <strong>3 Flash Preview</strong> / 2.5 Pro / <span style="color: #667eea;">2.5 Flash (recommended)</span> / <span style="color: #667eea;">2.0 Flash (stable)</span> / 1.5 Pro
+            </p>
+        </div>
+
+        <!-- OpenRouter -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #6366f1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #6366f1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-route"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">OpenRouter</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>Auto</strong> + 100+ models: Llama 4 Maverick, DeepSeek V3, Mistral, Qwen, and more
+            </p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- How It Works (4 steps) -->
+<!-- =============================================== -->
+<div id="how-it-works" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">How It Works</p>
+        <p style="color: #666; font-size: 1.1em;">Get your AI chatbot running in 4 simple steps</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto; position: relative;">
+
+        <!-- Step 1 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">1</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">Install & Activate</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Install from WordPress.org or upload the ZIP file</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">2</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">Configure API Key</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Enter your OpenAI / Claude / Gemini / OpenRouter API key</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">3</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">AI Learns Your Site</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Click "Crawl Now" to auto-index your site content</p>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">4</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">Analyze & Optimize<span class="wpaic-badge-pro">PRO</span></p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Use analytics to measure performance, scenarios and lead capture to optimize</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Pricing -->
+<!-- =============================================== -->
+<div id="pricing" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; padding: 80px 30px; border-radius: 24px; margin-bottom: 100px;">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <i class="fas fa-crown" style="font-size: 2.5em; color: #fbbf24; margin-bottom: 15px;"></i>
+        <p style="font-size: 2.2em; font-weight: 700;">Pricing</p>
+        <p style="opacity: 0.8; margin-top: 10px;">All core features are available in the free version</p>
+    </div>
+
+    <div class="wpaic-pricing-grid" style="display: flex; flex-wrap: wrap; gap: 25px; max-width: 1100px; margin: 0 auto; justify-content: center;">
+
+        <!-- Free Plan -->
+        <div class="wpaic-pricing-card" style="flex: 1; min-width: 280px; max-width: 340px; background: rgba(255,255,255,0.07); padding: 40px 30px; border-radius: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+            <p style="font-size: 1.3em; font-weight: 700; margin-bottom: 8px;">Free</p>
+            <p style="font-size: 3em; font-weight: 800; margin-bottom: 5px;">$0</p>
+            <p style="opacity: 0.8; margin-bottom: 30px;">Free forever</p>
+
+            <ul class="wpaic-checklist" style="text-align: left; margin-bottom: 30px;">
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>4 AI providers supported</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Vector RAG & Web Search</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Knowledge Base (unlimited)</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>6 themes & Gutenberg block</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>MCP Server (7 tools)</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Unlimited AI responses</li>
+            </ul>
+
+            <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" style="display: inline-block; background: white; color: #667eea; padding: 14px 35px; border-radius: 9999px; text-decoration: none; font-weight: 600; font-size: 1em;">Install from WordPress.org</a>
+        </div>
+
+        <!-- Pro 1-Site -->
+        <div class="wpaic-pricing-card" style="flex: 1; min-width: 280px; max-width: 340px; background: rgba(255,255,255,0.12); padding: 40px 30px; border-radius: 24px; text-align: center; border: 2px solid #667eea; position: relative;">
+            <p style="display: inline-block; background: #ef4444; color: white; padding: 4px 14px; border-radius: 9999px; font-size: 0.8em; font-weight: 600; position: absolute; top: -12px; right: 20px;"><i class="fas fa-fire" style="margin-right: 4px;"></i>Early Bird 51% OFF</p>
+            <p style="font-size: 1.3em; font-weight: 700; margin-bottom: 5px;">Pro Add-on</p>
+            <p style="font-size: 0.9em; opacity: 0.7; margin-bottom: 5px;">1-Site License</p>
+            <p style="font-size: 1.3em; opacity: 0.5; text-decoration: line-through; margin-bottom: 0;">$59</p>
+            <p style="font-size: 3em; font-weight: 800; margin-bottom: 5px; color: #4ade80;">$29</p>
+            <p style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">One-time purchase, 1 year of updates</p>
+            <p style="font-size: 0.8em; color: #fbbf24; margin-bottom: 25px;"><i class="fas fa-clock" style="margin-right: 4px;"></i>Limited-time price</p>
+
+            <ul class="wpaic-checklist" style="text-align: left; margin-bottom: 30px;">
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Everything in Free +</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>80+ advanced features</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Lead Capture & Webhooks</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>WooCommerce / LINE integration</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Scenarios / Voice / Encryption</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Analytics & reports</li>
+            </ul>
+
+            <a href="https://buy.stripe.com/test_cNi7sN0NF7oJ16p6yae7m02" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 35px; border-radius: 9999px; text-decoration: none; font-weight: 600; font-size: 1em; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);">Buy Now -- $29</a>
+        </div>
+
+        <!-- Pro 5-Site -->
+        <div class="wpaic-pricing-card" style="flex: 1; min-width: 280px; max-width: 340px; background: rgba(255,255,255,0.10); padding: 40px 30px; border-radius: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.15); position: relative;">
+            <p style="display: inline-block; background: #667eea; color: white; padding: 4px 14px; border-radius: 9999px; font-size: 0.8em; font-weight: 600; position: absolute; top: -12px; right: 20px;"><i class="fas fa-bolt" style="margin-right: 4px;"></i>$9.8/site</p>
+            <p style="font-size: 1.3em; font-weight: 700; margin-bottom: 5px;">Pro Add-on</p>
+            <p style="font-size: 0.9em; opacity: 0.7; margin-bottom: 5px;">5-Site License</p>
+            <p style="font-size: 1.3em; opacity: 0.5; text-decoration: line-through; margin-bottom: 0;">$99</p>
+            <p style="font-size: 3em; font-weight: 800; margin-bottom: 5px; color: #4ade80;">$49</p>
+            <p style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">One-time purchase, 1 year of updates</p>
+            <p style="font-size: 0.8em; color: #fbbf24; margin-bottom: 25px;"><i class="fas fa-clock" style="margin-right: 4px;"></i>Limited-time price</p>
+
+            <ul class="wpaic-checklist" style="text-align: left; margin-bottom: 30px;">
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Everything in 1-Site</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Use on up to 5 sites</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Perfect for agencies & freelancers</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i><strong>+$20 for 4 more sites</strong></li>
+            </ul>
+
+            <a href="https://buy.stripe.com/test_3cIfZj1RJdN77uNe0Ce7m03" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 35px; border-radius: 9999px; text-decoration: none; font-weight: 600; font-size: 1em; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);">Buy Now -- $49</a>
+        </div>
+
+    </div>
+    <p style="text-align: center; font-size: 0.85em; opacity: 0.7; margin-top: 25px;">Includes 1 year of updates & support (renew at $19/year, or keep using without renewal)</p>
+    <p style="text-align: center; font-size: 0.85em; opacity: 0.6; margin-top: 8px;">* AI provider API usage fees are billed separately by each provider</p>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Use Cases -->
+<!-- =============================================== -->
+<div id="use-cases" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">Use Cases</p>
+        <p style="color: #666; font-size: 1.1em;">AI chatbot that works across every business scenario</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; max-width: 1100px; margin: 0 auto;">
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #667eea;">
+            <i class="fas fa-shopping-bag" style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">E-commerce Customer Support</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Automatically handle product questions, stock checks, and return policies 24/7. WooCommerce integration displays product cards in chat.</p>
+        </div>
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #22c55e;">
+            <i class="fas fa-building" style="font-size: 2.5em; color: #22c55e; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">Business Inquiry Handling</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Automate responses about business hours, services, and pricing. Capture leads from interested prospects.</p>
+        </div>
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #f59e0b;">
+            <i class="fas fa-circle-question" style="font-size: 2.5em; color: #f59e0b; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">FAQ Automation</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Register common questions in the knowledge base. AI answers in natural conversational format, dramatically reducing staff workload.</p>
+        </div>
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #8b5cf6;">
+            <i class="fas fa-magnet" style="font-size: 2.5em; color: #8b5cf6; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">Lead Generation & Conversion</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Naturally collect lead information through conversation flow. Use the scenario engine to guide visitors to conversion.</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Developer Section -->
+<!-- =============================================== -->
+<div id="developers" class="wpaic-section-gap">
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 60px 30px; border-radius: 24px;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <i class="fas fa-code" style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;"></i>
+            <p style="font-size: 2em; font-weight: 700;">For Developers</p>
+            <p style="opacity: 0.7; margin-top: 10px;">Extend with REST API, MCP Server, and WordPress Abilities API</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 1000px; margin: 0 auto;">
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-server" style="color: #667eea; margin-right: 8px;"></i>REST API</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;">Namespace <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">wp-ai-chatbot/v1</code> with 10+ endpoints for chat, session management, and knowledge base operations.</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-plug" style="color: #667eea; margin-right: 8px;"></i>MCP Server</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;">7 tools (create/search posts, manage knowledge, chatbot settings, etc.) for Claude Desktop, Cursor, and VS Code.</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-puzzle-piece" style="color: #667eea; margin-right: 8px;"></i>WordPress Abilities API</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;">Abilities API bridge implementation. AI tools can auto-discover and use plugin capabilities.</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-filter" style="color: #667eea; margin-right: 8px;"></i>Hooks & Filters</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;"><code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">wpaic_system_prompt</code> <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">wpaic_ai_response</code> and more for customizing system prompts and responses.</p>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p style="opacity: 0.6; font-size: 0.9em;">Open Source (GPL v2+) | PHP 7.4+ | WordPress 5.8+</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- FAQ -->
+<!-- =============================================== -->
+<div id="faq" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">Frequently Asked Questions</p>
+    </div>
+
+    <div style="max-width: 800px; margin: 0 auto;">
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Can I use just the free version?</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">Yes. The free version includes 4 AI providers, site learning, Vector RAG, Web Search, Knowledge Base, 6 themes, Gutenberg block, MCP Server, and more — all with no artificial limits. Pro Add-on adds analytics, lead capture, WooCommerce integration, LINE, and other advanced business features.</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Is Pro a subscription?</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">No, it is a one-time purchase. Includes 1 year of updates and support. You can renew at $19/year, but the plugin continues to work even without renewal.</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Where can I get API keys?</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">From each AI provider's official site: OpenAI at platform.openai.com, Claude at console.anthropic.com, Gemini at aistudio.google.com, and OpenRouter at openrouter.ai.</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Which AI model do you recommend?</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">For the best cost-performance balance, try GPT-4o-mini or Gemini 2.5 Flash. For top performance, Claude Opus 4.6 or GPT-5.2 are excellent choices.</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>What is MCP Server?</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">MCP (Model Context Protocol) Server lets AI tools like Claude Desktop, Cursor, and VS Code directly interact with your WordPress site. It provides 7 tools for creating/searching posts, managing knowledge base, and more.</p>
+        </div>
+        <div style="padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>How do I upgrade from Free to Pro?</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">Simply install the Pro Add-on plugin alongside the free version. All your settings and data are preserved. Available now at the Early Bird price of $29 (regular $59).</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- System Requirements -->
+<!-- =============================================== -->
+<div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 40px 30px; border-radius: 20px; margin-bottom: 80px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <i class="fas fa-gear" style="font-size: 2em; color: #667eea; margin-bottom: 10px;"></i>
+        <p style="font-size: 1.6em; font-weight: 700;">System Requirements</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 50px; text-align: center;">
+        <div>
+            <i class="fab fa-wordpress" style="font-size: 2em; color: #21759b; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">WordPress</p>
+            <p style="color: #666;">6.3+</p>
+        </div>
+        <div>
+            <i class="fab fa-php" style="font-size: 2em; color: #777bb4; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">PHP</p>
+            <p style="color: #666;">7.4+</p>
+        </div>
+        <div>
+            <i class="fas fa-database" style="font-size: 2em; color: #00758f; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">MySQL</p>
+            <p style="color: #666;">5.7+</p>
+        </div>
+        <div>
+            <i class="fas fa-check-circle" style="font-size: 2em; color: #22c55e; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">Tested up to</p>
+            <p style="color: #666;">WordPress 6.9</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- CTA Section -->
+<!-- =============================================== -->
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 30px; border-radius: 24px; text-align: center; margin-bottom: 40px; position: relative; overflow: hidden;">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.06) 0%, transparent 50%); pointer-events: none;"></div>
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-rocket" style="font-size: 3em; margin-bottom: 20px; opacity: 0.9;"></i>
+        <p style="font-size: 2.2em; margin-bottom: 15px; font-weight: 700;">Get Started Today</p>
+        <p style="font-size: 1.15em; margin-bottom: 35px; opacity: 0.9; max-width: 500px; margin-left: auto; margin-right: auto;">Start with the free version right away. Add an AI chatbot to your WordPress site today.</p>
+        <div>
+            <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" class="wpaic-btn-white"><i class="fas fa-download" style="margin-right: 8px;"></i>Download Free</a>
+            <a href="/rapls-ai-chatbot-free-manual-en/" class="wpaic-btn-outline"><i class="fas fa-book-open" style="margin-right: 8px;"></i>Manual</a>
+            <a href="https://buy.stripe.com/test_cNi7sN0NF7oJ16p6yae7m02" target="_blank" class="wpaic-btn-gold"><i class="fas fa-crown" style="margin-right: 8px;"></i>Buy Pro -- $29</a>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Manuals & Documentation Section -->
+<!-- =============================================== -->
+<div class="wpaic-section" style="margin-bottom: 50px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <p style="font-size: 1.8em; font-weight: 700; color: #1e293b; margin-bottom: 10px;"><i class="fas fa-book" style="color: #667eea; margin-right: 10px;"></i>Manuals &amp; Documentation</p>
+        <p style="color: #64748b; font-size: 1.05em;">Step-by-step guides for setup and configuration</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 700px; margin: 0 auto;">
+        <a href="/rapls-ai-chatbot-free-manual-en/" style="text-decoration: none;">
+            <div style="background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%); border: 2px solid #667eea30; border-radius: 16px; padding: 30px; text-align: center; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 30px rgba(102,126,234,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <i class="fas fa-book-open" style="font-size: 24px; color: white;"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Free Manual</p>
+                <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;">Basic setup, AI provider connection, site learning &amp; more</p>
+                <span style="color: #667eea; font-weight: 600; font-size: 0.95em;">Read the manual <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></span>
+            </div>
+        </a>
+        <a href="/rapls-ai-chatbot-manual-pro-en/" style="text-decoration: none;">
+            <div style="background: linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%); border: 2px solid #f0c67440; border-radius: 16px; padding: 30px; text-align: center; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 30px rgba(212,160,23,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #f0c674, #d4a017); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <i class="fas fa-crown" style="font-size: 24px; color: white;"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Pro Manual</p>
+                <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;">Advanced features, analytics, customization &amp; more</p>
+                <span style="color: #d4a017; font-weight: 600; font-size: 0.95em;">Read the manual <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></span>
+            </div>
+        </a>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Footer -->
+<!-- =============================================== -->
+<div style="text-align: center; color: #9ca3af; font-size: 0.9em; padding: 40px 20px;">
+    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-download" style="margin-right: 5px;"></i>Download Free</a>
+        <a href="/rapls-ai-chatbot-free-manual-en/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-book-open" style="margin-right: 5px;"></i>Free Manual</a>
+        <a href="/rapls-ai-chatbot-manual-pro-en/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-book" style="margin-right: 5px;"></i>Pro Manual</a>
+        <a href="/contact-en/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-envelope" style="margin-right: 5px;"></i>Contact</a>
+        <a href="/disclaimer-en/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;">Disclaimer</a>
+        <a href="/privacy-policy/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;">Privacy Policy</a>
+    </div>
+    <p>&copy; 2026 raplsworks. All rights reserved.</p>
+    <p style="margin-top: 5px;">Rapls AI Chatbot | GPL v2 License</p>
+</div>

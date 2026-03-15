@@ -1,0 +1,960 @@
+<!-- Rapls AI Chatbot - プラグインホームページ（日本語版） -->
+
+<!-- Font Awesome CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- 不要な要素を非表示 + カスタムスタイル -->
+<style>
+.breadcrumb.breadcrumb-page.pbp-main-top,
+.article-header.entry-header {
+    display: none !important;
+}
+
+/* ベーススタイル */
+* { box-sizing: border-box; }
+
+.wpaic-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* アイコンボックス */
+.wpaic-icon-box {
+    width: 70px;
+    height: 70px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    margin-bottom: 18px;
+    font-size: 30px;
+}
+.wpaic-icon-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+.wpaic-icon-light {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    color: #667eea;
+}
+.wpaic-icon-gold {
+    background: linear-gradient(135deg, #f0c67420 0%, #d4a01720 100%);
+    color: #d4a017;
+}
+
+/* カード */
+.wpaic-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 30px;
+    transition: all 0.3s ease;
+}
+.wpaic-card:hover {
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+    transform: translateY(-3px);
+}
+
+/* Pro カード */
+.wpaic-pro-card {
+    background: white;
+    border: 1px solid #f0c67440;
+    border-radius: 16px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+.wpaic-pro-card:hover {
+    box-shadow: 0 8px 30px rgba(240, 198, 116, 0.2);
+    transform: translateY(-3px);
+    border-color: #f0c674;
+}
+
+/* ボタン */
+.wpaic-btn-primary {
+    display: inline-block;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+.wpaic-btn-white {
+    display: inline-block;
+    background: white;
+    color: #667eea;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.wpaic-btn-outline {
+    display: inline-block;
+    background: transparent;
+    color: white;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1em;
+    border: 2px solid white;
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-outline:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-2px);
+}
+.wpaic-btn-gold {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0c674 0%, #d4a017 100%);
+    color: #1a1a2e;
+    padding: 16px 40px;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.1em;
+    box-shadow: 0 4px 20px rgba(240, 198, 116, 0.4);
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+.wpaic-btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(240, 198, 116, 0.5);
+}
+
+/* バッジ */
+.wpaic-badge-new {
+    display: inline-block;
+    background: #ef4444;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.65em;
+    font-weight: 700;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+.wpaic-badge-pro {
+    display: inline-block;
+    background: linear-gradient(135deg, #f0c674, #d4a017);
+    color: #1a1a2e;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 0.65em;
+    font-weight: 700;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+/* テーブル */
+.wpaic-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+}
+.wpaic-table th {
+    background: #f8fafc;
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 2px solid #e5e7eb;
+}
+.wpaic-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #555;
+}
+.wpaic-table tr:hover td {
+    background: #f8fafc;
+}
+
+/* スクロールアニメーション */
+.wpaic-fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: wpaicFadeIn 0.6s ease forwards;
+}
+@keyframes wpaicFadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* セクション間隔 */
+.wpaic-section-gap {
+    margin-bottom: 100px;
+}
+
+/* チェックリスト */
+.wpaic-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.wpaic-checklist li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    color: #555;
+    line-height: 1.6;
+}
+.wpaic-pricing-card .wpaic-checklist li {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .wpaic-hero-title { font-size: 2em !important; }
+    .wpaic-hero-sub { font-size: 1.1em !important; }
+    .wpaic-section-title { font-size: 1.6em !important; }
+    .wpaic-flex-reverse { flex-direction: column !important; }
+    .wpaic-hide-mobile { display: none !important; }
+    .wpaic-pricing-grid { flex-direction: column !important; align-items: center !important; }
+    .wpaic-pricing-card { max-width: 100% !important; min-width: unset !important; }
+}
+
+/* ナビゲーション */
+.wpaic-nav {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 30px;
+    padding: 10px;
+}
+.wpaic-nav a {
+    color: #667eea;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.wpaic-nav a:hover {
+    background: #667eea10;
+    border-color: #667eea40;
+}
+
+/* スムーススクロール */
+html { scroll-behavior: smooth; }
+</style>
+
+<!-- 言語切り替え -->
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;">
+    <a href="/rapls-ai-chatbot-ja/" style="color: #667eea; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px;">JA</a>
+    <a href="/rapls-ai-chatbot-en/" style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">EN</a>
+</div>
+
+<!-- ナビゲーション -->
+<div class="wpaic-nav">
+    <a href="#features">機能</a>
+    <a href="#comparison">Free vs Pro</a>
+    <a href="#pro-features">Pro 機能</a>
+    <a href="#models">AI モデル</a>
+    <a href="#how-it-works">導入方法</a>
+    <a href="#pricing">料金</a>
+    <a href="#use-cases">活用事例</a>
+    <a href="#developers">開発者向け</a>
+    <a href="#faq">FAQ</a>
+</div>
+<div class="wpaic-nav" style="margin-top: -20px; margin-bottom: 30px;">
+    <a href="/rapls-ai-chatbot-free-manual-ja/" style="background: linear-gradient(135deg, #667eea10, #764ba210); border-color: #667eea40; font-weight: 600;"><i class="fas fa-book-open" style="margin-right: 5px;"></i>Free マニュアル</a>
+    <a href="/rapls-ai-chatbot-manual-pro-ja/" style="background: linear-gradient(135deg, #f0c67410, #d4a01710); border-color: #f0c67440; color: #d4a017; font-weight: 600;"><i class="fas fa-crown" style="margin-right: 5px;"></i>Pro マニュアル</a>
+</div>
+
+<!-- =============================================== -->
+<!-- ヒーローセクション -->
+<!-- =============================================== -->
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 100px 20px 80px; text-align: center; border-radius: 24px; margin-bottom: 80px; position: relative; overflow: hidden;">
+    <!-- 背景パターン -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%); pointer-events: none;"></div>
+    <div style="position: relative; z-index: 1;">
+        <div style="margin-bottom: 30px; position: relative; display: inline-block;">
+            <i class="fas fa-robot" style="font-size: 4.5em; opacity: 0.95;"></i>
+        </div>
+        <p class="wpaic-hero-title" style="font-size: 3.2em; margin-bottom: 15px; font-weight: 800; letter-spacing: -0.02em;">WordPress 用 AI チャットボット</p>
+        <p class="wpaic-hero-sub" style="font-size: 1.5em; margin-bottom: 15px; opacity: 0.95; font-weight: 400;">OpenAI / Claude / Gemini / OpenRouter 対応 &mdash; Free & Pro</p>
+        <p style="font-size: 1.05em; margin-bottom: 45px; opacity: 0.8; max-width: 600px; margin-left: auto; margin-right: auto;">AI があなたのサイトを学習し、訪問者の質問に24時間自動で回答。ベクトル RAG、Web 検索、MCP Server 対応。</p>
+        <div>
+            <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" class="wpaic-btn-white"><i class="fas fa-download" style="margin-right: 8px;"></i>無料ダウンロード</a>
+            <a href="/rapls-ai-chatbot-free-manual-ja/" class="wpaic-btn-outline"><i class="fas fa-book-open" style="margin-right: 8px;"></i>マニュアル</a>
+            <a href="https://buy.stripe.com/test_00w14pcwn9wR3ex7Cee7m04" target="_blank" class="wpaic-btn-gold"><i class="fas fa-crown" style="margin-right: 8px;"></i>Pro を購入 -- $29</a>
+        </div>
+        <p style="margin-top: 20px; opacity: 0.7; font-size: 0.85em;">WordPress.org 公式ディレクトリで配布中 | GPL v2+</p>
+    </div>
+</div>
+<style>@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }</style>
+
+
+<!-- =============================================== -->
+<!-- 特徴ハイライト (6カード) -->
+<!-- =============================================== -->
+<div id="features" class="wpaic-section wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">主要機能</p>
+        <p style="color: #666; font-size: 1.1em;">無料版だけでも充実した機能を搭載</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px;">
+
+        <!-- カード1: 4 AI プロバイダー -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">4つの AI プロバイダー</p>
+            <p style="color: #666; line-height: 1.7;">OpenAI GPT-5シリーズ、Claude Opus 4.6 / Sonnet 4.5、Gemini 3 / 2.5、OpenRouter 100以上のモデルに対応。用途とコストに合わせて最適な AI を選択。</p>
+        </div>
+
+        <!-- カード2: Web 検索 -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-globe"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">Web 検索連携<span class="wpaic-badge-new">NEW</span></p>
+            <p style="color: #666; line-height: 1.7;">ナレッジベースに情報がない場合、AI が自動的に Web 検索を実行。プロバイダーネイティブの検索で追加 API キー不要。</p>
+        </div>
+
+        <!-- カード3: ベクトル RAG -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-magnifying-glass-plus"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">ベクトル RAG<span class="wpaic-badge-new">NEW</span></p>
+            <p style="color: #666; line-height: 1.7;">FULLTEXT 検索（40%）とベクトル検索（60%）を組み合わせたハイブリッド検索で、高精度な文脈理解と回答を実現。</p>
+        </div>
+
+        <!-- カード4: Gutenberg ブロック -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-cube"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">Gutenberg ブロック</p>
+            <p style="color: #666; line-height: 1.7;">ブロックエディタに完全統合。SSR（サーバーサイドレンダリング）対応で、記事内に簡単にチャットボットを配置。</p>
+        </div>
+
+        <!-- カード5: MCP Server -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-plug"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">MCP Server<span class="wpaic-badge-new">NEW</span></p>
+            <p style="color: #666; line-height: 1.7;">7つのツールを備えた MCP Server を内蔵。Claude Desktop、Cursor、VS Code から WordPress を直接操作可能。</p>
+        </div>
+
+        <!-- カード6: 6テーマ -->
+        <div class="wpaic-card" style="text-align: center;">
+            <div class="wpaic-icon-box wpaic-icon-light">
+                <i class="fas fa-palette"></i>
+            </div>
+            <p style="font-size: 1.25em; margin-bottom: 10px; font-weight: 600;">6つの無料テーマ</p>
+            <p style="color: #666; line-height: 1.7;">Default、Simple、Classic、Light、Minimal、Flat の6テーマを搭載。サイトのデザインに合わせてカスタマイズ。</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Free vs Pro 比較 -->
+<!-- =============================================== -->
+<div id="comparison" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">Free vs Pro 比較</p>
+        <p style="color: #666; font-size: 1.1em;">ニーズに合ったプランを選択</p>
+    </div>
+
+    <div style="max-width: 900px; margin: 0 auto; border-radius: 16px; overflow: hidden; border: 1px solid #e5e7eb;">
+        <table class="wpaic-table">
+            <thead>
+                <tr>
+                    <th style="width: 40%;">機能</th>
+                    <th style="width: 30%; text-align: center;">Free</th>
+                    <th style="width: 30%; text-align: center; background: linear-gradient(135deg, #f0c67415, #d4a01715);"><i class="fas fa-crown" style="color: #d4a017; margin-right: 4px;"></i>Pro</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>AI 応答数</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>ナレッジベース</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>テーマ</strong></td>
+                    <td style="text-align: center;">6テーマ</td>
+                    <td style="text-align: center; font-weight: 600; color: #d4a017;">16テーマ + ダークモード</td>
+                </tr>
+                <tr>
+                    <td><strong>アナリティクス</strong></td>
+                    <td style="text-align: center;">基本統計</td>
+                    <td style="text-align: center; font-weight: 600; color: #d4a017;">フルダッシュボード</td>
+                </tr>
+                <tr>
+                    <td><strong>リードキャプチャ</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>WooCommerce 連携</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>シナリオエンジン</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>LINE / 音声 / 暗号化</strong></td>
+                    <td style="text-align: center;"><i class="fas fa-xmark" style="color: #ccc;"></i></td>
+                    <td style="text-align: center;"><i class="fas fa-check" style="color: #22c55e;"></i></td>
+                </tr>
+                <tr>
+                    <td><strong>合計機能数</strong></td>
+                    <td style="text-align: center;">主要機能</td>
+                    <td style="text-align: center; font-weight: 600; color: #d4a017;">80以上の機能</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- Pro 機能ショーケース (10カード) -->
+<!-- =============================================== -->
+<div id="pro-features" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <div style="display: inline-block; background: linear-gradient(135deg, #f0c674, #d4a017); color: #1a1a2e; padding: 6px 20px; border-radius: 9999px; font-size: 0.85em; font-weight: 700; margin-bottom: 15px;">
+            <i class="fas fa-crown" style="margin-right: 6px;"></i>PRO ADD-ON
+        </div>
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">80以上の Pro 機能</p>
+        <p style="color: #666; font-size: 1.1em;">ビジネスに必要なすべてを提供</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1100px; margin: 0 auto;">
+
+        <!-- Pro 1: アナリティクス -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">アナリティクスダッシュボード</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">会話分析、満足度スコア、FAQ ランキング、時間帯/デバイス分析、PDF/メールレポート</p>
+        </div>
+
+        <!-- Pro 2: リードキャプチャ -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-address-card"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">リードキャプチャ & Webhook</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">カスタムフォーム、CSV/JSON エクスポート、Webhook 連携、Slack 通知、Google Sheets</p>
+        </div>
+
+        <!-- Pro 3: 営業時間 & ハンドオフ -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-headset"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">営業時間 & 人間への引き継ぎ</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">営業時間設定、祝日対応、オペレーターモード、オフラインメッセージ、リアルタイムモニター</p>
+        </div>
+
+        <!-- Pro 4: シナリオ -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-route"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">会話シナリオエンジン</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">マルチステップの対話フロー、トリガー設定、条件分岐、アクション実行</p>
+        </div>
+
+        <!-- Pro 5: WooCommerce -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">WooCommerce 連携</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">商品データ自動クロール、チャット内商品カード表示、コンバージョントラッキング</p>
+        </div>
+
+        <!-- Pro 6: LINE -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fab fa-line"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">LINE Messaging API</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">LINE 上で AI チャットボットを運用。リッチメニュー対応、メッセージタイプ自動判別</p>
+        </div>
+
+        <!-- Pro 7: 音声 -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">音声入力(STT) & 読み上げ(TTS)</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">音声でメッセージ送信、AI 応答を音声で再生。ハンズフリー操作を実現</p>
+        </div>
+
+        <!-- Pro 8: セキュリティ -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">セキュリティ(AES-256-GCM)</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">データ暗号化、PII マスキング、監査ログ、IP ブロック、脆弱性スキャン、スパム検出</p>
+        </div>
+
+        <!-- Pro 9: テーマ -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-swatchbook"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">10 Pro テーマ + ダークモード</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">Modern、Glass、Neon など10テーマ追加。ダークモード、カスタムフォント、シーズナルテーマ</p>
+        </div>
+
+        <!-- Pro 10: キャッシュ -->
+        <div class="wpaic-pro-card">
+            <div class="wpaic-icon-box wpaic-icon-gold" style="width: 50px; height: 50px; font-size: 22px;">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <p style="font-weight: 600; color: #333; margin-bottom: 8px;">レスポンスキャッシュ</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">同一質問の API コストを30-50%削減。SHA-256ハッシュ、TTL 設定、キャッシュ統計</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- 対応 AI モデル -->
+<!-- =============================================== -->
+<div id="models" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">対応 AI モデル</p>
+        <p style="color: #666; font-size: 1.1em;">4つのプロバイダー、100以上のモデルから選択</p>
+    </div>
+
+    <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px;">
+
+        <!-- OpenAI -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #10a37f;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #10a37f; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">OpenAI</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>GPT-5.2</strong> / <strong>GPT-5.1</strong> / <strong>GPT-5</strong> / GPT-5-mini / <span style="color: #667eea;">GPT-4o (推奨)</span> / <span style="color: #667eea;">GPT-4o-mini (低コスト推奨)</span> / GPT-4.1 / o4-mini / o3 / o3-mini / o1
+            </p>
+        </div>
+
+        <!-- Claude -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #d4a574;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #d4a574; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">Anthropic Claude</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>Opus 4.6</strong> <span style="color: #667eea;">(最高性能)</span> / <span style="color: #667eea;">Sonnet 4.5 (推奨)</span> / <span style="color: #667eea;">Haiku 4.5 (最速)</span> / Opus 4.5 / Sonnet 4 / 3.7 Sonnet
+            </p>
+        </div>
+
+        <!-- Gemini -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #4285f4;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #4285f4; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-gem"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">Google Gemini</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>3 Pro Preview</strong> / <strong>3 Flash Preview</strong> / 2.5 Pro / <span style="color: #667eea;">2.5 Flash (推奨)</span> / <span style="color: #667eea;">2.0 Flash (安定版)</span> / 1.5 Pro
+            </p>
+        </div>
+
+        <!-- OpenRouter -->
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 30px; border-top: 4px solid #6366f1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+                <div style="width: 45px; height: 45px; background: #6366f1; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <i class="fas fa-route"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #333;">OpenRouter</p>
+            </div>
+            <p style="color: #555; font-size: 0.9em; line-height: 1.8;">
+                <strong>Auto</strong> + 100以上のモデル: Llama 4 Maverick、DeepSeek V3、Mistral、Qwen など
+            </p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- 導入方法 (4ステップ) -->
+<!-- =============================================== -->
+<div id="how-it-works" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">かんたん導入</p>
+        <p style="color: #666; font-size: 1.1em;">4ステップで AI チャットボットを稼働</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto; position: relative;">
+
+        <!-- ステップ1 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">1</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">インストール & 有効化</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">WordPress.org からインストールするか ZIP をアップロード</p>
+        </div>
+
+        <!-- ステップ2 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">2</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">API キーを設定</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">OpenAI / Claude / Gemini / OpenRouter の API キーを入力</p>
+        </div>
+
+        <!-- ステップ3 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">3</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">AI がサイトを学習</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">「今すぐクロール」でサイトコンテンツを自動インデックス</p>
+        </div>
+
+        <!-- ステップ4 -->
+        <div style="text-align: center; position: relative;">
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-size: 1.6em; font-weight: 700;">4</div>
+            <p style="margin-bottom: 10px; font-weight: 600; font-size: 1.05em; color: #333;">分析 & 最適化<span class="wpaic-badge-pro">PRO</span></p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">アナリティクスで効果測定、シナリオやリードキャプチャで最適化</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- 料金プラン -->
+<!-- =============================================== -->
+<div id="pricing" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: white; padding: 80px 30px; border-radius: 24px; margin-bottom: 100px;">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <i class="fas fa-crown" style="font-size: 2.5em; color: #fbbf24; margin-bottom: 15px;"></i>
+        <p style="font-size: 2.2em; font-weight: 700;">料金プラン</p>
+        <p style="opacity: 0.8; margin-top: 10px;">Free 版だけでも主要機能をすべて利用できます</p>
+    </div>
+
+    <div class="wpaic-pricing-grid" style="display: flex; flex-wrap: wrap; gap: 25px; max-width: 1100px; margin: 0 auto; justify-content: center;">
+
+        <!-- Free プラン -->
+        <div class="wpaic-pricing-card" style="flex: 1; min-width: 280px; max-width: 340px; background: rgba(255,255,255,0.07); padding: 40px 30px; border-radius: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+            <p style="font-size: 1.3em; font-weight: 700; margin-bottom: 8px;">Free</p>
+            <p style="font-size: 3em; font-weight: 800; margin-bottom: 5px;">$0</p>
+            <p style="opacity: 0.8; margin-bottom: 30px;">ずっと無料</p>
+
+            <ul class="wpaic-checklist" style="text-align: left; margin-bottom: 30px;">
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>4 AI プロバイダー対応</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>ベクトル RAG & Web 検索</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>ナレッジベース（無制限）</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>6テーマ & Gutenberg ブロック</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>MCP Server (7ツール)</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>AI 応答（無制限）</li>
+            </ul>
+
+            <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" style="display: inline-block; background: white; color: #667eea; padding: 14px 35px; border-radius: 9999px; text-decoration: none; font-weight: 600; font-size: 1em;">WordPress.org からインストール</a>
+        </div>
+
+        <!-- Pro 1サイト -->
+        <div class="wpaic-pricing-card" style="flex: 1; min-width: 280px; max-width: 340px; background: rgba(255,255,255,0.12); padding: 40px 30px; border-radius: 24px; text-align: center; border: 2px solid #667eea; position: relative;">
+            <p style="display: inline-block; background: #ef4444; color: white; padding: 4px 14px; border-radius: 9999px; font-size: 0.8em; font-weight: 600; position: absolute; top: -12px; right: 20px;"><i class="fas fa-fire" style="margin-right: 4px;"></i>Early Bird 51% OFF</p>
+            <p style="font-size: 1.3em; font-weight: 700; margin-bottom: 5px;">Pro Add-on</p>
+            <p style="font-size: 0.9em; opacity: 0.7; margin-bottom: 5px;">1サイトライセンス</p>
+            <p style="font-size: 1.3em; opacity: 0.5; text-decoration: line-through; margin-bottom: 0;">$59</p>
+            <p style="font-size: 3em; font-weight: 800; margin-bottom: 5px; color: #4ade80;">$29</p>
+            <p style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">買い切り・1年間アップデート付き</p>
+            <p style="font-size: 0.8em; color: #fbbf24; margin-bottom: 25px;"><i class="fas fa-clock" style="margin-right: 4px;"></i>期間限定価格</p>
+
+            <ul class="wpaic-checklist" style="text-align: left; margin-bottom: 30px;">
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>Free の全機能 +</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>80以上の高度な機能</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>WooCommerce / LINE 連携</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>シナリオ / 音声 / 暗号化</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>アナリティクス & レポート</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>リードキャプチャ & Webhook</li>
+            </ul>
+
+            <a href="https://buy.stripe.com/test_00w14pcwn9wR3ex7Cee7m04" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 35px; border-radius: 9999px; text-decoration: none; font-weight: 600; font-size: 1em; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);">今すぐ購入 -- $29</a>
+        </div>
+
+        <!-- Pro 5サイト -->
+        <div class="wpaic-pricing-card" style="flex: 1; min-width: 280px; max-width: 340px; background: rgba(255,255,255,0.10); padding: 40px 30px; border-radius: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.15); position: relative;">
+            <p style="display: inline-block; background: #667eea; color: white; padding: 4px 14px; border-radius: 9999px; font-size: 0.8em; font-weight: 600; position: absolute; top: -12px; right: 20px;"><i class="fas fa-bolt" style="margin-right: 4px;"></i>1サイト $9.8</p>
+            <p style="font-size: 1.3em; font-weight: 700; margin-bottom: 5px;">Pro Add-on</p>
+            <p style="font-size: 0.9em; opacity: 0.7; margin-bottom: 5px;">5サイトライセンス</p>
+            <p style="font-size: 1.3em; opacity: 0.5; text-decoration: line-through; margin-bottom: 0;">$99</p>
+            <p style="font-size: 3em; font-weight: 800; margin-bottom: 5px; color: #4ade80;">$49</p>
+            <p style="opacity: 0.9; margin-bottom: 8px; font-size: 0.9em;">買い切り・1年間アップデート付き</p>
+            <p style="font-size: 0.8em; color: #fbbf24; margin-bottom: 25px;"><i class="fas fa-clock" style="margin-right: 4px;"></i>期間限定価格</p>
+
+            <ul class="wpaic-checklist" style="text-align: left; margin-bottom: 30px;">
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>1サイト版の全機能</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>最大5サイトで利用可能</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i>制作会社・フリーランスに最適</li>
+                <li><i class="fas fa-circle-check" style="color: #4ade80; flex-shrink: 0;"></i><strong>+$20 でサイト4つ追加</strong></li>
+            </ul>
+
+            <a href="https://buy.stripe.com/test_dRm9AVaof8sN16pf4Ge7m05" target="_blank" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 35px; border-radius: 9999px; text-decoration: none; font-weight: 600; font-size: 1em; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);">今すぐ購入 -- $49</a>
+        </div>
+
+    </div>
+    <p style="text-align: center; font-size: 0.85em; opacity: 0.7; margin-top: 25px;">1年間のアップデート & サポート込み（2年目以降は年 $19 で延長可・延長なしでも利用継続 OK）</p>
+    <p style="text-align: center; font-size: 0.85em; opacity: 0.6; margin-top: 8px;">※ API 使用料は各プロバイダーに別途お支払いください</p>
+</div>
+
+
+<!-- =============================================== -->
+<!-- 活用事例 -->
+<!-- =============================================== -->
+<div id="use-cases" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">活用事例</p>
+        <p style="color: #666; font-size: 1.1em;">あらゆるビジネスシーンで AI チャットボットが活躍</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; max-width: 1100px; margin: 0 auto;">
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #667eea;">
+            <i class="fas fa-shopping-bag" style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">EC サイトのカスタマーサポート</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">商品の質問、在庫確認、返品ポリシーなどを24時間自動対応。WooCommerce 連携で商品カードも表示。</p>
+        </div>
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #22c55e;">
+            <i class="fas fa-building" style="font-size: 2.5em; color: #22c55e; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">ビジネスのお問い合わせ対応</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">営業時間、サービス内容、料金プランの案内を自動化。リードキャプチャで見込み客を獲得。</p>
+        </div>
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #f59e0b;">
+            <i class="fas fa-circle-question" style="font-size: 2.5em; color: #f59e0b; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">FAQ 自動化</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">よくある質問をナレッジベースに登録。AI が自然な会話形式で回答し、スタッフの負担を大幅削減。</p>
+        </div>
+
+        <div class="wpaic-card" style="text-align: center; border-top: 4px solid #8b5cf6;">
+            <i class="fas fa-magnet" style="font-size: 2.5em; color: #8b5cf6; margin-bottom: 15px;"></i>
+            <p style="font-size: 1.15em; font-weight: 600; margin-bottom: 10px;">リード獲得 & コンバージョン</p>
+            <p style="color: #666; font-size: 0.9em; line-height: 1.6;">会話の流れで自然にリード情報を収集。シナリオエンジンで最適な誘導を実現。</p>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- 開発者向けセクション -->
+<!-- =============================================== -->
+<div id="developers" class="wpaic-section-gap">
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 60px 30px; border-radius: 24px;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <i class="fas fa-code" style="font-size: 2.5em; color: #667eea; margin-bottom: 15px;"></i>
+            <p style="font-size: 2em; font-weight: 700;">開発者向け</p>
+            <p style="opacity: 0.7; margin-top: 10px;">REST API、MCP Server、WordPress Abilities API で拡張</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; max-width: 1000px; margin: 0 auto;">
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-server" style="color: #667eea; margin-right: 8px;"></i>REST API</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;">名前空間 <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">wp-ai-chatbot/v1</code> で10以上のエンドポイントを提供。チャット、セッション管理、ナレッジベース操作が可能。</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-plug" style="color: #667eea; margin-right: 8px;"></i>MCP Server</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;">7つのツール（投稿作成/検索、ナレッジ管理、チャットボット設定など）を提供。Claude Desktop、Cursor、VS Code から操作。</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-puzzle-piece" style="color: #667eea; margin-right: 8px;"></i>WordPress Abilities API</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;">WordPress Abilities API ブリッジを実装。AI ツールがプラグインの機能を自動検出・利用可能。</p>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.06); padding: 25px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-weight: 600; margin-bottom: 12px; font-size: 1.05em;"><i class="fas fa-filter" style="color: #667eea; margin-right: 8px;"></i>フック & フィルター</p>
+                <p style="opacity: 0.8; font-size: 0.9em; line-height: 1.7;"><code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">wpaic_system_prompt</code> <code style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">wpaic_ai_response</code> など、システムプロンプトや応答のカスタマイズが可能。</p>
+            </div>
+
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p style="opacity: 0.6; font-size: 0.9em;">オープンソース (GPL v2+) | PHP 7.4+ | WordPress 5.8+</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- FAQ -->
+<!-- =============================================== -->
+<div id="faq" class="wpaic-section-gap">
+    <div style="text-align: center; margin-bottom: 50px;">
+        <p class="wpaic-section-title" style="font-size: 2.2em; font-weight: 700; margin-bottom: 10px;">よくある質問</p>
+    </div>
+
+    <div style="max-width: 800px; margin: 0 auto;">
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Free 版だけで使えますか？</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">はい。Free 版だけで4つの AI プロバイダー、サイト学習、ベクトル RAG、Web 検索、ナレッジベース、6テーマ、Gutenberg ブロック、MCP Server など主要機能がすべて制限なしで使えます。Pro Add-on はアナリティクス、リードキャプチャ、WooCommerce 連携、LINE 連携などの高度なビジネス機能を追加します。</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Pro はサブスクリプションですか？</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">いいえ、買い切りです。1年間のアップデートとサポートが含まれます。2年目以降は年 $19 で延長可能ですが、延長しなくても引き続き使えます。</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>API キーはどこで取得できますか？</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">各 AI プロバイダーの公式サイトから取得できます。OpenAI は platform.openai.com、Claude は console.anthropic.com、Gemini は aistudio.google.com、OpenRouter は openrouter.ai にアクセスしてください。</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>どの AI モデルがおすすめですか？</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">コストと性能のバランスなら「GPT-4o-mini」や「Gemini 2.5 Flash」がおすすめです。最高性能を求めるなら「Claude Opus 4.6」や「GPT-5.2」が適しています。</p>
+        </div>
+        <div style="border-bottom: 1px solid #e5e7eb; padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>MCP Server とは何ですか？</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">MCP（Model Context Protocol）Server は、Claude Desktop や Cursor などの AI ツールからあなたの WordPress サイトを直接操作できる機能です。投稿の作成・検索、ナレッジベースの管理など7つのツールを提供します。</p>
+        </div>
+        <div style="padding: 25px 0;">
+            <p style="margin-bottom: 12px; font-weight: 600; font-size: 1.05em;"><i class="fas fa-q" style="color: #667eea; margin-right: 10px;"></i>Free 版から Pro にアップグレードするには？</p>
+            <p style="color: #666; padding-left: 28px; line-height: 1.7;">Pro Add-on を追加インストールするだけです。Free 版の設定やデータはそのまま引き継がれます。今なら Early Bird 価格 $29（通常 $59）でご購入いただけます。</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- 動作要件 -->
+<!-- =============================================== -->
+<div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 40px 30px; border-radius: 20px; margin-bottom: 80px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <i class="fas fa-gear" style="font-size: 2em; color: #667eea; margin-bottom: 10px;"></i>
+        <p style="font-size: 1.6em; font-weight: 700;">動作要件</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 50px; text-align: center;">
+        <div>
+            <i class="fab fa-wordpress" style="font-size: 2em; color: #21759b; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">WordPress</p>
+            <p style="color: #666;">6.3以上</p>
+        </div>
+        <div>
+            <i class="fab fa-php" style="font-size: 2em; color: #777bb4; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">PHP</p>
+            <p style="color: #666;">7.4以上</p>
+        </div>
+        <div>
+            <i class="fas fa-database" style="font-size: 2em; color: #00758f; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">MySQL</p>
+            <p style="color: #666;">5.7以上</p>
+        </div>
+        <div>
+            <i class="fas fa-check-circle" style="font-size: 2em; color: #22c55e; margin-bottom: 10px;"></i>
+            <p style="font-weight: 600;">テスト済み</p>
+            <p style="color: #666;">WordPress 6.9</p>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- CTA セクション -->
+<!-- =============================================== -->
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 30px; border-radius: 24px; text-align: center; margin-bottom: 40px; position: relative; overflow: hidden;">
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.06) 0%, transparent 50%); pointer-events: none;"></div>
+    <div style="position: relative; z-index: 1;">
+        <i class="fas fa-rocket" style="font-size: 3em; margin-bottom: 20px; opacity: 0.9;"></i>
+        <p style="font-size: 2.2em; margin-bottom: 15px; font-weight: 700;">今すぐ始めよう</p>
+        <p style="font-size: 1.15em; margin-bottom: 35px; opacity: 0.9; max-width: 500px; margin-left: auto; margin-right: auto;">Free 版ですぐに使えます。あなたのサイトに AI チャットボットを導入しましょう。</p>
+        <div>
+            <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" class="wpaic-btn-white"><i class="fas fa-download" style="margin-right: 8px;"></i>無料ダウンロード</a>
+            <a href="/rapls-ai-chatbot-free-manual-ja/" class="wpaic-btn-outline"><i class="fas fa-book-open" style="margin-right: 8px;"></i>マニュアル</a>
+            <a href="https://buy.stripe.com/test_00w14pcwn9wR3ex7Cee7m04" target="_blank" class="wpaic-btn-gold"><i class="fas fa-crown" style="margin-right: 8px;"></i>Pro を購入</a>
+        </div>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- マニュアル・ドキュメント セクション -->
+<!-- =============================================== -->
+<div class="wpaic-section" style="margin-bottom: 50px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <p style="font-size: 1.8em; font-weight: 700; color: #1e293b; margin-bottom: 10px;"><i class="fas fa-book" style="color: #667eea; margin-right: 10px;"></i>マニュアル・ドキュメント</p>
+        <p style="color: #64748b; font-size: 1.05em;">設定方法や使い方をわかりやすく解説しています</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 700px; margin: 0 auto;">
+        <a href="/rapls-ai-chatbot-free-manual-ja/" style="text-decoration: none;">
+            <div style="background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%); border: 2px solid #667eea30; border-radius: 16px; padding: 30px; text-align: center; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 30px rgba(102,126,234,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <i class="fas fa-book-open" style="font-size: 24px; color: white;"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Free 版マニュアル</p>
+                <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;">基本設定・AI プロバイダー接続・サイト学習など</p>
+                <span style="color: #667eea; font-weight: 600; font-size: 0.95em;">マニュアルを見る <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></span>
+            </div>
+        </a>
+        <a href="/rapls-ai-chatbot-manual-pro-ja/" style="text-decoration: none;">
+            <div style="background: linear-gradient(135deg, #fffbf0 0%, #fff5e0 100%); border: 2px solid #f0c67440; border-radius: 16px; padding: 30px; text-align: center; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 30px rgba(212,160,23,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #f0c674, #d4a017); border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <i class="fas fa-crown" style="font-size: 24px; color: white;"></i>
+                </div>
+                <p style="font-size: 1.2em; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Pro 版マニュアル</p>
+                <p style="color: #64748b; font-size: 0.9em; margin-bottom: 15px;">高度な機能・分析・カスタマイズなど</p>
+                <span style="color: #d4a017; font-weight: 600; font-size: 0.95em;">マニュアルを見る <i class="fas fa-arrow-right" style="margin-left: 5px;"></i></span>
+            </div>
+        </a>
+    </div>
+</div>
+
+
+<!-- =============================================== -->
+<!-- フッター -->
+<!-- =============================================== -->
+<div style="text-align: center; color: #9ca3af; font-size: 0.9em; padding: 40px 20px;">
+    <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+        <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-download" style="margin-right: 5px;"></i>無料ダウンロード</a>
+        <a href="/rapls-ai-chatbot-free-manual-ja/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-book-open" style="margin-right: 5px;"></i>Free マニュアル</a>
+        <a href="/rapls-ai-chatbot-manual-pro-ja/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-book" style="margin-right: 5px;"></i>Pro マニュアル</a>
+        <a href="/contact-ja/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;"><i class="fas fa-envelope" style="margin-right: 5px;"></i>お問い合わせ</a>
+        <a href="/disclaimer-ja/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;">免責事項</a>
+        <a href="/tokushoho/" style="color: #667eea; text-decoration: none; padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 9999px; transition: all 0.2s; background: white; font-size: 0.9em;">特定商取引法に基づく表記</a>
+    </div>
+    <p>&copy; 2026 raplsworks. All rights reserved.</p>
+    <p style="margin-top: 5px;">Rapls AI Chatbot | GPL v2 License</p>
+</div>

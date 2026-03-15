@@ -1,0 +1,75 @@
+<!-- Rapls AI Chatbot - Language Redirect Page -->
+<!--
+============================================
+【ブロックエディタ（Gutenberg）の場合】
+「カスタムHTML」ブロックを使用してください。
+自動リダイレクトが動作します。
+
+【クラシックエディターの場合】
+「テキスト」モードで貼り付け、ビジュアルモードに切り替えないでください。
+スクリプトが消える場合は、下の「手動選択版」をご使用ください。
+============================================
+-->
+
+<!-- 不要な要素を非表示 -->
+<style>
+.breadcrumb.breadcrumb-page.pbp-main-top,
+.article-header.entry-header {
+    display: none !important;
+}
+</style>
+
+<!-- リダイレクト中の表示（一瞬表示される） -->
+<div id="wpaic-redirect-loading" style="text-align: center; padding: 80px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div style="font-size: 3em; margin-bottom: 20px;">🤖</div>
+    <p style="font-size: 1.5em; margin-bottom: 30px; color: #666;">Redirecting... / リダイレクト中...</p>
+    <p style="color: #999;">
+        <a href="/rapls-ai-chatbot-en/" style="color: #667eea; margin: 0 10px;">English</a>
+        |
+        <a href="/rapls-ai-chatbot-ja/" style="color: #667eea; margin: 0 10px;">日本語</a>
+    </p>
+</div>
+
+<!-- 自動リダイレクトスクリプト -->
+<script>
+(function() {
+    var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+    if (lang.indexOf('ja') === 0) {
+        window.location.replace('/rapls-ai-chatbot-ja/');
+    } else {
+        window.location.replace('/rapls-ai-chatbot-en/');
+    }
+})();
+</script>
+
+<!-- JavaScriptが無効な場合 -->
+<noscript>
+<meta http-equiv="refresh" content="0; url=/rapls-ai-chatbot-en/">
+</noscript>
+
+
+<!--
+============================================
+【手動選択版】クラシックエディターでスクリプトが動作しない場合
+上記のコードを削除し、以下を使用してください：
+============================================
+
+<style>
+.breadcrumb.breadcrumb-page.pbp-main-top,
+.article-header.entry-header {
+    display: none !important;
+}
+</style>
+
+<div style="text-align: center; padding: 80px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <div style="font-size: 3em; margin-bottom: 20px;">🤖</div>
+    <p style="font-size: 2em; margin-bottom: 10px; font-weight: 700; color: #333;">Rapls AI Chatbot</p>
+    <p style="font-size: 1.2em; margin-bottom: 40px; color: #666;">Select your language / 言語を選択してください</p>
+    <div style="display: inline-flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+        <a href="/rapls-ai-chatbot-en/" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 50px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 1.1em;">English</a>
+        <a href="/rapls-ai-chatbot-ja/" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 50px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 1.1em;">日本語</a>
+    </div>
+</div>
+
+============================================
+-->
