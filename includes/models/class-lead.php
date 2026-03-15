@@ -231,7 +231,7 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $leads = $wpdb->get_results(
-            $wpdb->prepare($query, $where_values),
+            $wpdb->prepare($query, $where_values), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             ARRAY_A
         );
 

@@ -14,5 +14,5 @@ if (!defined('ABSPATH')) {
 }
 
 if (!defined('WPAIC_VERSION')) {
-    define('WPAIC_VERSION', '1.5.0');
+    define('WPAIC_VERSION', '1.5.1');
 }

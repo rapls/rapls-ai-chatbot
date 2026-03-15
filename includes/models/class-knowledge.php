@@ -671,8 +671,10 @@ class WPAIC_Knowledge {
         $content = [];
         $row_count = 0;
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- fgetcsv requires a file handle
         if (($handle = fopen($filepath, 'r')) !== false) {
             // Strip UTF-8 BOM if present (common in Excel CSV exports)
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- reading BOM bytes from CSV handle
             $bom = fread($handle, 3);
             if ($bom !== "\xEF\xBB\xBF") {
                 rewind($handle);
@@ -703,7 +705,7 @@ class WPAIC_Knowledge {
                     $content[] = implode("\n", $line_parts);
                 }
             }
-            fclose($handle);
+            fclose($handle); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
         }
 
         return implode("\n\n---\n\n", $content);

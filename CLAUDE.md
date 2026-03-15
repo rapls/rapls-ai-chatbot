@@ -118,6 +118,10 @@ wp plugin check rapls-ai-chatbot --format=json
 wp plugin check rapls-ai-chatbot --ignore-codes=WordPress.Security.EscapeOutput
 ```
 
+## Documentation
+
+- **管理画面構造**: `docs/admin-menu-structure.md` — Free版・Pro版の全メニュー/タブ/サブタブ/設定項目の一覧
+
 ## Architecture
 
 ### Initialization Flow

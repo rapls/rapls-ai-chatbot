@@ -24,26 +24,13 @@ class WPAIC_Main {
      */
     public function __construct() {
         $this->version = WPAIC_VERSION;
-        $this->load_textdomain();
+
         $this->load_dependencies();
         $this->maybe_upgrade();
         $this->define_admin_hooks();
         $this->define_public_hooks();
         $this->define_api_hooks();
         $this->define_cron_hooks();
-    }
-
-    /**
-     * Load plugin textdomain for translations (WordPress 6.7+ requires init or later)
-     */
-    private function load_textdomain() {
-        add_action('init', function () {
-            load_plugin_textdomain(
-                'rapls-ai-chatbot',
-                false,
-                dirname(WPAIC_PLUGIN_BASENAME) . '/languages'
-            );
-        });
     }
 
     /**
