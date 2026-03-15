@@ -2207,14 +2207,10 @@ class WPAIC_Admin {
             wp_send_json_error(__('Title and content are required.', 'rapls-ai-chatbot'));
         }
 
-        // Check FAQ limit
+        // Check FAQ limit (always passes in Free — no artificial limits)
         $pro_features = WPAIC_Pro_Features::get_instance();
         if (!$pro_features->can_add_faq()) {
-            wp_send_json_error(sprintf(
-                /* translators: %d: FAQ limit number */
-                __('FAQ limit reached (%d items). Upgrade to Pro for unlimited entries.', 'rapls-ai-chatbot'),
-                $pro_features->get_faq_limit()
-            ));
+            wp_send_json_error(__('Unable to add knowledge entry.', 'rapls-ai-chatbot'));
         }
 
         $result = WPAIC_Knowledge::create([
@@ -2275,14 +2271,10 @@ class WPAIC_Admin {
                 wp_send_json_error(__('File size must be 5MB or less.', 'rapls-ai-chatbot'));
             }
 
-            // Check FAQ limit
+            // Check FAQ limit (always passes in Free — no artificial limits)
             $pro_features = WPAIC_Pro_Features::get_instance();
             if (!$pro_features->can_add_faq()) {
-                wp_send_json_error(sprintf(
-                    /* translators: %d: FAQ limit number */
-                    __('FAQ limit reached (%d items). Upgrade to Pro for unlimited entries.', 'rapls-ai-chatbot'),
-                    $pro_features->get_faq_limit()
-                ));
+                wp_send_json_error(__('Unable to import knowledge file.', 'rapls-ai-chatbot'));
             }
 
             $result = WPAIC_Knowledge::import_from_file($file, $category);
@@ -2583,14 +2575,10 @@ class WPAIC_Admin {
             update_option('wpaic_settings', $merged_settings);
         }
 
-        // Import knowledge data (respects FAQ limit for Free users)
+        // Import knowledge data
         $knowledge_count = 0;
         if (isset($import_data['knowledge']) && is_array($import_data['knowledge'])) {
-            $pro = WPAIC_Pro_Features::get_instance();
             foreach ($import_data['knowledge'] as $item) {
-                if (!$pro->can_add_faq()) {
-                    break; // FAQ limit reached — stop importing
-                }
                 $result = WPAIC_Knowledge::create([
                     'title'     => sanitize_text_field($item['title'] ?? ''),
                     'content'   => wp_kses_post($item['content'] ?? ''),

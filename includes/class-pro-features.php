@@ -116,11 +116,11 @@ class WPAIC_Pro_Features {
     }
 
     /**
-     * Check if message limit is reached
+     * Check if message limit is reached (always passes in Free — no artificial limits)
      */
     public function check_message_limit() {
         if ($this->get_remaining_messages() <= 0) {
-            return new \WP_Error('message_limit_exceeded', __('Monthly AI response limit reached.', 'rapls-ai-chatbot'));
+            return new \WP_Error('message_limit_exceeded', __('Service temporarily unavailable.', 'rapls-ai-chatbot'));
         }
         return true;
     }

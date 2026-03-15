@@ -436,15 +436,9 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Added: WordPress Abilities API Bridge — Register all 7 MCP tools as WordPress Abilities for auto-discovery by MCP Adapters (Claude Desktop, Cursor, VS Code)
 * Added: Response language auto-detect — Automatically detect browser language for welcome message and AI responses; choose from "Site language", "Auto-detect", or manual
 * Added: OpenRouter provider support (100+ models via single API key)
-* Added: Pro feature defaults and stubs for 80+ features (scenarios, actions, WooCommerce, LINE, AI forms, encryption, queue, booking, screen sharing, multi-bot coordination, change management, vulnerability scanning, similar question merge)
-* Added: Voice input (STT) and text-to-speech (TTS) as Pro feature stubs
-* Added: Pro Settings page restructured with Integrations, Operations, and Management groups; additional sub-tabs for all Pro features
-* Fixed: MCP tool registration timing — Pro tools (search_products, get_analytics) now register reliably via rest_api_init hook
-* Fixed: Abilities API category registration and naming compliance (underscore-to-dash conversion for kebab-case identifiers)
-* Fixed: Abilities REST API exposure with show_in_rest and readonly annotations for MCP Adapter discovery
-* Improved: Free vs Pro comparison updated to reflect all current Pro capabilities
-* Improved: REST API endpoint list updated with new Pro endpoints
-* Improved: Pro Features listing expanded to two-column layout with complete feature coverage
+* Added: Pro add-on compatibility layer for extended features
+* Fixed: MCP tool registration timing for reliable integration
+* Fixed: Abilities API category registration and naming compliance
 * Updated: Japanese translation — all strings translated including Abilities API, Gutenberg block, and response language settings
 * Updated: WordPress Plugin Check compliance fixes
 
@@ -477,25 +471,15 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Improved: REST API session authentication documented in readme
 
 = 1.3.1 =
-* Added: Enhanced rate limiting (Pro) — configurable two-tier throttling with per-minute burst protection and per-hour sustained limits, proxy-aware IP detection, custom rate limit messages
-* Added: Server-side PDF export (Pro) — download analytics reports as PDF files using Dompdf, one-click download from the analytics page
-* Added: Rate limiting stub methods in Free plugin for Pro compatibility
-* Improved: Rate limit error messages are now customizable (returns specific message instead of generic text)
-* Improved: Diagnostic options renamed to `wpaic_diag_*` namespace (old `wpaic_hash_unexpected_count` and `wpaic_diag_upgrade_order_issue` keys auto-migrated on upgrade)
+* Added: Pro add-on compatibility for enhanced rate limiting and PDF export
+* Improved: Rate limit error messages are now customizable
+* Improved: Diagnostic options renamed to `wpaic_diag_*` namespace
 * Improved: Frontend debug minimum capability is now filterable via `wpaic_frontend_debug_min_cap`
 
 = 1.3.0 =
-* Added: Response caching (Pro) — SHA-256 hash-based cache reduces API costs by 30-50%, with configurable TTL and cache statistics dashboard
-* Added: Audit logs (Pro) — Track admin actions (settings changes, knowledge edits, exports), filterable log viewer with CSV export and retention policy
-* Added: Conversion tracking (Pro) — Monitor chat-to-conversion rates with URL pattern goals, integrated into analytics dashboard
-* Added: Offline messages (Pro) — Display contact form outside business hours, with email notification and webhook support
-* Added: Answer templates (Pro) — Knowledge base type system with operator quick-insert, supports dynamic variables
-* Added: New REST API endpoints — /offline-message, /conversion, /templates (Pro)
-* Added: Cache statistics widget on dashboard (Pro)
-* Added: Conversion rate card in analytics (Pro)
+* Added: Pro add-on compatibility for response caching, audit logs, conversion tracking, offline messages, and answer templates
 * Improved: Knowledge base supports 'qa' and 'template' entry types
-* Improved: Messages table supports cache_hash and cache_hit columns
-* Improved: Conversations table supports converted_at and conversion_goal columns
+* Improved: Database schema updates for caching and conversion tracking
 
 = 1.2.23 =
 * Added: Sortable column headers in admin tables — Dashboard model stats, Conversations, Knowledge, and Crawler pages now support click-to-sort with ascending/descending toggle
