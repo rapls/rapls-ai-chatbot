@@ -157,7 +157,7 @@ class RAPLSAICH_REST_Controller {
      * Known error_code values (kept as a reference for support docs):
      *   rate_limited, origin_mismatch, recaptcha_required, recaptcha_failed,
      *   recaptcha_misconfigured, session_expired, session_missing,
-     *   honeypot_triggered, timing_failed, pro_required,
+     *   honeypot_triggered, timing_failed,
      *   raplsaich_table_error, unknown
      *
      * @param mixed            $result  Response object.
@@ -311,45 +311,6 @@ class RAPLSAICH_REST_Controller {
             ],
         ]);
 
-        // Submit lead (Pro feature)
-        register_rest_route($this->namespace, '/lead', [
-            'methods'             => 'POST',
-            'callback'            => [$this, 'submit_lead'],
-            'permission_callback' => [$this, 'check_session_permission'],
-            'args'                => [
-                'session_id' => [
-                    'required'          => true,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ],
-                'name' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ],
-                'email' => [
-                    'required'          => true,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_email',
-                ],
-                'phone' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ],
-                'company' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ],
-                'page_url' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'esc_url_raw',
-                ],
-            ],
-        ]);
-
         // Get lead form configuration
         // Public: widget must query form config before session exists.
         // Defenses: rate limit (30/min), returns only UI flags (no sensitive data).
@@ -392,28 +353,66 @@ class RAPLSAICH_REST_Controller {
             ],
         ]);
 
-        // Regenerate response (Free feature)
-        register_rest_route($this->namespace, '/regenerate', [
-            'methods'             => 'POST',
-            'callback'            => [$this, 'regenerate_response'],
-            'permission_callback' => [$this, 'check_session_permission'],
-            'args'                => [
-                'message_id' => [
-                    'required'          => true,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                ],
-                'session_id' => [
-                    'required'          => true,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'sanitize_text_field',
-                ],
-            ],
-        ]);
-
         // Pro-only routes: only register when Pro is active
         $pro_features = RAPLSAICH_Pro_Features::get_instance();
         if ($pro_features->is_pro()) {
+            // Submit lead (Pro feature)
+            register_rest_route($this->namespace, '/lead', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'submit_lead'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'name' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'email' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_email',
+                    ],
+                    'phone' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'company' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'page_url' => [
+                        'required'          => false,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'esc_url_raw',
+                    ],
+                ],
+            ]);
+
+            // Regenerate response (Pro feature)
+            register_rest_route($this->namespace, '/regenerate', [
+                'methods'             => 'POST',
+                'callback'            => [$this, 'regenerate_response'],
+                'permission_callback' => [$this, 'check_session_permission'],
+                'args'                => [
+                    'message_id' => [
+                        'required'          => true,
+                        'type'              => 'integer',
+                        'sanitize_callback' => 'absint',
+                    ],
+                    'session_id' => [
+                        'required'          => true,
+                        'type'              => 'string',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                ],
+            ]);
             // Get conversation summary (Pro feature)
             register_rest_route($this->namespace, '/summary/(?P<session_id>[a-zA-Z0-9-]+)', [
                 'methods'             => 'GET',
@@ -3154,16 +3153,6 @@ class RAPLSAICH_REST_Controller {
         }
 
         try {
-            // Check if Pro feature is available
-            $pro_features = RAPLSAICH_Pro_Features::get_instance();
-            if (!$pro_features->is_feature_available(RAPLSAICH_Pro_Features::FEATURE_LEAD_CAPTURE)) {
-                return new WP_REST_Response([
-                    'success'    => false,
-                    'error'      => __('Lead capture feature requires Pro license.', 'rapls-ai-chatbot'),
-                    'error_code' => 'pro_required',
-                ], 403);
-            }
-
             // Rate limit: max 10 lead submissions per IP per hour
             $ip = $this->get_client_ip();
             if (!empty($ip)) {
@@ -3626,15 +3615,6 @@ class RAPLSAICH_REST_Controller {
         }
 
         // Check Pro license
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
-        if (!$pro_features->is_pro()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
-                'error_code' => 'pro_required',
-            ], 403);
-        }
-
         $message_id = absint($request->get_param('message_id'));
         $session_id = sanitize_text_field($request->get_param('session_id'));
 
@@ -4052,17 +4032,8 @@ class RAPLSAICH_REST_Controller {
             ], 200);
         }
 
-        // Check Pro license
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
-        if (!$pro_features->is_pro()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => __('This feature requires a Pro license.', 'rapls-ai-chatbot'),
-                'error_code' => 'pro_required',
-            ], 403);
-        }
-
         // Check budget limit
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
         if ($pro_features->check_budget_limit()) {
             return new WP_REST_Response([
                 'success'    => false,
