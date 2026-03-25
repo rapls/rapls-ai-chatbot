@@ -7455,3 +7455,133 @@ msgstr "低評価"
 #: includes/admin/class-admin.php (Analytics preview)
 msgid "FB: %1$s%% | Resp: %2$s%%"
 msgstr "FB: %1$s%% | 応答: %2$s%%"
+
+#: includes/admin/class-admin.php (Pro feature lists)
+msgid "Auto-learn site content on schedule"
+msgstr "スケジュールに基づくサイトコンテンツの自動学習"
+
+msgid "Vector embedding for semantic search"
+msgstr "セマンティック検索用ベクトル埋め込み"
+
+msgid "WooCommerce product data auto-crawl"
+msgstr "WooCommerce 商品データの自動クロール"
+
+msgid "Differential crawl (index changes only)"
+msgstr "差分クロール（変更分のみインデックス）"
+
+msgid "Exclude specific pages from indexing"
+msgstr "特定ページをインデックスから除外"
+
+msgid "Full conversation history with search"
+msgstr "検索機能付き全会話履歴"
+
+msgid "Export conversations (CSV/JSON)"
+msgstr "会話のエクスポート（CSV/JSON）"
+
+msgid "Operator mode for live chat takeover"
+msgstr "ライブチャット引き継ぎ用オペレーターモード"
+
+msgid "Conversation tags and archiving"
+msgstr "会話タグとアーカイブ"
+
+msgid "AI-powered response improvement suggestions"
+msgstr "AI による回答改善提案"
+
+msgid "Sentiment analysis per conversation"
+msgstr "会話ごとの感情分析"
+
+msgid "Conversation and message statistics"
+msgstr "会話とメッセージの統計"
+
+msgid "User satisfaction scores"
+msgstr "ユーザー満足度スコア"
+
+msgid "FAQ ranking and unresolved questions"
+msgstr "FAQ ランキングと未解決の質問"
+
+msgid "API cost tracking per model"
+msgstr "モデルごとの API コスト追跡"
+
+msgid "Daily/hourly activity charts"
+msgstr "日次/時間帯別アクティビティチャート"
+
+msgid "PDF report export"
+msgstr "PDF レポートエクスポート"
+
+msgid "Customizable lead capture forms"
+msgstr "カスタマイズ可能なリード獲得フォーム"
+
+msgid "Export leads (CSV/JSON)"
+msgstr "リードのエクスポート（CSV/JSON）"
+
+msgid "Email notifications on new leads"
+msgstr "新規リード時のメール通知"
+
+msgid "Webhook integration (Slack, Zapier, CRM)"
+msgstr "Webhook 連携（Slack、Zapier、CRM）"
+
+msgid "Lead-to-conversation linking"
+msgstr "リードと会話の紐付け"
+
+msgid "Detailed admin action history"
+msgstr "詳細な管理操作履歴"
+
+msgid "Export audit log (CSV)"
+msgstr "監査ログのエクスポート（CSV）"
+
+msgid "User and action type filtering"
+msgstr "ユーザーとアクション種別でのフィルタリング"
+
+msgid "Lead capture & custom forms"
+msgstr "リード獲得とカスタムフォーム"
+
+msgid "Business hours & holiday schedules"
+msgstr "営業時間と休日スケジュール"
+
+msgid "Webhook & LINE integration"
+msgstr "Webhook と LINE 連携"
+
+msgid "Human handoff & operator mode"
+msgstr "有人対応とオペレーターモード"
+
+msgid "AI prompts & templates"
+msgstr "AI プロンプトとテンプレート"
+
+msgid "Conversation scenarios & actions"
+msgstr "会話シナリオとアクション"
+
+msgid "Multiple chatbots per page"
+msgstr "ページごとに複数チャットボット"
+
+msgid "Budget alerts & cost caps"
+msgstr "予算アラートとコスト上限"
+
+msgid "Role-based access control"
+msgstr "ロールベースのアクセス制御"
+
+msgid "Voice input & text-to-speech"
+msgstr "音声入力とテキスト読み上げ"
+
+msgid "Response caching & performance tools"
+msgstr "レスポンスキャッシュとパフォーマンスツール"
+
+msgid "Settings backup, rollback & staging"
+msgstr "設定バックアップ、ロールバック、ステージング"
+
+msgid "Enhance your AI chatbot with site-wide content indexing and vector embeddings."
+msgstr "サイト全体のコンテンツインデックスとベクトル埋め込みで AI チャットボットを強化します。"
+
+msgid "View, manage, and export all chatbot conversations."
+msgstr "チャットボットの全会話を閲覧、管理、エクスポートできます。"
+
+msgid "Track chatbot performance with detailed analytics and reports."
+msgstr "詳細な分析とレポートでチャットボットのパフォーマンスを追跡します。"
+
+msgid "Capture and manage leads from chatbot conversations."
+msgstr "チャットボットの会話からリードを獲得・管理します。"
+
+msgid "Track administrative actions for compliance and security."
+msgstr "コンプライアンスとセキュリティのために管理操作を追跡します。"
+
+msgid "Unlock all Pro features including lead capture, business hours, webhooks, and more."
+msgstr "リード獲得、営業時間、Webhook などすべての Pro 機能をアンロックします。"
