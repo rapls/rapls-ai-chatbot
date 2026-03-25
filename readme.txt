@@ -205,7 +205,7 @@ MCP (Model Context Protocol) allows external AI agents like Claude Desktop, Curs
 
 = Can I embed the chatbot on external sites? =
 
-Yes. The plugin provides a cross-site embed page (`?wpaic_embed=1`) and a loader script (`assets/js/embed-loader.js`) for easy integration on any external website via iframe.
+Yes. The plugin provides a cross-site embed page (`?raplsaich_embed=1`) and a loader script (`assets/js/embed-loader.js`) for easy integration on any external website via iframe.
 
 = Can I use the Gutenberg block? =
 
@@ -233,7 +233,7 @@ Yes, the chatbot widget works with any theme and page builder including Elemento
 
 = Can I use custom system prompts? =
 
-Yes. Configure your own system prompt to define the AI's personality, behavior, and response style. The `wpaic_system_prompt` filter is also available for programmatic customization. Advanced feature prompts (regeneration, feedback learning, summary) are also customizable.
+Yes. Configure your own system prompt to define the AI's personality, behavior, and response style. The `raplsaich_system_prompt` filter is also available for programmatic customization. Advanced feature prompts (regeneration, feedback learning, summary) are also customizable.
 
 = What happens if I exceed my API quota? =
 
@@ -251,9 +251,9 @@ By default, the plugin keeps your settings and conversation data so you can re-i
 
 On large multisite networks, uninstall batch size is adjustable via filters. Add to your `functions.php` or an MU-plugin:
 
-`add_filter( 'wpaic_uninstall_batch_size', function() { return 50; } );`
+`add_filter( 'raplsaich_uninstall_batch_size', function() { return 50; } );`
 
-`add_filter( 'wpaic_uninstall_snapshot_threshold', function() { return 1000; } );`
+`add_filter( 'raplsaich_uninstall_snapshot_threshold', function() { return 1000; } );`
 
 Guide: low-memory/slow-DB → batch size 20-50, standard → 100, fast/large-scale → 200-500.
 
@@ -358,18 +358,18 @@ The plugin provides hooks and filters for customization:
 
 = Available Filters =
 
-* `wpaic_system_prompt` — Modify the system prompt sent to AI
-* `wpaic_context` — Modify the context from site learning
-* `wpaic_ai_response` — Filter the AI response before display
-* `wpaic_chatbot_enabled` — Control chatbot visibility programmatically
-* `wpaic_allowed_origins` — Add allowed origin hosts for same-origin check
-* `wpaic_chat_response_data` — Filter chat response data before returning to client
-* `wpaic_gpt5_token_multiplier` — GPT-5 reasoning token multiplier (default: 4, range: 1-8)
+* `raplsaich_system_prompt` — Modify the system prompt sent to AI
+* `raplsaich_context` — Modify the context from site learning
+* `raplsaich_ai_response` — Filter the AI response before display
+* `raplsaich_chatbot_enabled` — Control chatbot visibility programmatically
+* `raplsaich_allowed_origins` — Add allowed origin hosts for same-origin check
+* `raplsaich_chat_response_data` — Filter chat response data before returning to client
+* `raplsaich_gpt5_token_multiplier` — GPT-5 reasoning token multiplier (default: 4, range: 1-8)
 
 = Example: Custom System Prompt =
 
 `
-add_filter( 'wpaic_system_prompt', function( $prompt, $settings ) {
+add_filter( 'raplsaich_system_prompt', function( $prompt, $settings ) {
     return $prompt . "\n\nAlways end responses with a friendly emoji.";
 }, 10, 2 );
 `
@@ -377,7 +377,7 @@ add_filter( 'wpaic_system_prompt', function( $prompt, $settings ) {
 = Example: Conditionally Hide Chatbot =
 
 `
-add_filter( 'wpaic_chatbot_enabled', function( $enabled ) {
+add_filter( 'raplsaich_chatbot_enabled', function( $enabled ) {
     // Hide on checkout page
     if ( is_page( 'checkout' ) ) {
         return false;
@@ -388,20 +388,20 @@ add_filter( 'wpaic_chatbot_enabled', function( $enabled ) {
 
 = REST API Endpoints =
 
-The plugin registers REST API endpoints under the `wp-ai-chatbot/v1` namespace:
+The plugin registers REST API endpoints under the `rapls-ai-chatbot/v1` namespace:
 
 **Session authentication:** Pass the session ID via the `X-WPAIC-Session` HTTP header (recommended). When the header is present, any session_id in the request body is ignored (prevents APM/WAF body-logging leakage). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs.
 
 **Free:**
 
-* `GET /wp-ai-chatbot/v1/session` — Get or create a chat session
-* `POST /wp-ai-chatbot/v1/chat` — Send a message and receive AI response
-* `GET /wp-ai-chatbot/v1/history/{session_id}` — Get conversation history
-* `POST /wp-ai-chatbot/v1/feedback` — Rate a response (thumbs up/down)
-* `POST /wp-ai-chatbot/v1/regenerate` — Regenerate AI response
-* `GET /wp-ai-chatbot/v1/message-limit` — Check message limits
-* `POST /wp-ai-chatbot/v1/lead` — Submit lead form
-* `GET /wp-ai-chatbot/v1/lead-config` — Lead form configuration
+* `GET /rapls-ai-chatbot/v1/session` — Get or create a chat session
+* `POST /rapls-ai-chatbot/v1/chat` — Send a message and receive AI response
+* `GET /rapls-ai-chatbot/v1/history/{session_id}` — Get conversation history
+* `POST /rapls-ai-chatbot/v1/feedback` — Rate a response (thumbs up/down)
+* `POST /rapls-ai-chatbot/v1/regenerate` — Regenerate AI response
+* `GET /rapls-ai-chatbot/v1/message-limit` — Check message limits
+* `POST /rapls-ai-chatbot/v1/lead` — Submit lead form
+* `GET /rapls-ai-chatbot/v1/lead-config` — Lead form configuration
 
 The Pro add-on registers additional endpoints for analytics, scenarios, LINE, and more. See the Pro documentation for details.
 
@@ -454,7 +454,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Added: Web search integration — AI automatically searches the web when knowledge base lacks a sufficient answer (OpenAI web_search_preview, Claude web_search, Gemini google_search grounding)
 * Added: Web search toggle in AI Settings tab with per-provider cost notice
 * Added: Web source citations displayed with globe icon, separate from knowledge base sources
-* Added: Cross-site embed page — embed chatbot on external sites via iframe (?wpaic_embed=1 endpoint)
+* Added: Cross-site embed page — embed chatbot on external sites via iframe (?raplsaich_embed=1 endpoint)
 * Added: Embed loader script (assets/js/embed-loader.js) for easy cross-site integration
 * Added: PDF and DOCX file upload support in knowledge base (server-side parsing)
 * Added: Vector embedding RAG with hybrid search (keyword 40% + vector 60%)
@@ -465,11 +465,11 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Security: Session ID now transmitted via `X-WPAIC-Session` header instead of query strings (prevents access log leakage)
 * Security: GET requests no longer accept `?session_id=` query parameter
 * Security: POST requests ignore body `session_id` when header is present (prevents APM/WAF body-logging leakage)
-* Security: Removed client-side `wpaic_user_id` remnant from JavaScript
+* Security: Removed client-side `raplsaich_user_id` remnant from JavaScript
 * Security: Context key derivation simplified to session-only HMAC (removed IP binding for stability)
 * Security: DOM-based URL linking and offline form rendering (XSS hardening)
 * Security: Dompdf post-init safety assertion (`isPhpEnabled` / `isRemoteEnabled` check)
-* Added: Rate-limited error logging (`wpaic_rate_limited_log()`) with filterable interval via `wpaic_rate_limited_log_interval`
+* Added: Rate-limited error logging (`raplsaich_rate_limited_log()`) with filterable interval via `raplsaich_rate_limited_log_interval`
 * Added: Server-side offline message dedup (30-second window, session-preferred key)
 * Added: Client-side offline form dedup via sessionStorage
 * Improved: Offline message endpoint allows unauthenticated submissions (`allow_no_headers`)
@@ -481,8 +481,8 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 = 1.3.1 =
 * Added: Pro add-on compatibility for enhanced rate limiting and PDF export
 * Improved: Rate limit error messages are now customizable
-* Improved: Diagnostic options renamed to `wpaic_diag_*` namespace
-* Improved: Frontend debug minimum capability is now filterable via `wpaic_frontend_debug_min_cap`
+* Improved: Diagnostic options renamed to `raplsaich_diag_*` namespace
+* Improved: Frontend debug minimum capability is now filterable via `raplsaich_frontend_debug_min_cap`
 
 = 1.3.0 =
 * Added: Pro add-on compatibility for response caching, audit logs, conversion tracking, offline messages, and answer templates
@@ -502,7 +502,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 = 1.2.22 =
 * Improved: Default system prompt now enforces accuracy, honesty, and no-fabrication rules for better AI response quality
 * Improved: Site learning context prompt explicitly instructs AI not to guess or fabricate when information is missing
-* Added: `wpaic_system_prompt` filter — developers can now modify the system prompt programmatically
+* Added: `raplsaich_system_prompt` filter — developers can now modify the system prompt programmatically
 * Added: Customizable feature prompts — regenerate instruction, feedback learning headers, and summary prompt are now editable in Settings
 * Added: Advanced prompt sections gated behind checkboxes (disabled by default) for safe editing
 * Added: Placeholder documentation for regeneration prompt ({variation_number}, {forbidden_start}, {style})
@@ -524,7 +524,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Security: Added OpenSSL availability check with graceful fallback for encryption/decryption
 * Security: Conversation history endpoint (/history) now verifies session ownership via cookie and IP
 * Security: Chart.js bundled locally instead of loading from external CDN (WordPress.org compliance)
-* Added: Session cookie (wpaic_session_id) set on session creation for reliable history access across IP changes
+* Added: Session cookie (raplsaich_session_id) set on session creation for reliable history access across IP changes
 
 = 1.2.18 =
 * Security: Sanitized API error messages to prevent information leakage
@@ -580,7 +580,7 @@ Feature release: Web search integration (AI auto-searches the web when knowledge
 Security hardening: session ID header transport, XSS prevention via DOM API, rate-limited logging, and offline message dedup. **Breaking change:** GET requests no longer accept `?session_id=` — use the `X-WPAIC-Session` header instead. Recommended update for all users.
 
 = 1.3.1 =
-Enhanced rate limiting, server-side PDF export, and diagnostic option namespace migration (`wpaic_diag_*`). Recommended update for all users.
+Enhanced rate limiting, server-side PDF export, and diagnostic option namespace migration (`raplsaich_diag_*`). Recommended update for all users.
 
 = 1.3.0 =
 Major feature release: Response caching, audit logs, conversion tracking, offline messages, and answer templates. Reduces API costs and adds business-critical Pro features. Recommended update for all users.
@@ -589,7 +589,7 @@ Major feature release: Response caching, audit logs, conversion tracking, offlin
 Sortable admin tables, knowledge base draft workflow, enhanced content extraction, and session management improvements. Recommended update for all users.
 
 = 1.2.22 =
-Improved AI chat accuracy with better default prompts. All feature prompts now customizable. Added wpaic_system_prompt filter. Recommended update for all users.
+Improved AI chat accuracy with better default prompts. All feature prompts now customizable. Added raplsaich_system_prompt filter. Recommended update for all users.
 
 = 1.2.21 =
 Added knowledge base export support, budget management integration, and comprehensive debugging guide. Recommended update for Pro users.

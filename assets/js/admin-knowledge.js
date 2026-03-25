@@ -331,7 +331,7 @@ jQuery(document).ready(function($) {
 
     // Reject draft (Pro)
     $(document).on('click', '.raplsaich-reject-draft', function() {
-        if (!confirm((raplsaichKB.confirmReject||'Reject?')) {
+        if (!confirm((raplsaichKB.confirmReject||'Reject?'))) {
             return;
         }
 

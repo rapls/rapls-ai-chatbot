@@ -140,7 +140,7 @@ class RAPLSAICH_Chatbot_Widget {
         ob_start();
         // Output bot-specific primary color override (shortcode runs after wp_head)
         if (!empty($primary_color) && $primary_color !== ($settings['primary_color'] ?? '#007bff')) {
-            echo '<style>:root{--raplsaich-primary:' . esc_attr($primary_color) . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
+            wp_add_inline_style('raplsaich-chatbot', ':root{--raplsaich-primary:' . esc_attr($primary_color) . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}');
         }
         echo '<div class="raplsaich-inline" style="height:' . esc_attr($height) . '">';
         include RAPLSAICH_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
@@ -533,9 +533,9 @@ class RAPLSAICH_Chatbot_Widget {
             }
         }
 
-        // Output bot-specific primary color override (after wp_head, so inline <style> is needed)
+        // Output bot-specific primary color override
         if (!empty($primary_color) && $primary_color !== ($settings['primary_color'] ?? '#007bff')) {
-            echo '<style>:root{--raplsaich-primary:' . esc_attr($primary_color) . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
+            wp_add_inline_style('raplsaich-chatbot', ':root{--raplsaich-primary:' . esc_attr($primary_color) . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}');
         }
 
         include RAPLSAICH_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
@@ -625,25 +625,16 @@ class RAPLSAICH_Chatbot_Widget {
 <div class="raplsaich-inline raplsaich-embed" style="height:100vh">
 <?php include RAPLSAICH_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php'; ?>
 </div>
-<?php wp_footer(); ?>
-<script>
-(function(){
-    var origin=window.location.origin;
-    // Notify parent frame that embed is ready
-    if(window.parent!==window){
-        window.parent.postMessage({type:'raplsaich:ready'},origin);
-    }
-    // Listen for close button and notify parent
-    document.addEventListener('click',function(e){
-        if(e.target.closest('.chatbot-close')){
-            e.preventDefault();
-            if(window.parent!==window){
-                window.parent.postMessage({type:'raplsaich:close'},origin);
-            }
-        }
-    });
-})();
-</script>
+<?php
+wp_add_inline_script('raplsaich-chatbot', '(function(){' .
+    'var o=window.location.origin;' .
+    'if(window.parent!==window){window.parent.postMessage({type:"raplsaich:ready"},o);}' .
+    'document.addEventListener("click",function(e){' .
+    'if(e.target.closest(".chatbot-close")){e.preventDefault();' .
+    'if(window.parent!==window){window.parent.postMessage({type:"raplsaich:close"},o);}}});' .
+    '})();');
+wp_footer();
+?>
 </body>
 </html><?php
         exit;

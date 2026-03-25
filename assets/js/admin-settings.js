@@ -352,3 +352,4 @@ jQuery(document).ready(function($) {
             setTimeout(function() { $btn.text(orig); }, 2000);
         }
     });
+});
