@@ -854,7 +854,7 @@
                     // Dev aid: warn when server sends error_code not in the PHP map.
                     // Uses is_plugin_admin (no WP_DEBUG requirement) so production admins also see it.
                     if (ec && !errorMessage && self.config.is_plugin_admin) {
-                        console.warn('[WPAIC] Unmapped error_code: "' + ec + '". Add to error_code_messages in class-chatbot-widget.php.'); // raplsaich-i18n-ok
+                        console.warn('[RAPLSAICH] Unmapped error_code: "' + ec + '". Add to error_code_messages in class-chatbot-widget.php.'); // raplsaich-i18n-ok
                     }
                     if (!errorMessage) {
                         // Fallback to HTTP status categories
