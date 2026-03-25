@@ -1010,8 +1010,12 @@ class RAPLSAICH_Admin {
         if (strpos($hook, 'raplsaich-knowledge') !== false) {
             wp_enqueue_style('raplsaich-knowledge', RAPLSAICH_PLUGIN_URL . 'assets/css/admin-knowledge.css', ['raplsaich-admin'], RAPLSAICH_VERSION);
         }
-        // Pro preview styles (upsell pages)
-        wp_enqueue_style('raplsaich-pro-preview', RAPLSAICH_PLUGIN_URL . 'assets/css/admin-pro-preview.css', ['raplsaich-admin'], RAPLSAICH_VERSION);
+        // Pro preview styles (upsell pages — only on pages that show Pro previews)
+        if (strpos($hook, 'raplsaich-pro-settings') !== false || strpos($hook, 'raplsaich-analytics') !== false ||
+            strpos($hook, 'raplsaich-leads') !== false || strpos($hook, 'raplsaich-audit-log') !== false ||
+            strpos($hook, 'raplsaich-crawler') !== false || strpos($hook, 'raplsaich-conversations') !== false) {
+            wp_enqueue_style('raplsaich-pro-preview', RAPLSAICH_PLUGIN_URL . 'assets/css/admin-pro-preview.css', ['raplsaich-admin'], RAPLSAICH_VERSION);
+        }
 
         // Settings page JS (export/import/reset, avatar, multimodal checks)
         if (strpos($hook, 'raplsaich-settings') !== false) {
@@ -1049,7 +1053,7 @@ class RAPLSAICH_Admin {
         }
 
         // Enqueue Chart.js for dashboard
-        if (strpos($hook, 'toplevel_page_wpaic') !== false || strpos($hook, 'page_raplsaich-dashboard') !== false || $hook === 'toplevel_page_raplsaich-dashboard') {
+        if (strpos($hook, 'toplevel_page_raplsaich') !== false || strpos($hook, 'page_raplsaich-dashboard') !== false || $hook === 'toplevel_page_raplsaich-dashboard') {
             wp_enqueue_script(
                 'raplsaich-chartjs',
                 RAPLSAICH_PLUGIN_URL . 'assets/vendor/chart.js/chart.umd.min.js',

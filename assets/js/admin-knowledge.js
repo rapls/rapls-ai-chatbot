@@ -1,4 +1,3 @@
-<script>
 jQuery(document).ready(function($) {
     var i18n = raplsaichAdmin.i18n || {};
 
@@ -294,7 +293,7 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 $status.html('<span style="color:green;"></span>').find('span').text(response.data.message);
                 setTimeout(function() {
-                    window.location.href = raplsaichKB.draftUrl';
+                    window.location.href = raplsaichKB.draftUrl;
                 }, 1500);
             } else {
                 $status.html('<span style="color:red;"></span>').find('span').text(response.data);
@@ -322,7 +321,7 @@ jQuery(document).ready(function($) {
                 $row.find('.raplsaich-approve-draft, .raplsaich-reject-draft').remove();
                 $row.find('td:last').prepend('<button type="button" class="button button-small button-link-delete raplsaich-delete-knowledge" data-id="' + id + '">'+(raplsaichKB.deleteBtn||'Delete')+'</button> ');
             } else {
-                alert(response.data || (raplsaichKB.error||'Error');
+                alert(response.data || (raplsaichKB.error||'Error'));
             }
         }).fail(function(xhr) {
             console.error('raplsaich_approve_faq_draft failed:', xhr.status, xhr.responseText);
@@ -349,7 +348,7 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 $row.fadeOut(300, function() { $(this).remove(); });
             } else {
-                alert(response.data || (raplsaichKB.error||'Error');
+                alert(response.data || (raplsaichKB.error||'Error'));
                 $row.css('opacity', '1');
             }
         }).fail(function(xhr) {
@@ -368,7 +367,7 @@ jQuery(document).ready(function($) {
         var category = $('#raplsaich-category-filter').val() || '';
 
         $btn.prop('disabled', true);
-        $status.text((raplsaichKB.exporting||'Exporting...');
+        $status.text((raplsaichKB.exporting||'Exporting...'));
 
         // Direct download via GET — server streams the file (no JSON payload in memory)
         var url = raplsaichAdmin.ajaxUrl
@@ -520,7 +519,7 @@ jQuery(document).ready(function($) {
         var currentContent = $('#edit-knowledge-content').val();
         var oldContent = v.content;
 
-        $('#raplsaich-diff-title').text('v' + v.version_number + ' → '+(raplsaichKB.current||'Current');
+        $('#raplsaich-diff-title').text('v' + v.version_number + ' → '+(raplsaichKB.current||'Current'));
 
         var diffHtml = '';
         // Title diff
@@ -578,15 +577,15 @@ jQuery(document).ready(function($) {
                     }
                 });
                 $('#raplsaich-versions-panel').slideUp(200);
-                alert((raplsaichKB.restored||'Restored.');
+                alert((raplsaichKB.restored||'Restored.'));
                 // Reload page to reflect changes in the table
                 location.reload();
             } else {
-                alert(r.data || (raplsaichKB.restoreFail||'Failed.');
+                alert(r.data || (raplsaichKB.restoreFail||'Failed.'));
                 $btn.prop('disabled', false);
             }
         }).fail(function() {
-            alert((raplsaichKB.ajaxError||'AJAX error.');
+            alert((raplsaichKB.ajaxError||'AJAX error.'));
             $btn.prop('disabled', false);
         });
     });

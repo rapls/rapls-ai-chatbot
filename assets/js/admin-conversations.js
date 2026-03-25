@@ -1,4 +1,3 @@
-<script>
 jQuery(document).ready(function($) {
     var i18n = raplsaichAdmin.i18n || {};
     var _operatorPollTimer = null;
@@ -334,7 +333,7 @@ jQuery(document).ready(function($) {
     // Operator: End chat (resolve handoff)
     $('#raplsaich-operator-end').on('click', function() {
         if (!_currentConvId || !_isPro) return;
-        if (!confirm((raplsaichConv.endOperatorChatAnd||'End operator chat and return to AI mode?'))) return;
+        if (!confirm((raplsaichConv.confirmEndOperator||'End operator chat and return to AI mode?'))) return;
         var $btn = $(this);
         $btn.prop('disabled', true);
         $.ajax({
@@ -552,7 +551,7 @@ jQuery(document).ready(function($) {
     // Delete single
     $('.raplsaich-delete-conversation').on('click', function() {
         var id = $(this).data('id');
-        if (!confirm(i18n.confirmDelete || (raplsaichConv.areYouSureYou2||'Are you sure you want to delete this conversation?'))) {
+        if (!confirm(i18n.confirmDelete || (raplsaichConv.confirmDeleteOne||'Are you sure you want to delete this conversation?'))) {
             return;
         }
 
@@ -595,11 +594,11 @@ jQuery(document).ready(function($) {
         });
 
         if (ids.length === 0) {
-            alert((raplsaichConv.pleaseSelectConversationsTo||'Please select conversations to delete.'));
+            alert((raplsaichConv.pleaseSelect||'Please select conversations to delete.'));
             return;
         }
 
-        if (!confirm((raplsaichConv.areYouSureYou2||'Are you sure you want to delete the selected conversations?').replace('%d', ids.length))) {
+        if (!confirm((raplsaichConv.confirmDeleteSelected||'Are you sure you want to delete the selected conversations?').replace('%d', ids.length))) {
             return;
         }
 
@@ -632,7 +631,7 @@ jQuery(document).ready(function($) {
 
     // Delete all conversations
     $('#raplsaich-delete-all').on('click', function() {
-        if (!confirm((raplsaichConv.areYouSureYou||'Are you sure you want to delete all conversation history?\nThis action cannot be undone.'))) {
+        if (!confirm((raplsaichConv.confirmDeleteAll||'Are you sure you want to delete all conversation history?\nThis action cannot be undone.'))) {
             return;
         }
 
@@ -662,7 +661,7 @@ jQuery(document).ready(function($) {
 
     // Reset all user sessions
     $('#raplsaich-reset-sessions').on('click', function() {
-        if (!confirm((raplsaichConv.areYouSureYou2||'Are you sure you want to reset all user sessions?') + '\n\n' + (raplsaichConv.thisWillForceAll||'This will force all users to start new conversations on their next visit.') + '\n' + (raplsaichConv.existingConversationHistoryWill||'Existing conversation history will remain in the database.'))) {
+        if (!confirm((raplsaichConv.confirmResetSessions||'Are you sure you want to reset all user sessions?') + '\n\n' + (raplsaichConv.forceNewSessions||'This will force all users to start new conversations on their next visit.') + '\n' + (raplsaichConv.existingHistory||'Existing conversation history will remain in the database.'))) {
             return;
         }
 
@@ -696,7 +695,7 @@ jQuery(document).ready(function($) {
     $(document).on('click', '.raplsaich-reset-handoff', function() {
         var $btn = $(this);
         var convId = $btn.data('id');
-        if (!confirm((raplsaichConv.resetHandoffStatusFor||'Reset handoff status for this conversation?'))) {
+        if (!confirm((raplsaichConv.confirmResetHandoff||'Reset handoff status for this conversation?'))) {
             return;
         }
         $btn.prop('disabled', true).text('...');

@@ -31,11 +31,11 @@ jQuery(document).ready(function($) {
                     }
                 });
             } else {
-                alert(response.data || (raplsaichCrawler.deleteFailed||'Failed');
+                alert(response.data || (raplsaichCrawler.deleteFailed||'Failed'));
                 $btn.prop('disabled', false);
             }
         }).fail(function() {
-            alert((raplsaichCrawler.errorOccurred||'Error');
+            alert((raplsaichCrawler.errorOccurred||'Error'));
             $btn.prop('disabled', false);
         });
     });
@@ -69,11 +69,11 @@ jQuery(document).ready(function($) {
                     }
                 });
             } else {
-                alert(response.data || (raplsaichCrawler.errorOccurred||'Error');
+                alert(response.data || (raplsaichCrawler.errorOccurred||'Error'));
                 $btn.prop('disabled', false);
             }
         }).fail(function() {
-            alert((raplsaichCrawler.errorOccurred||'Error');
+            alert((raplsaichCrawler.errorOccurred||'Error'));
             $btn.prop('disabled', false);
         });
     });
@@ -94,11 +94,11 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 $tag.fadeOut(200, function() { $(this).remove(); });
             } else {
-                alert(response.data || (raplsaichCrawler.errorOccurred||'Error');
+                alert(response.data || (raplsaichCrawler.errorOccurred||'Error'));
                 $btn.prop('disabled', false);
             }
         }).fail(function() {
-            alert((raplsaichCrawler.errorOccurred||'Error');
+            alert((raplsaichCrawler.errorOccurred||'Error'));
             $btn.prop('disabled', false);
         });
     });
@@ -134,11 +134,11 @@ jQuery(document).ready(function($) {
                 // Remove from indexed list if present
                 $('#indexed-list-body tr[data-post-id="' + postId + '"]').fadeOut(300, function() { $(this).remove(); });
             } else {
-                alert(response.data || (raplsaichCrawler.errorOccurred||'Error');
+                alert(response.data || (raplsaichCrawler.errorOccurred||'Error'));
             }
             $btn.prop('disabled', false);
         }).fail(function() {
-            alert((raplsaichCrawler.errorOccurred||'Error');
+            alert((raplsaichCrawler.errorOccurred||'Error'));
             $btn.prop('disabled', false);
         });
     });
@@ -148,7 +148,7 @@ jQuery(document).ready(function($) {
         var $btn = $(this);
         var $status = $('#embedding-status');
         $btn.prop('disabled', true);
-        $status.text((raplsaichCrawler.processing||'Processing...');
+        $status.text((raplsaichCrawler.processing||'Processing...'));
 
         function processBatch(source) {
             $.post(ajaxurl, {
@@ -172,7 +172,7 @@ jQuery(document).ready(function($) {
                     $btn.prop('disabled', false);
                 }
             }).fail(function() {
-                $status.text((raplsaichCrawler.errorOccurred||'Error');
+                $status.text((raplsaichCrawler.errorOccurred||'Error'));
                 $btn.prop('disabled', false);
             });
         }
@@ -194,11 +194,11 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 location.reload();
             } else {
-                alert(response.data || (raplsaichCrawler.errorOccurred||'Error');
+                alert(response.data || (raplsaichCrawler.errorOccurred||'Error'));
                 $btn.prop('disabled', false);
             }
         }).fail(function() {
-            alert((raplsaichCrawler.errorOccurred||'Error');
+            alert((raplsaichCrawler.errorOccurred||'Error'));
             $btn.prop('disabled', false);
         });
     });
@@ -218,7 +218,7 @@ jQuery(document).ready(function($) {
     $('#raplsaich-delete-all-index').on('click', function() {
         var $btn = $(this);
 
-        $btn.prop('disabled', true).text((raplsaichCrawler.deleting||'Deleting...');
+        $btn.prop('disabled', true).text((raplsaichCrawler.deleting||'Deleting...'));
 
         raplsaichDestructiveAjax({
             data: { action: 'raplsaich_delete_all_index', nonce: raplsaichAdmin.nonce },
@@ -226,16 +226,16 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data || (raplsaichCrawler.deleteFailed||'Failed');
-                    $btn.prop('disabled', false).html('🗑️ '+(raplsaichCrawler.deleteAll||'Delete All');
+                    alert(response.data || (raplsaichCrawler.deleteFailed||'Failed'));
+                    $btn.prop('disabled', false).html('🗑️ '+(raplsaichCrawler.deleteAll||'Delete All'));
                 }
             },
             cancel: function() {
-                $btn.prop('disabled', false).html('🗑️ '+(raplsaichCrawler.deleteAll||'Delete All');
+                $btn.prop('disabled', false).html('🗑️ '+(raplsaichCrawler.deleteAll||'Delete All'));
             },
             fail: function() {
-                alert((raplsaichCrawler.errorOccurred||'Error');
-                $btn.prop('disabled', false).html('🗑️ '+(raplsaichCrawler.deleteAll||'Delete All');
+                alert((raplsaichCrawler.errorOccurred||'Error'));
+                $btn.prop('disabled', false).html('🗑️ '+(raplsaichCrawler.deleteAll||'Delete All'));
             }
         });
     });
