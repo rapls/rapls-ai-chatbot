@@ -97,7 +97,7 @@ $is_pro = $pro_features->is_pro();
                     <?php endif; ?>
                 </table>
                 <p class="submit">
-                    <button type="submit" class="button button-primary" <?php disabled($faq_limit_reached && !$is_pro); ?>><?php esc_html_e('Add', 'rapls-ai-chatbot'); ?></button>
+                    <button type="submit" class="button button-primary" <?php disabled($faq_limit_reached); ?>><?php esc_html_e('Add', 'rapls-ai-chatbot'); ?></button>
                     <span id="add-knowledge-status"></span>
                 </p>
             </form>
@@ -125,7 +125,7 @@ $is_pro = $pro_features->is_pro();
                     </tr>
                 </table>
                 <p class="submit">
-                    <button type="submit" class="button button-secondary" <?php disabled($faq_limit_reached && !$is_pro); ?>><?php esc_html_e('Import', 'rapls-ai-chatbot'); ?></button>
+                    <button type="submit" class="button button-secondary" <?php disabled($faq_limit_reached); ?>><?php esc_html_e('Import', 'rapls-ai-chatbot'); ?></button>
                     <span id="import-knowledge-status"></span>
                 </p>
             </form>
