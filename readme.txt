@@ -390,7 +390,7 @@ add_filter( 'raplsaich_chatbot_enabled', function( $enabled ) {
 
 The plugin registers REST API endpoints under the `rapls-ai-chatbot/v1` namespace:
 
-**Session authentication:** Pass the session ID via the `X-WPAIC-Session` HTTP header (recommended). When the header is present, any session_id in the request body is ignored (prevents APM/WAF body-logging leakage). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs.
+**Session authentication:** Pass the session ID via the `X-RAPLSAICH-Session` HTTP header (recommended). When the header is present, any session_id in the request body is ignored (prevents APM/WAF body-logging leakage). Query string parameters (`?session_id=...`) are **not** accepted for GET requests to prevent session leakage in server access logs.
 
 **Free:**
 
@@ -462,7 +462,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Updated: Japanese translation
 
 = 1.3.2 =
-* Security: Session ID now transmitted via `X-WPAIC-Session` header instead of query strings (prevents access log leakage)
+* Security: Session ID now transmitted via `X-RAPLSAICH-Session` header instead of query strings (prevents access log leakage)
 * Security: GET requests no longer accept `?session_id=` query parameter
 * Security: POST requests ignore body `session_id` when header is present (prevents APM/WAF body-logging leakage)
 * Security: Removed client-side `raplsaich_user_id` remnant from JavaScript
@@ -577,7 +577,7 @@ Major update: Gutenberg block support, WordPress Abilities API bridge, response 
 Feature release: Web search integration (AI auto-searches the web when knowledge base is insufficient), cross-site embed support, PDF/DOCX knowledge upload, vector embedding hybrid search, and updated AI model lists. Recommended update for all users.
 
 = 1.3.2 =
-Security hardening: session ID header transport, XSS prevention via DOM API, rate-limited logging, and offline message dedup. **Breaking change:** GET requests no longer accept `?session_id=` — use the `X-WPAIC-Session` header instead. Recommended update for all users.
+Security hardening: session ID header transport, XSS prevention via DOM API, rate-limited logging, and offline message dedup. **Breaking change:** GET requests no longer accept `?session_id=` — use the `X-RAPLSAICH-Session` header instead. Recommended update for all users.
 
 = 1.3.1 =
 Enhanced rate limiting, server-side PDF export, and diagnostic option namespace migration (`raplsaich_diag_*`). Recommended update for all users.
