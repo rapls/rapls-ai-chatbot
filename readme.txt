@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -431,7 +431,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 == Changelog ==
 
-= 1.5.1 =
+= 1.5.2 =
 * Fixed: WordPress Plugin Check compliance (removed deprecated load_plugin_textdomain, added WP_Filesystem annotations, prepared SQL annotations)
 * Fixed: Plugin Check warnings for file system operations in CSV import
 * Removed: Artificial free-tier limits — all core features are fully available
@@ -567,11 +567,11 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 == Upgrade Notice ==
 
-= 1.5.1 =
+= 1.5.2 =
 WordPress.org compliance fixes: Plugin Check errors resolved, artificial limits removed, promotional text replaced with neutral messages. Recommended update for all users.
 
 = 1.5.0 =
-Major update: Gutenberg block support, WordPress Abilities API bridge, response language auto-detect, and OpenRouter provider. Pro feature stubs for 80+ features (scenarios, WooCommerce, LINE, AI forms, encryption, queue management, and more). MCP tool registration fixes for reliable Pro integration. Full Japanese translation. Recommended update for all users.
+Major update: Gutenberg block, Abilities API, language auto-detect, OpenRouter. Recommended update for all users.
 
 = 1.4.0 =
 Feature release: Web search integration (AI auto-searches the web when knowledge base is insufficient), cross-site embed support, PDF/DOCX knowledge upload, vector embedding hybrid search, and updated AI model lists. Recommended update for all users.

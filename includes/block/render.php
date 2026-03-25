@@ -12,16 +12,16 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$shortcode_atts = '';
+$raplsaich_shortcode_atts = '';
 
 if (!empty($attributes['height'])) {
-    $shortcode_atts .= ' height="' . esc_attr($attributes['height']) . '"';
+    $raplsaich_shortcode_atts .= ' height="' . esc_attr($attributes['height']) . '"';
 }
 if (!empty($attributes['theme'])) {
-    $shortcode_atts .= ' theme="' . esc_attr($attributes['theme']) . '"';
+    $raplsaich_shortcode_atts .= ' theme="' . esc_attr($attributes['theme']) . '"';
 }
 if (!empty($attributes['bot'])) {
-    $shortcode_atts .= ' bot="' . esc_attr($attributes['bot']) . '"';
+    $raplsaich_shortcode_atts .= ' bot="' . esc_attr($attributes['bot']) . '"';
 }
 
-echo do_shortcode('[rapls_chatbot' . $shortcode_atts . ']');
+echo do_shortcode('[rapls_chatbot' . $raplsaich_shortcode_atts . ']');

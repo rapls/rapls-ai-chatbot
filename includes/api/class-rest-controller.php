@@ -2214,7 +2214,7 @@ class RAPLSAICH_REST_Controller {
             );
 
             if ($remote_is_proxy && !empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-                $forwarded = wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']);
+                $forwarded = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR']));
 
                 // Guard against oversized XFF headers (DoS via CPU-expensive parsing).
                 // Normal XFF rarely exceeds a few hundred bytes; cap at 2KB / 20 entries.

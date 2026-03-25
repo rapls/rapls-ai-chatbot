@@ -1583,8 +1583,9 @@ class RAPLSAICH_Admin {
         $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? 'openai'));
         // Use lighter sanitization for API keys — sanitize_text_field strips characters
         // that some providers may use in key formats. Only remove control chars and trim.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- API keys contain special chars that sanitize_text_field strips
         $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
-        $use_saved = !empty($_POST['use_saved']);
+        $use_saved = !empty(wp_unslash($_POST['use_saved'] ?? ''));
 
         // If no key entered but use_saved flag set, decrypt the saved key
         if (empty($api_key) && $use_saved) {
@@ -1641,9 +1642,10 @@ class RAPLSAICH_Admin {
         $provider = sanitize_text_field(wp_unslash($_POST['provider'] ?? 'openai'));
         // Use lighter sanitization for API keys — sanitize_text_field strips characters
         // that some providers may use in key formats. Only remove control chars and trim.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- API keys contain special chars that sanitize_text_field strips
         $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
-        $use_saved = !empty(wp_unslash($_POST['use_saved']));
-        $force_refresh = !empty(wp_unslash($_POST['force_refresh']));
+        $use_saved = !empty(wp_unslash($_POST['use_saved'] ?? ''));
+        $force_refresh = !empty(wp_unslash($_POST['force_refresh'] ?? ''));
 
         // Use saved API key if requested
         if ($use_saved || empty($api_key)) {
@@ -2287,7 +2289,7 @@ class RAPLSAICH_Admin {
                 wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
             }
 
-            if (empty($_FILES['file'])) {
+            if (empty($_FILES['file'])) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- file upload handled by wp_handle_upload
                 wp_send_json_error(__('No file uploaded.', 'rapls-ai-chatbot'));
             }
 
@@ -2968,6 +2970,7 @@ class RAPLSAICH_Admin {
      * @return bool True if confirmed, false if token was issued (caller should return).
      */
     private function verify_destructive_token(string $action): bool {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified in the calling AJAX handler before this method is invoked
         $token = sanitize_text_field(wp_unslash($_POST['confirm_token'] ?? ''));
         $transient_key = 'raplsaich_confirm_' . $action . '_' . get_current_user_id();
 
