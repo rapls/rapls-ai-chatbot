@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Content_Extractor {
+class RAPLSAICH_Content_Extractor {
 
     /**
      * Extract text from post
@@ -21,7 +21,7 @@ class WPAIC_Content_Extractor {
         }
 
         // Expand shortcodes in a safe context (disable side-effect-prone shortcodes during crawl)
-        $is_crawling = defined('WPAIC_CRAWLING') && WPAIC_CRAWLING;
+        $is_crawling = defined('RAPLSAICH_CRAWLING') && RAPLSAICH_CRAWLING;
         if (!$is_crawling) {
             $content = do_shortcode($content);
         } else {
@@ -29,11 +29,11 @@ class WPAIC_Content_Extractor {
         }
 
         // Check if enhanced extraction is enabled (Pro feature)
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro_features = $settings['pro_features'] ?? [];
         $enhanced = !empty($pro_features['enhanced_content_extraction'])
-            && class_exists('WPAIC_Pro_Features')
-            && WPAIC_Pro_Features::get_instance()->is_pro();
+            && class_exists('RAPLSAICH_Pro_Features')
+            && RAPLSAICH_Pro_Features::get_instance()->is_pro();
 
         if ($enhanced) {
             $content = $this->enhanced_strip_html($content);
@@ -62,7 +62,7 @@ class WPAIC_Content_Extractor {
      * Process Gutenberg blocks
      */
     private function process_blocks(string $content): string {
-        $is_crawling = defined('WPAIC_CRAWLING') && WPAIC_CRAWLING;
+        $is_crawling = defined('RAPLSAICH_CRAWLING') && RAPLSAICH_CRAWLING;
 
         // During crawl, only serialize block content without rendering (avoids side effects)
         if ($is_crawling) {
@@ -619,8 +619,8 @@ class WPAIC_Content_Extractor {
                     // Add string values only
                     if (is_string($value) && !empty(trim($value))) {
                         // Truncate long values
-                        if (wpaic_mb_strlen($value) > 500) {
-                            $value = wpaic_mb_substr($value, 0, 500) . '...';
+                        if (raplsaich_mb_strlen($value) > 500) {
+                            $value = raplsaich_mb_substr($value, 0, 500) . '...';
                         }
                         $cf_parts[] = $key . ': ' . $value;
                     }

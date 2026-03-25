@@ -11,11 +11,11 @@ if (!defined('ABSPATH')) {
 }
 
 // Guard: if the real Pro implementation was loaded first, skip this stub.
-if (class_exists('WPAIC_Pro_Features', false)) {
+if (class_exists('RAPLSAICH_Pro_Features', false)) {
     return;
 }
 
-class WPAIC_Pro_Features {
+class RAPLSAICH_Pro_Features {
 
     /**
      * Feature constants (used by Pro plugin via is_feature_available)
@@ -35,12 +35,12 @@ class WPAIC_Pro_Features {
     /**
      * Singleton instance (protected for Pro override)
      */
-    protected static ?WPAIC_Pro_Features $instance = null;
+    protected static ?RAPLSAICH_Pro_Features $instance = null;
 
     /**
      * Get singleton instance
      */
-    public static function get_instance(): WPAIC_Pro_Features {
+    public static function get_instance(): RAPLSAICH_Pro_Features {
         if (self::$instance === null) {
             self::$instance = new self();
         }
@@ -50,7 +50,7 @@ class WPAIC_Pro_Features {
     /**
      * Set instance (for Pro plugin override)
      */
-    public static function set_instance(WPAIC_Pro_Features $instance): void {
+    public static function set_instance(RAPLSAICH_Pro_Features $instance): void {
         self::$instance = $instance;
     }
 
@@ -85,10 +85,10 @@ class WPAIC_Pro_Features {
      */
     public function get_monthly_ai_response_count(): int {
         global $wpdb;
-        $table = wpaic_require_table('aichat_messages', 'get_monthly_ai_response_count');
+        $table = raplsaich_require_table('raplsaich_messages', 'get_monthly_ai_response_count');
         if (!$table) {
             // Fall back to no-history count only
-            $nohist_counts = (array) get_option('wpaic_nohist_msg_counts', []);
+            $nohist_counts = (array) get_option('raplsaich_nohist_msg_counts', []);
             return (int) ($nohist_counts[wp_date('Y_m')] ?? 0);
         }
         // Use WordPress site timezone for consistent month boundary calculation
@@ -99,7 +99,7 @@ class WPAIC_Pro_Features {
             $month_start
         ));
         // Include messages sent while save_history was OFF (same TZ key)
-        $nohist_counts = (array) get_option('wpaic_nohist_msg_counts', []);
+        $nohist_counts = (array) get_option('raplsaich_nohist_msg_counts', []);
         $nohist_count = (int) ($nohist_counts[wp_date('Y_m')] ?? 0);
         return $db_count + $nohist_count;
     }
@@ -143,7 +143,7 @@ class WPAIC_Pro_Features {
      * Check if more FAQ entries can be added
      */
     public function can_add_faq(): bool {
-        return WPAIC_Knowledge::get_count() < $this->get_faq_limit();
+        return RAPLSAICH_Knowledge::get_count() < $this->get_faq_limit();
     }
 
     /**
@@ -152,7 +152,7 @@ class WPAIC_Pro_Features {
      * @return string Prefix string (e.g. "Rapls AI Chatbot").
      */
     public static function get_email_subject_prefix(): string {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro = $settings['pro_features'] ?? [];
         $prefix = trim($pro['email_subject_prefix'] ?? '');
         return $prefix !== '' ? $prefix : 'Rapls AI Chatbot';

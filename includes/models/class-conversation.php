@@ -7,13 +7,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Conversation {
+class RAPLSAICH_Conversation {
 
     /**
-     * Table name — whitelist-validated via wpaic_validated_table().
+     * Table name — whitelist-validated via raplsaich_validated_table().
      */
     private static function get_table_name(): string {
-        return trim(wpaic_validated_table('aichat_conversations'), '`');
+        return trim(raplsaich_validated_table('raplsaich_conversations'), '`');
     }
 
     /**
@@ -103,7 +103,7 @@ class WPAIC_Conversation {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert($table, $insert_data, $formats);
-        wpaic_log_db_error('Conversation::create');
+        raplsaich_log_db_error('Conversation::create');
 
         if ($wpdb->insert_id === 0) {
             // Concurrent insert may have succeeded — retry lookup
@@ -112,7 +112,7 @@ class WPAIC_Conversation {
 
         $new_conversation = self::get_by_id($wpdb->insert_id);
         if ($new_conversation) {
-            do_action('wpaic_new_conversation', $new_conversation, $session_id);
+            do_action('raplsaich_new_conversation', $new_conversation, $session_id);
         }
 
         return $new_conversation;
@@ -188,7 +188,7 @@ class WPAIC_Conversation {
             $params[] = $args['date_to'] . ' 23:59:59';
         }
 
-        $msg_table = wpaic_validated_table('aichat_messages');
+        $msg_table = raplsaich_validated_table('raplsaich_messages');
 
         if (!empty($args['search'])) {
             $where .= " AND c.id IN (SELECT conversation_id FROM {$msg_table} WHERE content LIKE %s)";
@@ -264,7 +264,7 @@ class WPAIC_Conversation {
         }
 
         if (!empty($args['search'])) {
-            $msg_table = wpaic_validated_table('aichat_messages');
+            $msg_table = raplsaich_validated_table('raplsaich_messages');
             $where .= " AND c.id IN (SELECT conversation_id FROM {$msg_table} WHERE content LIKE %s)";
             $params[] = '%' . $wpdb->esc_like($args['search']) . '%';
         }
@@ -356,7 +356,7 @@ class WPAIC_Conversation {
         $table = self::get_table_name();
 
         // Delete related messages first
-        WPAIC_Message::delete_by_conversation($id);
+        RAPLSAICH_Message::delete_by_conversation($id);
 
         // Delete conversation
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -396,7 +396,7 @@ class WPAIC_Conversation {
         }
 
         // Delete all messages first
-        WPAIC_Message::delete_all();
+        RAPLSAICH_Message::delete_all();
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query("TRUNCATE TABLE `{$table}`");

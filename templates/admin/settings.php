@@ -7,19 +7,19 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div class="wrap wpaic-admin">
+<div class="wrap raplsaich-admin">
     <h1>
         <?php esc_html_e('AI Chatbot - Settings', 'rapls-ai-chatbot'); ?>
-        <?php if (defined('WPAIC_VERSION')) : ?>
+        <?php if (defined('RAPLSAICH_VERSION')) : ?>
         <span style="font-size:12px;font-weight:normal;color:#666;margin-left:8px;">
-            v<?php echo esc_html(WPAIC_VERSION); ?><?php if (defined('WPAIC_BUILD') && WPAIC_BUILD && strpos(WPAIC_BUILD, 'Format') === false) : ?> (<?php echo esc_html(WPAIC_BUILD); ?>)<?php endif; ?>
+            v<?php echo esc_html(RAPLSAICH_VERSION); ?><?php if (defined('RAPLSAICH_BUILD') && RAPLSAICH_BUILD && strpos(RAPLSAICH_BUILD, 'Format') === false) : ?> (<?php echo esc_html(RAPLSAICH_BUILD); ?>)<?php endif; ?>
         </span>
         <?php endif; ?>
     </h1>
 
-    <?php $is_pro_active = get_option('wpaic_pro_active'); ?>
+    <?php $is_pro_active = get_option('raplsaich_pro_active'); ?>
     <?php if (!$is_pro_active) : ?>
-    <div class="wpaic-pro-settings-banner">
+    <div class="raplsaich-pro-settings-banner">
         <span class="dashicons dashicons-star-filled"></span>
         <span><?php esc_html_e('Extend your AI chatbot with automation, analytics, and business-ready features.', 'rapls-ai-chatbot'); ?></span>
         <a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" class="button">
@@ -29,9 +29,9 @@ if (!defined('ABSPATH')) {
     <?php endif; ?>
 
     <form method="post" action="options.php">
-        <?php settings_fields('wpaic_settings_group'); ?>
+        <?php settings_fields('raplsaich_settings_group'); ?>
 
-        <div class="wpaic-settings-tabs">
+        <div class="raplsaich-settings-tabs">
             <nav class="nav-tab-wrapper">
                 <a href="#tab-ai" class="nav-tab nav-tab-active"><?php esc_html_e('AI Settings', 'rapls-ai-chatbot'); ?></a>
                 <a href="#tab-chat" class="nav-tab"><?php esc_html_e('Chat Settings', 'rapls-ai-chatbot'); ?></a>
@@ -42,10 +42,10 @@ if (!defined('ABSPATH')) {
 
             <!-- AI Settings -->
             <div id="tab-ai" class="tab-content active">
-                <input type="hidden" name="wpaic_settings[_settings_page]" value="1">
-                <div class="wpaic-tab-header">
+                <input type="hidden" name="raplsaich_settings[_settings_page]" value="1">
+                <div class="raplsaich-tab-header">
                     <h2><?php esc_html_e('AI Settings', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-ai">
+                    <button type="button" class="raplsaich-reset-tab-btn" data-tab="tab-ai">
                         <span class="dashicons dashicons-image-rotate"></span>
                         <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
                     </button>
@@ -55,7 +55,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('AI Provider', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <select name="wpaic_settings[ai_provider]" id="ai_provider">
+                            <select name="raplsaich_settings[ai_provider]" id="ai_provider">
                                 <option value="openai" <?php selected($settings['ai_provider'] ?? '', 'openai'); ?>>OpenAI (ChatGPT)</option>
                                 <option value="claude" <?php selected($settings['ai_provider'] ?? '', 'claude'); ?>>Anthropic (Claude)</option>
                                 <option value="gemini" <?php selected($settings['ai_provider'] ?? '', 'gemini'); ?>>Google (Gemini)</option>
@@ -72,19 +72,19 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('API Key', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <div class="wpaic-api-key-wrapper">
-                                    <input type="password" name="wpaic_settings[openai_api_key]"
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[openai_api_key]"
                                            id="openai_api_key"
                                            value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['openai_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
-                                    <input type="hidden" name="wpaic_settings[delete_openai_api_key]" id="delete_openai_api_key" value="0">
-                                    <button type="button" class="button wpaic-test-api" data-provider="openai"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
+                                    <input type="hidden" name="raplsaich_settings[delete_openai_api_key]" id="delete_openai_api_key" value="0">
+                                    <button type="button" class="button raplsaich-test-api" data-provider="openai"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['openai_api_key'])): ?>
-                                        <button type="button" class="button wpaic-clear-api-key" data-target="openai_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
-                                        <span class="wpaic-key-status wpaic-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="openai_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php else: ?>
-                                        <span class="wpaic-key-status wpaic-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <p class="description"><?php esc_html_e('Enter your OpenAI API key.', 'rapls-ai-chatbot'); ?></p>
@@ -94,7 +94,7 @@ if (!defined('ABSPATH')) {
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
                                 <?php $openai_vision_models = $openai_provider->get_vision_models(); ?>
-                                <select name="wpaic_settings[openai_model]" id="wpaic-openai-model"
+                                <select name="raplsaich_settings[openai_model]" id="raplsaich-openai-model"
                                     data-initial-value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o-mini'); ?>">
                                     <?php foreach ($openai_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
@@ -104,10 +104,10 @@ if (!defined('ABSPATH')) {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="button wpaic-refresh-models" data-provider="openai" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
+                                <button type="button" class="button raplsaich-refresh-models" data-provider="openai" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
-                                <p class="description wpaic-vision-warning" style="display: none; color: #d63638;">
+                                <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
                                     <?php esc_html_e('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot'); ?>
                                 </p>
                             </td>
@@ -122,19 +122,19 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('API Key', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <div class="wpaic-api-key-wrapper">
-                                    <input type="password" name="wpaic_settings[claude_api_key]"
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[claude_api_key]"
                                            id="claude_api_key"
                                            value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['claude_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
-                                    <input type="hidden" name="wpaic_settings[delete_claude_api_key]" id="delete_claude_api_key" value="0">
-                                    <button type="button" class="button wpaic-test-api" data-provider="claude"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
+                                    <input type="hidden" name="raplsaich_settings[delete_claude_api_key]" id="delete_claude_api_key" value="0">
+                                    <button type="button" class="button raplsaich-test-api" data-provider="claude"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['claude_api_key'])): ?>
-                                        <button type="button" class="button wpaic-clear-api-key" data-target="claude_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
-                                        <span class="wpaic-key-status wpaic-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="claude_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php else: ?>
-                                        <span class="wpaic-key-status wpaic-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <p class="description"><?php esc_html_e('Enter your Anthropic API key.', 'rapls-ai-chatbot'); ?></p>
@@ -144,7 +144,7 @@ if (!defined('ABSPATH')) {
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
                                 <?php $claude_vision_models = $claude_provider->get_vision_models(); ?>
-                                <select name="wpaic_settings[claude_model]" id="wpaic-claude-model"
+                                <select name="raplsaich_settings[claude_model]" id="raplsaich-claude-model"
                                     data-initial-value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'); ?>">
                                     <?php foreach ($claude_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
@@ -154,10 +154,10 @@ if (!defined('ABSPATH')) {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="button wpaic-refresh-models" data-provider="claude" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
+                                <button type="button" class="button raplsaich-refresh-models" data-provider="claude" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
-                                <p class="description wpaic-vision-warning" style="display: none; color: #d63638;">
+                                <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
                                     <?php esc_html_e('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot'); ?>
                                 </p>
                             </td>
@@ -172,19 +172,19 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('API Key', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <div class="wpaic-api-key-wrapper">
-                                    <input type="password" name="wpaic_settings[gemini_api_key]"
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[gemini_api_key]"
                                            id="gemini_api_key"
                                            value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['gemini_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
-                                    <input type="hidden" name="wpaic_settings[delete_gemini_api_key]" id="delete_gemini_api_key" value="0">
-                                    <button type="button" class="button wpaic-test-api" data-provider="gemini"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
+                                    <input type="hidden" name="raplsaich_settings[delete_gemini_api_key]" id="delete_gemini_api_key" value="0">
+                                    <button type="button" class="button raplsaich-test-api" data-provider="gemini"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['gemini_api_key'])): ?>
-                                        <button type="button" class="button wpaic-clear-api-key" data-target="gemini_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
-                                        <span class="wpaic-key-status wpaic-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="gemini_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php else: ?>
-                                        <span class="wpaic-key-status wpaic-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <p class="description"><?php esc_html_e('Get your API key from Google AI Studio.', 'rapls-ai-chatbot'); ?></p>
@@ -194,7 +194,7 @@ if (!defined('ABSPATH')) {
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
                                 <?php $gemini_vision_models = $gemini_provider->get_vision_models(); ?>
-                                <select name="wpaic_settings[gemini_model]" id="wpaic-gemini-model"
+                                <select name="raplsaich_settings[gemini_model]" id="raplsaich-gemini-model"
                                     data-initial-value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash'); ?>">
                                     <?php foreach ($gemini_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
@@ -204,10 +204,10 @@ if (!defined('ABSPATH')) {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="button wpaic-refresh-models" data-provider="gemini" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
+                                <button type="button" class="button raplsaich-refresh-models" data-provider="gemini" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
-                                <p class="description wpaic-vision-warning" style="display: none; color: #d63638;">
+                                <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
                                     <?php esc_html_e('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot'); ?>
                                 </p>
                             </td>
@@ -225,19 +225,19 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('API Key', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <div class="wpaic-api-key-wrapper">
-                                    <input type="password" name="wpaic_settings[openrouter_api_key]"
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[openrouter_api_key]"
                                            id="openrouter_api_key"
                                            value=""
                                            class="regular-text" autocomplete="off"
                                            placeholder="<?php echo !empty($settings['openrouter_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
-                                    <input type="hidden" name="wpaic_settings[delete_openrouter_api_key]" id="delete_openrouter_api_key" value="0">
-                                    <button type="button" class="button wpaic-test-api" data-provider="openrouter"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
+                                    <input type="hidden" name="raplsaich_settings[delete_openrouter_api_key]" id="delete_openrouter_api_key" value="0">
+                                    <button type="button" class="button raplsaich-test-api" data-provider="openrouter"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
                                     <?php if (!empty($settings['openrouter_api_key'])): ?>
-                                        <button type="button" class="button wpaic-clear-api-key" data-target="openrouter_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
-                                        <span class="wpaic-key-status wpaic-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="openrouter_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php else: ?>
-                                        <span class="wpaic-key-status wpaic-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <p class="description"><?php esc_html_e('Get your API key from openrouter.ai.', 'rapls-ai-chatbot'); ?></p>
@@ -246,7 +246,7 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <select name="wpaic_settings[openrouter_model]" id="wpaic-openrouter-model"
+                                <select name="raplsaich_settings[openrouter_model]" id="raplsaich-openrouter-model"
                                     data-initial-value="<?php echo esc_attr($settings['openrouter_model'] ?? 'openrouter/auto'); ?>">
                                     <?php foreach ($openrouter_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
@@ -255,7 +255,7 @@ if (!defined('ABSPATH')) {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="button wpaic-refresh-models" data-provider="openrouter" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
+                                <button type="button" class="button raplsaich-refresh-models" data-provider="openrouter" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
                                 <p class="description">
@@ -275,7 +275,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Vector Search', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[embedding_enabled]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[embedding_enabled]" value="1"
                                     <?php checked($settings['embedding_enabled'] ?? false); ?>>
                                 <?php esc_html_e('Enable vector embedding search', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -287,8 +287,8 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Embedding Provider', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <select name="wpaic_settings[embedding_provider]" id="embedding_provider">
-                                <?php foreach (WPAIC_Embedding_Generator::get_available_providers() as $value => $label) : ?>
+                            <select name="raplsaich_settings[embedding_provider]" id="embedding_provider">
+                                <?php foreach (RAPLSAICH_Embedding_Generator::get_available_providers() as $value => $label) : ?>
                                     <option value="<?php echo esc_attr($value); ?>" <?php selected($settings['embedding_provider'] ?? 'auto', $value); ?>>
                                         <?php echo esc_html($label); ?>
                                     </option>
@@ -305,9 +305,9 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <?php
-                    $emb_gen = new WPAIC_Embedding_Generator($settings);
+                    $emb_gen = new RAPLSAICH_Embedding_Generator($settings);
                     if ($emb_gen->is_configured()) :
-                        $idx_stats = WPAIC_Content_Index::get_embedding_stats();
+                        $idx_stats = RAPLSAICH_Content_Index::get_embedding_stats();
                     ?>
                     <tr>
                         <th scope="row"><?php esc_html_e('Status', 'rapls-ai-chatbot'); ?></th>
@@ -350,7 +350,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('MCP Server', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[mcp_enabled]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[mcp_enabled]" value="1"
                                     <?php checked($settings['mcp_enabled'] ?? false); ?>>
                                 <?php esc_html_e('Enable MCP server', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -362,21 +362,21 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('MCP API Key', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <div id="wpaic-mcp-key-section">
+                            <div id="raplsaich-mcp-key-section">
                                 <?php if (!empty($settings['mcp_api_key_hash'])) : ?>
-                                    <code id="wpaic-mcp-key-display">••••••••••••••••••••</code>
+                                    <code id="raplsaich-mcp-key-display">••••••••••••••••••••</code>
                                 <?php else : ?>
-                                    <span id="wpaic-mcp-key-display" style="color: #d63638;">
+                                    <span id="raplsaich-mcp-key-display" style="color: #d63638;">
                                         <?php esc_html_e('No API key generated yet.', 'rapls-ai-chatbot'); ?>
                                     </span>
                                 <?php endif; ?>
                                 <br><br>
-                                <button type="button" class="button" id="wpaic-mcp-generate-key">
+                                <button type="button" class="button" id="raplsaich-mcp-generate-key">
                                     <?php echo !empty($settings['mcp_api_key_hash'])
                                         ? esc_html__('Regenerate Key', 'rapls-ai-chatbot')
                                         : esc_html__('Generate Key', 'rapls-ai-chatbot'); ?>
                                 </button>
-                                <button type="button" class="button" id="wpaic-mcp-copy-key" style="display: none;">
+                                <button type="button" class="button" id="raplsaich-mcp-copy-key" style="display: none;">
                                     <?php esc_html_e('Copy Key', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </div>
@@ -388,8 +388,8 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('MCP Endpoint', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <code id="wpaic-mcp-endpoint"><?php echo esc_url(rest_url('wp-ai-chatbot/v1/mcp')); ?></code>
-                            <button type="button" class="button button-small" id="wpaic-mcp-copy-endpoint">
+                            <code id="raplsaich-mcp-endpoint"><?php echo esc_url(rest_url('rapls-ai-chatbot/v1/mcp')); ?></code>
+                            <button type="button" class="button button-small" id="raplsaich-mcp-copy-endpoint">
                                 <?php esc_html_e('Copy', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description">
@@ -405,7 +405,7 @@ if (!defined('ABSPATH')) {
                     <pre style="margin: 8px 0 0; padding: 10px; background: #fff; border: 1px solid #c3c4c7; border-radius: 2px; font-size: 12px; overflow-x: auto;">{
   "mcpServers": {
     "<?php echo esc_js(sanitize_title(get_bloginfo('name'))); ?>": {
-      "url": "<?php echo esc_url(rest_url('wp-ai-chatbot/v1/mcp')); ?>",
+      "url": "<?php echo esc_url(rest_url('rapls-ai-chatbot/v1/mcp')); ?>",
       "headers": {
         "Authorization": "Bearer YOUR_MCP_API_KEY"
       }
@@ -414,97 +414,37 @@ if (!defined('ABSPATH')) {
 }</pre>
                 </div>
 
-                <script>
-                (function() {
-                    var generateBtn = document.getElementById('wpaic-mcp-generate-key');
-                    var copyKeyBtn = document.getElementById('wpaic-mcp-copy-key');
-                    var copyEndpointBtn = document.getElementById('wpaic-mcp-copy-endpoint');
-                    var keyDisplay = document.getElementById('wpaic-mcp-key-display');
-
-                    if (generateBtn) {
-                        generateBtn.addEventListener('click', function() {
-                            if (!confirm(<?php echo wp_json_encode(
-                                __('Generate a new MCP API key? The previous key will be invalidated.', 'rapls-ai-chatbot')
-                            ); ?>)) {
-                                return;
-                            }
-
-                            generateBtn.disabled = true;
-                            generateBtn.textContent = <?php echo wp_json_encode(__('Generating...', 'rapls-ai-chatbot')); ?>;
-
-                            jQuery.post(ajaxurl, {
-                                action: 'wpaic_generate_mcp_key',
-                                _wpnonce: <?php echo wp_json_encode(wp_create_nonce('wpaic_generate_mcp_key')); ?>
-                            }, function(response) {
-                                generateBtn.disabled = false;
-                                generateBtn.textContent = <?php echo wp_json_encode(__('Regenerate Key', 'rapls-ai-chatbot')); ?>;
-
-                                if (response.success) {
-                                    var codeEl = document.createElement('code');
-                                    codeEl.style.cssText = 'user-select: all; cursor: pointer; word-break: break-all;';
-                                    codeEl.textContent = response.data.api_key;
-                                    keyDisplay.textContent = '';
-                                    keyDisplay.appendChild(codeEl);
-                                    keyDisplay.style.color = '';
-                                    copyKeyBtn.style.display = 'inline-block';
-                                    copyKeyBtn.dataset.key = response.data.api_key;
-                                } else {
-                                    alert(response.data || <?php echo wp_json_encode(__('Error generating key.', 'rapls-ai-chatbot')); ?>);
-                                }
-                            }).fail(function() {
-                                generateBtn.disabled = false;
-                                generateBtn.textContent = <?php echo wp_json_encode(__('Regenerate Key', 'rapls-ai-chatbot')); ?>;
-                                alert(<?php echo wp_json_encode(__('Request failed.', 'rapls-ai-chatbot')); ?>);
-                            });
-                        });
-                    }
-
-                    function wpaicCopyText(text, btn, originalLabel) {
-                        if (navigator.clipboard && window.isSecureContext) {
-                            navigator.clipboard.writeText(text).then(function() {
-                                btn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
-                                setTimeout(function() { btn.textContent = originalLabel; }, 2000);
-                            });
-                        } else {
-                            var textarea = document.createElement('textarea');
-                            textarea.value = text;
-                            textarea.style.cssText = 'position:fixed;opacity:0';
-                            document.body.appendChild(textarea);
-                            textarea.select();
-                            try {
-                                document.execCommand('copy');
-                                btn.textContent = <?php echo wp_json_encode(__('Copied!', 'rapls-ai-chatbot')); ?>;
-                                setTimeout(function() { btn.textContent = originalLabel; }, 2000);
-                            } catch (e) {}
-                            document.body.removeChild(textarea);
-                        }
-                    }
-
-                    if (copyKeyBtn) {
-                        copyKeyBtn.addEventListener('click', function() {
-                            var key = this.dataset.key;
-                            if (key) {
-                                wpaicCopyText(key, copyKeyBtn, <?php echo wp_json_encode(__('Copy Key', 'rapls-ai-chatbot')); ?>);
-                            }
-                        });
-                    }
-
-                    if (copyEndpointBtn) {
-                        copyEndpointBtn.addEventListener('click', function() {
-                            var endpoint = document.getElementById('wpaic-mcp-endpoint').textContent;
-                            wpaicCopyText(endpoint, copyEndpointBtn, <?php echo wp_json_encode(__('Copy', 'rapls-ai-chatbot')); ?>);
-                        });
-                    }
-                })();
-                </script>
+                <?php
+                wp_localize_script('raplsaich-admin', 'raplsaichMcp', [
+                    'nonce'        => wp_create_nonce('raplsaich_generate_mcp_key'),
+                    'confirmGen'   => __('Generate a new MCP API key? The previous key will be invalidated.', 'rapls-ai-chatbot'),
+                    'generating'   => __('Generating...', 'rapls-ai-chatbot'),
+                    'regenerate'   => __('Regenerate Key', 'rapls-ai-chatbot'),
+                    'errorGen'     => __('Error generating key.', 'rapls-ai-chatbot'),
+                    'requestFail'  => __('Request failed.', 'rapls-ai-chatbot'),
+                    'copied'       => __('Copied!', 'rapls-ai-chatbot'),
+                    'copyKey'      => __('Copy Key', 'rapls-ai-chatbot'),
+                    'copy'         => __('Copy', 'rapls-ai-chatbot'),
+                ]);
+                wp_add_inline_script('raplsaich-admin', '(function(){' .
+                    'var L=raplsaichMcp,gB=document.getElementById("raplsaich-mcp-generate-key"),' .
+                    'cK=document.getElementById("raplsaich-mcp-copy-key"),' .
+                    'cE=document.getElementById("raplsaich-mcp-copy-endpoint"),' .
+                    'kD=document.getElementById("raplsaich-mcp-key-display");' .
+                    'function cp(t,b,o){if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(function(){b.textContent=L.copied;setTimeout(function(){b.textContent=o},2000)})}else{var a=document.createElement("textarea");a.value=t;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();try{document.execCommand("copy");b.textContent=L.copied;setTimeout(function(){b.textContent=o},2000)}catch(e){}document.body.removeChild(a)}}' .
+                    'if(gB){gB.addEventListener("click",function(){if(!confirm(L.confirmGen))return;gB.disabled=true;gB.textContent=L.generating;jQuery.post(ajaxurl,{action:"raplsaich_generate_mcp_key",_wpnonce:L.nonce},function(r){gB.disabled=false;gB.textContent=L.regenerate;if(r.success){var c=document.createElement("code");c.style.cssText="user-select:all;cursor:pointer;word-break:break-all";c.textContent=r.data.api_key;kD.textContent="";kD.appendChild(c);kD.style.color="";cK.style.display="inline-block";cK.dataset.key=r.data.api_key}else{alert(r.data||L.errorGen)}}).fail(function(){gB.disabled=false;gB.textContent=L.regenerate;alert(L.requestFail)})})}' .
+                    'if(cK){cK.addEventListener("click",function(){var k=this.dataset.key;if(k)cp(k,cK,L.copyKey)})}' .
+                    'if(cE){cE.addEventListener("click",function(){var e=document.getElementById("raplsaich-mcp-endpoint").textContent;cp(e,cE,L.copy)})}' .
+                    '})();');
+                ?>
 
             </div>
 
             <!-- Chat Settings -->
             <div id="tab-chat" class="tab-content">
-                <div class="wpaic-tab-header">
+                <div class="raplsaich-tab-header">
                     <h2><?php esc_html_e('Chat Settings', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-chat">
+                    <button type="button" class="raplsaich-reset-tab-btn" data-tab="tab-chat">
                         <span class="dashicons dashicons-image-rotate"></span>
                         <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
                     </button>
@@ -514,10 +454,10 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Bot Name', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="text" name="wpaic_settings[bot_name]" id="wpaic_bot_name"
+                            <input type="text" name="raplsaich_settings[bot_name]" id="raplsaich_bot_name"
                                    value="<?php echo esc_attr($settings['bot_name'] ?? 'Assistant'); ?>"
                                    class="regular-text">
-                            <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_bot_name" data-default="Assistant">
+                            <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_bot_name" data-default="Assistant">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                         </td>
@@ -529,8 +469,8 @@ if (!defined('ABSPATH')) {
                             $bot_avatar_val = $settings['bot_avatar'] ?? '🤖';
                             $is_image = filter_var($bot_avatar_val, FILTER_VALIDATE_URL) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_val);
                             ?>
-                            <div class="wpaic-avatar-setting">
-                                <div class="wpaic-avatar-preview" style="margin-bottom: 10px;">
+                            <div class="raplsaich-avatar-setting">
+                                <div class="raplsaich-avatar-preview" style="margin-bottom: 10px;">
                                     <?php if ($is_image): ?>
                                         <img src="<?php echo esc_url($bot_avatar_val); ?>" alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">
                                     <?php else: ?>
@@ -538,13 +478,13 @@ if (!defined('ABSPATH')) {
                                     <?php endif; ?>
                                 </div>
                                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                    <input type="text" name="wpaic_settings[bot_avatar]" id="wpaic_bot_avatar"
+                                    <input type="text" name="raplsaich_settings[bot_avatar]" id="raplsaich_bot_avatar"
                                            value="<?php echo esc_attr($bot_avatar_val); ?>"
                                            class="regular-text" placeholder="🤖">
-                                    <button type="button" class="button" id="wpaic-upload-avatar">
+                                    <button type="button" class="button" id="raplsaich-upload-avatar">
                                         <?php esc_html_e('Select Image', 'rapls-ai-chatbot'); ?>
                                     </button>
-                                    <button type="button" class="button" id="wpaic-reset-avatar">
+                                    <button type="button" class="button" id="raplsaich-reset-avatar">
                                         <?php esc_html_e('Reset to Emoji', 'rapls-ai-chatbot'); ?>
                                     </button>
                                 </div>
@@ -555,11 +495,11 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Welcome Message', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <textarea name="wpaic_settings[welcome_message]" id="wpaic_welcome_message" rows="3" class="large-text"><?php
+                            <textarea name="raplsaich_settings[welcome_message]" id="raplsaich_welcome_message" rows="3" class="large-text"><?php
                                 echo esc_textarea($settings['welcome_message'] ?? 'Hello! How can I help you today?');
                             ?></textarea>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_welcome_message" data-default="Hello! How can I help you today?">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_welcome_message" data-default="Hello! How can I help you today?">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -582,7 +522,7 @@ if (!defined('ABSPATH')) {
                                 'vi' => ['Tiếng Việt', 'Xin chào! Tôi có thể giúp gì cho bạn?'],
                             ];
                             ?>
-                            <div id="wpaic-per-language-welcome" style="display: <?php echo ($settings['response_language'] ?? '') === 'auto' ? 'block' : 'none'; ?>; margin-top: 12px;">
+                            <div id="raplsaich-per-language-welcome" style="display: <?php echo ($settings['response_language'] ?? '') === 'auto' ? 'block' : 'none'; ?>; margin-top: 12px;">
                                 <details>
                                     <summary style="cursor: pointer; font-weight: 600; margin-bottom: 8px;">
                                         <?php esc_html_e('Per-Language Welcome Messages', 'rapls-ai-chatbot'); ?>
@@ -600,23 +540,23 @@ if (!defined('ABSPATH')) {
                                     </div>
                                     <?php foreach ($welcome_langs as $lang_code => $lang_info) : ?>
                                         <div style="margin-bottom: 8px;">
-                                            <label for="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>">
+                                            <label for="raplsaich_welcome_msg_<?php echo esc_attr($lang_code); ?>">
                                                 <strong><?php echo esc_html($lang_info[0]); ?></strong> (<?php echo esc_html($lang_code); ?>)
                                             </label>
                                             <div style="display: flex; gap: 6px; align-items: flex-start;">
                                                 <textarea
-                                                    name="wpaic_settings[welcome_messages][<?php echo esc_attr($lang_code); ?>]"
-                                                    id="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>"
+                                                    name="raplsaich_settings[welcome_messages][<?php echo esc_attr($lang_code); ?>]"
+                                                    id="raplsaich_welcome_msg_<?php echo esc_attr($lang_code); ?>"
                                                     rows="2"
                                                     class="large-text"
                                                     placeholder="<?php echo esc_attr($lang_info[1]); ?>"
                                                 ><?php echo esc_textarea($welcome_messages[$lang_code] ?? ''); ?></textarea>
-                                                <button type="button" class="button button-small wpaic-reset-welcome-lang" data-target="wpaic_welcome_msg_<?php echo esc_attr($lang_code); ?>" style="flex-shrink: 0; margin-top: 4px;" title="<?php esc_attr_e('Clear', 'rapls-ai-chatbot'); ?>">&times;</button>
+                                                <button type="button" class="button button-small raplsaich-reset-welcome-lang" data-target="raplsaich_welcome_msg_<?php echo esc_attr($lang_code); ?>" style="flex-shrink: 0; margin-top: 4px;" title="<?php esc_attr_e('Clear', 'rapls-ai-chatbot'); ?>">&times;</button>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
                                     <p>
-                                        <button type="button" class="button button-small" id="wpaic-reset-all-welcome-langs">
+                                        <button type="button" class="button button-small" id="raplsaich-reset-all-welcome-langs">
                                             <?php esc_html_e('Clear All', 'rapls-ai-chatbot'); ?>
                                         </button>
                                     </p>
@@ -630,12 +570,12 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_system_prompt = "You are a knowledgeable assistant for this website. Follow these rules:\n\n1. ACCURACY: When reference information is provided, treat it as the primary and most reliable source. Base your answers on this information first.\n2. HONESTY: If the provided information does not cover the user's question, clearly state that you don't have specific information about it, then offer general guidance if appropriate.\n3. NO FABRICATION: Never invent facts, URLs, prices, dates, or specific details that are not in the provided reference information.\n4. CONCISENESS: Provide clear, focused answers. Avoid unnecessary repetition or filler.\n5. LANGUAGE: Always respond in the same language the user writes in.\n6. TONE: Be professional, friendly, and helpful.";
                             ?>
-                            <textarea name="wpaic_settings[system_prompt]" id="wpaic_system_prompt" rows="10" class="large-text"><?php
+                            <textarea name="raplsaich_settings[system_prompt]" id="raplsaich_system_prompt" rows="10" class="large-text"><?php
                                 echo esc_textarea($settings['system_prompt'] ?? $default_system_prompt);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('A prompt that defines the AI behavior.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_system_prompt" data-default="<?php echo esc_attr($default_system_prompt); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_system_prompt" data-default="<?php echo esc_attr($default_system_prompt); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -644,7 +584,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Response Language', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <select name="wpaic_settings[response_language]" id="wpaic_response_language">
+                            <select name="raplsaich_settings[response_language]" id="raplsaich_response_language">
                                 <option value="" <?php selected($settings['response_language'] ?? '', ''); ?>><?php esc_html_e('Site language', 'rapls-ai-chatbot'); ?> (<?php echo esc_html(get_locale()); ?>)</option>
                                 <option value="auto" <?php selected($settings['response_language'] ?? '', 'auto'); ?>><?php esc_html_e('Auto-detect (match user language)', 'rapls-ai-chatbot'); ?></option>
                                 <option value="en" <?php selected($settings['response_language'] ?? '', 'en'); ?>>English</option>
@@ -665,9 +605,9 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="wpaic_message_history_count"><?php esc_html_e('Message History Count', 'rapls-ai-chatbot'); ?></label></th>
+                        <th scope="row"><label for="raplsaich_message_history_count"><?php esc_html_e('Message History Count', 'rapls-ai-chatbot'); ?></label></th>
                         <td>
-                            <input type="number" name="wpaic_settings[message_history_count]" id="wpaic_message_history_count"
+                            <input type="number" name="raplsaich_settings[message_history_count]" id="raplsaich_message_history_count"
                                 value="<?php echo esc_attr($settings['message_history_count'] ?? 10); ?>"
                                 min="1" max="50" class="small-text">
                             <p class="description"><?php esc_html_e('Number of previous messages sent as context to the AI. Higher values give more context but increase token usage.', 'rapls-ai-chatbot'); ?></p>
@@ -677,7 +617,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Feedback Buttons', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[show_feedback_buttons]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[show_feedback_buttons]" value="1"
                                     <?php checked($settings['show_feedback_buttons'] ?? true); ?>>
                                 <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -687,13 +627,13 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('API Quota Error Message', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="text" name="wpaic_settings[quota_error_message]"
-                                   id="wpaic_quota_error_message"
+                            <input type="text" name="raplsaich_settings[quota_error_message]"
+                                   id="raplsaich_quota_error_message"
                                    value="<?php echo esc_attr($settings['quota_error_message'] ?? 'Currently recharging. Please try again later.'); ?>"
                                    class="large-text">
                             <p class="description"><?php esc_html_e('Message displayed when the API quota is exceeded or billing issue occurs.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_quota_error_message" data-default="Currently recharging. Please try again later.">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_quota_error_message" data-default="Currently recharging. Please try again later.">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -702,20 +642,20 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Max Tokens', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="number" name="wpaic_settings[max_tokens]" id="wpaic_max_tokens"
+                            <input type="number" name="raplsaich_settings[max_tokens]" id="raplsaich_max_tokens"
                                    value="<?php echo esc_attr($settings['max_tokens'] ?? 1000); ?>"
                                    min="100" max="16384" class="small-text">
-                            <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_max_tokens" data-default="1000">
+                            <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_max_tokens" data-default="1000">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                             <?php
-                            $gpt5_info = WPAIC_OpenAI_Provider::get_gpt5_effective_tokens((int) ($settings['max_tokens'] ?? 1000));
+                            $gpt5_info = RAPLSAICH_OpenAI_Provider::get_gpt5_effective_tokens((int) ($settings['max_tokens'] ?? 1000));
                             ?>
                             <p class="description">
                                 <?php
                                 printf(
                                     /* translators: 1: multiplier value, 2: effective token limit */
-                                    esc_html__('For GPT-5 and reasoning models, this value is automatically multiplied (current filter value: x%1$d, approximate effective limit: %2$s tokens, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the wpaic_gpt5_token_multiplier filter. The actual value may differ if the filter is context-dependent.', 'rapls-ai-chatbot'),
+                                    esc_html__('For GPT-5 and reasoning models, this value is automatically multiplied (current filter value: x%1$d, approximate effective limit: %2$s tokens, recommended: x2-4) to account for internal reasoning tokens. Higher multipliers improve response completeness but increase API costs. Adjust via the raplsaich_gpt5_token_multiplier filter. The actual value may differ if the filter is context-dependent.', 'rapls-ai-chatbot'),
                                     (int) $gpt5_info['multiplier'],
                                     esc_html(number_format_i18n($gpt5_info['tokens']))
                                 );
@@ -726,10 +666,10 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Temperature', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="number" name="wpaic_settings[temperature]" id="wpaic_temperature"
+                            <input type="number" name="raplsaich_settings[temperature]" id="raplsaich_temperature"
                                    value="<?php echo esc_attr($settings['temperature'] ?? 0.7); ?>"
                                    min="0" max="2" step="0.1" class="small-text">
-                            <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_temperature" data-default="0.7">
+                            <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_temperature" data-default="0.7">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description"><?php esc_html_e('Closer to 0 is more deterministic, closer to 2 is more random.', 'rapls-ai-chatbot'); ?></p>
@@ -739,7 +679,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Web Search', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[web_search_enabled]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[web_search_enabled]" value="1"
                                     <?php checked(!empty($settings['web_search_enabled'])); ?>>
                                 <?php esc_html_e('Enable Web Search', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -753,13 +693,13 @@ if (!defined('ABSPATH')) {
 
                 <h3>
                     <label>
-                        <input type="checkbox" id="wpaic_advanced_context_toggle" class="wpaic-advanced-toggle" data-target="wpaic-advanced-context-section">
+                        <input type="checkbox" id="raplsaich_advanced_context_toggle" class="raplsaich-advanced-toggle" data-target="raplsaich-advanced-context-section">
                         <?php esc_html_e('Context Prompts (Advanced)', 'rapls-ai-chatbot'); ?>
                     </label>
                 </h3>
                 <p class="description"><?php esc_html_e('These prompts are appended to the system prompt when knowledge base or site learning data is used. Use {context} as a placeholder for the actual content.', 'rapls-ai-chatbot'); ?></p>
 
-                <div id="wpaic-advanced-context-section" class="wpaic-advanced-section wpaic-advanced-disabled">
+                <div id="raplsaich-advanced-context-section" class="raplsaich-advanced-section raplsaich-advanced-disabled">
                 <table class="form-table">
                     <tr>
                         <th scope="row"><?php esc_html_e('Knowledge Base (Exact Match)', 'rapls-ai-chatbot'); ?></th>
@@ -767,12 +707,12 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_exact_match = "=== STRICT INSTRUCTIONS ===\nAn EXACT MATCH has been found for the user's question.\nYou MUST:\n1. Use ONLY the Answer provided below\n2. DO NOT add any information not in this Answer\n3. DO NOT combine with other sources\n4. Respond naturally using this Answer's content\n\n=== ANSWER TO USE ===\n{context}\n=== END ===";
                             ?>
-                            <textarea name="wpaic_settings[knowledge_exact_prompt]" id="wpaic_knowledge_exact_prompt" rows="8" class="large-text"><?php
+                            <textarea name="raplsaich_settings[knowledge_exact_prompt]" id="raplsaich_knowledge_exact_prompt" rows="8" class="large-text"><?php
                                 echo esc_textarea($settings['knowledge_exact_prompt'] ?? $default_exact_match);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Prompt used when an exact Q&A match is found in the knowledge base.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_knowledge_exact_prompt" data-default="<?php echo esc_attr($default_exact_match); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_knowledge_exact_prompt" data-default="<?php echo esc_attr($default_exact_match); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -784,12 +724,12 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_qa_prompt = "=== CRITICAL INSTRUCTIONS ===\nBelow is a FAQ database. When the user asks a question:\n1. FIRST, look for [BEST MATCH] - this is the most relevant Q&A for the user's question\n2. If [BEST MATCH] exists, use that Answer to respond\n3. If no [BEST MATCH], find the Question that matches or is similar to the user's question\n4. Return the corresponding Answer from the FAQ\n5. DO NOT make up answers - ONLY use the information provided below\n\nIMPORTANT: The Answer after [BEST MATCH] is your primary response source.\n\n=== FAQ DATABASE ===\n{context}\n=== END FAQ DATABASE ===";
                             ?>
-                            <textarea name="wpaic_settings[knowledge_qa_prompt]" id="wpaic_knowledge_qa_prompt" rows="10" class="large-text"><?php
+                            <textarea name="raplsaich_settings[knowledge_qa_prompt]" id="raplsaich_knowledge_qa_prompt" rows="10" class="large-text"><?php
                                 echo esc_textarea($settings['knowledge_qa_prompt'] ?? $default_qa_prompt);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Prompt used when Q&A format knowledge is found (but not exact match).', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_knowledge_qa_prompt" data-default="<?php echo esc_attr($default_qa_prompt); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_knowledge_qa_prompt" data-default="<?php echo esc_attr($default_qa_prompt); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -801,31 +741,31 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_site_prompt = "[IMPORTANT: Reference Information]\nBelow is reference information from this site's knowledge base. You MUST use this as the primary source when answering.\n- Search the ENTIRE reference information thoroughly before concluding that no relevant data exists.\n- The user's wording may differ from the reference text (e.g. \"料金プラン\" vs \"料金体系\", \"price\" vs \"pricing\"). Match by MEANING, not exact keywords.\n- If ANY part of the reference information is relevant to the user's question, use it to answer.\n- Only say you don't have the information if, after careful review, absolutely nothing in the reference is related.\n\n{context}";
                             ?>
-                            <textarea name="wpaic_settings[site_context_prompt]" id="wpaic_site_context_prompt" rows="6" class="large-text"><?php
+                            <textarea name="raplsaich_settings[site_context_prompt]" id="raplsaich_site_context_prompt" rows="6" class="large-text"><?php
                                 echo esc_textarea($settings['site_context_prompt'] ?? $default_site_prompt);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Prompt used when site learning content is provided as context.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_site_context_prompt" data-default="<?php echo esc_attr($default_site_prompt); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_site_context_prompt" data-default="<?php echo esc_attr($default_site_prompt); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
                         </td>
                     </tr>
                 </table>
-                </div><!-- /.wpaic-advanced-context-section -->
+                </div><!-- /.raplsaich-advanced-context-section -->
 
                 <hr style="margin: 30px 0;">
 
                 <h3>
                     <label>
-                        <input type="checkbox" id="wpaic_advanced_feature_toggle" class="wpaic-advanced-toggle" data-target="wpaic-advanced-feature-section">
+                        <input type="checkbox" id="raplsaich_advanced_feature_toggle" class="raplsaich-advanced-toggle" data-target="raplsaich-advanced-feature-section">
                         <?php esc_html_e('Feature Prompts (Advanced)', 'rapls-ai-chatbot'); ?>
                     </label>
                 </h3>
                 <p class="description"><?php esc_html_e('These prompts control how AI behaves for specific features.', 'rapls-ai-chatbot'); ?></p>
 
-                <div id="wpaic-advanced-feature-section" class="wpaic-advanced-section wpaic-advanced-disabled">
+                <div id="raplsaich-advanced-feature-section" class="raplsaich-advanced-section raplsaich-advanced-disabled">
                 <table class="form-table">
                     <tr>
                         <th scope="row"><?php esc_html_e('Regenerate Response Instruction', 'rapls-ai-chatbot'); ?></th>
@@ -833,7 +773,7 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_regenerate_prompt = '[REGENERATION REQUEST #{variation_number}]: The user wants a DIFFERENT answer. FORBIDDEN: Do not start with "{forbidden_start}". {style}. Create a completely new response with different wording. IMPORTANT: Do NOT use headings, labels, or section markers like【】or brackets. Write in natural flowing paragraphs. Complete all sentences fully.';
                             ?>
-                            <textarea name="wpaic_settings[regenerate_prompt]" id="wpaic_regenerate_prompt" rows="4" class="large-text"><?php
+                            <textarea name="raplsaich_settings[regenerate_prompt]" id="raplsaich_regenerate_prompt" rows="4" class="large-text"><?php
                                 echo esc_textarea($settings['regenerate_prompt'] ?? $default_regenerate_prompt);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Instruction appended when user requests response regeneration.', 'rapls-ai-chatbot'); ?></p>
@@ -846,7 +786,7 @@ if (!defined('ABSPATH')) {
                                 </ul>
                             </details>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_regenerate_prompt" data-default="<?php echo esc_attr($default_regenerate_prompt); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_regenerate_prompt" data-default="<?php echo esc_attr($default_regenerate_prompt); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -858,12 +798,12 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_feedback_good = "[LEARNING FROM USER FEEDBACK - GOOD EXAMPLES]\nThe following responses received positive feedback. Use these as examples of good responses:";
                             ?>
-                            <textarea name="wpaic_settings[feedback_good_header]" id="wpaic_feedback_good_header" rows="3" class="large-text"><?php
+                            <textarea name="raplsaich_settings[feedback_good_header]" id="raplsaich_feedback_good_header" rows="3" class="large-text"><?php
                                 echo esc_textarea($settings['feedback_good_header'] ?? $default_feedback_good);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Header text prepended to positive feedback examples sent to AI.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_feedback_good_header" data-default="<?php echo esc_attr($default_feedback_good); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_feedback_good_header" data-default="<?php echo esc_attr($default_feedback_good); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -875,12 +815,12 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_feedback_bad = "[LEARNING FROM USER FEEDBACK - AVOID THESE PATTERNS]\nThe following responses received negative feedback. AVOID responding in similar ways:";
                             ?>
-                            <textarea name="wpaic_settings[feedback_bad_header]" id="wpaic_feedback_bad_header" rows="3" class="large-text"><?php
+                            <textarea name="raplsaich_settings[feedback_bad_header]" id="raplsaich_feedback_bad_header" rows="3" class="large-text"><?php
                                 echo esc_textarea($settings['feedback_bad_header'] ?? $default_feedback_bad);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Header text prepended to negative feedback examples sent to AI.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_feedback_bad_header" data-default="<?php echo esc_attr($default_feedback_bad); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_feedback_bad_header" data-default="<?php echo esc_attr($default_feedback_bad); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
@@ -892,26 +832,26 @@ if (!defined('ABSPATH')) {
                             <?php
                             $default_summary_prompt = 'Please summarize the following conversation in 2-3 sentences, highlighting the main topics discussed and any conclusions reached:';
                             ?>
-                            <textarea name="wpaic_settings[summary_prompt]" id="wpaic_summary_prompt" rows="3" class="large-text"><?php
+                            <textarea name="raplsaich_settings[summary_prompt]" id="raplsaich_summary_prompt" rows="3" class="large-text"><?php
                                 echo esc_textarea($settings['summary_prompt'] ?? $default_summary_prompt);
                             ?></textarea>
                             <p class="description"><?php esc_html_e('Prompt used to generate conversation summaries.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_summary_prompt" data-default="<?php echo esc_attr($default_summary_prompt); ?>">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_summary_prompt" data-default="<?php echo esc_attr($default_summary_prompt); ?>">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
                         </td>
                     </tr>
                 </table>
-                </div><!-- /.wpaic-advanced-feature-section -->
+                </div><!-- /.raplsaich-advanced-feature-section -->
             </div>
 
             <!-- Display Settings -->
             <div id="tab-display" class="tab-content">
-                <div class="wpaic-tab-header">
+                <div class="raplsaich-tab-header">
                     <h2><?php esc_html_e('Display Settings', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-display">
+                    <button type="button" class="raplsaich-reset-tab-btn" data-tab="tab-display">
                         <span class="dashicons dashicons-image-rotate"></span>
                         <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
                     </button>
@@ -921,7 +861,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Widget Theme', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('Select the appearance theme for the chat widget. Pro version offers more refined design themes.', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="raplsaich-tooltip" data-tooltip="<?php esc_attr_e('Select the appearance theme for the chat widget. Pro version offers more refined design themes.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <?php
@@ -947,35 +887,37 @@ if (!defined('ABSPATH')) {
                                 'elegant' => __('Elegant', 'rapls-ai-chatbot'),
                             ];
                             ?>
-                            <div class="wpaic-theme-selector">
-                                <p class="wpaic-theme-group-label"><?php esc_html_e('Free Themes', 'rapls-ai-chatbot'); ?></p>
-                                <div class="wpaic-theme-options">
+                            <div class="raplsaich-theme-selector">
+                                <p class="raplsaich-theme-group-label"><?php esc_html_e('Free Themes', 'rapls-ai-chatbot'); ?></p>
+                                <div class="raplsaich-theme-options">
                                     <?php foreach ($free_themes as $theme_key => $theme_name): ?>
-                                        <label class="wpaic-theme-option <?php echo esc_attr($current_theme === $theme_key ? 'selected' : ''); ?>">
-                                            <input type="radio" name="wpaic_settings[widget_theme]" value="<?php echo esc_attr($theme_key); ?>"
+                                        <label class="raplsaich-theme-option <?php echo esc_attr($current_theme === $theme_key ? 'selected' : ''); ?>">
+                                            <input type="radio" name="raplsaich_settings[widget_theme]" value="<?php echo esc_attr($theme_key); ?>"
                                                 <?php checked($current_theme, $theme_key); ?>>
-                                            <span class="wpaic-theme-preview wpaic-theme-preview-<?php echo esc_attr($theme_key); ?>"></span>
-                                            <span class="wpaic-theme-name"><?php echo esc_html($theme_name); ?></span>
+                                            <span class="raplsaich-theme-preview raplsaich-theme-preview-<?php echo esc_attr($theme_key); ?>"></span>
+                                            <span class="raplsaich-theme-name"><?php echo esc_html($theme_name); ?></span>
                                         </label>
                                     <?php endforeach; ?>
                                 </div>
 
-                                <p class="wpaic-theme-group-label"><?php esc_html_e('Pro Themes', 'rapls-ai-chatbot'); ?> <?php if (!$is_pro_active): ?><span class="wpaic-pro-badge-small">PRO</span><?php endif; ?></p>
-                                <div class="wpaic-theme-options <?php echo esc_attr(!$is_pro_active ? 'wpaic-themes-locked' : ''); ?>">
+                                <?php if ($is_pro_active): ?>
+                                <p class="raplsaich-theme-group-label"><?php esc_html_e('Pro Themes', 'rapls-ai-chatbot'); ?></p>
+                                <div class="raplsaich-theme-options">
                                     <?php foreach ($pro_themes as $theme_key => $theme_name): ?>
-                                        <label class="wpaic-theme-option <?php echo esc_attr($current_theme === $theme_key ? 'selected' : ''); ?> <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>">
-                                            <input type="radio" name="wpaic_settings[widget_theme]" value="<?php echo esc_attr($theme_key); ?>"
-                                                <?php checked($current_theme, $theme_key); ?>
-                                                <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
-                                            <span class="wpaic-theme-preview wpaic-theme-preview-<?php echo esc_attr($theme_key); ?>"></span>
-                                            <span class="wpaic-theme-name"><?php echo esc_html($theme_name); ?></span>
-                                            <?php if (!$is_pro_active): ?>
-                                            <span class="wpaic-theme-lock"><span class="dashicons dashicons-lock"></span></span>
-                                            <?php endif; ?>
+                                        <label class="raplsaich-theme-option <?php echo esc_attr($current_theme === $theme_key ? 'selected' : ''); ?>">
+                                            <input type="radio" name="raplsaich_settings[widget_theme]" value="<?php echo esc_attr($theme_key); ?>"
+                                                <?php checked($current_theme, $theme_key); ?>>
+                                            <span class="raplsaich-theme-preview raplsaich-theme-preview-<?php echo esc_attr($theme_key); ?>"></span>
+                                            <span class="raplsaich-theme-name"><?php echo esc_html($theme_name); ?></span>
                                         </label>
                                     <?php endforeach; ?>
                                 </div>
-                                <?php if (!$is_pro_active): ?>
+                                <?php else: ?>
+                                <p class="raplsaich-theme-group-label"><?php esc_html_e('Pro Themes', 'rapls-ai-chatbot'); ?> <span class="raplsaich-pro-badge-small">PRO</span></p>
+                                <p class="description">
+                                    <?php esc_html_e('10 additional themes available:', 'rapls-ai-chatbot'); ?>
+                                    <?php echo esc_html(implode(', ', $pro_themes)); ?>
+                                </p>
                                 <p class="description">
                                     <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank"><?php esc_html_e('Upgrade to Pro to unlock all themes', 'rapls-ai-chatbot'); ?></a>
                                 </p>
@@ -987,76 +929,63 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Badge Position', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php $badge_position = $settings['badge_position'] ?? 'bottom-right'; ?>
-                            <div class="wpaic-badge-position-selector">
-                                <div class="wpaic-badge-position-grid">
-                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'top-left' ? ' active' : ''; ?>">
-                                        <input type="radio" name="wpaic_settings[badge_position]" value="top-left" <?php checked($badge_position, 'top-left'); ?>>
-                                        <span class="wpaic-badge-pos-box">
-                                            <span class="wpaic-badge-pos-dot" style="top: 4px; left: 4px;"></span>
+                            <div class="raplsaich-badge-position-selector">
+                                <div class="raplsaich-badge-position-grid">
+                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'top-left' ? ' active' : ''; ?>">
+                                        <input type="radio" name="raplsaich_settings[badge_position]" value="top-left" <?php checked($badge_position, 'top-left'); ?>>
+                                        <span class="raplsaich-badge-pos-box">
+                                            <span class="raplsaich-badge-pos-dot" style="top: 4px; left: 4px;"></span>
                                         </span>
-                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Top Left', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-badge-pos-label"><?php esc_html_e('Top Left', 'rapls-ai-chatbot'); ?></span>
                                     </label>
-                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'top-right' ? ' active' : ''; ?>">
-                                        <input type="radio" name="wpaic_settings[badge_position]" value="top-right" <?php checked($badge_position, 'top-right'); ?>>
-                                        <span class="wpaic-badge-pos-box">
-                                            <span class="wpaic-badge-pos-dot" style="top: 4px; right: 4px;"></span>
+                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'top-right' ? ' active' : ''; ?>">
+                                        <input type="radio" name="raplsaich_settings[badge_position]" value="top-right" <?php checked($badge_position, 'top-right'); ?>>
+                                        <span class="raplsaich-badge-pos-box">
+                                            <span class="raplsaich-badge-pos-dot" style="top: 4px; right: 4px;"></span>
                                         </span>
-                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Top Right', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-badge-pos-label"><?php esc_html_e('Top Right', 'rapls-ai-chatbot'); ?></span>
                                     </label>
-                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'bottom-left' ? ' active' : ''; ?>">
-                                        <input type="radio" name="wpaic_settings[badge_position]" value="bottom-left" <?php checked($badge_position, 'bottom-left'); ?>>
-                                        <span class="wpaic-badge-pos-box">
-                                            <span class="wpaic-badge-pos-dot" style="bottom: 4px; left: 4px;"></span>
+                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'bottom-left' ? ' active' : ''; ?>">
+                                        <input type="radio" name="raplsaich_settings[badge_position]" value="bottom-left" <?php checked($badge_position, 'bottom-left'); ?>>
+                                        <span class="raplsaich-badge-pos-box">
+                                            <span class="raplsaich-badge-pos-dot" style="bottom: 4px; left: 4px;"></span>
                                         </span>
-                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Bottom Left', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-badge-pos-label"><?php esc_html_e('Bottom Left', 'rapls-ai-chatbot'); ?></span>
                                     </label>
-                                    <label class="wpaic-badge-pos-option<?php echo $badge_position === 'bottom-right' ? ' active' : ''; ?>">
-                                        <input type="radio" name="wpaic_settings[badge_position]" value="bottom-right" <?php checked($badge_position, 'bottom-right'); ?>>
-                                        <span class="wpaic-badge-pos-box">
-                                            <span class="wpaic-badge-pos-dot" style="bottom: 4px; right: 4px;"></span>
+                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'bottom-right' ? ' active' : ''; ?>">
+                                        <input type="radio" name="raplsaich_settings[badge_position]" value="bottom-right" <?php checked($badge_position, 'bottom-right'); ?>>
+                                        <span class="raplsaich-badge-pos-box">
+                                            <span class="raplsaich-badge-pos-dot" style="bottom: 4px; right: 4px;"></span>
                                         </span>
-                                        <span class="wpaic-badge-pos-label"><?php esc_html_e('Bottom Right', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="raplsaich-badge-pos-label"><?php esc_html_e('Bottom Right', 'rapls-ai-chatbot'); ?></span>
                                     </label>
                                 </div>
-                                <div class="wpaic-badge-margin-group" style="margin-top: 12px;">
-                                    <span class="wpaic-badge-margin-label"><?php esc_html_e('Margin', 'rapls-ai-chatbot'); ?>:</span>
-                                    <label id="wpaic_margin_h_wrap">
-                                        <span id="wpaic_margin_h_label"><?php echo esc_html(in_array($badge_position, ['bottom-left', 'top-left']) ? __('Left:', 'rapls-ai-chatbot') : __('Right:', 'rapls-ai-chatbot')); ?></span>
-                                        <input type="number" name="wpaic_settings[badge_margin_right]" id="wpaic_badge_margin_right"
+                                <div class="raplsaich-badge-margin-group" style="margin-top: 12px;">
+                                    <span class="raplsaich-badge-margin-label"><?php esc_html_e('Margin', 'rapls-ai-chatbot'); ?>:</span>
+                                    <label id="raplsaich_margin_h_wrap">
+                                        <span id="raplsaich_margin_h_label"><?php echo esc_html(in_array($badge_position, ['bottom-left', 'top-left']) ? __('Left:', 'rapls-ai-chatbot') : __('Right:', 'rapls-ai-chatbot')); ?></span>
+                                        <input type="number" name="raplsaich_settings[badge_margin_right]" id="raplsaich_badge_margin_right"
                                                value="<?php echo esc_attr($settings['badge_margin_right'] ?? 20); ?>"
                                                min="0" max="200" style="width: 70px;"> px
                                     </label>
-                                    <label id="wpaic_margin_v_wrap">
-                                        <span id="wpaic_margin_v_label"><?php echo esc_html(in_array($badge_position, ['top-right', 'top-left']) ? __('Top:', 'rapls-ai-chatbot') : __('Bottom:', 'rapls-ai-chatbot')); ?></span>
-                                        <input type="number" name="wpaic_settings[badge_margin_bottom]" id="wpaic_badge_margin_bottom"
+                                    <label id="raplsaich_margin_v_wrap">
+                                        <span id="raplsaich_margin_v_label"><?php echo esc_html(in_array($badge_position, ['top-right', 'top-left']) ? __('Top:', 'rapls-ai-chatbot') : __('Bottom:', 'rapls-ai-chatbot')); ?></span>
+                                        <input type="number" name="raplsaich_settings[badge_margin_bottom]" id="raplsaich_badge_margin_bottom"
                                                value="<?php echo esc_attr($settings['badge_margin_bottom'] ?? 20); ?>"
                                                min="0" max="200" style="width: 70px;"> px
                                     </label>
-                                    <button type="button" class="button button-small" onclick="jQuery('#wpaic_badge_margin_right').val(20); jQuery('#wpaic_badge_margin_bottom').val(20); return false;">
+                                    <button type="button" class="button button-small" onclick="jQuery('#raplsaich_badge_margin_right').val(20); jQuery('#raplsaich_badge_margin_bottom').val(20); return false;">
                                         <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                                     </button>
                                 </div>
                             </div>
-                            <style>
-                                .wpaic-badge-position-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 260px; }
-                                .wpaic-badge-pos-option { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-                                .wpaic-badge-pos-option input[type="radio"] { display: none; }
-                                .wpaic-badge-pos-box { display: block; width: 80px; height: 50px; border: 2px solid #ddd; border-radius: 6px; background: #f9f9f9; position: relative; transition: border-color 0.2s, background 0.2s; }
-                                .wpaic-badge-pos-option:hover .wpaic-badge-pos-box { border-color: #999; }
-                                .wpaic-badge-pos-option.active .wpaic-badge-pos-box { border-color: #007bff; background: #f0f6ff; }
-                                .wpaic-badge-pos-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #999; transition: background 0.2s; }
-                                .wpaic-badge-pos-option.active .wpaic-badge-pos-dot { background: #007bff; }
-                                .wpaic-badge-pos-label { font-size: 12px; margin-top: 4px; color: #666; }
-                                .wpaic-badge-pos-option.active .wpaic-badge-pos-label { color: #007bff; font-weight: 600; }
-                                .wpaic-badge-margin-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-                                .wpaic-badge-margin-label { font-weight: 600; }
-                            </style>
+                            <!-- Badge position styles loaded via wp_enqueue_style('raplsaich-badge-position') -->
                         </td>
                     </tr>
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Badge Icon', 'rapls-ai-chatbot'); ?>
-                            <?php if (!$is_pro_active): ?><span class="wpaic-pro-badge-small">PRO</span><?php endif; ?>
+                            <?php if (!$is_pro_active): ?><span class="raplsaich-pro-badge-small">PRO</span><?php endif; ?>
                         </th>
                         <td>
                             <?php
@@ -1066,14 +995,14 @@ if (!defined('ABSPATH')) {
                             $badge_icon_image = $badge_pro_settings['badge_icon_image'] ?? '';
                             $badge_icon_emoji = $badge_pro_settings['badge_icon_emoji'] ?? '';
                             ?>
-                            <div class="wpaic-badge-icon-preview" style="display: flex; align-items: center; gap: 15px;">
+                            <div class="raplsaich-badge-icon-preview" style="display: flex; align-items: center; gap: 15px;">
                                 <div style="width: 60px; height: 60px; border-radius: 50%; background: <?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-shrink: 0; cursor: pointer;">
                                     <?php if ($badge_icon_type === 'preset' && !empty($badge_icon_preset)) : ?>
                                         <?php
                                         // Force SVG to 28x28 by adding width/height attributes
-                                        $preview_svg = wpaic_get_badge_preset_svg($badge_icon_preset);
+                                        $preview_svg = raplsaich_get_badge_preset_svg($badge_icon_preset);
                                         $preview_svg = str_replace('<svg ', '<svg width="28" height="28" ', $preview_svg);
-                                        $svg_tags = wpaic_get_svg_allowed_tags();
+                                        $svg_tags = raplsaich_get_svg_allowed_tags();
                                         $svg_tags['svg']['width'] = true;
                                         $svg_tags['svg']['height'] = true;
                                         echo wp_kses($preview_svg, $svg_tags);
@@ -1088,11 +1017,11 @@ if (!defined('ABSPATH')) {
                                 </div>
                                 <div>
                                     <?php if ($is_pro_active) : ?>
-                                        <span class="description"><span class="wpaic-pro-menu-badge wpaic-pro-badge-active" style="font-size: 10px; padding: 1px 5px; vertical-align: middle;">PRO</span> <?php esc_html_e('Configured in Pro Settings > Badge Icon tab.', 'rapls-ai-chatbot'); ?></span>
+                                        <span class="description"><span class="raplsaich-pro-menu-badge raplsaich-pro-badge-active" style="font-size: 10px; padding: 1px 5px; vertical-align: middle;">PRO</span> <?php esc_html_e('Configured in Pro Settings > Badge Icon tab.', 'rapls-ai-chatbot'); ?></span>
                                     <?php else : ?>
-                                        <span class="description" style="color: #999;">
-                                            <span class="dashicons dashicons-lock" style="font-size: 14px; width: 14px; height: 14px; vertical-align: text-bottom;"></span>
-                                            <?php esc_html_e('Upgrade to Pro to customize the badge icon with presets, images, or emoji.', 'rapls-ai-chatbot'); ?>
+                                        <span class="description">
+                                            <span class="dashicons dashicons-star-filled" style="font-size: 14px; width: 14px; height: 14px; vertical-align: text-bottom; color: #667eea;"></span>
+                                            <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank"><?php esc_html_e('Upgrade to Pro to customize the badge icon with presets, images, or emoji.', 'rapls-ai-chatbot'); ?></a>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -1102,10 +1031,10 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Primary Color', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="text" name="wpaic_settings[primary_color]" id="wpaic_primary_color"
+                            <input type="text" name="raplsaich_settings[primary_color]" id="raplsaich_primary_color"
                                    value="<?php echo esc_attr($settings['primary_color'] ?? '#007bff'); ?>"
-                                   class="wpaic-color-field" data-default-color="#007bff">
-                            <button type="button" class="button button-small wpaic-reset-field" data-target="wpaic_primary_color" data-default="#007bff">
+                                   class="raplsaich-color-field" data-default-color="#007bff">
+                            <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_primary_color" data-default="#007bff">
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description"><?php esc_html_e('This color is automatically set when you select a theme.', 'rapls-ai-chatbot'); ?></p>
@@ -1114,26 +1043,29 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Dark Mode', 'rapls-ai-chatbot'); ?>
-                            <?php if (!$is_pro_active): ?><span class="wpaic-pro-badge-small">PRO</span><?php endif; ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('When dark mode is enabled, the chat widget displays in dark colors regardless of the selected theme.', 'rapls-ai-chatbot'); ?>">?</span>
+                            <?php if (!$is_pro_active): ?><span class="raplsaich-pro-badge-small">PRO</span><?php endif; ?>
+                            <span class="raplsaich-tooltip" data-tooltip="<?php esc_attr_e('When dark mode is enabled, the chat widget displays in dark colors regardless of the selected theme.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
-                            <label class="<?php echo esc_attr(!$is_pro_active ? 'wpaic-pro-locked' : ''); ?>">
-                                <input type="checkbox" name="wpaic_settings[dark_mode]" value="1"
-                                    <?php checked($settings['dark_mode'] ?? false); ?>
-                                    <?php echo esc_attr(!$is_pro_active ? 'disabled' : ''); ?>>
+                            <?php if ($is_pro_active): ?>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[dark_mode]" value="1"
+                                    <?php checked($settings['dark_mode'] ?? false); ?>>
                                 <?php esc_html_e('Enable dark mode for the chatbot', 'rapls-ai-chatbot'); ?>
-                                <?php if (!$is_pro_active): ?>
-                                <span class="dashicons dashicons-lock" style="color: #999; margin-left: 5px;"></span>
-                                <?php endif; ?>
                             </label>
+                            <?php else: ?>
+                            <p class="description">
+                                <span class="dashicons dashicons-star-filled" style="color: #667eea; vertical-align: text-bottom;"></span>
+                                <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank"><?php esc_html_e('Upgrade to Pro to enable dark mode for the chatbot.', 'rapls-ai-chatbot'); ?></a>
+                            </p>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><?php esc_html_e('Mobile Display', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[show_on_mobile]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[show_on_mobile]" value="1"
                                     <?php checked($settings['show_on_mobile'] ?? true); ?>>
                                 <?php esc_html_e('Show on mobile devices', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1143,7 +1075,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Markdown Rendering', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[markdown_enabled]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[markdown_enabled]" value="1"
                                     <?php checked($settings['markdown_enabled'] ?? true); ?>>
                                 <?php
                                 /* translators: Markdown is a text formatting syntax used in AI responses */
@@ -1156,27 +1088,27 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Page Type Display', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('Select page types where the chatbot is displayed. Unchecking a type hides the chatbot on those pages.', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="raplsaich-tooltip" data-tooltip="<?php esc_attr_e('Select page types where the chatbot is displayed. Unchecking a type hides the chatbot on those pages.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
                             <fieldset>
                                 <label style="display: block; margin-bottom: 6px;">
-                                    <input type="checkbox" name="wpaic_settings[badge_show_on_home]" value="1"
+                                    <input type="checkbox" name="raplsaich_settings[badge_show_on_home]" value="1"
                                         <?php checked($settings['badge_show_on_home'] ?? true); ?>>
                                     <?php esc_html_e('Homepage / Front Page', 'rapls-ai-chatbot'); ?>
                                 </label>
                                 <label style="display: block; margin-bottom: 6px;">
-                                    <input type="checkbox" name="wpaic_settings[badge_show_on_posts]" value="1"
+                                    <input type="checkbox" name="raplsaich_settings[badge_show_on_posts]" value="1"
                                         <?php checked($settings['badge_show_on_posts'] ?? true); ?>>
                                     <?php esc_html_e('Single Posts', 'rapls-ai-chatbot'); ?>
                                 </label>
                                 <label style="display: block; margin-bottom: 6px;">
-                                    <input type="checkbox" name="wpaic_settings[badge_show_on_pages]" value="1"
+                                    <input type="checkbox" name="raplsaich_settings[badge_show_on_pages]" value="1"
                                         <?php checked($settings['badge_show_on_pages'] ?? true); ?>>
                                     <?php esc_html_e('Pages', 'rapls-ai-chatbot'); ?>
                                 </label>
                                 <label style="display: block; margin-bottom: 6px;">
-                                    <input type="checkbox" name="wpaic_settings[badge_show_on_archives]" value="1"
+                                    <input type="checkbox" name="raplsaich_settings[badge_show_on_archives]" value="1"
                                         <?php checked($settings['badge_show_on_archives'] ?? true); ?>>
                                     <?php esc_html_e('Archives (Category, Tag, Date, Author)', 'rapls-ai-chatbot'); ?>
                                 </label>
@@ -1187,10 +1119,10 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Include Only (IDs)', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('Enter IDs to show the chatbot only on those pages/posts. When empty, page type settings are used.', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="raplsaich-tooltip" data-tooltip="<?php esc_attr_e('Enter IDs to show the chatbot only on those pages/posts. When empty, page type settings are used.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
-                            <input type="text" name="wpaic_settings[badge_include_ids]"
+                            <input type="text" name="raplsaich_settings[badge_include_ids]"
                                    value="<?php echo esc_attr($settings['badge_include_ids'] ?? ''); ?>"
                                    class="regular-text" placeholder="<?php esc_attr_e('e.g. 10, 25, 142', 'rapls-ai-chatbot'); ?>">
                             <p class="description"><?php esc_html_e('Comma-separated post/page IDs. If set, the chatbot will ONLY be displayed on these pages (overrides page type settings above).', 'rapls-ai-chatbot'); ?></p>
@@ -1199,10 +1131,10 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row">
                             <?php esc_html_e('Exclude (IDs)', 'rapls-ai-chatbot'); ?>
-                            <span class="wpaic-tooltip" data-tooltip="<?php esc_attr_e('The chatbot will be hidden on pages/posts with the specified IDs.', 'rapls-ai-chatbot'); ?>">?</span>
+                            <span class="raplsaich-tooltip" data-tooltip="<?php esc_attr_e('The chatbot will be hidden on pages/posts with the specified IDs.', 'rapls-ai-chatbot'); ?>">?</span>
                         </th>
                         <td>
-                            <input type="text" name="wpaic_settings[badge_exclude_ids]"
+                            <input type="text" name="raplsaich_settings[badge_exclude_ids]"
                                    value="<?php echo esc_attr($settings['badge_exclude_ids'] ?? ''); ?>"
                                    class="regular-text" placeholder="<?php esc_attr_e('e.g. 5, 30, 200', 'rapls-ai-chatbot'); ?>">
                             <p class="description"><?php esc_html_e('Comma-separated post/page IDs. The chatbot will NOT be displayed on these pages.', 'rapls-ai-chatbot'); ?></p>
@@ -1215,10 +1147,10 @@ if (!defined('ABSPATH')) {
                             $excluded_pages = $settings['excluded_pages'] ?? [];
                             $pages = get_pages(['post_status' => 'publish', 'sort_column' => 'post_title']);
                             ?>
-                            <div class="wpaic-page-exclusion">
+                            <div class="raplsaich-page-exclusion">
                                 <!-- Empty value to ensure the field is submitted even when no pages are selected -->
-                                <input type="hidden" name="wpaic_settings[excluded_pages_submitted]" value="1">
-                                <select id="wpaic-page-selector" style="min-width: 300px;">
+                                <input type="hidden" name="raplsaich_settings[excluded_pages_submitted]" value="1">
+                                <select id="raplsaich-page-selector" style="min-width: 300px;">
                                     <option value=""><?php esc_html_e('-- Select page to exclude --', 'rapls-ai-chatbot'); ?></option>
                                     <?php foreach ($pages as $page): ?>
                                         <?php if (!in_array($page->ID, $excluded_pages, true)): ?>
@@ -1226,17 +1158,17 @@ if (!defined('ABSPATH')) {
                                         <?php endif; ?>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="button" id="wpaic-add-excluded-page"><?php esc_html_e('Add', 'rapls-ai-chatbot'); ?></button>
+                                <button type="button" class="button" id="raplsaich-add-excluded-page"><?php esc_html_e('Add', 'rapls-ai-chatbot'); ?></button>
 
-                                <div id="wpaic-excluded-pages-list" style="margin-top: 15px;">
+                                <div id="raplsaich-excluded-pages-list" style="margin-top: 15px;">
                                     <?php if (!empty($excluded_pages)): ?>
                                         <?php foreach ($excluded_pages as $page_id): ?>
                                             <?php $page_title = get_the_title($page_id); ?>
                                             <?php if ($page_title): ?>
-                                                <div class="wpaic-excluded-page-item" data-page-id="<?php echo esc_attr($page_id); ?>" style="display: inline-flex; align-items: center; background: #f0f0f1; border-radius: 4px; padding: 5px 10px; margin: 3px 5px 3px 0;">
+                                                <div class="raplsaich-excluded-page-item" data-page-id="<?php echo esc_attr($page_id); ?>" style="display: inline-flex; align-items: center; background: #f0f0f1; border-radius: 4px; padding: 5px 10px; margin: 3px 5px 3px 0;">
                                                     <span><?php echo esc_html($page_title); ?></span>
-                                                    <input type="hidden" name="wpaic_settings[excluded_pages][]" value="<?php echo esc_attr($page_id); ?>">
-                                                    <button type="button" class="wpaic-remove-excluded-page" style="background: none; border: none; cursor: pointer; color: #a00; margin-left: 8px; font-size: 16px;">&times;</button>
+                                                    <input type="hidden" name="raplsaich_settings[excluded_pages][]" value="<?php echo esc_attr($page_id); ?>">
+                                                    <button type="button" class="raplsaich-remove-excluded-page" style="background: none; border: none; cursor: pointer; color: #a00; margin-left: 8px; font-size: 16px;">&times;</button>
                                                 </div>
                                             <?php endif; ?>
                                         <?php endforeach; ?>
@@ -1255,7 +1187,7 @@ if (!defined('ABSPATH')) {
                 </p>
                 <?php
                 $embed_site_url = esc_url(home_url());
-                $embed_plugin_url = esc_url(WPAIC_PLUGIN_URL . 'assets/js/embed-loader.js');
+                $embed_plugin_url = esc_url(RAPLSAICH_PLUGIN_URL . 'assets/js/embed-loader.js');
                 $embed_primary_color = esc_attr($settings['primary_color'] ?? '#007bff');
                 // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript -- embed snippet for external sites, not enqueued here
                 $embed_script_code = '<script src="' . $embed_plugin_url . '"' . "\n"
@@ -1263,7 +1195,7 @@ if (!defined('ABSPATH')) {
                     . '        data-color="' . $embed_primary_color . '"' . "\n"
                     . '        data-position="right"' . "\n"
                     . '        async></script>';
-                $embed_iframe_code = '<iframe src="' . $embed_site_url . '/?wpaic_embed=1"' . "\n"
+                $embed_iframe_code = '<iframe src="' . $embed_site_url . '/?raplsaich_embed=1"' . "\n"
                     . '        style="width:400px;height:600px;border:none;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,.15)"' . "\n"
                     . '        allow="clipboard-write"' . "\n"
                     . '        title="Chat"></iframe>';
@@ -1273,8 +1205,8 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Script Embed (Recommended)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <div style="position:relative;">
-                                <textarea id="wpaic-embed-script-code" class="large-text code" rows="5" readonly onclick="this.select()"><?php echo esc_textarea($embed_script_code); ?></textarea>
-                                <button type="button" class="button button-small wpaic-copy-embed" data-target="wpaic-embed-script-code" style="margin-top:5px;">
+                                <textarea id="raplsaich-embed-script-code" class="large-text code" rows="5" readonly onclick="this.select()"><?php echo esc_textarea($embed_script_code); ?></textarea>
+                                <button type="button" class="button button-small raplsaich-copy-embed" data-target="raplsaich-embed-script-code" style="margin-top:5px;">
                                     <?php esc_html_e('Copy', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </div>
@@ -1285,8 +1217,8 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Iframe Embed', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <div style="position:relative;">
-                                <textarea id="wpaic-embed-iframe-code" class="large-text code" rows="4" readonly onclick="this.select()"><?php echo esc_textarea($embed_iframe_code); ?></textarea>
-                                <button type="button" class="button button-small wpaic-copy-embed" data-target="wpaic-embed-iframe-code" style="margin-top:5px;">
+                                <textarea id="raplsaich-embed-iframe-code" class="large-text code" rows="4" readonly onclick="this.select()"><?php echo esc_textarea($embed_iframe_code); ?></textarea>
+                                <button type="button" class="button button-small raplsaich-copy-embed" data-target="raplsaich-embed-iframe-code" style="margin-top:5px;">
                                     <?php esc_html_e('Copy', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </div>
@@ -1298,9 +1230,9 @@ if (!defined('ABSPATH')) {
 
             <!-- Security Settings -->
             <div id="tab-security" class="tab-content">
-                <div class="wpaic-tab-header">
+                <div class="raplsaich-tab-header">
                     <h2><?php esc_html_e('Security Settings', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-security">
+                    <button type="button" class="raplsaich-reset-tab-btn" data-tab="tab-security">
                         <span class="dashicons dashicons-image-rotate"></span>
                         <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
                     </button>
@@ -1317,7 +1249,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Enable reCAPTCHA', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[recaptcha_enabled]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[recaptcha_enabled]" value="1"
                                     <?php checked($settings['recaptcha_enabled'] ?? false); ?>>
                                 <?php esc_html_e('Protect with reCAPTCHA v3', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1326,7 +1258,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Site Key', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="text" name="wpaic_settings[recaptcha_site_key]"
+                            <input type="text" name="raplsaich_settings[recaptcha_site_key]"
                                    value="<?php echo esc_attr($settings['recaptcha_site_key'] ?? ''); ?>"
                                    class="regular-text" autocomplete="off">
                             <p class="description"><?php esc_html_e('reCAPTCHA v3 site key', 'rapls-ai-chatbot'); ?></p>
@@ -1335,7 +1267,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Secret Key', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="password" name="wpaic_settings[recaptcha_secret_key]"
+                            <input type="password" name="raplsaich_settings[recaptcha_secret_key]"
                                    value=""
                                    class="regular-text" autocomplete="off"
                                    placeholder="<?php echo esc_attr(!empty($settings['recaptcha_secret_key']) ? '••••••••' : ''); ?>">
@@ -1350,7 +1282,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Score Threshold', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="number" name="wpaic_settings[recaptcha_threshold]"
+                            <input type="number" name="raplsaich_settings[recaptcha_threshold]"
                                    value="<?php echo esc_attr($settings['recaptcha_threshold'] ?? 0.5); ?>"
                                    min="0.1" max="1" step="0.1" class="small-text">
                             <p class="description"><?php esc_html_e('0.1-1.0 (default: 0.5). Requests below this score will be blocked.', 'rapls-ai-chatbot'); ?></p>
@@ -1360,7 +1292,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Use Existing reCAPTCHA', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[recaptcha_use_existing]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[recaptcha_use_existing]" value="1"
                                     <?php checked($settings['recaptcha_use_existing'] ?? false); ?>>
                                 <?php esc_html_e('Use existing reCAPTCHA on the page', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1379,7 +1311,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Consent Strict Mode', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[consent_strict_mode]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[consent_strict_mode]" value="1"
                                     <?php checked($settings['consent_strict_mode'] ?? false); ?>>
                                 <?php esc_html_e('Require WP Consent API for localStorage and conversion tracking (GDPR strict)', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1396,14 +1328,14 @@ if (!defined('ABSPATH')) {
                         <td>
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <div>
-                                    <input type="number" name="wpaic_settings[rate_limit]"
+                                    <input type="number" name="raplsaich_settings[rate_limit]"
                                            value="<?php echo esc_attr($settings['rate_limit'] ?? 20); ?>"
                                            min="0" class="small-text">
                                     <span><?php esc_html_e('requests', 'rapls-ai-chatbot'); ?></span>
                                 </div>
                                 <span>/</span>
                                 <div>
-                                    <select name="wpaic_settings[rate_limit_window]">
+                                    <select name="raplsaich_settings[rate_limit_window]">
                                         <option value="60" <?php selected($settings['rate_limit_window'] ?? 3600, 60); ?>><?php esc_html_e('1 minute', 'rapls-ai-chatbot'); ?></option>
                                         <option value="300" <?php selected($settings['rate_limit_window'] ?? 3600, 300); ?>><?php esc_html_e('5 minutes', 'rapls-ai-chatbot'); ?></option>
                                         <option value="600" <?php selected($settings['rate_limit_window'] ?? 3600, 600); ?>><?php esc_html_e('10 minutes', 'rapls-ai-chatbot'); ?></option>
@@ -1423,7 +1355,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Cloudflare Integration', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[trust_cloudflare_ip]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[trust_cloudflare_ip]" value="1"
                                     <?php checked($settings['trust_cloudflare_ip'] ?? false); ?>>
                                 <?php esc_html_e('Trust Cloudflare CF-Connecting-IP header', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1432,7 +1364,7 @@ if (!defined('ABSPATH')) {
 
                             <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #dcdcde;">
                             <label>
-                                <input type="checkbox" name="wpaic_settings[trust_proxy_ip]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[trust_proxy_ip]" value="1"
                                     <?php checked($settings['trust_proxy_ip'] ?? false); ?>>
                                 <?php esc_html_e('Trust reverse proxy X-Forwarded-For header', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1448,11 +1380,11 @@ if (!defined('ABSPATH')) {
                                         . '<ol style="margin: 0 0 12px 20px; padding: 0;">'
                                         . '<li>' . __('Confirm <code>REMOTE_ADDR</code> shows your proxy IP (not the visitor IP) before enabling', 'rapls-ai-chatbot') . '</li>'
                                         . '<li>' . __('For Cloudflare: enable "Trust Cloudflare" above (uses CF-Connecting-IP, no CIDR needed)', 'rapls-ai-chatbot') . '</li>'
-                                        . '<li>' . __('For other proxies: add their IPs/CIDRs via the <code>wpaic_trusted_proxies</code> filter', 'rapls-ai-chatbot') . '</li>'
+                                        . '<li>' . __('For other proxies: add their IPs/CIDRs via the <code>raplsaich_trusted_proxies</code> filter', 'rapls-ai-chatbot') . '</li>'
                                         . '<li>' . __('Verify in Security Diagnostics below that client IPs are detected correctly', 'rapls-ai-chatbot') . '</li>'
                                         . '</ol>'
                                         . '<p style="margin: 0 0 10px;"><strong>' . __('Filter usage', 'rapls-ai-chatbot') . '</strong></p>'
-                                        . '<p style="margin: 0 0 6px;">' . __('Add trusted proxy IPs or CIDR ranges via <code>wpaic_trusted_proxies</code> filter:', 'rapls-ai-chatbot') . '</p>'
+                                        . '<p style="margin: 0 0 6px;">' . __('Add trusted proxy IPs or CIDR ranges via <code>raplsaich_trusted_proxies</code> filter:', 'rapls-ai-chatbot') . '</p>'
                                         . '<table style="font-size: 12px; border-collapse: collapse; margin: 0 0 12px;">'
                                         . '<tr><td style="padding: 2px 12px 2px 0; font-weight: 600;">Cloudflare</td><td style="padding: 2px 0;"><code>172.64.0.0/13, 104.16.0.0/13, 173.245.48.0/20</code> …</td></tr>'
                                         . '<tr><td style="padding: 2px 12px 2px 0; font-weight: 600;">AWS ALB</td><td style="padding: 2px 0;">' . __('Your VPC CIDR (e.g. <code>10.0.0.0/8</code>)', 'rapls-ai-chatbot') . '</td></tr>'
@@ -1471,7 +1403,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('reCAPTCHA Failure Mode', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <select name="wpaic_settings[recaptcha_fail_mode]">
+                            <select name="raplsaich_settings[recaptcha_fail_mode]">
                                 <option value="open" <?php selected($settings['recaptcha_fail_mode'] ?? 'open', 'open'); ?>><?php esc_html_e('Fail-open (allow requests)', 'rapls-ai-chatbot'); ?></option>
                                 <option value="closed" <?php selected($settings['recaptcha_fail_mode'] ?? 'open', 'closed'); ?>><?php esc_html_e('Fail-closed (block requests)', 'rapls-ai-chatbot'); ?></option>
                             </select>
@@ -1490,14 +1422,14 @@ if (!defined('ABSPATH')) {
                         <td>
                             <?php
                             // Use the same function as runtime to guarantee display matches actual checks.
-                            $rest_controller = new WPAIC_REST_Controller();
+                            $rest_controller = new RAPLSAICH_REST_Controller();
                             $diag_hosts = $rest_controller->get_allowed_origin_hosts();
                             ?>
                             <code><?php echo esc_html(implode(', ', $diag_hosts)); ?></code>
                             <?php if (empty($diag_hosts)) : ?>
                                 <span style="color:#d63638;"><strong><?php esc_html_e('Warning: No allowed hosts detected. Origin/Referer checks will reject all requests.', 'rapls-ai-chatbot'); ?></strong></span>
                             <?php endif; ?>
-                            <p class="description"><?php esc_html_e('These hostnames are accepted for Origin/Referer checks and reCAPTCHA hostname validation (same source as runtime). Custom hosts can be added via the wpaic_allowed_origins filter.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><?php esc_html_e('These hostnames are accepted for Origin/Referer checks and reCAPTCHA hostname validation (same source as runtime). Custom hosts can be added via the raplsaich_allowed_origins filter.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>
@@ -1518,9 +1450,9 @@ if (!defined('ABSPATH')) {
                             $has_detections = false;
                             $use_cache = wp_using_ext_object_cache();
                             foreach ($bot_types as $bkey => $blabel) {
-                                $tkey = 'wpaic_bot_drop_' . $bkey;
+                                $tkey = 'raplsaich_bot_drop_' . $bkey;
                                 $bcount = $use_cache
-                                    ? (int) wp_cache_get($tkey, 'wpaic_bot')
+                                    ? (int) wp_cache_get($tkey, 'raplsaich_bot')
                                     : (int) get_transient($tkey);
                                 // future_ts counters are always exact; others are sampled 1-in-10
                                 $is_future_ts = strpos($bkey, 'future_ts_') === 0;
@@ -1545,9 +1477,9 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('XFF Truncated (past hour)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
-                            $xff_key = 'wpaic_xff_truncated';
+                            $xff_key = 'raplsaich_xff_truncated';
                             $xff_count = $use_cache
-                                ? (int) wp_cache_get($xff_key, 'wpaic_bot')
+                                ? (int) wp_cache_get($xff_key, 'raplsaich_bot')
                                 : (int) get_transient($xff_key);
                             if (!$use_cache && $xff_count > 0) {
                                 $xff_count *= 10;
@@ -1565,7 +1497,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('IP Detection', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
-                            $diag_settings = get_option('wpaic_settings', []);
+                            $diag_settings = get_option('raplsaich_settings', []);
                             $remote_addr = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '—';
                             $xff = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_X_FORWARDED_FOR'])) : '';
                             $cf_ip = isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_CF_CONNECTING_IP'])) : '';
@@ -1585,7 +1517,7 @@ if (!defined('ABSPATH')) {
                                 </td></tr>
                                 <tr><td><?php esc_html_e('Trusted Proxies', 'rapls-ai-chatbot'); ?></td><td>
                                     <?php
-                                    $raw_proxies = (array) apply_filters('wpaic_trusted_proxies', []);
+                                    $raw_proxies = (array) apply_filters('raplsaich_trusted_proxies', []);
                                     if (!empty($raw_proxies)) {
                                         echo '<code>' . esc_html(implode(', ', array_slice($raw_proxies, 0, 10))) . '</code>';
                                         if (count($raw_proxies) > 10) {
@@ -1605,7 +1537,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Recent Admin Failures (past 24h)', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
-                            $diag_events = get_transient('wpaic_diag_events');
+                            $diag_events = get_transient('raplsaich_diag_events');
                             if (is_array($diag_events) && !empty($diag_events)) {
                                 $recent = array_reverse($diag_events);
                                 echo '<ul style="margin:0;">';
@@ -1646,7 +1578,7 @@ if (!defined('ABSPATH')) {
                             <?php if (wp_using_ext_object_cache()) : ?>
                                 <?php
                                 // Verify transients actually work (Redis/Memcached may be misconfigured)
-                                $test_key = 'wpaic_diag_oc_test';
+                                $test_key = 'raplsaich_diag_oc_test';
                                 set_transient($test_key, 'ok', 60);
                                 $test_result = get_transient($test_key);
                                 delete_transient($test_key);
@@ -1699,7 +1631,7 @@ if (!defined('ABSPATH')) {
                             global $wpdb;
                             $missing_tables = [];
                             $check_failed = false;
-                            foreach (wpaic_table_suffixes() as $suffix) {
+                            foreach (raplsaich_table_suffixes() as $suffix) {
                                 $full = $wpdb->prefix . $suffix;
                                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                                 $result = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $full));
@@ -1721,64 +1653,39 @@ if (!defined('ABSPATH')) {
                                     "Issue: SHOW TABLES LIKE query is blocked in wp-admin.\nURL: %s\nDate: %s\nPlugin: Rapls AI Chatbot v%s\nPHP: %s / WP: %s",
                                     esc_url(admin_url()),
                                     gmdate('Y-m-d H:i:s') . ' UTC',
-                                    defined('WPAIC_VERSION') ? WPAIC_VERSION : '?',
+                                    defined('RAPLSAICH_VERSION') ? RAPLSAICH_VERSION : '?',
                                     PHP_VERSION,
                                     get_bloginfo('version')
                                 );
                                 ?>
-                                <br><button type="button" class="button button-small" id="wpaic-copy-support" data-info="<?php echo esc_attr($support_info); ?>"><?php esc_html_e('Copy support info', 'rapls-ai-chatbot'); ?></button>
-                                <span id="wpaic-copy-status" style="margin-left:6px;display:none;"></span>
-                                <textarea id="wpaic-copy-fallback" class="wpaic-supportinfo-fallback" style="display:none;width:100%;max-width:100%;margin-top:4px;box-sizing:border-box;font-size:12px;font-family:monospace;" rows="5" readonly></textarea>
-                                <script>
-                                (function(){
-                                    var btn = document.getElementById('wpaic-copy-support');
-                                    if (!btn) return;
-                                    btn.addEventListener('click', function(){
-                                        var info = btn.dataset.info;
-                                        var status = document.getElementById('wpaic-copy-status');
-                                        var fallback = document.getElementById('wpaic-copy-fallback');
-                                        // Guard: if fallback textarea is already visible, just re-select (no duplication)
-                                        // Uses data-visible flag instead of style.display for CSS-change resilience
-                                        if (fallback.getAttribute('data-visible') === '1') {
-                                            fallback.focus();
-                                            fallback.select();
-                                            return;
-                                        }
-                                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                                            navigator.clipboard.writeText(info).then(function(){
-                                                status.textContent = '<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>';
-                                                status.style.color = 'green';
-                                                status.style.display = 'inline';
-                                                fallback.style.display = 'none';
-                                                fallback.removeAttribute('data-visible');
-                                            }).catch(function(){
-                                                fallback.value = info;
-                                                fallback.style.display = 'block';
-                                                fallback.setAttribute('data-visible', '1');
-                                                fallback.focus();
-                                                fallback.select();
-                                                status.textContent = '<?php echo esc_js(__('Copy failed — please select and copy manually.', 'rapls-ai-chatbot')); ?>';
-                                                status.style.color = '#d63638';
-                                                status.style.display = 'inline';
-                                            });
-                                        } else {
-                                            fallback.value = info;
-                                            fallback.style.display = 'block';
-                                            fallback.setAttribute('data-visible', '1');
-                                            fallback.focus();
-                                            fallback.select();
-                                            status.textContent = '<?php echo esc_js(__('Clipboard not available — please copy manually.', 'rapls-ai-chatbot')); ?>';
-                                            status.style.color = '#d63638';
-                                            status.style.display = 'inline';
-                                        }
-                                    });
-                                })();
-                                </script>
+                                <br><button type="button" class="button button-small" id="raplsaich-copy-support" data-info="<?php echo esc_attr($support_info); ?>"><?php esc_html_e('Copy support info', 'rapls-ai-chatbot'); ?></button>
+                                <span id="raplsaich-copy-status" style="margin-left:6px;display:none;"></span>
+                                <textarea id="raplsaich-copy-fallback" class="raplsaich-supportinfo-fallback" style="display:none;width:100%;max-width:100%;margin-top:4px;box-sizing:border-box;font-size:12px;font-family:monospace;" rows="5" readonly></textarea>
+                                <?php
+                                wp_add_inline_script('raplsaich-admin', '(function(){' .
+                                    'var b=document.getElementById("raplsaich-copy-support");if(!b)return;' .
+                                    'b.addEventListener("click",function(){var info=b.dataset.info,' .
+                                    's=document.getElementById("raplsaich-copy-status"),' .
+                                    'f=document.getElementById("raplsaich-copy-fallback");' .
+                                    'if(f.getAttribute("data-visible")==="1"){f.focus();f.select();return}' .
+                                    'if(navigator.clipboard&&navigator.clipboard.writeText){' .
+                                    'navigator.clipboard.writeText(info).then(function(){' .
+                                    's.textContent=' . wp_json_encode(__('Copied!', 'rapls-ai-chatbot')) . ';' .
+                                    's.style.color="green";s.style.display="inline";f.style.display="none";f.removeAttribute("data-visible")' .
+                                    '}).catch(function(){' .
+                                    'f.value=info;f.style.display="block";f.setAttribute("data-visible","1");f.focus();f.select();' .
+                                    's.textContent=' . wp_json_encode(__('Copy failed — please select and copy manually.', 'rapls-ai-chatbot')) . ';' .
+                                    's.style.color="#d63638";s.style.display="inline"' .
+                                    '})}else{' .
+                                    'f.value=info;f.style.display="block";f.setAttribute("data-visible","1");f.focus();f.select();' .
+                                    's.textContent=' . wp_json_encode(__('Clipboard not available — please copy manually.', 'rapls-ai-chatbot')) . ';' .
+                                    's.style.color="#d63638";s.style.display="inline"}})})();');
+                                ?>
                             <?php elseif (empty($missing_tables)) : ?>
                                 <span style="color:green;">&#x2713;</span> <?php echo esc_html(sprintf(
                                     /* translators: %d: number of tables */
                                     __('All %d tables exist.', 'rapls-ai-chatbot'),
-                                    count(wpaic_table_suffixes())
+                                    count(raplsaich_table_suffixes())
                                 )); ?>
                             <?php else : ?>
                                 <span style="color:#d63638;">&#x2717;</span>
@@ -1794,14 +1701,14 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('REST API', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
-                            $rest_url = get_rest_url(null, 'wp-ai-chatbot/v1/message-limit');
+                            $rest_url = get_rest_url(null, 'rapls-ai-chatbot/v1/message-limit');
                             $rest_args = [
                                 'timeout'     => 5,
                                 'redirection' => 0,
-                                'user-agent'  => 'WPAIC-Diagnostics/' . WPAIC_VERSION,
+                                'user-agent'  => 'RAPLSAICH-Diagnostics/' . RAPLSAICH_VERSION,
                             ];
                             /** Allow insecure SSL for self-signed certs (default: false). */
-                            if (apply_filters('wpaic_diag_allow_insecure_ssl', false)) {
+                            if (apply_filters('raplsaich_diag_allow_insecure_ssl', false)) {
                                 $rest_args['sslverify'] = false;
                             }
                             $rest_response = wp_remote_get($rest_url, $rest_args);
@@ -1834,9 +1741,9 @@ if (!defined('ABSPATH')) {
 
             <!-- Data Management -->
             <div id="tab-data" class="tab-content">
-                <div class="wpaic-tab-header">
+                <div class="raplsaich-tab-header">
                     <h2><?php esc_html_e('Data Management', 'rapls-ai-chatbot'); ?></h2>
-                    <button type="button" class="wpaic-reset-tab-btn" data-tab="tab-data">
+                    <button type="button" class="raplsaich-reset-tab-btn" data-tab="tab-data">
                         <span class="dashicons dashicons-image-rotate"></span>
                         <?php esc_html_e('Reset to Default', 'rapls-ai-chatbot'); ?>
                     </button>
@@ -1848,7 +1755,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Save History', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[save_history]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[save_history]" value="1"
                                     <?php checked($settings['save_history'] ?? true); ?>>
                                 <?php esc_html_e('Save conversation history', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1857,7 +1764,7 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('History Retention', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="number" name="wpaic_settings[retention_days]"
+                            <input type="number" name="raplsaich_settings[retention_days]"
                                    value="<?php echo esc_attr($settings['retention_days'] ?? 90); ?>"
                                    min="0" max="3650" class="small-text"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
                             <p class="description"><?php esc_html_e('0 for unlimited retention', 'rapls-ai-chatbot'); ?></p>
@@ -1867,7 +1774,7 @@ if (!defined('ABSPATH')) {
                         <th scope="row"><?php esc_html_e('Delete Data on Uninstall', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
-                                <input type="checkbox" name="wpaic_settings[delete_data_on_uninstall]" value="1"
+                                <input type="checkbox" name="raplsaich_settings[delete_data_on_uninstall]" value="1"
                                     <?php checked($settings['delete_data_on_uninstall'] ?? false); ?>>
                                 <?php esc_html_e('Delete all conversation history, knowledge base, leads, and other plugin data when the plugin is uninstalled', 'rapls-ai-chatbot'); ?>
                             </label>
@@ -1887,11 +1794,11 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Export', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <button type="button" id="wpaic-export-settings" class="button button-secondary">
+                            <button type="button" id="raplsaich-export-settings" class="button button-secondary">
                                 <?php esc_html_e('Export Settings', 'rapls-ai-chatbot'); ?>
                             </button>
                             <label style="margin-left: 15px;">
-                                <input type="checkbox" id="wpaic-export-include-knowledge" checked>
+                                <input type="checkbox" id="raplsaich-export-include-knowledge" checked>
                                 <?php esc_html_e('Include knowledge data', 'rapls-ai-chatbot'); ?>
                             </label>
                             <p class="description"><?php esc_html_e('Download current settings as a JSON file.', 'rapls-ai-chatbot'); ?></p>
@@ -1900,447 +1807,32 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Import', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <input type="file" id="wpaic-import-file" accept=".json">
-                            <button type="button" id="wpaic-import-settings" class="button button-secondary" style="margin-left: 10px;">
+                            <input type="file" id="raplsaich-import-file" accept=".json">
+                            <button type="button" id="raplsaich-import-settings" class="button button-secondary" style="margin-left: 10px;">
                                 <?php esc_html_e('Import Settings', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description"><?php esc_html_e('Upload an exported JSON file to restore settings.', 'rapls-ai-chatbot'); ?></p>
-                            <p id="wpaic-import-status"></p>
+                            <p id="raplsaich-import-status"></p>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><?php esc_html_e('Reset Settings', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <button type="button" id="wpaic-reset-settings" class="button button-secondary" style="color: #a00;">
+                            <button type="button" id="raplsaich-reset-settings" class="button button-secondary" style="color: #a00;">
                                 <?php esc_html_e('Reset Settings', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description"><?php esc_html_e('Reset all settings to default values. API keys will also be deleted.', 'rapls-ai-chatbot'); ?></p>
-                            <p id="wpaic-reset-status"></p>
+                            <p id="raplsaich-reset-status"></p>
                         </td>
                     </tr>
                 </table>
             </div>
         </div>
 
-        <div id="wpaic-global-submit">
+        <div id="raplsaich-global-submit">
             <?php submit_button(__('Save Settings', 'rapls-ai-chatbot')); ?>
         </div>
     </form>
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-    var i18n = wpaicAdmin.i18n || {};
-
-    // Export
-    $('#wpaic-export-settings').on('click', function() {
-        var $button = $(this);
-        var includeKnowledge = $('#wpaic-export-include-knowledge').is(':checked');
-
-        $button.prop('disabled', true).text(i18n.exporting || 'Exporting...');
-
-        $.ajax({
-            url: wpaicAdmin.ajaxUrl,
-            method: 'POST',
-            data: {
-                action: 'wpaic_export_settings',
-                nonce: wpaicAdmin.nonce,
-                include_knowledge: includeKnowledge ? 1 : 0
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Download JSON file
-                    var blob = new Blob([JSON.stringify(response.data, null, 2)], {type: 'application/json'});
-                    var url = URL.createObjectURL(blob);
-                    var a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'wpaic-settings-' + new Date().toISOString().slice(0,10) + '.json';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                } else {
-                    alert((i18n.exportFailed || 'Export failed') + ': ' + response.data);
-                }
-            },
-            error: function() {
-                alert(i18n.exportFailed || 'Export failed.');
-            },
-            complete: function() {
-                $button.prop('disabled', false).text('<?php echo esc_js(__('Export Settings', 'rapls-ai-chatbot')); ?>');
-            }
-        });
-    });
-
-    // Import
-    $('#wpaic-import-settings').on('click', function() {
-        var $button = $(this);
-        var $status = $('#wpaic-import-status');
-        var fileInput = $('#wpaic-import-file')[0];
-
-        if (!fileInput.files.length) {
-            $status.html('<span style="color: red;"></span>').find('span').text(i18n.selectFile || 'Please select a file.');
-            return;
-        }
-
-        var file = fileInput.files[0];
-        if (!file.name.endsWith('.json')) {
-            $status.html('<span style="color: red;"></span>').find('span').text(i18n.invalidJson || 'Please select a JSON file.');
-            return;
-        }
-
-        if (!confirm(i18n.confirmOverwrite || 'Current settings will be overwritten. Continue?')) {
-            return;
-        }
-
-        $button.prop('disabled', true).text(i18n.importing || 'Importing...');
-        $status.text('');
-
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                var importData = JSON.parse(e.target.result);
-
-                $.ajax({
-                    url: wpaicAdmin.ajaxUrl,
-                    method: 'POST',
-                    data: {
-                        action: 'wpaic_import_settings',
-                        nonce: wpaicAdmin.nonce,
-                        import_data: JSON.stringify(importData)
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            $status.html('<span style="color: green;"></span>').find('span').text(response.data);
-                            setTimeout(function() {
-                                location.reload();
-                            }, 1500);
-                        } else {
-                            $status.html('<span style="color: red;"></span>').find('span').text(response.data);
-                        }
-                    },
-                    error: function() {
-                        $status.html('<span style="color: red;"></span>').find('span').text(i18n.importFailed || 'Import failed.');
-                    },
-                    complete: function() {
-                        $button.prop('disabled', false).text('<?php echo esc_js(__('Import Settings', 'rapls-ai-chatbot')); ?>');
-                    }
-                });
-            } catch (err) {
-                $status.html('<span style="color: red;"></span>').find('span').text(i18n.invalidJson || 'Invalid JSON file.');
-                $button.prop('disabled', false).text('<?php echo esc_js(__('Import Settings', 'rapls-ai-chatbot')); ?>');
-            }
-        };
-        reader.readAsText(file);
-    });
-
-    // Reset settings
-    $('#wpaic-reset-settings').on('click', function() {
-        var $button = $(this);
-        var $status = $('#wpaic-reset-status');
-
-        var input = prompt(i18n.resetConfirm || 'All settings will be reset. API keys will also be deleted.\n\nThis action cannot be undone.\n\nTo reset, type "reset":');
-
-        if (input !== 'reset') {
-            if (input !== null) {
-                $status.html('<span style="color: red;"></span>').find('span').text(i18n.resetTypeError || 'Please type "reset".');
-            }
-            return;
-        }
-
-        $button.prop('disabled', true).text(i18n.resetting || 'Resetting...');
-        $status.text('');
-
-        wpaicDestructiveAjax({
-            data: {
-                action: 'wpaic_reset_settings',
-                nonce: wpaicAdmin.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    $status.html('<span style="color: green;"></span>').find('span').text(response.data);
-                    setTimeout(function() {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    $status.html('<span style="color: red;"></span>').find('span').text(response.data);
-                }
-                $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
-            },
-            fail: function() {
-                $status.html('<span style="color: red;"></span>').find('span').text(i18n.resetFailed || 'Reset failed.');
-                $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
-            },
-            cancel: function() {
-                $button.prop('disabled', false).text('<?php echo esc_js(__('Reset Settings', 'rapls-ai-chatbot')); ?>');
-            }
-        });
-    });
-
-    // Page exclusion - Add page
-    $('#wpaic-add-excluded-page').on('click', function() {
-        var $select = $('#wpaic-page-selector');
-        var pageId = $select.val();
-        var pageTitle = $select.find('option:selected').text();
-
-        if (!pageId) {
-            return;
-        }
-
-        // Create tag item (use DOM construction to prevent XSS from page titles)
-        var $item = $('<div class="wpaic-excluded-page-item" style="display: inline-flex; align-items: center; background: #f0f0f1; border-radius: 4px; padding: 5px 10px; margin: 3px 5px 3px 0;"></div>')
-            .attr('data-page-id', pageId);
-        $item.append($('<span></span>').text(pageTitle));
-        $item.append($('<input type="hidden" name="wpaic_settings[excluded_pages][]">').val(pageId));
-        $item.append('<button type="button" class="wpaic-remove-excluded-page" style="background: none; border: none; cursor: pointer; color: #a00; margin-left: 8px; font-size: 16px;">&times;</button>');
-
-        $('#wpaic-excluded-pages-list').append($item);
-
-        // Remove from select
-        $select.find('option[value="' + pageId + '"]').remove();
-        $select.val('');
-    });
-
-    // Page exclusion - Remove page
-    $(document).on('click', '.wpaic-remove-excluded-page', function() {
-        var $item = $(this).closest('.wpaic-excluded-page-item');
-        var pageId = $item.data('page-id');
-        var pageTitle = $item.find('span').text();
-
-        // Add back to select (use DOM construction to prevent XSS)
-        $('#wpaic-page-selector').append($('<option></option>').val(pageId).text(pageTitle));
-
-        // Remove item
-        $item.remove();
-    });
-
-    // Reset field to default
-    $(document).on('click', '.wpaic-reset-field', function() {
-        var targetId = $(this).data('target');
-        var defaultValue = $(this).data('default');
-        var $target = $('#' + targetId);
-
-        if ($target.length) {
-            $target.val(defaultValue);
-            // Flash effect to indicate change
-            $target.css('background-color', '#fff9c4');
-            setTimeout(function() {
-                $target.css('background-color', '');
-            }, 500);
-        }
-    });
-
-    // Avatar image uploader
-    var avatarFrame;
-    $('#wpaic-upload-avatar').on('click', function(e) {
-        e.preventDefault();
-
-        if (avatarFrame) {
-            avatarFrame.open();
-            return;
-        }
-
-        avatarFrame = wp.media({
-            title: '<?php echo esc_js(__('Select Avatar Image', 'rapls-ai-chatbot')); ?>',
-            button: {
-                text: '<?php echo esc_js(__('Use as Avatar', 'rapls-ai-chatbot')); ?>'
-            },
-            multiple: false,
-            library: {
-                type: 'image'
-            }
-        });
-
-        avatarFrame.on('select', function() {
-            var attachment = avatarFrame.state().get('selection').first().toJSON();
-            var imageUrl = attachment.sizes && attachment.sizes.thumbnail ? attachment.sizes.thumbnail.url : attachment.url;
-
-            $('#wpaic_bot_avatar').val(imageUrl);
-            updateAvatarPreview(imageUrl);
-        });
-
-        avatarFrame.open();
-    });
-
-    // Reset avatar to emoji
-    $('#wpaic-reset-avatar').on('click', function() {
-        $('#wpaic_bot_avatar').val('🤖');
-        updateAvatarPreview('🤖');
-    });
-
-    // Update avatar preview
-    function updateAvatarPreview(value) {
-        var $preview = $('.wpaic-avatar-preview');
-        var isImage = /^(https?:\/\/|\/)/i.test(value) || /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(value);
-
-        if (isImage) {
-            var $img = $('<img alt="Avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;">').attr('src', value);
-            $preview.empty().append($img);
-        } else {
-            $preview.empty().append($('<span style="font-size: 48px; line-height: 1;"></span>').text(value));
-        }
-    }
-
-    // Update preview on input change
-    $('#wpaic_bot_avatar').on('input', function() {
-        updateAvatarPreview($(this).val());
-    });
-
-    // Multimodal vision model filter
-    var multimodalEnabled = <?php
-        $pro_settings = $settings['pro_features'] ?? [];
-        echo !empty($pro_settings['multimodal_enabled']) ? 'true' : 'false';
-    ?>;
-
-    function checkMultimodalModels() {
-        if (!multimodalEnabled) {
-            // Reset all options when multimodal is disabled
-            $('#wpaic-openai-model, #wpaic-claude-model, #wpaic-gemini-model').each(function() {
-                $(this).find('option').each(function() {
-                    var $opt = $(this);
-                    $opt.prop('disabled', false);
-                    if ($opt.data('original-text')) {
-                        $opt.text($opt.data('original-text'));
-                    }
-                });
-                $(this).css('border-color', '');
-                $(this).siblings('.wpaic-vision-warning').hide();
-            });
-            return;
-        }
-
-        var provider = $('[name="wpaic_settings[ai_provider]"]').val();
-        var modelSelect = null;
-
-        switch (provider) {
-            case 'openai':
-                modelSelect = $('#wpaic-openai-model');
-                break;
-            case 'claude':
-                modelSelect = $('#wpaic-claude-model');
-                break;
-            case 'gemini':
-                modelSelect = $('#wpaic-gemini-model');
-                break;
-        }
-
-        if (!modelSelect || !modelSelect.length) {
-            return;
-        }
-
-        // First, disable all non-vision models
-        var firstVisionModel = null;
-        modelSelect.find('option').each(function() {
-            var $opt = $(this);
-            var vision = $opt.data('vision');
-            var isVision = (vision === 1 || vision === '1' || vision === true);
-
-            if (!isVision) {
-                $opt.prop('disabled', true);
-                if (!$opt.data('original-text')) {
-                    $opt.data('original-text', $opt.text());
-                }
-                $opt.text($opt.data('original-text') + ' (<?php esc_html_e('No vision support', 'rapls-ai-chatbot'); ?>)');
-            } else {
-                $opt.prop('disabled', false);
-                if ($opt.data('original-text')) {
-                    $opt.text($opt.data('original-text'));
-                }
-                if (!firstVisionModel) {
-                    firstVisionModel = $opt.val();
-                }
-            }
-        });
-
-        // Check if currently selected model is vision-capable
-        var selectedOption = modelSelect.find('option:selected');
-        var selectedVision = selectedOption.data('vision');
-        var isVisionModel = (selectedVision === 1 || selectedVision === '1' || selectedVision === true);
-        var $warning = modelSelect.siblings('.wpaic-vision-warning');
-
-        if (!isVisionModel) {
-            // Auto-select first vision model
-            if (firstVisionModel) {
-                modelSelect.val(firstVisionModel);
-            }
-            $warning.show();
-            modelSelect.css('border-color', '#d63638');
-        } else {
-            $warning.hide();
-            modelSelect.css('border-color', '');
-        }
-    }
-
-    // Check on page load
-    checkMultimodalModels();
-
-    // Check when provider changes
-    $('[name="wpaic_settings[ai_provider]"]').on('change', function() {
-        setTimeout(checkMultimodalModels, 100);
-    });
-
-    // Check when model changes
-    $('#wpaic-openai-model, #wpaic-claude-model, #wpaic-gemini-model').on('change', checkMultimodalModels);
-
-    // Save active tab on form submit so it persists after the settings-updated redirect.
-    // Append the tab hash to _wp_http_referer so WordPress redirects back with the hash.
-    $('form').on('submit', function(e) {
-        var $activeTab = $('.wpaic-settings-tabs .nav-tab-active');
-        if ($activeTab.length) {
-            var tabHash = $activeTab.attr('href');
-            localStorage.setItem('wpaic_active_tab', tabHash);
-
-            // Update _wp_http_referer to include the tab hash
-            var $referer = $(this).find('input[name="_wp_http_referer"]');
-            if ($referer.length) {
-                var refUrl = $referer.val().replace(/#.*$/, '') + tabHash;
-                $referer.val(refUrl);
-            }
-        }
-
-        // Prevent form submission with non-vision model when multimodal is enabled
-        if (!multimodalEnabled) return true;
-
-        var provider = $('[name="wpaic_settings[ai_provider]"]').val();
-        var modelSelect = $('#wpaic-' + provider + '-model');
-
-        if (modelSelect.length) {
-            var selectedOption = modelSelect.find('option:selected');
-            var vision = selectedOption.data('vision');
-
-            // Skip check for providers without vision metadata (e.g., OpenRouter)
-            if (typeof vision === 'undefined') return true;
-
-            var isVision = (vision === 1 || vision === '1' || vision === true);
-
-            if (!isVision) {
-                alert('<?php echo esc_js(__('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot')); ?>');
-                e.preventDefault();
-                return false;
-            }
-        }
-        return true;
-    });
-
-    // Embed code copy buttons
-    $('.wpaic-copy-embed').on('click', function() {
-        var $btn = $(this);
-        var target = document.getElementById($btn.data('target'));
-        if (!target) return;
-        var text = target.value;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(function() {
-                var orig = $btn.text();
-                $btn.text('<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>');
-                setTimeout(function() { $btn.text(orig); }, 2000);
-            });
-        } else {
-            target.select();
-            document.execCommand('copy');
-            var orig = $btn.text();
-            $btn.text('<?php echo esc_js(__('Copied!', 'rapls-ai-chatbot')); ?>');
-            setTimeout(function() { $btn.text(orig); }, 2000);
-        }
-    });
-});
-</script>
+<!-- Settings JS loaded via wp_enqueue_script("raplsaich-admin-settings") -->

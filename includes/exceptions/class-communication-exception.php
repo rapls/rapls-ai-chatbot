@@ -11,6 +11,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Communication_Exception extends Exception {
+class RAPLSAICH_Communication_Exception extends Exception {
     // Custom exception for network/transport failures
 }

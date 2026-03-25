@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_PDF_Parser {
+class RAPLSAICH_PDF_Parser {
 
     /**
      * Extract text content from a PDF file.

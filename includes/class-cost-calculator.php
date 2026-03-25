@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Cost_Calculator {
+class RAPLSAICH_Cost_Calculator {
 
     /**
      * モデル別の料金（1Mトークンあたりのドル）
@@ -187,7 +187,7 @@ class WPAIC_Cost_Calculator {
      */
     public static function get_usage_stats(int $days = 30): array {
         global $wpdb;
-        $table = wpaic_require_table('aichat_messages', 'get_usage_stats');
+        $table = raplsaich_require_table('raplsaich_messages', 'get_usage_stats');
         if (!$table) {
             return ['daily_stats' => [], 'model_totals' => [], 'totals' => ['input_tokens' => 0, 'output_tokens' => 0, 'total_tokens' => 0, 'message_count' => 0, 'cost' => 0, 'cost_formatted' => '$0.00'], 'days' => $days];
         }
@@ -319,7 +319,7 @@ class WPAIC_Cost_Calculator {
      */
     public static function reset_usage_stats(): bool {
         global $wpdb;
-        $table = wpaic_require_table('aichat_messages', 'reset_usage_stats');
+        $table = raplsaich_require_table('raplsaich_messages', 'reset_usage_stats');
         if (!$table) {
             return false;
         }
@@ -402,7 +402,7 @@ class WPAIC_Cost_Calculator {
      */
     public static function get_chart_data(int $days = 30): array {
         global $wpdb;
-        $table = wpaic_require_table('aichat_messages', 'get_chart_data');
+        $table = raplsaich_require_table('raplsaich_messages', 'get_chart_data');
         if (!$table) {
             return [];
         }

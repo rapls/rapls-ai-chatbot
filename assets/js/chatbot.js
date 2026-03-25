@@ -9,13 +9,13 @@
      * WP Consent API integration.
      * Returns true if consent is granted for the given category, or if no
      * Consent API / CMP is active (backwards-compatible default).
-     * When wpAiChatbotConfig.consent_strict_mode is true, returns false
+     * When raplsaichConfig.consent_strict_mode is true, returns false
      * when no Consent API is detected (GDPR-strict sites).
      *
      * @param {string} category Consent category (e.g. 'functional', 'statistics', 'marketing').
      * @returns {boolean}
      */
-    function wpaicHasConsent(category) {
+    function raplsaichHasConsent(category) {
         if (typeof window.wp_has_consent === 'function') {
             return window.wp_has_consent(category);
         }
@@ -23,7 +23,7 @@
             return window.wp_get_consent(category) === 'allow';
         }
         // No Consent API present — respect strict mode setting.
-        var config = window.wpAiChatbotConfig || {};
+        var config = window.raplsaichConfig || {};
         return !config.consent_strict_mode;
     }
 
@@ -31,38 +31,38 @@
      * Check if persistent storage (localStorage) is allowed by consent.
      * Requires functional or preferences consent.
      */
-    function wpaicStorageAllowed() {
-        return wpaicHasConsent('functional') || wpaicHasConsent('preferences');
+    function raplsaichStorageAllowed() {
+        return raplsaichHasConsent('functional') || raplsaichHasConsent('preferences');
     }
 
     // localStorage wrappers — gate reads/writes on consent, allow removal always.
     // try/catch guards against Safari private mode and other environments that throw.
-    function wpaicLsGet(k) {
-        if (!wpaicStorageAllowed()) return null;
+    function raplsaichLsGet(k) {
+        if (!raplsaichStorageAllowed()) return null;
         try { return localStorage.getItem(k); } catch (e) { return null; }
     }
-    function wpaicLsSet(k, v) {
-        if (!wpaicStorageAllowed()) return;
+    function raplsaichLsSet(k, v) {
+        if (!raplsaichStorageAllowed()) return;
         try { localStorage.setItem(k, v); } catch (e) { /* quota exceeded or private mode */ }
     }
-    function wpaicLsRemove(k) {
+    function raplsaichLsRemove(k) {
         try { localStorage.removeItem(k); } catch (e) { /* noop */ }
     }
 
     // sessionStorage wrappers — session data also gated on functional consent
-    function wpaicSsGet(k) {
-        if (!wpaicStorageAllowed()) return null;
+    function raplsaichSsGet(k) {
+        if (!raplsaichStorageAllowed()) return null;
         try { return sessionStorage.getItem(k); } catch (e) { return null; }
     }
-    function wpaicSsSet(k, v) {
-        if (!wpaicStorageAllowed()) return;
+    function raplsaichSsSet(k, v) {
+        if (!raplsaichStorageAllowed()) return;
         try { sessionStorage.setItem(k, v); } catch (e) { /* quota exceeded or private mode */ }
     }
-    function wpaicSsRemove(k) {
+    function raplsaichSsRemove(k) {
         try { sessionStorage.removeItem(k); } catch (e) { /* noop */ }
     }
 
-    const WPAIChatbot = {
+    const RaplsaichChatbot = {
 
         // DOM要素
         container: null,
@@ -95,13 +95,13 @@
         lastOperatorMessageId: 0,
 
         // 設定
-        config: window.wpAiChatbotConfig || {},
+        config: window.raplsaichConfig || {},
 
         /**
          * 初期化
          */
         init: function() {
-            this.bookmarkKey = 'wpaic_bookmarks_' + (this.config.restUrl || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
+            this.bookmarkKey = 'raplsaich_bookmarks_' + (this.config.restUrl || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
             this.cacheElements();
             if (!this.container) return;
             this.applyBrowserLanguagePlaceholders();
@@ -256,7 +256,7 @@
         loadWindowSize: function() {
             // Inline mode: size controlled by container CSS
             if (this.config.inlineMode) return;
-            var savedSize = wpaicLsGet('wpaic_window_size');
+            var savedSize = raplsaichLsGet('raplsaich_window_size');
             if (savedSize) {
                 try {
                     var size = JSON.parse(savedSize);
@@ -278,7 +278,7 @@
                 width: this.window.offsetWidth,
                 height: this.window.offsetHeight
             };
-            wpaicLsSet('wpaic_window_size', JSON.stringify(size));
+            raplsaichLsSet('raplsaich_window_size', JSON.stringify(size));
         },
 
         /**
@@ -467,7 +467,7 @@
                 this.stopHandoffPolling();
                 if (window.parent !== window) {
                     var targetOrigin = this.config.embed_origin || window.location.origin;
-                    window.parent.postMessage({type: 'wpaic:close'}, targetOrigin);
+                    window.parent.postMessage({type: 'raplsaich:close'}, targetOrigin);
                 }
                 return;
             }
@@ -483,7 +483,7 @@
             this.window.inert = true;
 
             // リサイズ状態をリセット
-            wpaicLsRemove('wpaic_window_size');
+            raplsaichLsRemove('raplsaich_window_size');
             this.window.style.width = '';
             this.window.style.height = '';
         },
@@ -501,8 +501,8 @@
             }
 
             // セッションバージョンチェック（sessionStorageを使用）
-            var storedVersion = wpaicSsGet('wpaic_session_version');
-            var storedSessionId = wpaicSsGet('wpaic_session');
+            var storedVersion = raplsaichSsGet('raplsaich_session_version');
+            var storedSessionId = raplsaichSsGet('raplsaich_session');
             var currentVersion = parseInt(this.config.session_version, 10) || 1;
 
             // セッションをクリアすべき条件:
@@ -520,8 +520,8 @@
             }
 
             // セッションストレージからセッションID取得（sessionStorage優先、localStorageフォールバック）
-            this.sessionId = wpaicSsGet('wpaic_session')
-                || wpaicLsGet('wpaic_session');
+            this.sessionId = raplsaichSsGet('raplsaich_session')
+                || raplsaichLsGet('raplsaich_session');
 
             var finishLoading = function() {
                 self.sessionLoading = false;
@@ -540,15 +540,15 @@
                 this.apiRequest('GET', '/session')
                     .then(function(response) {
                         self.sessionId = response.session_id;
-                        wpaicSsSet('wpaic_session', self.sessionId);
-                        wpaicSsSet('wpaic_session_version', String(currentVersion));
+                        raplsaichSsSet('raplsaich_session', self.sessionId);
+                        raplsaichSsSet('raplsaich_session_version', String(currentVersion));
                         // 会話履歴保存がオンの場合のみ localStorage に永続化
                         if (self.config.save_history) {
-                            wpaicLsSet('wpaic_session', self.sessionId);
+                            raplsaichLsSet('raplsaich_session', self.sessionId);
                         }
                         // HMAC トークンを保存（IP 変動時のフォールバック認証用）
                         if (response.session_token) {
-                            wpaicLsSet('wpaic_session_token', response.session_token);
+                            raplsaichLsSet('raplsaich_session_token', response.session_token);
                         }
                         // セッション作成後にリード設定を読み込み
                         return self.loadLeadConfig();
@@ -592,22 +592,22 @@
          */
         clearSession: function() {
             // 古いセッションのリード送信フラグを取得してクリア
-            var oldSessionId = wpaicSsGet('wpaic_session');
+            var oldSessionId = raplsaichSsGet('raplsaich_session');
             if (oldSessionId) {
-                wpaicSsRemove('wpaic_lead_submitted_' + oldSessionId);
+                raplsaichSsRemove('raplsaich_lead_submitted_' + oldSessionId);
             }
 
-            wpaicSsRemove('wpaic_session');
-            wpaicSsRemove('wpaic_session_version');
-            wpaicLsRemove('wpaic_session');
-            wpaicLsRemove('wpaic_session_token');
+            raplsaichSsRemove('raplsaich_session');
+            raplsaichSsRemove('raplsaich_session_version');
+            raplsaichLsRemove('raplsaich_session');
+            raplsaichLsRemove('raplsaich_session_token');
 
             // すべてのリード送信済みフラグをクリア（クリーンアップは常に許可）
             try {
                 var ssKeys = Object.keys(sessionStorage);
                 for (var si = 0; si < ssKeys.length; si++) {
-                    if (ssKeys[si].indexOf('wpaic_lead_submitted_') === 0) {
-                        wpaicSsRemove(ssKeys[si]);
+                    if (ssKeys[si].indexOf('raplsaich_lead_submitted_') === 0) {
+                        raplsaichSsRemove(ssKeys[si]);
                     }
                 }
             } catch (e) {
@@ -823,9 +823,9 @@
                 sendPromise = this.apiRequest('GET', '/session')
                     .then(function(response) {
                         self.sessionId = response.session_id;
-                        wpaicSsSet('wpaic_session', self.sessionId);
+                        raplsaichSsSet('raplsaich_session', self.sessionId);
                         if (response.session_token) {
-                            wpaicLsSet('wpaic_session_token', response.session_token);
+                            raplsaichLsSet('raplsaich_session_token', response.session_token);
                         }
                         return self.doSendMessage(message);
                     });
@@ -850,22 +850,22 @@
                         errorMessage = error.message;
                     } else {
                         errorMessage = ecMapValue;
-                    } // wpaic-i18n-ok
+                    } // raplsaich-i18n-ok
                     // Dev aid: warn when server sends error_code not in the PHP map.
                     // Uses is_plugin_admin (no WP_DEBUG requirement) so production admins also see it.
                     if (ec && !errorMessage && self.config.is_plugin_admin) {
-                        console.warn('[WPAIC] Unmapped error_code: "' + ec + '". Add to error_code_messages in class-chatbot-widget.php.'); // wpaic-i18n-ok
+                        console.warn('[WPAIC] Unmapped error_code: "' + ec + '". Add to error_code_messages in class-chatbot-widget.php.'); // raplsaich-i18n-ok
                     }
                     if (!errorMessage) {
                         // Fallback to HTTP status categories
                         if (error.status === 429) {
-                            errorMessage = _s.error_rate_limit || 'Too many requests. Please try again in a moment.'; // wpaic-i18n-ok
+                            errorMessage = _s.error_rate_limit || 'Too many requests. Please try again in a moment.'; // raplsaich-i18n-ok
                         } else if (error.status === 403) {
-                            errorMessage = _s.error_unavailable || 'This feature is currently unavailable.'; // wpaic-i18n-ok
+                            errorMessage = _s.error_unavailable || 'This feature is currently unavailable.'; // raplsaich-i18n-ok
                         } else if (error.status >= 500) {
-                            errorMessage = _s.error_server || 'A temporary error occurred. Please try again later.'; // wpaic-i18n-ok
+                            errorMessage = _s.error_server || 'A temporary error occurred. Please try again later.'; // raplsaich-i18n-ok
                         } else {
-                            errorMessage = error.message || (_s.error_occurred || 'An error occurred.'); // wpaic-i18n-ok
+                            errorMessage = error.message || (_s.error_occurred || 'An error occurred.'); // raplsaich-i18n-ok
                         }
                     }
                     self.addMessage('bot', errorMessage);
@@ -1310,7 +1310,7 @@
                 var formatted = this.formatBotMessage(content);
                 var textSpan = document.createElement('span');
                 if (this.config.markdown_enabled && role === 'bot') {
-                    textSpan.className = 'wpaic-markdown';
+                    textSpan.className = 'raplsaich-markdown';
                 }
                 textSpan.appendChild(formatted);
                 contentEl.appendChild(textSpan);
@@ -1663,11 +1663,11 @@
                     bookmarkBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
                     bookmarkBtn.title = (self.config.strings && self.config.strings.bookmark) || 'Bookmark this message';
                     // Check if already bookmarked
-                    var bookmarks = JSON.parse(wpaicLsGet(self.bookmarkKey) || '[]');
+                    var bookmarks = JSON.parse(raplsaichLsGet(self.bookmarkKey) || '[]');
                     var bmkNumId = parseInt(messageId, 10);
                     var isBookmarked = !isNaN(bmkNumId) && bookmarks.some(function(b) { return parseInt(b.id, 10) === bmkNumId; });
                     if (isBookmarked) {
-                        bookmarkBtn.classList.add('wpaic-bookmarked');
+                        bookmarkBtn.classList.add('raplsaich-bookmarked');
                         bookmarkBtn.title = (self.config.strings && self.config.strings.bookmarked) || 'Bookmarked';
                     }
                     bookmarkBtn.onclick = function() {
@@ -1760,7 +1760,7 @@
                     contentEl.innerHTML = '';
                     var textSpan = document.createElement('span');
                     if (self.config.markdown_enabled) {
-                        textSpan.className = 'wpaic-markdown';
+                        textSpan.className = 'raplsaich-markdown';
                     }
                     textSpan.appendChild(formatted);
                     contentEl.appendChild(textSpan);
@@ -2344,7 +2344,7 @@
         },
 
         /**
-         * html2canvas CDN を動的に読み込み
+         * html2canvas をローカルから動的に読み込み
          */
         _loadHtml2Canvas: function(callback) {
             if (typeof html2canvas !== 'undefined') {
@@ -2353,7 +2353,7 @@
             }
             var self = this;
             var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.src = this.config.html2canvas_url;
             script.onload = callback;
             script.onerror = function() {
                 // CDN 失敗時: getDisplayMedia フォールバック
@@ -2449,7 +2449,7 @@
             // Save current text to data attribute (survives DOM replacement by
             // page builders) and always update on each countdown start to handle
             // dynamic text changes from translations or theme overrides.
-            btn.setAttribute('data-wpaic-retry-original-text', btn.textContent);
+            btn.setAttribute('data-raplsaich-retry-original-text', btn.textContent);
             btn.disabled = true;
             self.isLoading = true;
 
@@ -2458,15 +2458,15 @@
                 var currentBtn = self.inputForm.querySelector('button[type="submit"]');
                 if (!currentBtn) {
                     if (self.config && self.config.debug) {
-                        console.debug('WPAIC: retry countdown cancelled — submit button removed from DOM');
+                        console.debug('RAPLSAICH: retry countdown cancelled — submit button removed from DOM');
                     }
                     self._retryTimerId = null;
                     self.isLoading = false;
                     return;
                 }
                 if (remaining <= 0) {
-                    currentBtn.textContent = currentBtn.getAttribute('data-wpaic-retry-original-text') || '';
-                    currentBtn.removeAttribute('data-wpaic-retry-original-text');
+                    currentBtn.textContent = currentBtn.getAttribute('data-raplsaich-retry-original-text') || '';
+                    currentBtn.removeAttribute('data-raplsaich-retry-original-text');
                     currentBtn.disabled = false;
                     self.isLoading = false;
                     self._retryTimerId = null;
@@ -2503,13 +2503,13 @@
             };
 
             if (this.sessionId) {
-                headers['X-WPAIC-Session'] = this.sessionId;
+                headers['X-RAPLSAICH-Session'] = this.sessionId;
             }
 
             // HMAC トークンを送信（IP 変動時のフォールバック認証用）
-            var sessionToken = wpaicLsGet('wpaic_session_token');
+            var sessionToken = raplsaichLsGet('raplsaich_session_token');
             if (sessionToken) {
-                headers['X-WPAIC-Session-Token'] = sessionToken;
+                headers['X-RAPLSAICH-Session-Token'] = sessionToken;
             }
 
             var options = {
@@ -2574,9 +2574,9 @@
                                 self.clearSession();
                                 return self.apiRequest('GET', '/session').then(function(sessResp) {
                                     self.sessionId = sessResp.session_id;
-                                    wpaicSsSet('wpaic_session', self.sessionId);
+                                    raplsaichSsSet('raplsaich_session', self.sessionId);
                                     if (sessResp.session_token) {
-                                        wpaicLsSet('wpaic_session_token', sessResp.session_token);
+                                        raplsaichLsSet('raplsaich_session_token', sessResp.session_token);
                                     }
                                     if (data && data.session_id) {
                                         data.session_id = self.sessionId;
@@ -2608,8 +2608,8 @@
             }
 
             // 既にリードを送信済みかチェック
-            var leadSubmittedKey = 'wpaic_lead_submitted_' + this.sessionId;
-            var leadSubmitted = wpaicSsGet(leadSubmittedKey);
+            var leadSubmittedKey = 'raplsaich_lead_submitted_' + this.sessionId;
+            var leadSubmitted = raplsaichSsGet(leadSubmittedKey);
             if (leadSubmitted) {
                 this.leadSubmitted = true;
                 return Promise.resolve();
@@ -2912,7 +2912,7 @@
             .then(function(data) {
                 if (data.success) {
                     self.leadSubmitted = true;
-                    wpaicSsSet('wpaic_lead_submitted_' + self.sessionId, 'true');
+                    raplsaichSsSet('raplsaich_lead_submitted_' + self.sessionId, 'true');
                     self.hideLeadForm();
                     self.showChat();
                 } else {
@@ -2984,7 +2984,7 @@
                     self.stopRecording();
                     if (event.error !== 'aborted' && event.error !== 'no-speech') {
                         if (self.config.debug) {
-                            console.warn('WPAIC Voice: SpeechRecognition error:', event.error);
+                            console.warn('RAPLSAICH Voice: SpeechRecognition error:', event.error);
                         }
                     }
                 };
@@ -3243,7 +3243,7 @@
         },
 
         initOfflineForm: function() {
-            var config = window.wpAiChatbotConfig || {};
+            var config = window.raplsaichConfig || {};
             var offline = config.offline_message;
 
             if (!offline || !offline.enabled) return;
@@ -3277,28 +3277,28 @@
                 return node;
             };
 
-            var form = el('form', { id: 'wpaic-offline-form' }, [
-                el('div', { 'class': 'wpaic-offline-field' }, [
-                    el('input', { type: 'text', name: 'name', placeholder: (_s.offline_name || 'Name'), 'class': 'wpaic-offline-input' })
+            var form = el('form', { id: 'raplsaich-offline-form' }, [
+                el('div', { 'class': 'raplsaich-offline-field' }, [
+                    el('input', { type: 'text', name: 'name', placeholder: (_s.offline_name || 'Name'), 'class': 'raplsaich-offline-input' })
                 ]),
-                el('div', { 'class': 'wpaic-offline-field' }, [
-                    el('input', { type: 'email', name: 'email', placeholder: (_s.offline_email || 'Email') + ' *', required: '', 'class': 'wpaic-offline-input' })
+                el('div', { 'class': 'raplsaich-offline-field' }, [
+                    el('input', { type: 'email', name: 'email', placeholder: (_s.offline_email || 'Email') + ' *', required: '', 'class': 'raplsaich-offline-input' })
                 ]),
-                el('div', { 'class': 'wpaic-offline-field' }, [
-                    el('textarea', { name: 'message', placeholder: (_s.offline_message || 'Message') + ' *', required: '', rows: '4', 'class': 'wpaic-offline-input' })
+                el('div', { 'class': 'raplsaich-offline-field' }, [
+                    el('textarea', { name: 'message', placeholder: (_s.offline_message || 'Message') + ' *', required: '', rows: '4', 'class': 'raplsaich-offline-input' })
                 ]),
                 // Honeypot field: hidden from real users, bots auto-fill it
                 el('div', { style: 'position:absolute;left:-9999px;top:-9999px;', 'aria-hidden': 'true', tabindex: '-1' }, [
-                    el('input', { type: 'text', name: 'wpaic_hp', autocomplete: 'off', tabindex: '-1' })
+                    el('input', { type: 'text', name: 'raplsaich_hp', autocomplete: 'off', tabindex: '-1' })
                 ]),
                 // Timing field: records when form was rendered
                 el('input', { type: 'hidden', name: '_ts', value: String(Math.floor(Date.now() / 1000)) }),
-                el('button', { type: 'submit', 'class': 'wpaic-offline-submit' }, [(_s.offline_send || 'Send Message')]),
-                el('div', { 'class': 'wpaic-offline-status' })
+                el('button', { type: 'submit', 'class': 'raplsaich-offline-submit' }, [(_s.offline_send || 'Send Message')]),
+                el('div', { 'class': 'raplsaich-offline-status' })
             ]);
 
-            var wrapper = el('div', { 'class': 'wpaic-offline-form' }, [
-                el('div', { 'class': 'wpaic-offline-header' }, [
+            var wrapper = el('div', { 'class': 'raplsaich-offline-form' }, [
+                el('div', { 'class': 'raplsaich-offline-header' }, [
                     el('h3', null, [offline.title || '']),
                     el('p', null, [offline.description || ''])
                 ]),
@@ -3327,9 +3327,9 @@
 
         submitOfflineForm: function(form) {
             var self = this;
-            var config = window.wpAiChatbotConfig || {};
-            var statusEl = form.querySelector('.wpaic-offline-status');
-            var submitBtn = form.querySelector('.wpaic-offline-submit');
+            var config = window.raplsaichConfig || {};
+            var statusEl = form.querySelector('.raplsaich-offline-status');
+            var submitBtn = form.querySelector('.raplsaich-offline-submit');
 
             // Cancel any pending _dropped retry timer from a previous submission.
             if (self._droppedTimer) {
@@ -3351,7 +3351,7 @@
             // Uses sessionStorage so the guard survives page reloads within the same tab.
             var dedupKey = email + '|' + message;
             try {
-                var lastDedup = JSON.parse(wpaicSsGet('wpaic_offline_dedup') || '{}');
+                var lastDedup = JSON.parse(raplsaichSsGet('raplsaich_offline_dedup') || '{}');
                 if (lastDedup.k === dedupKey && lastDedup.t && (Date.now() - lastDedup.t) < 30000) {
                     return;
                 }
@@ -3360,10 +3360,10 @@
             submitBtn.disabled = true;
             var _s = self.config.strings || {};
             statusEl.textContent = _s.sending || 'Sending...';
-            statusEl.className = 'wpaic-offline-status';
+            statusEl.className = 'raplsaich-offline-status';
 
-            // Honeypot (wpaic_hp) and timing (_ts) for bot detection
-            var honeypot = form.querySelector('[name="wpaic_hp"]');
+            // Honeypot (raplsaich_hp) and timing (_ts) for bot detection
+            var honeypot = form.querySelector('[name="raplsaich_hp"]');
             var tsField = form.querySelector('[name="_ts"]');
 
             // Ensure _ts is set even if form was rendered late (JS optimization/deferred load)
@@ -3377,7 +3377,7 @@
                 email: email,
                 message: message,
                 page_url: window.location.href,
-                wpaic_hp: honeypot ? honeypot.value : '',
+                raplsaich_hp: honeypot ? honeypot.value : '',
                 _ts: tsValue
             };
 
@@ -3388,7 +3388,7 @@
                 } else if (config.recaptcha_enabled) {
                     // reCAPTCHA is configured but token is empty (script not loaded yet)
                     statusEl.textContent = _s.recaptcha_loading || 'Security verification loading. Please try again in a moment.';
-                    statusEl.className = 'wpaic-offline-status wpaic-offline-error';
+                    statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
                     submitBtn.disabled = false;
                     return Promise.reject('recaptcha_not_ready');
                 }
@@ -3401,27 +3401,27 @@
                     // Show a generic processing message, then a retry hint after delay.
                     // No specific reason is revealed to avoid giving attackers clues.
                     statusEl.textContent = _s.processing || 'Processing...';
-                    statusEl.className = 'wpaic-offline-status';
+                    statusEl.className = 'raplsaich-offline-status';
                     self._droppedTimer = setTimeout(function() {
                         self._droppedTimer = null;
                         statusEl.textContent = _s.offline_reload_request || 'Could not complete the request. Please reload the page and try again.';
-                        statusEl.className = 'wpaic-offline-status wpaic-offline-error';
+                        statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
                     }, 3000);
                 } else if (data.success) {
-                    try { wpaicSsSet('wpaic_offline_dedup', JSON.stringify({ k: dedupKey, t: Date.now() })); } catch (e) { /* ignore */ }
+                    try { raplsaichSsSet('raplsaich_offline_dedup', JSON.stringify({ k: dedupKey, t: Date.now() })); } catch (e) { /* ignore */ }
                     statusEl.textContent = data.data.message || _s.message_sent || 'Message sent!';
-                    statusEl.className = 'wpaic-offline-status wpaic-offline-success';
+                    statusEl.className = 'raplsaich-offline-status raplsaich-offline-success';
                     form.reset();
                 } else {
                     statusEl.textContent = data.error || _s.send_failed || 'Failed to send.';
-                    statusEl.className = 'wpaic-offline-status wpaic-offline-error';
+                    statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
                 }
             })
             .catch(function(err) {
                 // Skip if already handled (e.g. recaptcha_not_ready)
                 if (err === 'recaptcha_not_ready') return;
                 statusEl.textContent = _s.send_failed_retry || 'Failed to send. Please try again.';
-                statusEl.className = 'wpaic-offline-status wpaic-offline-error';
+                statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
             })
             .finally(function() {
                 submitBtn.disabled = false;
@@ -3721,20 +3721,20 @@
         listenForConsentChange: function() {
             var self = this;
             document.addEventListener('wp_listen_for_consent_change', function() {
-                if (!wpaicStorageAllowed()) {
-                    // Consent revoked — remove ALL wpaic_ keys from both storages.
+                if (!raplsaichStorageAllowed()) {
+                    // Consent revoked — remove ALL raplsaich_ keys from both storages.
                     // Walk all keys to catch conversion markers from old sessions, etc.
                     try {
                         var i;
                         var lsKeys = Object.keys(localStorage);
                         for (i = 0; i < lsKeys.length; i++) {
-                            if (lsKeys[i].indexOf('wpaic_') === 0) {
+                            if (lsKeys[i].indexOf('raplsaich_') === 0) {
                                 localStorage.removeItem(lsKeys[i]);
                             }
                         }
                         var ssKeys = Object.keys(sessionStorage);
                         for (i = 0; i < ssKeys.length; i++) {
-                            if (ssKeys[i].indexOf('wpaic_') === 0) {
+                            if (ssKeys[i].indexOf('raplsaich_') === 0) {
                                 sessionStorage.removeItem(ssKeys[i]);
                             }
                         }
@@ -3751,12 +3751,12 @@
         conversionTrackingInitialized: false,
 
         initConversionTracking: function() {
-            var config = window.wpAiChatbotConfig || {};
+            var config = window.raplsaichConfig || {};
             if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
                 return;
             }
             // WP Consent API: conversion tracking requires statistics or marketing consent
-            if (!wpaicHasConsent('statistics') && !wpaicHasConsent('marketing')) {
+            if (!raplsaichHasConsent('statistics') && !raplsaichHasConsent('marketing')) {
                 return;
             }
 
@@ -3777,7 +3777,7 @@
             history.pushState = function() {
                 originalPushState.apply(this, arguments);
                 // Re-check consent at call time (may have been revoked since hook was installed)
-                if (wpaicHasConsent('statistics') || wpaicHasConsent('marketing')) {
+                if (raplsaichHasConsent('statistics') || raplsaichHasConsent('marketing')) {
                     self.checkConversionGoals(goals);
                 }
             };
@@ -3785,13 +3785,13 @@
             var originalReplaceState = history.replaceState;
             history.replaceState = function() {
                 originalReplaceState.apply(this, arguments);
-                if (wpaicHasConsent('statistics') || wpaicHasConsent('marketing')) {
+                if (raplsaichHasConsent('statistics') || raplsaichHasConsent('marketing')) {
                     self.checkConversionGoals(goals);
                 }
             };
 
             window.addEventListener('popstate', function() {
-                if (wpaicHasConsent('statistics') || wpaicHasConsent('marketing')) {
+                if (raplsaichHasConsent('statistics') || raplsaichHasConsent('marketing')) {
                     self.checkConversionGoals(goals);
                 }
             });
@@ -3801,11 +3801,11 @@
          * Re-check conversion goals after session is ready
          */
         recheckConversionGoals: function() {
-            var config = window.wpAiChatbotConfig || {};
+            var config = window.raplsaichConfig || {};
             if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
                 return;
             }
-            if (!wpaicHasConsent('statistics') && !wpaicHasConsent('marketing')) {
+            if (!raplsaichHasConsent('statistics') && !raplsaichHasConsent('marketing')) {
                 return;
             }
             if (!this.sessionId) return;
@@ -3822,8 +3822,8 @@
             if (!sessionId) return;
 
             // Check if already tracked this session
-            var trackingKey = 'wpaic_converted_' + sessionId;
-            if (wpaicSsGet(trackingKey)) return;
+            var trackingKey = 'raplsaich_converted_' + sessionId;
+            if (raplsaichSsGet(trackingKey)) return;
 
             for (var i = 0; i < goals.length; i++) {
                 var goal = goals[i];
@@ -3855,7 +3855,7 @@
                 goal: goalName
             }).then(function(data) {
                 if (data.success && trackingKey) {
-                    wpaicSsSet(trackingKey, '1');
+                    raplsaichSsSet(trackingKey, '1');
                 }
             }).catch(function() {
                 // Silently fail - will retry on next page load
@@ -3868,14 +3868,14 @@
         toggleBookmark: function(messageId, textEl, btnEl) {
             var numId = parseInt(messageId, 10);
             if (isNaN(numId)) return;
-            var bookmarks = JSON.parse(wpaicLsGet(this.bookmarkKey) || '[]');
+            var bookmarks = JSON.parse(raplsaichLsGet(this.bookmarkKey) || '[]');
             var idx = -1;
             for (var i = 0; i < bookmarks.length; i++) {
                 if (parseInt(bookmarks[i].id, 10) === numId) { idx = i; break; }
             }
             if (idx >= 0) {
                 bookmarks.splice(idx, 1);
-                btnEl.classList.remove('wpaic-bookmarked');
+                btnEl.classList.remove('raplsaich-bookmarked');
                 btnEl.title = (this.config.strings && this.config.strings.bookmark) || 'Bookmark this message';
             } else {
                 bookmarks.push({
@@ -3883,10 +3883,10 @@
                     content: textEl ? textEl.textContent.substring(0, 500) : '',
                     timestamp: Date.now()
                 });
-                btnEl.classList.add('wpaic-bookmarked');
+                btnEl.classList.add('raplsaich-bookmarked');
                 btnEl.title = (this.config.strings && this.config.strings.bookmarked) || 'Bookmarked';
             }
-            wpaicLsSet(this.bookmarkKey, JSON.stringify(bookmarks));
+            raplsaichLsSet(this.bookmarkKey, JSON.stringify(bookmarks));
         },
 
         /**
@@ -4140,7 +4140,7 @@
             function collectBookmarkedMessages() {
                 bmkMatches = [];
                 currentBmkIdx = -1;
-                var bookmarks = JSON.parse(wpaicLsGet(self.bookmarkKey) || '[]');
+                var bookmarks = JSON.parse(raplsaichLsGet(self.bookmarkKey) || '[]');
                 if (bookmarks.length === 0) return;
                 var bmkIds = {};
                 for (var i = 0; i < bookmarks.length; i++) {
@@ -4278,10 +4278,10 @@
     // DOM準備完了後に初期化
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            WPAIChatbot.init();
+            RaplsaichChatbot.init();
         });
     } else {
-        WPAIChatbot.init();
+        RaplsaichChatbot.init();
     }
 
 })();

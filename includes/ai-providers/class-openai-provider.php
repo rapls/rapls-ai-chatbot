@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
+class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * API Key
@@ -122,7 +122,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * @return array ['tokens' => int, 'multiplier' => int]
      */
     public static function get_gpt5_effective_tokens(int $configured_max): array {
-        $multiplier = (int) apply_filters('wpaic_gpt5_token_multiplier', 4);
+        $multiplier = (int) apply_filters('raplsaich_gpt5_token_multiplier', 4);
         $multiplier = max(1, min(8, $multiplier));
         return [
             'tokens'     => min($configured_max * $multiplier, 16384),
@@ -134,10 +134,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * Check if debug logging is enabled.
      * Requires WP_DEBUG + WP_DEBUG_LOG (file logging) to prevent casual dev
      * environments from accumulating operational data in log files.
-     * Can be force-enabled via wpaic_debug_log_enabled filter.
+     * Can be force-enabled via raplsaich_debug_log_enabled filter.
      */
     private function should_log(): bool {
-        if (apply_filters('wpaic_debug_log_enabled', false)) {
+        if (apply_filters('raplsaich_debug_log_enabled', false)) {
             return true;
         }
         return defined('WP_DEBUG') && WP_DEBUG
@@ -193,15 +193,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         if (empty($options['_request_id'])) {
             $options['_request_id'] = wp_generate_uuid4();
         }
-        $header_name = apply_filters('wpaic_request_id_header', 'X-WPAIC-Request-Id');
+        $header_name = apply_filters('raplsaich_request_id_header', 'X-RAPLSAICH-Request-Id');
         // Validate: only allow known safe header names by default.
         // Custom X-* names require admin + WP_DEBUG (developer mode).
-        $allowed_headers = ['X-WPAIC-Request-Id', 'Idempotency-Key'];
+        $allowed_headers = ['X-RAPLSAICH-Request-Id', 'Idempotency-Key'];
         if (!in_array($header_name, $allowed_headers, true)) {
             $is_dev_mode = (defined('WP_DEBUG') && WP_DEBUG)
                 && function_exists('current_user_can') && current_user_can('manage_options');
             if (!$is_dev_mode || !preg_match('/^X-[A-Za-z0-9-]+$/', $header_name)) {
-                $header_name = 'X-WPAIC-Request-Id';
+                $header_name = 'X-RAPLSAICH-Request-Id';
             }
         }
         $options['_request_id_header'] = $header_name;
@@ -216,7 +216,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             return call_user_func($primary, $messages, $options);
         } catch (Exception $e) {
             // Quota/billing exceptions are never recoverable by switching endpoints
-            if ($e instanceof WPAIC_Quota_Exceeded_Exception) {
+            if ($e instanceof RAPLSAICH_Quota_Exceeded_Exception) {
                 throw $e; // 429/402/quota — never retry
             }
 
@@ -264,13 +264,13 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             }
 
             // ── Transient server/network errors ──
-            // WPAIC_Communication_Exception = WP_Error from wp_remote_post
+            // RAPLSAICH_Communication_Exception = WP_Error from wp_remote_post
             // (timeout, DNS failure, connection reset). Using instanceof avoids
             // catching generic Exception(code=0) from JSON decode failures,
             // runtime errors, etc. Server errors (5xx) carry their HTTP code.
             // NOTE: Timeout fallback risks double billing; the request ID enables
             // post-hoc audit.
-            $is_transient = ($e instanceof WPAIC_Communication_Exception)
+            $is_transient = ($e instanceof RAPLSAICH_Communication_Exception)
                 || ($code >= 500 && $code < 600);
 
             if (!$is_endpoint_mismatch && !$is_transient) {
@@ -280,7 +280,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         if ($this->should_log()) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC OpenAI: primary API failed for model=%s, retrying with fallback (request_id=%s)', $this->model, $options['_request_id']));
+            error_log(sprintf('RAPLSAICH OpenAI: primary API failed for model=%s, retrying with fallback (request_id=%s)', $this->model, $options['_request_id']));
         }
         return call_user_func($secondary, $messages, $options);
     }
@@ -337,7 +337,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             $effective_tokens = $body['max_completion_tokens'] ?? $body['max_tokens'] ?? '?';
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf(
-                'WPAIC OpenAI: endpoint=chat/completions model=%s max_tokens=%s request_id=%s',
+                'RAPLSAICH OpenAI: endpoint=chat/completions model=%s max_tokens=%s request_id=%s',
                 $this->model,
                 $effective_tokens,
                 $options['_request_id'] ?? 'none'
@@ -442,7 +442,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         if ($this->should_log()) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             error_log(sprintf(
-                'WPAIC OpenAI: endpoint=responses model=%s max_output_tokens=%s web_search=%s request_id=%s',
+                'RAPLSAICH OpenAI: endpoint=responses model=%s max_output_tokens=%s web_search=%s request_id=%s',
                 $this->model,
                 $body['max_output_tokens'] ?? '?',
                 $has_web_search ? 'yes' : 'no',
@@ -474,15 +474,15 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
     /**
      * Send an HTTP POST to an OpenAI endpoint and return parsed data.
      *
-     * Centralizes WP_Error → WPAIC_Communication_Exception conversion and
+     * Centralizes WP_Error → RAPLSAICH_Communication_Exception conversion and
      * HTTP error code handling so every send method goes through one path.
      *
      * @param string $url     API endpoint URL.
      * @param array  $headers HTTP headers.
      * @param array  $body    Request body (will be JSON-encoded).
      * @return array Parsed response data.
-     * @throws WPAIC_Communication_Exception On network/transport failure.
-     * @throws Exception|WPAIC_Quota_Exceeded_Exception On API errors.
+     * @throws RAPLSAICH_Communication_Exception On network/transport failure.
+     * @throws Exception|RAPLSAICH_Quota_Exceeded_Exception On API errors.
      */
     private function send_http_request(string $url, array $headers, array $body): array {
         /**
@@ -496,7 +496,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
          */
         // Filter must return a deterministic value — avoid wp_rand() or
         // request-scoped state in callbacks.
-        $requested = (int) apply_filters('wpaic_api_timeout', 120, $url, $this->model);
+        $requested = (int) apply_filters('raplsaich_api_timeout', 120, $url, $this->model);
         // Clamp to 10-300s, but never exceed PHP max_execution_time (0 = unlimited).
         // Note: FPM request_terminate_timeout is not readable from PHP — hosting
         // providers may impose a lower limit that cannot be auto-detected.
@@ -517,7 +517,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             if ($was_clamped || wp_rand(1, 20) === 1) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                 error_log(sprintf(
-                    'WPAIC timeout: requested=%ds | final=%ds | max_exec=%ds | upper=%ds(%s) | model=%s',
+                    'RAPLSAICH timeout: requested=%ds | final=%ds | max_exec=%ds | upper=%ds(%s) | model=%s',
                     $requested, $timeout, $max_exec, $upper, $upper_source, $this->model
                 ));
             }
@@ -530,7 +530,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new WPAIC_Communication_Exception(
+            throw new RAPLSAICH_Communication_Exception(
                 esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message())
             );
         }
@@ -552,7 +552,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
      * @param int              $response_code HTTP status code.
      * @param array|null       $data          Decoded response body.
      * @param array|WP_Error   $raw_response  Raw wp_remote_post response (for headers).
-     * @throws Exception|WPAIC_Quota_Exceeded_Exception
+     * @throws Exception|RAPLSAICH_Quota_Exceeded_Exception
      */
     private function handle_api_error(int $response_code, ?array $data, $raw_response = null): void {
         $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
@@ -560,10 +560,10 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
         $error_code = $data['error']['code'] ?? '';
 
         // Rate-limited: under API outages, every chat request triggers this.
-        wpaic_rate_limited_log(
+        raplsaich_rate_limited_log(
             'openai_api_error_' . $response_code,
             sprintf(
-                'WPAIC OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
+                'RAPLSAICH OpenAI API Error: HTTP %d | type=%s | code=%s | model=%s | message=%s',
                 $response_code,
                 $error_type,
                 $error_code,
@@ -584,7 +584,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             stripos($error_message, 'quota') !== false ||
             stripos($error_message, 'billing') !== false ||
             stripos($error_message, 'exceeded') !== false) {
-            throw new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+            throw new RAPLSAICH_Quota_Exceeded_Exception(esc_html($error_message));
         }
 
         // Model access denied
@@ -625,7 +625,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
 
         // Rate limit errors — propagate Retry-After as structured property
         if ($response_code === 429) {
-            $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+            $ex = new RAPLSAICH_Quota_Exceeded_Exception(esc_html($error_message));
             if ($raw_response && !is_wp_error($raw_response)) {
                 $retry_after = wp_remote_retrieve_header($raw_response, 'retry-after');
                 if (is_numeric($retry_after) && (int) $retry_after > 0) {
@@ -896,7 +896,7 @@ class WPAIC_OpenAI_Provider implements WPAIC_AI_Provider_Interface {
             return [];
         }
 
-        $cache_key = 'wpaic_models_openai_v2_' . md5($this->api_key);
+        $cache_key = 'raplsaich_models_openai_v2_' . md5($this->api_key);
         $cached = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;

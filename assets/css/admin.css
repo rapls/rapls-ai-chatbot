@@ -5,15 +5,15 @@
 /* ============================================
    共通スタイル
 ============================================ */
-.wpaic-admin {
+.raplsaich-admin {
     max-width: 1200px;
 }
 
-.wpaic-admin h1 {
+.raplsaich-admin h1 {
     margin-bottom: 20px;
 }
 
-.wpaic-admin h2 {
+.raplsaich-admin h2 {
     margin-top: 0;
     padding-bottom: 10px;
     border-bottom: 1px solid #ddd;
@@ -22,7 +22,7 @@
 /* ============================================
    カード
 ============================================ */
-.wpaic-card {
+.raplsaich-card {
     background: #fff;
     border: 1px solid #ccd0d4;
     border-radius: 4px;
@@ -31,7 +31,7 @@
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 
-.wpaic-card h2 {
+.raplsaich-card h2 {
     margin: -20px -20px 20px;
     padding: 15px 20px;
     background: #f9f9f9;
@@ -42,24 +42,24 @@
 /* ============================================
    ダッシュボード
 ============================================ */
-.wpaic-dashboard-grid {
+.raplsaich-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
 }
 
-.wpaic-stats-cards {
+.raplsaich-stats-cards {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     grid-column: 1 / -1;
 }
 
-.wpaic-dashboard-grid .wpaic-card-full {
+.raplsaich-dashboard-grid .raplsaich-card-full {
     grid-column: 1 / -1;
 }
 
-.wpaic-stat-card {
+.raplsaich-stat-card {
     background: #fff;
     border: 1px solid #ccd0d4;
     border-radius: 4px;
@@ -69,52 +69,52 @@
     gap: 15px;
 }
 
-.wpaic-stat-card .stat-icon {
+.raplsaich-stat-card .stat-icon {
     font-size: 36px;
     line-height: 1;
 }
 
-.wpaic-stat-card .stat-value {
+.raplsaich-stat-card .stat-value {
     font-size: 28px;
     font-weight: 600;
     color: #1d2327;
     line-height: 1.2;
 }
 
-.wpaic-stat-card .stat-label {
+.raplsaich-stat-card .stat-label {
     color: #50575e;
     font-size: 14px;
 }
 
-.wpaic-stat-card-warning {
+.raplsaich-stat-card-warning {
     border-color: #dba617;
     background: #fef8ee;
 }
 
-.wpaic-stat-card-warning .stat-value {
+.raplsaich-stat-card-warning .stat-value {
     color: #96600a;
 }
 
-.wpaic-stat-card-critical {
+.raplsaich-stat-card-critical {
     border-color: #d63638;
     background: #fef0f0;
 }
 
-.wpaic-stat-card-critical .stat-value {
+.raplsaich-stat-card-critical .stat-value {
     color: #d63638;
 }
 
 /* ============================================
    クイックアクション
 ============================================ */
-.wpaic-quick-actions {
+.raplsaich-quick-actions {
     background: #fff;
     border: 1px solid #ccd0d4;
     border-radius: 4px;
     padding: 20px;
 }
 
-.wpaic-quick-actions .action-buttons {
+.raplsaich-quick-actions .action-buttons {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
@@ -123,22 +123,22 @@
 /* ============================================
    ステータステーブル
 ============================================ */
-.wpaic-status-table {
+.raplsaich-status-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.wpaic-status-table td {
+.raplsaich-status-table td {
     padding: 10px 0;
     border-bottom: 1px solid #f0f0f0;
 }
 
-.wpaic-status-table td:first-child {
+.raplsaich-status-table td:first-child {
     color: #50575e;
     width: 40%;
 }
 
-.wpaic-status-table tr:last-child td {
+.raplsaich-status-table tr:last-child td {
     border-bottom: none;
 }
 
@@ -184,11 +184,11 @@
 /* ============================================
    設定タブ
 ============================================ */
-.wpaic-settings-tabs .nav-tab-wrapper {
+.raplsaich-settings-tabs .nav-tab-wrapper {
     margin-bottom: 20px;
 }
 
-.wpaic-settings-tabs .tab-content {
+.raplsaich-settings-tabs .tab-content {
     display: none;
     background: #fff;
     border: 1px solid #ccd0d4;
@@ -197,58 +197,58 @@
     margin-top: -1px;
 }
 
-.wpaic-settings-tabs .tab-content.active {
+.raplsaich-settings-tabs .tab-content.active {
     display: block;
 }
 
-.wpaic-settings-tabs .provider-settings {
+.raplsaich-settings-tabs .provider-settings {
     margin-top: 20px;
     padding: 15px;
     background: #f9f9f9;
     border-radius: 4px;
 }
 
-.wpaic-settings-tabs .provider-settings h3 {
+.raplsaich-settings-tabs .provider-settings h3 {
     margin-top: 0;
     padding-bottom: 10px;
     border-bottom: 1px solid #ddd;
 }
 
 /* APIキー入力 */
-.wpaic-api-key-wrapper {
+.raplsaich-api-key-wrapper {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 }
 
-.wpaic-api-key-wrapper input[type="password"] {
+.raplsaich-api-key-wrapper input[type="password"] {
     flex: 0 0 300px;
 }
 
-.wpaic-key-status {
+.raplsaich-key-status {
     font-size: 12px;
     padding: 4px 10px;
     border-radius: 3px;
     margin-left: 5px;
 }
 
-.wpaic-key-status.wpaic-key-set {
+.raplsaich-key-status.raplsaich-key-set {
     background: #d4edda;
     color: #155724;
 }
 
-.wpaic-key-status.wpaic-key-empty {
+.raplsaich-key-status.raplsaich-key-empty {
     background: #f8d7da;
     color: #721c24;
 }
 
-.wpaic-clear-api-key {
+.raplsaich-clear-api-key {
     color: #b32d2e !important;
     border-color: #b32d2e !important;
 }
 
-.wpaic-clear-api-key:hover {
+.raplsaich-clear-api-key:hover {
     background: #b32d2e !important;
     color: #fff !important;
 }
@@ -256,32 +256,32 @@
 /* ============================================
    クローラーページ
 ============================================ */
-.wpaic-crawler-grid {
+.raplsaich-crawler-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
 
-.wpaic-crawler-grid .wpaic-card-status {
+.raplsaich-crawler-grid .raplsaich-card-status {
     grid-column: 1;
     grid-row: 1;
 }
 
-.wpaic-crawler-grid .wpaic-card-embedding {
+.raplsaich-crawler-grid .raplsaich-card-embedding {
     grid-column: 1;
     grid-row: 2;
 }
 
-.wpaic-crawler-grid .wpaic-card-settings {
+.raplsaich-crawler-grid .raplsaich-card-settings {
     grid-column: 2;
     grid-row: 1 / 3;
 }
 
-.wpaic-crawler-grid .wpaic-card-full {
+.raplsaich-crawler-grid .raplsaich-card-full {
     grid-column: 1 / -1;
 }
 
-.wpaic-actions {
+.raplsaich-actions {
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid #ddd;
@@ -295,7 +295,7 @@
 /* ============================================
    モーダル
 ============================================ */
-.wpaic-modal {
+.raplsaich-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -308,7 +308,7 @@
     justify-content: center;
 }
 
-.wpaic-modal-content {
+.raplsaich-modal-content {
     background: #fff;
     border-radius: 4px;
     width: 90%;
@@ -318,7 +318,7 @@
     flex-direction: column;
 }
 
-.wpaic-modal-header {
+.raplsaich-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -326,13 +326,13 @@
     border-bottom: 1px solid #ddd;
 }
 
-.wpaic-modal-header h2 {
+.raplsaich-modal-header h2 {
     margin: 0;
     padding: 0;
     border: none;
 }
 
-.wpaic-modal-close {
+.raplsaich-modal-close {
     background: none;
     border: none;
     font-size: 28px;
@@ -341,42 +341,42 @@
     line-height: 1;
 }
 
-.wpaic-modal-close:hover {
+.raplsaich-modal-close:hover {
     color: #000;
 }
 
-.wpaic-modal-body {
+.raplsaich-modal-body {
     padding: 20px;
     overflow-y: auto;
 }
 
 /* 会話メッセージ */
-.wpaic-message {
+.raplsaich-message {
     margin-bottom: 15px;
     padding: 10px 15px;
     border-radius: 8px;
 }
 
-.wpaic-message.message-user {
+.raplsaich-message.message-user {
     background: #e3f2fd;
     margin-left: 20%;
 }
 
-.wpaic-message.message-assistant {
+.raplsaich-message.message-assistant {
     background: #f5f5f5;
     margin-right: 20%;
 }
 
-.wpaic-message strong {
+.raplsaich-message strong {
     display: block;
     margin-bottom: 5px;
 }
 
-.wpaic-message small {
+.raplsaich-message small {
     color: #666;
 }
 
-.wpaic-message p {
+.raplsaich-message p {
     margin: 5px 0 0;
     white-space: pre-wrap;
 }
@@ -384,19 +384,19 @@
 /* ============================================
    マージン入力
 ============================================ */
-.wpaic-margin-inputs {
+.raplsaich-margin-inputs {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
 }
 
-.wpaic-margin-inputs label {
+.raplsaich-margin-inputs label {
     display: inline-flex;
     align-items: center;
     gap: 5px;
 }
 
-.wpaic-margin-inputs input[type="number"] {
+.raplsaich-margin-inputs input[type="number"] {
     text-align: center;
 }
 
@@ -420,13 +420,13 @@
 }
 
 /* 一括操作 */
-.wpaic-admin .tablenav .bulkactions {
+.raplsaich-admin .tablenav .bulkactions {
     display: flex;
     gap: 10px;
     align-items: center;
 }
 
-.wpaic-admin .tablenav .bulkactions .button {
+.raplsaich-admin .tablenav .bulkactions .button {
     margin: 0;
 }
 
@@ -435,7 +435,7 @@
 ============================================ */
 
 /* Pro バッジ（小）- タブ用 */
-.wpaic-pro-badge-small {
+.raplsaich-pro-badge-small {
     display: inline-block;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -452,7 +452,7 @@
 /* Pro menu badge styles are in admin-menu.css (loaded on all admin pages) */
 
 /* Pro バッジ（通常） */
-.wpaic-pro-badge {
+.raplsaich-pro-badge {
     display: inline-block;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -467,7 +467,7 @@
 }
 
 /* Pro ステータスバナー */
-.wpaic-pro-status-banner {
+.raplsaich-pro-status-banner {
     display: flex;
     align-items: center;
     padding: 15px 20px;
@@ -476,27 +476,27 @@
     font-weight: 500;
 }
 
-.wpaic-pro-status-banner .dashicons {
+.raplsaich-pro-status-banner .dashicons {
     font-size: 24px;
     width: 24px;
     height: 24px;
     margin-right: 12px;
 }
 
-.wpaic-pro-status-banner.wpaic-pro-active {
+.raplsaich-pro-status-banner.raplsaich-pro-active {
     background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
     color: #155724;
     border: 1px solid #c3e6cb;
 }
 
-.wpaic-pro-status-banner.wpaic-pro-inactive {
+.raplsaich-pro-status-banner.raplsaich-pro-inactive {
     background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
     color: #856404;
     border: 1px solid #ffeeba;
 }
 
 /* Pro 機能セクション */
-.wpaic-pro-feature {
+.raplsaich-pro-feature {
     position: relative;
     padding: 20px;
     background: #fff;
@@ -505,7 +505,7 @@
     margin-bottom: 20px;
 }
 
-.wpaic-pro-feature h3 {
+.raplsaich-pro-feature h3 {
     margin-top: 0;
     padding-bottom: 15px;
     border-bottom: 1px solid #eee;
@@ -513,12 +513,12 @@
     align-items: center;
 }
 
-.wpaic-pro-feature .form-table {
+.raplsaich-pro-feature .form-table {
     margin-top: 10px;
 }
 
 /* h3タイトルをオーバーレイの上に表示 */
-.wpaic-pro-feature h3 {
+.raplsaich-pro-feature h3 {
     position: relative;
     z-index: 20;
     background: #fff;
@@ -526,79 +526,12 @@
     padding: 10px 0;
 }
 
-/* ロック状態 */
-.wpaic-pro-feature.wpaic-pro-locked {
-    opacity: 1;
-}
-
-.wpaic-pro-feature.wpaic-pro-locked .form-table {
-    opacity: 0.6;
-}
-
-.wpaic-pro-feature.wpaic-pro-locked input,
-.wpaic-pro-feature.wpaic-pro-locked select,
-.wpaic-pro-feature.wpaic-pro-locked textarea,
-.wpaic-pro-feature.wpaic-pro-locked button {
-    pointer-events: none;
-}
-
-/* オーバーレイ */
-.wpaic-pro-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    border-radius: 6px;
-}
-
-.wpaic-pro-overlay-content {
-    text-align: center;
-    padding: 30px;
-}
-
-.wpaic-pro-overlay-content .dashicons {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: #667eea;
-    margin-bottom: 15px;
-}
-
-.wpaic-pro-overlay-content p {
-    margin: 0 0 15px;
-    color: #666;
-    font-size: 14px;
-}
-
-.wpaic-pro-overlay-content a {
-    display: inline-block;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 10px 25px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.wpaic-pro-overlay-content a:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    color: white;
-}
-
 /* 使用量バー */
-.wpaic-usage-stats {
+.raplsaich-usage-stats {
     padding: 10px 0;
 }
 
-.wpaic-usage-bar-container {
+.raplsaich-usage-bar-container {
     width: 100%;
     height: 20px;
     background: #e9ecef;
@@ -607,18 +540,18 @@
     margin-bottom: 10px;
 }
 
-.wpaic-usage-bar {
+.raplsaich-usage-bar {
     height: 100%;
     background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     border-radius: 10px;
     transition: width 0.3s ease;
 }
 
-.wpaic-usage-stats p {
+.raplsaich-usage-stats p {
     margin: 5px 0;
 }
 
-.wpaic-usage-stats p.description {
+.raplsaich-usage-stats p.description {
     color: #666;
     font-size: 13px;
 }
@@ -627,44 +560,41 @@
    レスポンシブ
 ============================================ */
 @media (max-width: 782px) {
-    .wpaic-stats-cards {
+    .raplsaich-stats-cards {
         grid-template-columns: 1fr;
     }
 
-    .wpaic-crawler-grid {
+    .raplsaich-crawler-grid {
         grid-template-columns: 1fr;
     }
 
-    .wpaic-crawler-grid .wpaic-card-status,
-    .wpaic-crawler-grid .wpaic-card-embedding,
-    .wpaic-crawler-grid .wpaic-card-settings {
+    .raplsaich-crawler-grid .raplsaich-card-status,
+    .raplsaich-crawler-grid .raplsaich-card-embedding,
+    .raplsaich-crawler-grid .raplsaich-card-settings {
         grid-column: 1;
         grid-row: auto;
     }
 
-    .wpaic-modal-content {
+    .raplsaich-modal-content {
         width: 95%;
         max-height: 90vh;
     }
 
-    .wpaic-admin .tablenav .bulkactions {
+    .raplsaich-admin .tablenav .bulkactions {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .wpaic-pro-feature {
+    .raplsaich-pro-feature {
         padding: 15px;
     }
 
-    .wpaic-pro-overlay-content {
-        padding: 20px;
-    }
 }
 
 /* ============================================
    ツールチップ
 ============================================ */
-.wpaic-tooltip {
+.raplsaich-tooltip {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -682,12 +612,12 @@
     transition: background 0.2s, color 0.2s;
 }
 
-.wpaic-tooltip:hover {
+.raplsaich-tooltip:hover {
     background: #667eea;
     color: #fff;
 }
 
-.wpaic-tooltip::before {
+.raplsaich-tooltip::before {
     content: attr(data-tooltip);
     position: absolute;
     bottom: calc(100% + 8px);
@@ -712,7 +642,7 @@
     pointer-events: none;
 }
 
-.wpaic-tooltip::after {
+.raplsaich-tooltip::after {
     content: '';
     position: absolute;
     bottom: calc(100% + 2px);
@@ -726,30 +656,30 @@
     z-index: 1000;
 }
 
-.wpaic-tooltip:hover::before,
-.wpaic-tooltip:hover::after {
+.raplsaich-tooltip:hover::before,
+.raplsaich-tooltip:hover::after {
     opacity: 1;
     visibility: visible;
 }
 
 /* 右寄せ調整（画面端で切れないように） */
-.wpaic-tooltip.wpaic-tooltip-left::before {
+.raplsaich-tooltip.raplsaich-tooltip-left::before {
     left: 0;
     transform: translateX(0);
 }
 
-.wpaic-tooltip.wpaic-tooltip-left::after {
+.raplsaich-tooltip.raplsaich-tooltip-left::after {
     left: 9px;
     transform: translateX(0);
 }
 
-.wpaic-tooltip.wpaic-tooltip-right::before {
+.raplsaich-tooltip.raplsaich-tooltip-right::before {
     left: auto;
     right: 0;
     transform: translateX(0);
 }
 
-.wpaic-tooltip.wpaic-tooltip-right::after {
+.raplsaich-tooltip.raplsaich-tooltip-right::after {
     left: auto;
     right: 9px;
     transform: translateX(0);
@@ -758,11 +688,11 @@
 /* ============================================
    テーマセレクター
 ============================================ */
-.wpaic-theme-selector {
+.raplsaich-theme-selector {
     max-width: 600px;
 }
 
-.wpaic-theme-group-label {
+.raplsaich-theme-group-label {
     font-weight: 600;
     margin: 15px 0 10px 0;
     color: #1d2327;
@@ -771,21 +701,17 @@
     gap: 8px;
 }
 
-.wpaic-theme-group-label:first-child {
+.raplsaich-theme-group-label:first-child {
     margin-top: 0;
 }
 
-.wpaic-theme-options {
+.raplsaich-theme-options {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
 }
 
-.wpaic-themes-locked {
-    opacity: 0.7;
-}
-
-.wpaic-theme-option {
+.raplsaich-theme-option {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -798,30 +724,30 @@
     background: #fff;
 }
 
-.wpaic-theme-option:hover {
+.raplsaich-theme-option:hover {
     border-color: #667eea;
 }
 
-.wpaic-theme-option.selected {
+.raplsaich-theme-option.selected {
     border-color: #667eea;
     background: #f0f3ff;
 }
 
-.wpaic-theme-option.disabled {
+.raplsaich-theme-option.disabled {
     cursor: not-allowed;
 }
 
-.wpaic-theme-option.disabled:hover {
+.raplsaich-theme-option.disabled:hover {
     border-color: #ddd;
 }
 
-.wpaic-theme-option input[type="radio"] {
+.raplsaich-theme-option input[type="radio"] {
     position: absolute;
     opacity: 0;
     pointer-events: none;
 }
 
-.wpaic-theme-preview {
+.raplsaich-theme-preview {
     pointer-events: none;
     width: 80px;
     height: 60px;
@@ -833,11 +759,11 @@
 }
 
 /* Free Themes Previews */
-.wpaic-theme-preview-default {
+.raplsaich-theme-preview-default {
     background: linear-gradient(180deg, #007bff 30%, #f5f5f5 30%);
 }
 
-.wpaic-theme-preview-default::after {
+.raplsaich-theme-preview-default::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -848,12 +774,12 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-simple {
+.raplsaich-theme-preview-simple {
     background: #fff;
     border: 2px solid #e0e0e0;
 }
 
-.wpaic-theme-preview-simple::before {
+.raplsaich-theme-preview-simple::before {
     content: '';
     position: absolute;
     top: 0;
@@ -864,11 +790,11 @@
     border-bottom: 1px solid #e0e0e0;
 }
 
-.wpaic-theme-preview-classic {
+.raplsaich-theme-preview-classic {
     background: linear-gradient(180deg, #2c3e50 30%, #ecf0f1 30%);
 }
 
-.wpaic-theme-preview-classic::after {
+.raplsaich-theme-preview-classic::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -880,11 +806,11 @@
 }
 
 /* Pro Themes Previews */
-.wpaic-theme-preview-modern {
+.raplsaich-theme-preview-modern {
     background: linear-gradient(180deg, #1a1a2e 30%, #16213e 30%);
 }
 
-.wpaic-theme-preview-modern::after {
+.raplsaich-theme-preview-modern::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -895,11 +821,11 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-gradient {
+.raplsaich-theme-preview-gradient {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.wpaic-theme-preview-gradient::after {
+.raplsaich-theme-preview-gradient::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -910,11 +836,11 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-dark {
+.raplsaich-theme-preview-dark {
     background: linear-gradient(180deg, #1e1e1e 30%, #2d2d2d 30%);
 }
 
-.wpaic-theme-preview-dark::after {
+.raplsaich-theme-preview-dark::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -925,13 +851,13 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-glass {
+.raplsaich-theme-preview-glass {
     background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.5);
 }
 
-.wpaic-theme-preview-glass::before {
+.raplsaich-theme-preview-glass::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -939,12 +865,12 @@
     z-index: -1;
 }
 
-.wpaic-theme-preview-rounded {
+.raplsaich-theme-preview-rounded {
     background: linear-gradient(180deg, #ff6b6b 30%, #fff5f5 30%);
     border-radius: 12px;
 }
 
-.wpaic-theme-preview-rounded::after {
+.raplsaich-theme-preview-rounded::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -955,46 +881,25 @@
     border-radius: 10px;
 }
 
-.wpaic-theme-name {
+.raplsaich-theme-name {
     font-size: 12px;
     color: #50575e;
     font-weight: 500;
     pointer-events: none;
 }
 
-.wpaic-theme-option.selected .wpaic-theme-name {
+.raplsaich-theme-option.selected .raplsaich-theme-name {
     color: #667eea;
     font-weight: 600;
 }
 
-.wpaic-theme-lock {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.wpaic-theme-lock .dashicons {
-    font-size: 12px;
-    width: 12px;
-    height: 12px;
-}
-
 /* New Free Theme Previews */
-.wpaic-theme-preview-light {
+.raplsaich-theme-preview-light {
     background: linear-gradient(180deg, #fff 30%, #fafafa 30%);
     border: 2px solid #e8e8e8;
 }
 
-.wpaic-theme-preview-light::after {
+.raplsaich-theme-preview-light::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1005,12 +910,12 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-minimal {
+.raplsaich-theme-preview-minimal {
     background: #fff;
     border: 1px solid #ddd;
 }
 
-.wpaic-theme-preview-minimal::before {
+.raplsaich-theme-preview-minimal::before {
     content: '';
     position: absolute;
     top: 8px;
@@ -1021,7 +926,7 @@
     border-radius: 2px;
 }
 
-.wpaic-theme-preview-minimal::after {
+.raplsaich-theme-preview-minimal::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1032,11 +937,11 @@
     border-radius: 3px;
 }
 
-.wpaic-theme-preview-flat {
+.raplsaich-theme-preview-flat {
     background: linear-gradient(180deg, #3498db 30%, #ecf0f1 30%);
 }
 
-.wpaic-theme-preview-flat::after {
+.raplsaich-theme-preview-flat::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1048,11 +953,11 @@
 }
 
 /* New Pro Theme Previews */
-.wpaic-theme-preview-ocean {
+.raplsaich-theme-preview-ocean {
     background: linear-gradient(180deg, #006994 30%, #e0f7fa 30%);
 }
 
-.wpaic-theme-preview-ocean::after {
+.raplsaich-theme-preview-ocean::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1063,11 +968,11 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-sunset {
+.raplsaich-theme-preview-sunset {
     background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffcc00 100%);
 }
 
-.wpaic-theme-preview-sunset::after {
+.raplsaich-theme-preview-sunset::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1078,11 +983,11 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-forest {
+.raplsaich-theme-preview-forest {
     background: linear-gradient(180deg, #1b4332 30%, #d8f3dc 30%);
 }
 
-.wpaic-theme-preview-forest::after {
+.raplsaich-theme-preview-forest::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1093,11 +998,11 @@
     border-radius: 4px;
 }
 
-.wpaic-theme-preview-neon {
+.raplsaich-theme-preview-neon {
     background: #0a0a0a;
 }
 
-.wpaic-theme-preview-neon::before {
+.raplsaich-theme-preview-neon::before {
     content: '';
     position: absolute;
     top: 0;
@@ -1107,7 +1012,7 @@
     background: linear-gradient(90deg, #ff00ff, #00ffff);
 }
 
-.wpaic-theme-preview-neon::after {
+.raplsaich-theme-preview-neon::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1119,12 +1024,12 @@
     box-shadow: 0 0 10px #00ffff;
 }
 
-.wpaic-theme-preview-elegant {
+.raplsaich-theme-preview-elegant {
     background: linear-gradient(180deg, #1a1a1a 30%, #f5f5f5 30%);
     border: 1px solid #c9a961;
 }
 
-.wpaic-theme-preview-elegant::before {
+.raplsaich-theme-preview-elegant::before {
     content: '';
     position: absolute;
     top: 0;
@@ -1134,7 +1039,7 @@
     border-bottom: 2px solid #c9a961;
 }
 
-.wpaic-theme-preview-elegant::after {
+.raplsaich-theme-preview-elegant::after {
     content: '';
     position: absolute;
     bottom: 8px;
@@ -1150,7 +1055,7 @@
 ============================================ */
 
 /* タブリセットボタン */
-.wpaic-tab-header {
+.raplsaich-tab-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1159,13 +1064,13 @@
     border-bottom: 1px solid #ddd;
 }
 
-.wpaic-tab-header h2 {
+.raplsaich-tab-header h2 {
     margin: 0;
     padding: 0;
     border: 0;
 }
 
-.wpaic-reset-tab-btn {
+.raplsaich-reset-tab-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -1179,20 +1084,20 @@
     transition: all 0.2s;
 }
 
-.wpaic-reset-tab-btn:hover {
+.raplsaich-reset-tab-btn:hover {
     background: #fff;
     border-color: #8c8f94;
     color: #1d2327;
 }
 
-.wpaic-reset-tab-btn .dashicons {
+.raplsaich-reset-tab-btn .dashicons {
     font-size: 14px;
     width: 14px;
     height: 14px;
 }
 
 /* フィールドリセットボタン */
-.wpaic-field-reset {
+.raplsaich-field-reset {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1209,52 +1114,52 @@
     transition: all 0.2s;
 }
 
-.wpaic-field-reset:hover {
+.raplsaich-field-reset:hover {
     background: #f0f0f1;
     border-color: #c3c4c7;
     color: #1d2327;
 }
 
-.wpaic-field-reset .dashicons {
+.raplsaich-field-reset .dashicons {
     font-size: 16px;
     width: 16px;
     height: 16px;
 }
 
 /* フィールドラッパー */
-.wpaic-field-with-reset {
+.raplsaich-field-with-reset {
     display: inline-flex;
     align-items: center;
 }
 
-.wpaic-field-with-reset input[type="text"],
-.wpaic-field-with-reset input[type="number"],
-.wpaic-field-with-reset input[type="email"],
-.wpaic-field-with-reset input[type="url"],
-.wpaic-field-with-reset textarea {
+.raplsaich-field-with-reset input[type="text"],
+.raplsaich-field-with-reset input[type="number"],
+.raplsaich-field-with-reset input[type="email"],
+.raplsaich-field-with-reset input[type="url"],
+.raplsaich-field-with-reset textarea {
     flex: 1;
 }
 
 /* ============================================
    フィードバックバッジ
 ============================================ */
-.wpaic-feedback-badge {
+.raplsaich-feedback-badge {
     display: inline-block;
     font-size: 14px;
     margin-left: 5px;
     cursor: help;
 }
 
-.wpaic-feedback-positive {
+.raplsaich-feedback-positive {
     color: #00a32a;
 }
 
-.wpaic-feedback-negative {
+.raplsaich-feedback-negative {
     color: #d63638;
 }
 
 /* 設定画面 Pro アップグレードバナー */
-.wpaic-pro-settings-banner {
+.raplsaich-pro-settings-banner {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1266,18 +1171,18 @@
     font-size: 14px;
 }
 
-.wpaic-pro-settings-banner .dashicons {
+.raplsaich-pro-settings-banner .dashicons {
     font-size: 20px;
     width: 20px;
     height: 20px;
     color: #ffd700;
 }
 
-.wpaic-pro-settings-banner span:nth-child(2) {
+.raplsaich-pro-settings-banner span:nth-child(2) {
     flex: 1;
 }
 
-.wpaic-pro-settings-banner .button {
+.raplsaich-pro-settings-banner .button {
     background: #fff;
     color: #667eea;
     border: none;
@@ -1285,53 +1190,53 @@
     white-space: nowrap;
 }
 
-.wpaic-pro-settings-banner .button:hover {
+.raplsaich-pro-settings-banner .button:hover {
     background: #f0f0f0;
     color: #764ba2;
 }
 
 /* 会話詳細モーダル内のフィードバック */
-.wpaic-message .wpaic-feedback-badge {
+.raplsaich-message .raplsaich-feedback-badge {
     font-size: 16px;
     vertical-align: middle;
 }
 
 /* Sortable column headers */
-.wpaic-sortable,
-.wpaic-sorted {
+.raplsaich-sortable,
+.raplsaich-sorted {
     text-decoration: none;
     color: #2271b1;
     white-space: nowrap;
 }
 
-.wpaic-sortable:hover {
+.raplsaich-sortable:hover {
     color: #135e96;
 }
 
-.wpaic-sorted {
+.raplsaich-sorted {
     font-weight: 600;
     color: #1d2327;
 }
 
-.wpaic-sorted:hover {
+.raplsaich-sorted:hover {
     color: #135e96;
 }
 
-.wpaic-sort-indicator {
+.raplsaich-sort-indicator {
     font-size: 10px;
     vertical-align: middle;
     margin-left: 2px;
 }
 
 /* List statistics cards */
-.wpaic-list-stats {
+.raplsaich-list-stats {
     display: flex;
     gap: 15px;
     margin-bottom: 15px;
     flex-wrap: wrap;
 }
 
-.wpaic-list-stat-card {
+.raplsaich-list-stat-card {
     background: #fff;
     border: 1px solid #c3c4c7;
     border-left-width: 4px;
@@ -1341,46 +1246,46 @@
     min-width: 120px;
 }
 
-.wpaic-list-stat-card .stat-value {
+.raplsaich-list-stat-card .stat-value {
     font-size: 24px;
     font-weight: 600;
     line-height: 1.2;
     color: #1d2327;
 }
 
-.wpaic-list-stat-card .stat-label {
+.raplsaich-list-stat-card .stat-label {
     font-size: 12px;
     color: #646970;
     margin-top: 2px;
 }
 
-.wpaic-list-stat-card.stat-highlight {
+.raplsaich-list-stat-card.stat-highlight {
     border-left-color: #00a32a;
 }
 
-.wpaic-list-stat-card.stat-warning {
+.raplsaich-list-stat-card.stat-warning {
     border-left-color: #dba617;
 }
 
-.wpaic-list-stat-card.stat-info {
+.raplsaich-list-stat-card.stat-info {
     border-left-color: #667eea;
 }
 
 /* Advanced section toggle */
-.wpaic-advanced-section.wpaic-advanced-disabled {
+.raplsaich-advanced-section.raplsaich-advanced-disabled {
     opacity: 0.4;
     pointer-events: none;
     user-select: none;
 }
 
-.wpaic-advanced-section.wpaic-advanced-disabled textarea,
-.wpaic-advanced-section.wpaic-advanced-disabled input,
-.wpaic-advanced-section.wpaic-advanced-disabled button,
-.wpaic-advanced-section.wpaic-advanced-disabled select {
+.raplsaich-advanced-section.raplsaich-advanced-disabled textarea,
+.raplsaich-advanced-section.raplsaich-advanced-disabled input,
+.raplsaich-advanced-section.raplsaich-advanced-disabled button,
+.raplsaich-advanced-section.raplsaich-advanced-disabled select {
     pointer-events: none;
 }
 
-.wpaic-advanced-toggle {
+.raplsaich-advanced-toggle {
     vertical-align: middle;
     margin-right: 4px;
 }

@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Quota_Exceeded_Exception extends Exception {
+class RAPLSAICH_Quota_Exceeded_Exception extends Exception {
 
     /**
      * Recommended wait time in seconds (from Retry-After header).

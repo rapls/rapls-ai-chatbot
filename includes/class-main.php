@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Main {
+class RAPLSAICH_Main {
 
     /**
      * Loader instance
@@ -23,7 +23,7 @@ class WPAIC_Main {
      * Constructor
      */
     public function __construct() {
-        $this->version = WPAIC_VERSION;
+        $this->version = RAPLSAICH_VERSION;
 
         $this->load_dependencies();
         $this->maybe_upgrade();
@@ -42,40 +42,40 @@ class WPAIC_Main {
      * but it blocks the current request until complete.
      */
     private function maybe_upgrade() {
-        $current_version = get_option('wpaic_version', '0');
+        $current_version = get_option('raplsaich_version', '0');
 
         if (version_compare($current_version, $this->version, '<')) {
             // Run lightweight upgrade (no rewrite flush).
             // Activator is require_once'd here; all model classes are already
             // available via load_dependencies() which runs before this method.
             // Upgrade must only use early WP APIs ($wpdb, options, transients).
-            // Sentinel: WPAIC_PLUGIN_DIR must be defined by plugin entry point.
+            // Sentinel: RAPLSAICH_PLUGIN_DIR must be defined by plugin entry point.
             // MU-plugin/autoloader may trigger this benignly (not fatal).
             // Triage: single occurrence in MU setup = safe to ignore;
             // continuous updates in standard setup = investigate load order.
             // Static guard limits DB writes to 1/process.
-            if (defined('WP_DEBUG') && WP_DEBUG && !defined('WPAIC_PLUGIN_DIR')) {
+            if (defined('WP_DEBUG') && WP_DEBUG && !defined('RAPLSAICH_PLUGIN_DIR')) {
                 static $bootstrap_warned = false;
                 if (!$bootstrap_warned) {
                     $bootstrap_warned = true;
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC: maybe_upgrade() called before plugin bootstrap — constants missing');
+                    error_log('RAPLSAICH: maybe_upgrade() called before plugin bootstrap — constants missing');
                     $now     = time();
-                    $last_ts = (int) get_option('wpaic_diag_boot_order_last_seen', 0);
+                    $last_ts = (int) get_option('raplsaich_diag_boot_order_last_seen', 0);
                     // Throttle: update at most once per 60s across all workers.
                     // Note: last_seen may lag up to 60s behind actual occurrence.
                     if (($now - $last_ts) >= 60) {
                         // _first_seen: set only once. Strict false check avoids
                         // treating stored "0" as unset.
-                        if (false === get_option('wpaic_diag_boot_order_first_seen', false)) {
-                            update_option('wpaic_diag_boot_order_first_seen', $now, false);
+                        if (false === get_option('raplsaich_diag_boot_order_first_seen', false)) {
+                            update_option('raplsaich_diag_boot_order_first_seen', $now, false);
                         }
-                        update_option('wpaic_diag_boot_order_last_seen', $now, false);
+                        update_option('raplsaich_diag_boot_order_last_seen', $now, false);
                     }
                 }
             }
-            require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
-            WPAIC_Activator::upgrade();
+            require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-activator.php';
+            RAPLSAICH_Activator::upgrade();
         }
     }
 
@@ -84,60 +84,60 @@ class WPAIC_Main {
      */
     private function load_dependencies() {
         // Pro features stubs (for compatibility — skipped if Pro already loaded)
-        if (!class_exists('WPAIC_Pro_Features', false)) {
-            require_once WPAIC_PLUGIN_DIR . 'includes/class-pro-features.php';
+        if (!class_exists('RAPLSAICH_Pro_Features', false)) {
+            require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-pro-features.php';
         }
 
         // Parsers
-        require_once WPAIC_PLUGIN_DIR . 'includes/parsers/class-pdf-parser.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/parsers/class-docx-parser.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/parsers/class-pdf-parser.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/parsers/class-docx-parser.php';
 
         // Models
-        require_once WPAIC_PLUGIN_DIR . 'includes/models/class-conversation.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/models/class-message.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/models/class-content-index.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/models/class-knowledge.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/models/class-lead.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/models/class-conversation.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/models/class-message.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/models/class-content-index.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/models/class-knowledge.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/models/class-lead.php';
 
         // Utilities
-        require_once WPAIC_PLUGIN_DIR . 'includes/class-cost-calculator.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-cost-calculator.php';
 
         // Exceptions
-        require_once WPAIC_PLUGIN_DIR . 'includes/exceptions/class-quota-exceeded-exception.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/exceptions/class-communication-exception.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/exceptions/class-quota-exceeded-exception.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/exceptions/class-communication-exception.php';
 
         // AI Providers
-        require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/interface-ai-provider.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-openai-provider.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-claude-provider.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-gemini-provider.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/ai-providers/class-openrouter-provider.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/interface-ai-provider.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-openai-provider.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-claude-provider.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-gemini-provider.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-openrouter-provider.php';
 
         // Crawler
-        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-content-extractor.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-content-chunker.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-embedding-generator.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-vector-search.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-search-engine.php';
-        require_once WPAIC_PLUGIN_DIR . 'includes/crawler/class-site-crawler.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-content-extractor.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-content-chunker.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-embedding-generator.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-vector-search.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-search-engine.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-site-crawler.php';
 
         // API
-        require_once WPAIC_PLUGIN_DIR . 'includes/api/class-rest-controller.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/api/class-rest-controller.php';
 
         // Admin
-        require_once WPAIC_PLUGIN_DIR . 'includes/admin/class-admin.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/admin/class-admin.php';
 
         // Frontend
-        require_once WPAIC_PLUGIN_DIR . 'includes/frontend/class-chatbot-widget.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/frontend/class-chatbot-widget.php';
 
-        $this->loader = new WPAIC_Loader();
+        $this->loader = new RAPLSAICH_Loader();
     }
 
     /**
      * Define admin hooks
      */
     private function define_admin_hooks() {
-        $admin = new WPAIC_Admin();
+        $admin = new RAPLSAICH_Admin();
 
         $this->loader->add_action('admin_menu', $admin, 'add_admin_menu');
         $this->loader->add_action('admin_notices', $admin, 'message_limit_notice');
@@ -153,80 +153,80 @@ class WPAIC_Main {
         $this->loader->add_filter('update_footer', $admin, 'admin_footer_build_info', 20);
 
         // AJAX
-        $this->loader->add_action('wp_ajax_wpaic_manual_crawl', $admin, 'ajax_manual_crawl');
-        $this->loader->add_action('wp_ajax_wpaic_delete_index', $admin, 'ajax_delete_index');
-        $this->loader->add_action('wp_ajax_wpaic_delete_all_index', $admin, 'ajax_delete_all_index');
-        $this->loader->add_action('wp_ajax_wpaic_crawler_exclude_post', $admin, 'ajax_crawler_exclude_post');
-        $this->loader->add_action('wp_ajax_wpaic_crawler_include_post', $admin, 'ajax_crawler_include_post');
-        $this->loader->add_action('wp_ajax_wpaic_test_api', $admin, 'ajax_test_api');
-        $this->loader->add_action('wp_ajax_wpaic_get_conversation_messages', $admin, 'ajax_get_conversation_messages');
-        $this->loader->add_action('wp_ajax_wpaic_delete_conversation', $admin, 'ajax_delete_conversation');
-        $this->loader->add_action('wp_ajax_wpaic_archive_conversation', $admin, 'ajax_archive_conversation');
-        $this->loader->add_action('wp_ajax_wpaic_unarchive_conversation', $admin, 'ajax_unarchive_conversation');
-        $this->loader->add_action('wp_ajax_wpaic_delete_conversations_bulk', $admin, 'ajax_delete_conversations_bulk');
-        $this->loader->add_action('wp_ajax_wpaic_delete_all_conversations', $admin, 'ajax_delete_all_conversations');
-        $this->loader->add_action('wp_ajax_wpaic_reset_handoff', $admin, 'ajax_reset_handoff');
+        $this->loader->add_action('wp_ajax_raplsaich_manual_crawl', $admin, 'ajax_manual_crawl');
+        $this->loader->add_action('wp_ajax_raplsaich_delete_index', $admin, 'ajax_delete_index');
+        $this->loader->add_action('wp_ajax_raplsaich_delete_all_index', $admin, 'ajax_delete_all_index');
+        $this->loader->add_action('wp_ajax_raplsaich_crawler_exclude_post', $admin, 'ajax_crawler_exclude_post');
+        $this->loader->add_action('wp_ajax_raplsaich_crawler_include_post', $admin, 'ajax_crawler_include_post');
+        $this->loader->add_action('wp_ajax_raplsaich_test_api', $admin, 'ajax_test_api');
+        $this->loader->add_action('wp_ajax_raplsaich_get_conversation_messages', $admin, 'ajax_get_conversation_messages');
+        $this->loader->add_action('wp_ajax_raplsaich_delete_conversation', $admin, 'ajax_delete_conversation');
+        $this->loader->add_action('wp_ajax_raplsaich_archive_conversation', $admin, 'ajax_archive_conversation');
+        $this->loader->add_action('wp_ajax_raplsaich_unarchive_conversation', $admin, 'ajax_unarchive_conversation');
+        $this->loader->add_action('wp_ajax_raplsaich_delete_conversations_bulk', $admin, 'ajax_delete_conversations_bulk');
+        $this->loader->add_action('wp_ajax_raplsaich_delete_all_conversations', $admin, 'ajax_delete_all_conversations');
+        $this->loader->add_action('wp_ajax_raplsaich_reset_handoff', $admin, 'ajax_reset_handoff');
 
         // Knowledge AJAX
-        $this->loader->add_action('wp_ajax_wpaic_add_knowledge', $admin, 'ajax_add_knowledge');
-        $this->loader->add_action('wp_ajax_wpaic_import_knowledge', $admin, 'ajax_import_knowledge');
-        $this->loader->add_action('wp_ajax_wpaic_get_knowledge', $admin, 'ajax_get_knowledge');
-        $this->loader->add_action('wp_ajax_wpaic_update_knowledge', $admin, 'ajax_update_knowledge');
-        $this->loader->add_action('wp_ajax_wpaic_delete_knowledge', $admin, 'ajax_delete_knowledge');
-        $this->loader->add_action('wp_ajax_wpaic_toggle_knowledge', $admin, 'ajax_toggle_knowledge');
-        $this->loader->add_action('wp_ajax_wpaic_update_priority', $admin, 'ajax_update_priority');
+        $this->loader->add_action('wp_ajax_raplsaich_add_knowledge', $admin, 'ajax_add_knowledge');
+        $this->loader->add_action('wp_ajax_raplsaich_import_knowledge', $admin, 'ajax_import_knowledge');
+        $this->loader->add_action('wp_ajax_raplsaich_get_knowledge', $admin, 'ajax_get_knowledge');
+        $this->loader->add_action('wp_ajax_raplsaich_update_knowledge', $admin, 'ajax_update_knowledge');
+        $this->loader->add_action('wp_ajax_raplsaich_delete_knowledge', $admin, 'ajax_delete_knowledge');
+        $this->loader->add_action('wp_ajax_raplsaich_toggle_knowledge', $admin, 'ajax_toggle_knowledge');
+        $this->loader->add_action('wp_ajax_raplsaich_update_priority', $admin, 'ajax_update_priority');
 
         // Embedding AJAX
-        $this->loader->add_action('wp_ajax_wpaic_generate_embeddings', $admin, 'ajax_generate_embeddings');
-        $this->loader->add_action('wp_ajax_wpaic_clear_embeddings', $admin, 'ajax_clear_embeddings');
-        $this->loader->add_action('wp_ajax_wpaic_embedding_status', $admin, 'ajax_embedding_status');
+        $this->loader->add_action('wp_ajax_raplsaich_generate_embeddings', $admin, 'ajax_generate_embeddings');
+        $this->loader->add_action('wp_ajax_raplsaich_clear_embeddings', $admin, 'ajax_clear_embeddings');
+        $this->loader->add_action('wp_ajax_raplsaich_embedding_status', $admin, 'ajax_embedding_status');
 
         // Settings import/export/reset AJAX
-        $this->loader->add_action('wp_ajax_wpaic_export_settings', $admin, 'ajax_export_settings');
-        $this->loader->add_action('wp_ajax_wpaic_import_settings', $admin, 'ajax_import_settings');
-        $this->loader->add_action('wp_ajax_wpaic_reset_settings', $admin, 'ajax_reset_settings');
-        $this->loader->add_action('wp_ajax_wpaic_reset_usage', $admin, 'ajax_reset_usage');
+        $this->loader->add_action('wp_ajax_raplsaich_export_settings', $admin, 'ajax_export_settings');
+        $this->loader->add_action('wp_ajax_raplsaich_import_settings', $admin, 'ajax_import_settings');
+        $this->loader->add_action('wp_ajax_raplsaich_reset_settings', $admin, 'ajax_reset_settings');
+        $this->loader->add_action('wp_ajax_raplsaich_reset_usage', $admin, 'ajax_reset_usage');
 
         // Session reset AJAX
-        $this->loader->add_action('wp_ajax_wpaic_reset_sessions', $admin, 'ajax_reset_sessions');
+        $this->loader->add_action('wp_ajax_raplsaich_reset_sessions', $admin, 'ajax_reset_sessions');
 
         // Model fetch AJAX
-        $this->loader->add_action('wp_ajax_wpaic_fetch_models', $admin, 'ajax_fetch_models');
+        $this->loader->add_action('wp_ajax_raplsaich_fetch_models', $admin, 'ajax_fetch_models');
 
         // Dismiss security notice
-        $this->loader->add_action('wp_ajax_wpaic_dismiss_security_notice', $admin, 'ajax_dismiss_security_notice');
+        $this->loader->add_action('wp_ajax_raplsaich_dismiss_security_notice', $admin, 'ajax_dismiss_security_notice');
 
         // MCP API key generation
-        $this->loader->add_action('wp_ajax_wpaic_generate_mcp_key', $admin, 'ajax_generate_mcp_key');
+        $this->loader->add_action('wp_ajax_raplsaich_generate_mcp_key', $admin, 'ajax_generate_mcp_key');
     }
 
     /**
      * Define public hooks
      */
     private function define_public_hooks() {
-        $widget = new WPAIC_Chatbot_Widget();
+        $widget = new RAPLSAICH_Chatbot_Widget();
 
         $this->loader->add_action('wp_enqueue_scripts', $widget, 'enqueue_styles');
         $this->loader->add_action('wp_enqueue_scripts', $widget, 'enqueue_scripts');
         $this->loader->add_action('wp_footer', $widget, 'render_widget');
 
-        // Shortcode [rapls_chatbot] and [wpaic_chatbot] for inline embedding
+        // Shortcode [rapls_chatbot] and [raplsaich_chatbot] for inline embedding
         add_shortcode('rapls_chatbot', [$widget, 'render_shortcode']);
-        add_shortcode('wpaic_chatbot', [$widget, 'render_shortcode']);
+        add_shortcode('raplsaich_chatbot', [$widget, 'render_shortcode']);
 
         // Gutenberg block (server-side rendered, wraps the shortcode)
         add_action('init', function () {
-            register_block_type(WPAIC_PLUGIN_DIR . 'includes/block');
+            register_block_type(RAPLSAICH_PLUGIN_DIR . 'includes/block');
             wp_set_script_translations(
                 'rapls-ai-chatbot-chatbot-editor-script',
                 'rapls-ai-chatbot',
-                WPAIC_PLUGIN_DIR . 'languages'
+                RAPLSAICH_PLUGIN_DIR . 'languages'
             );
         });
 
-        // Cross-site embed endpoint: ?wpaic_embed=1
+        // Cross-site embed endpoint: ?raplsaich_embed=1
         add_filter('query_vars', function ($vars) {
-            $vars[] = 'wpaic_embed';
+            $vars[] = 'raplsaich_embed';
             return $vars;
         });
         $this->loader->add_action('template_redirect', $widget, 'maybe_render_embed_page');
@@ -236,16 +236,16 @@ class WPAIC_Main {
      * Define REST API hooks
      */
     private function define_api_hooks() {
-        $api = new WPAIC_REST_Controller();
+        $api = new RAPLSAICH_REST_Controller();
 
         $this->loader->add_action('rest_api_init', $api, 'register_routes');
 
         // MCP Server (conditional on setting)
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (!empty($settings['mcp_enabled'])) {
-            require_once WPAIC_PLUGIN_DIR . 'includes/mcp/class-mcp-tool-registry.php';
-            require_once WPAIC_PLUGIN_DIR . 'includes/mcp/class-mcp-server.php';
-            $mcp = new WPAIC_MCP_Server();
+            require_once RAPLSAICH_PLUGIN_DIR . 'includes/mcp/class-mcp-tool-registry.php';
+            require_once RAPLSAICH_PLUGIN_DIR . 'includes/mcp/class-mcp-server.php';
+            $mcp = new RAPLSAICH_MCP_Server();
             $this->loader->add_action('rest_api_init', $mcp, 'register_routes');
         }
     }
@@ -263,8 +263,8 @@ class WPAIC_Main {
                 'display'  => __('Monthly', 'rapls-ai-chatbot'),
             ];
         }
-        if (!isset($schedules['wpaic_half_hourly'])) {
-            $schedules['wpaic_half_hourly'] = [
+        if (!isset($schedules['raplsaich_half_hourly'])) {
+            $schedules['raplsaich_half_hourly'] = [
                 'interval' => 30 * MINUTE_IN_SECONDS,
                 'display'  => __('Every 30 minutes', 'rapls-ai-chatbot'),
             ];
@@ -280,7 +280,7 @@ class WPAIC_Main {
         $this->loader->add_filter('cron_schedules', $this, 'add_cron_schedules');
 
         // Cleanup is always registered
-        $this->loader->add_action('wpaic_cleanup_old_conversations', $this, 'cleanup_old_conversations');
+        $this->loader->add_action('raplsaich_cleanup_old_conversations', $this, 'cleanup_old_conversations');
 
         // Crawler hooks deferred to init so Pro singleton is available
         $this->loader->add_action('init', $this, 'maybe_register_crawler_hooks');
@@ -290,9 +290,9 @@ class WPAIC_Main {
      * Register crawler hooks if Pro is active (Site Learning is Pro-only)
      */
     public function maybe_register_crawler_hooks() {
-        if (WPAIC_Pro_Features::get_instance()->is_pro()) {
-            $crawler = new WPAIC_Site_Crawler();
-            add_action('wpaic_crawl_site', [$crawler, 'crawl_all']);
+        if (RAPLSAICH_Pro_Features::get_instance()->is_pro()) {
+            $crawler = new RAPLSAICH_Site_Crawler();
+            add_action('raplsaich_crawl_site', [$crawler, 'crawl_all']);
             add_action('save_post', [$crawler, 'on_save_post'], 10, 2);
             add_action('delete_post', [$crawler, 'on_delete_post']);
         }
@@ -304,7 +304,7 @@ class WPAIC_Main {
     public function cleanup_old_conversations() {
         global $wpdb;
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro = $settings['pro_features'] ?? [];
 
         if (!empty($pro['data_retention_enabled'])) {
@@ -318,8 +318,8 @@ class WPAIC_Main {
         }
 
         // Whitelist-validated table names for raw SQL.
-        $table_conversations = wpaic_require_table('aichat_conversations', 'cleanup_old_conversations');
-        $table_messages = wpaic_require_table('aichat_messages', 'cleanup_old_conversations');
+        $table_conversations = raplsaich_require_table('raplsaich_conversations', 'cleanup_old_conversations');
+        $table_messages = raplsaich_require_table('raplsaich_messages', 'cleanup_old_conversations');
         if (!$table_conversations || !$table_messages) {
             return;
         }
@@ -365,7 +365,7 @@ class WPAIC_Main {
          *
          * @param int $retention_days Number of days to retain data.
          */
-        do_action('wpaic_after_cleanup', $retention_days);
+        do_action('raplsaich_after_cleanup', $retention_days);
     }
 
     /**
@@ -426,17 +426,17 @@ class WPAIC_Main {
      */
     public function maybe_upgrade_database() {
         // Skip if maybe_upgrade() already ran column migrations this request
-        if (get_option('wpaic_version', '0') === WPAIC_VERSION) {
-            $db_version = get_option('wpaic_db_version', '0');
-            if (version_compare($db_version, WPAIC_VERSION, '<')) {
-                update_option('wpaic_db_version', WPAIC_VERSION);
+        if (get_option('raplsaich_version', '0') === RAPLSAICH_VERSION) {
+            $db_version = get_option('raplsaich_db_version', '0');
+            if (version_compare($db_version, RAPLSAICH_VERSION, '<')) {
+                update_option('raplsaich_db_version', RAPLSAICH_VERSION);
             }
             return;
         }
-        $db_version = get_option('wpaic_db_version', '0');
-        if (version_compare($db_version, WPAIC_VERSION, '<')) {
+        $db_version = get_option('raplsaich_db_version', '0');
+        if (version_compare($db_version, RAPLSAICH_VERSION, '<')) {
             $this->upgrade_database();
-            update_option('wpaic_db_version', WPAIC_VERSION);
+            update_option('raplsaich_db_version', RAPLSAICH_VERSION);
         }
     }
 
@@ -444,8 +444,8 @@ class WPAIC_Main {
      * Upgrade database schema (delegates to Activator to avoid duplication)
      */
     private function upgrade_database() {
-        require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
-        WPAIC_Activator::upgrade_columns();
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-activator.php';
+        RAPLSAICH_Activator::upgrade_columns();
     }
 
     /**

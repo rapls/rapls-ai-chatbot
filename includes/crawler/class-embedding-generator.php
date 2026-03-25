@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Embedding_Generator {
+class RAPLSAICH_Embedding_Generator {
 
     /**
      * Embedding provider ('openai' | 'gemini')
@@ -36,7 +36,7 @@ class WPAIC_Embedding_Generator {
      */
     public function __construct(?array $settings = null) {
         if ($settings === null) {
-            $settings = get_option('wpaic_settings', []);
+            $settings = get_option('raplsaich_settings', []);
         }
 
         if (empty($settings['embedding_enabled'])) {
@@ -209,7 +209,7 @@ class WPAIC_Embedding_Generator {
             ]);
 
             /** This filter is documented in includes/ai-providers/class-openai-provider.php */
-            $timeout = (int) apply_filters('wpaic_api_timeout', 30);
+            $timeout = (int) apply_filters('raplsaich_api_timeout', 30);
 
             $response = wp_remote_post('https://api.openai.com/v1/embeddings', [
                 'headers' => [
@@ -223,7 +223,7 @@ class WPAIC_Embedding_Generator {
             if (is_wp_error($response)) {
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC Embedding API error: ' . $response->get_error_message());
+                    error_log('RAPLSAICH Embedding API error: ' . $response->get_error_message());
                 }
                 continue;
             }
@@ -235,7 +235,7 @@ class WPAIC_Embedding_Generator {
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     $err_msg = $resp_body['error']['message'] ?? 'Unknown error';
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log("WPAIC Embedding API error (HTTP {$status}): {$err_msg}");
+                    error_log("RAPLSAICH Embedding API error (HTTP {$status}): {$err_msg}");
                 }
                 continue;
             }
@@ -279,7 +279,7 @@ class WPAIC_Embedding_Generator {
             $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . ':batchEmbedContents?key=' . $this->api_key;
 
             /** This filter is documented in includes/ai-providers/class-openai-provider.php */
-            $timeout = (int) apply_filters('wpaic_api_timeout', 30);
+            $timeout = (int) apply_filters('raplsaich_api_timeout', 30);
 
             $response = wp_remote_post($url, [
                 'headers' => ['Content-Type' => 'application/json'],
@@ -290,7 +290,7 @@ class WPAIC_Embedding_Generator {
             if (is_wp_error($response)) {
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC Gemini Embedding API error: ' . $response->get_error_message());
+                    error_log('RAPLSAICH Gemini Embedding API error: ' . $response->get_error_message());
                 }
                 continue;
             }
@@ -302,7 +302,7 @@ class WPAIC_Embedding_Generator {
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     $err_msg = $resp_body['error']['message'] ?? 'Unknown error';
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log("WPAIC Gemini Embedding API error (HTTP {$status}): {$err_msg}");
+                    error_log("RAPLSAICH Gemini Embedding API error (HTTP {$status}): {$err_msg}");
                 }
                 continue;
             }
@@ -320,13 +320,13 @@ class WPAIC_Embedding_Generator {
     /**
      * Decrypt an API key from settings.
      *
-     * Replicates the decryption logic used by WPAIC_Admin and WPAIC_REST_Controller.
+     * Replicates the decryption logic used by RAPLSAICH_Admin and RAPLSAICH_REST_Controller.
      * Supports AES-256-GCM (encg:) and AES-256-CBC (enc:) formats, plus unencrypted keys.
      *
      * @param string $encrypted Encrypted or raw API key
      * @return string Decrypted key, or empty string on failure
      */
     private function decrypt_key(string $encrypted): string {
-        return wpaic_decrypt_api_key($encrypted);
+        return raplsaich_decrypt_api_key($encrypted);
     }
 }

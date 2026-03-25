@@ -41,7 +41,7 @@
     var iframeReady = false;
 
     // Prefix for all our elements
-    var PREFIX = 'wpaic-embed-';
+    var PREFIX = 'raplsaich-embed-';
 
     // --- Badge Button ---
     var badge = document.createElement('button');
@@ -94,7 +94,7 @@
     function createIframe() {
         if (iframe) return;
         iframe = document.createElement('iframe');
-        iframe.src = siteUrl + '/?wpaic_embed=1';
+        iframe.src = siteUrl + '/?raplsaich_embed=1';
         iframe.style.cssText = 'width:100%;height:100%;border:none;';
         iframe.setAttribute('allow', 'clipboard-write');
         iframe.setAttribute('title', label || 'Chat');
@@ -150,10 +150,10 @@
         var expectedOrigin = siteUrl.replace(/\/+$/, '');
         if (e.origin !== expectedOrigin) return;
 
-        if (e.data.type === 'wpaic:close') {
+        if (e.data.type === 'raplsaich:close') {
             closeChat();
         }
-        if (e.data.type === 'wpaic:ready') {
+        if (e.data.type === 'raplsaich:ready') {
             iframeReady = true;
         }
     });

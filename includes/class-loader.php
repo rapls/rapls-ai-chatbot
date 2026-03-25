@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Loader {
+class RAPLSAICH_Loader {
 
     /**
      * Registered actions

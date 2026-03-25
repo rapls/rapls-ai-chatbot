@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Tool_Registry {
+class RAPLSAICH_MCP_Tool_Registry {
 
     /**
      * Registered tools: name => ['schema' => array, 'handler' => callable]

@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
+class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * API Key
@@ -132,8 +132,8 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             }
         }
 
-        /** @see WPAIC_OpenAI_Provider::send_http_request() for filter docs */
-        $requested = (int) apply_filters('wpaic_api_timeout', 120, $this->api_url, $this->model);
+        /** @see RAPLSAICH_OpenAI_Provider::send_http_request() for filter docs */
+        $requested = (int) apply_filters('raplsaich_api_timeout', 120, $this->api_url, $this->model);
         $max_exec  = (int) ini_get('max_execution_time');
         $upper     = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
         $timeout   = max(10, min($upper, $requested));
@@ -149,7 +149,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new RAPLSAICH_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
@@ -164,10 +164,10 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
             $error_type = $data['error']['type'] ?? '';
 
             // Rate-limited: under API outages, every chat request triggers this.
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'claude_api_error_' . $response_code,
                 sprintf(
-                    'WPAIC Claude API Error: HTTP %d | type=%s | model=%s | message=%s',
+                    'RAPLSAICH Claude API Error: HTTP %d | type=%s | model=%s | message=%s',
                     $response_code,
                     $error_type,
                     $this->model,
@@ -187,7 +187,7 @@ class WPAIC_Claude_Provider implements WPAIC_AI_Provider_Interface {
                 stripos($error_message, 'quota') !== false ||
                 stripos($error_message, 'billing') !== false ||
                 stripos($error_message, 'exceeded') !== false) {
-                $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+                $ex = new RAPLSAICH_Quota_Exceeded_Exception(esc_html($error_message));
                 $retry_after = wp_remote_retrieve_header($response, 'retry-after');
                 if (is_numeric($retry_after) && (int) $retry_after > 0) {
                     $ex->set_retry_after((int) $retry_after);

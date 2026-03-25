@@ -1,5 +1,5 @@
 /* Pro menu badge — loaded on all admin pages */
-.wpaic-pro-menu-badge {
+.raplsaich-pro-menu-badge {
     display: inline-block;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white !important;
@@ -13,10 +13,10 @@
     vertical-align: middle;
 }
 
-#toplevel_page_wpaic-dashboard .wp-submenu li:has(.wpaic-pro-menu-badge:not(.wpaic-pro-badge-active)) > a {
+#toplevel_page_raplsaich-dashboard .wp-submenu li:has(.raplsaich-pro-menu-badge:not(.raplsaich-pro-badge-active)) > a {
     opacity: 0.45;
 }
 
-#toplevel_page_wpaic-dashboard .wp-submenu li:has(.wpaic-pro-menu-badge:not(.wpaic-pro-badge-active)) > a:hover {
+#toplevel_page_raplsaich-dashboard .wp-submenu li:has(.raplsaich-pro-menu-badge:not(.raplsaich-pro-badge-active)) > a:hover {
     opacity: 0.75;
 }

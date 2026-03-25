@@ -9,14 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Tool_Search_Knowledge {
+class RAPLSAICH_MCP_Tool_Search_Knowledge {
 
     /**
      * Register this tool with the registry.
      *
-     * @param WPAIC_MCP_Tool_Registry $registry Tool registry.
+     * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry.
      */
-    public function register(WPAIC_MCP_Tool_Registry $registry): void {
+    public function register(RAPLSAICH_MCP_Tool_Registry $registry): void {
         $registry->register('search_knowledge', $this->get_schema(), [$this, 'execute']);
     }
 
@@ -65,7 +65,7 @@ class WPAIC_MCP_Tool_Search_Knowledge {
             $limit = 5;
         }
 
-        $search_engine = new WPAIC_Search_Engine();
+        $search_engine = new RAPLSAICH_Search_Engine();
         $results = $search_engine->search($query, $limit);
 
         $formatted = [];

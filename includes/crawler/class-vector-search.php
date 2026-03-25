@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Vector_Search {
+class RAPLSAICH_Vector_Search {
 
     /**
      * Pack a float array into binary string (float32)
@@ -68,7 +68,7 @@ class WPAIC_Vector_Search {
      */
     public function search_index(array $query_embedding, int $limit = 10): array {
         global $wpdb;
-        $table = trim(wpaic_validated_table('aichat_index'), '`');
+        $table = trim(raplsaich_validated_table('raplsaich_index'), '`');
 
         if ($table === '') {
             return [];
@@ -176,7 +176,7 @@ class WPAIC_Vector_Search {
      */
     public function search_knowledge(array $query_embedding, int $limit = 5): array {
         global $wpdb;
-        $table = trim(wpaic_validated_table('aichat_knowledge'), '`');
+        $table = trim(raplsaich_validated_table('raplsaich_knowledge'), '`');
 
         if ($table === '') {
             return [];

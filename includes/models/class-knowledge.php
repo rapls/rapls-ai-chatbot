@@ -7,13 +7,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Knowledge {
+class RAPLSAICH_Knowledge {
 
     /**
-     * Table name — whitelist-validated via wpaic_validated_table().
+     * Table name — whitelist-validated via raplsaich_validated_table().
      */
     private static function get_table_name(): string {
-        return trim(wpaic_validated_table('aichat_knowledge'), '`');
+        return trim(raplsaich_validated_table('raplsaich_knowledge'), '`');
     }
 
     /**
@@ -50,22 +50,22 @@ class WPAIC_Knowledge {
      */
     private static function maybe_migrate_schema($table) {
         $schema_version = 2; // Increment when adding new migrations
-        $option_key = 'wpaic_knowledge_schema_version';
+        $option_key = 'raplsaich_knowledge_schema_version';
 
         if ((int) get_option($option_key, 0) >= $schema_version) {
             return; // Already migrated
         }
 
         // Transient lock to prevent race conditions on concurrent requests
-        $lock_key = 'wpaic_knowledge_migration_lock';
+        $lock_key = 'raplsaich_knowledge_migration_lock';
         if (get_transient($lock_key)) {
             return; // Another process is running the migration
         }
         set_transient($lock_key, 1, 30); // 30-second lock
 
         // Delegate to Activator which handles all schema changes
-        if (class_exists('WPAIC_Activator')) {
-            WPAIC_Activator::upgrade_columns();
+        if (class_exists('RAPLSAICH_Activator')) {
+            RAPLSAICH_Activator::upgrade_columns();
         }
 
         update_option($option_key, $schema_version, true);
@@ -114,7 +114,7 @@ class WPAIC_Knowledge {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $result = $wpdb->insert($table, $insert_data, ['%s', '%s', '%s', '%d', '%d', '%s', '%s']);
-        wpaic_log_db_error('Knowledge::create');
+        raplsaich_log_db_error('Knowledge::create');
 
         if ($result === false) {
             return new WP_Error('db_error', __('Failed to save to database.', 'rapls-ai-chatbot'));
@@ -324,7 +324,7 @@ class WPAIC_Knowledge {
         }
 
         // Allow Pro to save version history before update
-        do_action('wpaic_knowledge_before_update', (int) $id, $data);
+        do_action('raplsaich_knowledge_before_update', (int) $id, $data);
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->update(
@@ -351,7 +351,7 @@ class WPAIC_Knowledge {
         );
 
         if ($result !== false) {
-            do_action('wpaic_knowledge_deleted', (int) $id);
+            do_action('raplsaich_knowledge_deleted', (int) $id);
         }
 
         return $result;
@@ -551,7 +551,7 @@ class WPAIC_Knowledge {
                 break;
 
             case 'pdf':
-                $content = WPAIC_PDF_Parser::extract_text($file['tmp_name']);
+                $content = RAPLSAICH_PDF_Parser::extract_text($file['tmp_name']);
                 if (empty($content)) {
                     return new WP_Error(
                         'pdf_no_text',
@@ -567,7 +567,7 @@ class WPAIC_Knowledge {
                         __('DOCX import requires the PHP ZipArchive extension, which is not available on this server.', 'rapls-ai-chatbot')
                     );
                 }
-                $content = WPAIC_DOCX_Parser::extract_text($file['tmp_name']);
+                $content = RAPLSAICH_DOCX_Parser::extract_text($file['tmp_name']);
                 if (empty($content)) {
                     return new WP_Error(
                         'docx_parse_error',

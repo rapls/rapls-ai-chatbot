@@ -20,7 +20,7 @@ if (!defined('ABSPATH')) {
  * @param string $encrypted Encrypted (or plaintext) key.
  * @return string Decrypted key, or empty string on failure.
  */
-function wpaic_decrypt_api_key(string $encrypted): string {
+function raplsaich_decrypt_api_key(string $encrypted): string {
     if (empty($encrypted)) {
         return '';
     }
@@ -40,7 +40,7 @@ function wpaic_decrypt_api_key(string $encrypted): string {
     }
 
     $new_key = hash('sha256', wp_salt('auth'), true);
-    $aad     = 'wpaic_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
+    $aad     = 'raplsaich_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
     $old_key = wp_salt('auth'); // Legacy fallback
 
     // --- AES-256-GCM (new format, tamper-resistant) ---
@@ -49,7 +49,7 @@ function wpaic_decrypt_api_key(string $encrypted): string {
         if ($data === false || strlen($data) <= 28) { // 12 (IV) + 16 (tag) = 28 minimum
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC: API key decryption failed (invalid GCM data). Key may need to be re-entered.');
+                error_log('RAPLSAICH: API key decryption failed (invalid GCM data). Key may need to be re-entered.');
             }
             return '';
         }
@@ -70,7 +70,7 @@ function wpaic_decrypt_api_key(string $encrypted): string {
         if ($decrypted === false) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC: API key GCM decryption failed (salt may have changed). Please re-enter your API key.');
+                error_log('RAPLSAICH: API key GCM decryption failed (salt may have changed). Please re-enter your API key.');
             }
             return '';
         }
@@ -87,7 +87,7 @@ function wpaic_decrypt_api_key(string $encrypted): string {
     if ($data === false) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('WPAIC: API key decryption failed (invalid base64). Key may need to be re-entered.');
+            error_log('RAPLSAICH: API key decryption failed (invalid base64). Key may need to be re-entered.');
         }
         return '';
     }
@@ -96,7 +96,7 @@ function wpaic_decrypt_api_key(string $encrypted): string {
     if (strlen($data) <= $iv_length) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('WPAIC: API key decryption failed (data too short). Key may need to be re-entered.');
+            error_log('RAPLSAICH: API key decryption failed (data too short). Key may need to be re-entered.');
         }
         return '';
     }
@@ -112,7 +112,7 @@ function wpaic_decrypt_api_key(string $encrypted): string {
     if ($decrypted === false) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('WPAIC: API key decryption failed (salt may have changed). Please re-enter your API key.');
+            error_log('RAPLSAICH: API key decryption failed (salt may have changed). Please re-enter your API key.');
         }
         return '';
     }
@@ -126,11 +126,11 @@ function wpaic_decrypt_api_key(string $encrypted): string {
  * Centralises provider construction so that LINE, MCP, REST, etc.
  * all go through the same code path.
  *
- * @param array       $settings   Plugin settings array (from get_option('wpaic_settings')).
+ * @param array       $settings   Plugin settings array (from get_option('raplsaich_settings')).
  * @param array|null  $bot_config Optional per-bot overrides (ai_provider, model).
- * @return WPAIC_AI_Provider_Interface
+ * @return RAPLSAICH_AI_Provider_Interface
  */
-function wpaic_create_ai_provider(array $settings, ?array $bot_config = null): WPAIC_AI_Provider_Interface {
+function raplsaich_create_ai_provider(array $settings, ?array $bot_config = null): RAPLSAICH_AI_Provider_Interface {
     $provider_name = (is_array($bot_config) && !empty($bot_config['ai_provider']))
         ? $bot_config['ai_provider']
         : ($settings['ai_provider'] ?? 'openai');
@@ -138,26 +138,26 @@ function wpaic_create_ai_provider(array $settings, ?array $bot_config = null): W
 
     switch ($provider_name) {
         case 'claude':
-            $provider = new WPAIC_Claude_Provider();
-            $provider->set_api_key(wpaic_decrypt_api_key($settings['claude_api_key'] ?? ''));
+            $provider = new RAPLSAICH_Claude_Provider();
+            $provider->set_api_key(raplsaich_decrypt_api_key($settings['claude_api_key'] ?? ''));
             $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'));
             break;
 
         case 'gemini':
-            $provider = new WPAIC_Gemini_Provider();
-            $provider->set_api_key(wpaic_decrypt_api_key($settings['gemini_api_key'] ?? ''));
+            $provider = new RAPLSAICH_Gemini_Provider();
+            $provider->set_api_key(raplsaich_decrypt_api_key($settings['gemini_api_key'] ?? ''));
             $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['gemini_model'] ?? 'gemini-2.0-flash'));
             break;
 
         case 'openrouter':
-            $provider = new WPAIC_OpenRouter_Provider();
-            $provider->set_api_key(wpaic_decrypt_api_key($settings['openrouter_api_key'] ?? ''));
+            $provider = new RAPLSAICH_OpenRouter_Provider();
+            $provider->set_api_key(raplsaich_decrypt_api_key($settings['openrouter_api_key'] ?? ''));
             $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openrouter_model'] ?? 'openrouter/auto'));
             break;
 
         default: // openai
-            $provider = new WPAIC_OpenAI_Provider();
-            $provider->set_api_key(wpaic_decrypt_api_key($settings['openai_api_key'] ?? ''));
+            $provider = new RAPLSAICH_OpenAI_Provider();
+            $provider->set_api_key(raplsaich_decrypt_api_key($settings['openai_api_key'] ?? ''));
             $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openai_model'] ?? 'gpt-4o-mini'));
             break;
     }

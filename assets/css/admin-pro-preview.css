@@ -1,0 +1,191 @@
+/* Pro upgrade banner */
+.raplsaich-pro-upgrade-banner {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+.raplsaich-pro-upgrade-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #fff;
+}
+.raplsaich-pro-upgrade-content .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+.raplsaich-pro-upgrade-content div {
+    flex: 1;
+}
+.raplsaich-pro-upgrade-content strong {
+    font-size: 16px;
+}
+.raplsaich-pro-upgrade-content p {
+    margin: 5px 0 0;
+    opacity: 0.9;
+}
+.raplsaich-pro-upgrade-content .button {
+    background: #fff;
+    color: #667eea;
+    border: none;
+}
+.raplsaich-pro-upgrade-content .button:hover {
+    background: #f0f0f0;
+    color: #764ba2;
+}
+
+/* Preview wrapper */
+.raplsaich-pro-preview-wrapper {
+    position: relative;
+    margin: 20px 0;
+}
+.raplsaich-pro-preview {
+    opacity: 0.55;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Features list */
+.raplsaich-pro-features-list {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px 30px;
+    max-width: 600px;
+    margin-top: 20px;
+}
+.raplsaich-pro-features-list h3 {
+    margin-top: 0;
+}
+.raplsaich-pro-features-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+.raplsaich-pro-features-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.raplsaich-pro-features-list .dashicons-yes {
+    color: #00a32a;
+}
+
+/* Pro settings preview tab groups */
+.raplsaich-tab-groups-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 0;
+    border-bottom: 2px solid #667eea;
+    padding: 0;
+}
+.raplsaich-pro-preview .raplsaich-tab-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: #f0f0f1;
+    border: 1px solid #c3c4c7;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    text-decoration: none;
+    color: #50575e;
+    font-weight: 500;
+    cursor: pointer;
+}
+.raplsaich-pro-preview .raplsaich-tab-group:hover {
+    background: #e8e8e8;
+    color: #1d2327;
+}
+.raplsaich-pro-preview .raplsaich-tab-group-active {
+    background: #667eea;
+    color: #fff;
+    border-color: #667eea;
+}
+.raplsaich-pro-preview .raplsaich-tab-group-active:hover {
+    background: #5a6fd6;
+    color: #fff;
+}
+.raplsaich-pro-preview .raplsaich-tab-group .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+.raplsaich-pro-preview .raplsaich-sub-tabs {
+    display: flex;
+    gap: 0;
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 0 10px;
+}
+.raplsaich-pro-preview .raplsaich-sub-tab {
+    padding: 8px 16px;
+    text-decoration: none;
+    color: #50575e;
+    font-size: 13px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+}
+.raplsaich-pro-preview .raplsaich-sub-tab:visited {
+    color: #50575e;
+}
+.raplsaich-pro-preview .raplsaich-sub-tab:hover {
+    color: #1d2327;
+    background: #eaeaea;
+}
+.raplsaich-pro-preview .raplsaich-sub-tab:focus {
+    color: #50575e;
+    box-shadow: none;
+    outline: none;
+}
+.raplsaich-pro-preview .raplsaich-sub-tab-active,
+.raplsaich-pro-preview .raplsaich-sub-tab-active:visited,
+.raplsaich-pro-preview .raplsaich-sub-tab-active:focus,
+.raplsaich-pro-preview .raplsaich-sub-tab-active:active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+    font-weight: 600;
+    box-shadow: none;
+    outline: none;
+}
+.raplsaich-pro-preview .raplsaich-sub-tab-active:hover {
+    color: #5a6fd6;
+}
+.raplsaich-pro-preview .raplsaich-settings-tabs .tab-content {
+    display: none;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-top: none;
+    padding: 20px;
+}
+.raplsaich-pro-preview .raplsaich-settings-tabs .tab-content.active {
+    display: block;
+}
+.raplsaich-pro-preview .tab-content {
+    opacity: 0.6;
+}
+
+/* Schedule table (Pro settings preview) */
+.raplsaich-schedule-table {
+    border-collapse: collapse;
+}
+.raplsaich-schedule-table tr {
+    border-bottom: 1px solid #e0e0e0;
+}
+.raplsaich-schedule-table tr:last-child {
+    border-bottom: none;
+}
+.raplsaich-schedule-table td {
+    padding: 8px 0;
+}
+.raplsaich-schedule-table label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}

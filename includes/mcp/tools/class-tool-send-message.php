@@ -9,14 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Tool_Send_Message {
+class RAPLSAICH_MCP_Tool_Send_Message {
 
     /**
      * Register this tool with the registry.
      *
-     * @param WPAIC_MCP_Tool_Registry $registry Tool registry.
+     * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry.
      */
-    public function register(WPAIC_MCP_Tool_Registry $registry): void {
+    public function register(RAPLSAICH_MCP_Tool_Registry $registry): void {
         $registry->register('send_message', $this->get_schema(), [$this, 'execute']);
     }
 
@@ -60,16 +60,16 @@ class WPAIC_MCP_Tool_Send_Message {
             return ['error' => __('Message is required.', 'rapls-ai-chatbot')];
         }
 
-        $max_length = (int) apply_filters('wpaic_max_message_length', 8000);
+        $max_length = (int) apply_filters('raplsaich_max_message_length', 8000);
         $msg_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
         if ($msg_length > $max_length) {
             return ['error' => __('Message exceeds maximum length.', 'rapls-ai-chatbot')];
         }
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         // Check banned words (Pro feature)
-        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
         if ($pro_features->contains_banned_words($message)) {
             return ['error' => $pro_features->get_banned_words_message()];
         }
@@ -87,10 +87,10 @@ class WPAIC_MCP_Tool_Send_Message {
 
         // Create or get session
         if (empty($session_id)) {
-            $session_id = WPAIC_Conversation::generate_session_id();
+            $session_id = RAPLSAICH_Conversation::generate_session_id();
         }
 
-        $conversation = WPAIC_Conversation::get_or_create($session_id, [
+        $conversation = RAPLSAICH_Conversation::get_or_create($session_id, [
             'page_url' => 'mcp',
         ]);
 
@@ -102,7 +102,7 @@ class WPAIC_MCP_Tool_Send_Message {
 
         // Get conversation history for context
         $history_count = absint($settings['message_history_count'] ?? 10);
-        $context_messages = WPAIC_Message::get_context_messages($conversation_id, $history_count);
+        $context_messages = RAPLSAICH_Message::get_context_messages($conversation_id, $history_count);
 
         // Build AI messages array
         $ai_messages = [];
@@ -110,18 +110,18 @@ class WPAIC_MCP_Tool_Send_Message {
         // System prompt
         $system_prompt = $settings['system_prompt'] ?? '';
         if (!empty($system_prompt)) {
-            $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt);
+            $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt);
             $ai_messages[] = ['role' => 'system', 'content' => $system_prompt];
         }
 
         // Search for related content (RAG)
         $sources = [];
-        $search_engine = new WPAIC_Search_Engine();
+        $search_engine = new RAPLSAICH_Search_Engine();
         $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
 
         if (!empty($related_content)) {
             $context = $search_engine->build_context($related_content, 50000, $message);
-            $context = apply_filters('wpaic_context', $context, $message);
+            $context = apply_filters('raplsaich_context', $context, $message);
 
             if (!empty($context)) {
                 $ai_messages[] = [
@@ -165,18 +165,18 @@ class WPAIC_MCP_Tool_Send_Message {
         }
 
         $response_content = $ai_response['content'] ?? '';
-        $response_content = apply_filters('wpaic_ai_response', $response_content, $message);
+        $response_content = apply_filters('raplsaich_ai_response', $response_content, $message);
 
         // Save messages to conversation
         $save_history = !empty($settings['save_history']);
         if ($save_history) {
-            WPAIC_Message::create([
+            RAPLSAICH_Message::create([
                 'conversation_id' => $conversation_id,
                 'role'            => 'user',
                 'content'         => $message,
             ]);
 
-            WPAIC_Message::create([
+            RAPLSAICH_Message::create([
                 'conversation_id' => $conversation_id,
                 'role'            => 'assistant',
                 'content'         => $response_content,
@@ -202,9 +202,9 @@ class WPAIC_MCP_Tool_Send_Message {
      * Get AI provider instance — delegates to global helper.
      *
      * @param array $settings Plugin settings.
-     * @return WPAIC_AI_Provider_Interface
+     * @return RAPLSAICH_AI_Provider_Interface
      */
-    private function get_ai_provider(array $settings): WPAIC_AI_Provider_Interface {
-        return wpaic_create_ai_provider($settings);
+    private function get_ai_provider(array $settings): RAPLSAICH_AI_Provider_Interface {
+        return raplsaich_create_ai_provider($settings);
     }
 }

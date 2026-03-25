@@ -10,17 +10,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Server {
+class RAPLSAICH_MCP_Server {
 
     /**
      * REST namespace
      */
-    private string $namespace = 'wp-ai-chatbot/v1';
+    private string $namespace = 'rapls-ai-chatbot/v1';
 
     /**
      * Tool registry
      */
-    private WPAIC_MCP_Tool_Registry $registry;
+    private RAPLSAICH_MCP_Tool_Registry $registry;
 
     /**
      * Protocol version
@@ -31,11 +31,11 @@ class WPAIC_MCP_Server {
      * Constructor
      */
     public function __construct() {
-        $this->registry = new WPAIC_MCP_Tool_Registry();
+        $this->registry = new RAPLSAICH_MCP_Tool_Registry();
         $this->register_default_tools();
 
         // Pro tools + Abilities Bridge deferred until rest_api_init
-        // so Pro plugin has time to register its wpaic_mcp_register_tools listener.
+        // so Pro plugin has time to register its raplsaich_mcp_register_tools listener.
         add_action('rest_api_init', [$this, 'late_init'], 5);
     }
 
@@ -43,19 +43,19 @@ class WPAIC_MCP_Server {
      * Late initialization: register Pro/third-party tools and Abilities Bridge.
      *
      * Runs on rest_api_init (priority 5) so Pro plugin's plugins_loaded hook
-     * has already fired and registered its wpaic_mcp_register_tools listener.
+     * has already fired and registered its raplsaich_mcp_register_tools listener.
      */
     public function late_init(): void {
         /**
          * Allow Pro and third-party plugins to register additional MCP tools.
          *
-         * @param WPAIC_MCP_Tool_Registry $registry Tool registry instance.
+         * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry instance.
          */
-        do_action('wpaic_mcp_register_tools', $this->registry);
+        do_action('raplsaich_mcp_register_tools', $this->registry);
 
         // Bridge MCP tools to WordPress Abilities API (WP 6.9+)
         require_once __DIR__ . '/class-abilities-bridge.php';
-        (new WPAIC_Abilities_Bridge($this->registry))->init();
+        (new RAPLSAICH_Abilities_Bridge($this->registry))->init();
     }
 
     /**
@@ -105,7 +105,7 @@ class WPAIC_MCP_Server {
         }
 
         // Verify against stored hash
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $stored_hash = $settings['mcp_api_key_hash'] ?? '';
 
         if (empty($stored_hash) || !wp_check_password($provided_key, $stored_hash)) {
@@ -182,7 +182,7 @@ class WPAIC_MCP_Server {
             'protocolVersion' => $this->protocol_version,
             'serverInfo'      => [
                 'name'    => 'rapls-ai-chatbot',
-                'version' => defined('WPAIC_VERSION') ? WPAIC_VERSION : '1.0.0',
+                'version' => defined('RAPLSAICH_VERSION') ? RAPLSAICH_VERSION : '1.0.0',
             ],
             'capabilities'    => [
                 'tools' => (object) [],
@@ -296,7 +296,7 @@ class WPAIC_MCP_Server {
      * Register default MCP tools.
      */
     private function register_default_tools(): void {
-        $tools_dir = WPAIC_PLUGIN_DIR . 'includes/mcp/tools/';
+        $tools_dir = RAPLSAICH_PLUGIN_DIR . 'includes/mcp/tools/';
 
         require_once $tools_dir . 'class-tool-search-knowledge.php';
         require_once $tools_dir . 'class-tool-list-conversations.php';
@@ -304,10 +304,10 @@ class WPAIC_MCP_Server {
         require_once $tools_dir . 'class-tool-send-message.php';
         require_once $tools_dir . 'class-tool-get-site-info.php';
 
-        (new WPAIC_MCP_Tool_Search_Knowledge())->register($this->registry);
-        (new WPAIC_MCP_Tool_List_Conversations())->register($this->registry);
-        (new WPAIC_MCP_Tool_Get_Conversation())->register($this->registry);
-        (new WPAIC_MCP_Tool_Send_Message())->register($this->registry);
-        (new WPAIC_MCP_Tool_Get_Site_Info())->register($this->registry);
+        (new RAPLSAICH_MCP_Tool_Search_Knowledge())->register($this->registry);
+        (new RAPLSAICH_MCP_Tool_List_Conversations())->register($this->registry);
+        (new RAPLSAICH_MCP_Tool_Get_Conversation())->register($this->registry);
+        (new RAPLSAICH_MCP_Tool_Send_Message())->register($this->registry);
+        (new RAPLSAICH_MCP_Tool_Get_Site_Info())->register($this->registry);
     }
 }

@@ -37,29 +37,29 @@ if (!defined('ABSPATH')) {
 
 // Version: single source of truth in includes/version.php
 require_once __DIR__ . '/includes/version.php';
-define('WPAIC_BUILD', '$Format:%h$'); // Auto-replaced by git archive (export-subst)
-define('WPAIC_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('WPAIC_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('WPAIC_PLUGIN_BASENAME', plugin_basename(__FILE__));
+define('RAPLSAICH_BUILD', '$Format:%h$'); // Auto-replaced by git archive (export-subst)
+define('RAPLSAICH_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('RAPLSAICH_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('RAPLSAICH_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
  * Plugin activation handler
  *
  * @param bool $network_wide True when Network Activated on multisite.
  */
-function wpaic_activate($network_wide = false)
+function raplsaich_activate($network_wide = false)
 {
-    require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
+    require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-activator.php';
 
     if (is_multisite() && $network_wide) {
         // Network Activate: create tables/options on every existing subsite.
-        // New subsites created later are handled by wpaic_on_new_blog().
+        // New subsites created later are handled by raplsaich_on_new_blog().
         $site_ids = get_sites(['fields' => 'ids', 'number' => 0]);
         $failed_sites = [];
         foreach ($site_ids as $site_id) {
             switch_to_blog((int) $site_id);
             try {
-                WPAIC_Activator::activate();
+                RAPLSAICH_Activator::activate();
             } catch (\Throwable $e) {
                 $failed_sites[(int) $site_id] = $e->getMessage();
             }
@@ -78,24 +78,24 @@ function wpaic_activate($network_wide = false)
                 $compact = array_slice($compact, 0, 50, true);
                 $compact['_truncated'] = $overflow;
             }
-            update_site_option('wpaic_ms_activate_errors', $compact);
+            update_site_option('raplsaich_ms_activate_errors', $compact);
             // 24h copy for post-incident investigation (survives notice dismissal)
-            set_site_transient('wpaic_ms_activate_errors_last', $compact, DAY_IN_SECONDS);
+            set_site_transient('raplsaich_ms_activate_errors_last', $compact, DAY_IN_SECONDS);
         } else {
-            delete_site_option('wpaic_ms_activate_errors');
+            delete_site_option('raplsaich_ms_activate_errors');
         }
     } else {
-        WPAIC_Activator::activate();
+        RAPLSAICH_Activator::activate();
     }
 }
-register_activation_hook(__FILE__, 'wpaic_activate');
+register_activation_hook(__FILE__, 'raplsaich_activate');
 
 /**
  * Provision new subsites created after Network Activate.
  *
  * @param WP_Site|int $new_site New site object (WP 5.1+) or blog_id.
  */
-function wpaic_on_new_blog($new_site) {
+function raplsaich_on_new_blog($new_site) {
     if (!function_exists('is_plugin_active_for_network')) {
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
     }
@@ -103,26 +103,26 @@ function wpaic_on_new_blog($new_site) {
         return;
     }
     // Ensure activator is loaded (wp_initialize_site fires early)
-    if (!class_exists('WPAIC_Activator', false)) {
-        if (!defined('WPAIC_PLUGIN_DIR')) {
+    if (!class_exists('RAPLSAICH_Activator', false)) {
+        if (!defined('RAPLSAICH_PLUGIN_DIR')) {
             return; // Plugin bootstrap incomplete — maybe_upgrade() will handle later
         }
-        require_once WPAIC_PLUGIN_DIR . 'includes/class-activator.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-activator.php';
     }
     $blog_id = is_object($new_site) ? (int) $new_site->blog_id : (int) $new_site;
     switch_to_blog($blog_id);
     try {
-        WPAIC_Activator::activate();
+        RAPLSAICH_Activator::activate();
     } catch (\Throwable $e) {
         if (defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('WPAIC: new subsite activation failed for blog ' . $blog_id . ': ' . $e->getMessage());
+            error_log('RAPLSAICH: new subsite activation failed for blog ' . $blog_id . ': ' . $e->getMessage());
         }
         // Fallback: maybe_upgrade() will retry on first request to this subsite
     }
     restore_current_blog();
 }
-add_action('wp_initialize_site', 'wpaic_on_new_blog', 200);
+add_action('wp_initialize_site', 'raplsaich_on_new_blog', 200);
 
 /**
  * Suggest a recovery action based on error message keywords.
@@ -132,7 +132,7 @@ add_action('wp_initialize_site', 'wpaic_on_new_blog', 200);
  * @param string $msg Truncated error message from activation.
  * @return string Recovery hint, or '' if no match.
  */
-function wpaic_ms_recovery_hint(string $msg): string {
+function raplsaich_ms_recovery_hint(string $msg): string {
     $lower = strtolower($msg);
     // High-confidence patterns only — MySQL error strings are stable English.
     if (strpos($lower, 'access denied') !== false) {
@@ -148,11 +148,11 @@ function wpaic_ms_recovery_hint(string $msg): string {
 /**
  * Show admin notice if Network Activate had partial failures.
  */
-function wpaic_ms_activate_error_notice() {
+function raplsaich_ms_activate_error_notice() {
     if (!is_network_admin()) {
         return;
     }
-    $errors = get_site_option('wpaic_ms_activate_errors');
+    $errors = get_site_option('raplsaich_ms_activate_errors');
     if (empty($errors) || !is_array($errors)) {
         return;
     }
@@ -173,7 +173,7 @@ function wpaic_ms_activate_error_notice() {
             )) . '</em></li>';
             continue;
         }
-        $action = wpaic_ms_recovery_hint((string) $msg);
+        $action = raplsaich_ms_recovery_hint((string) $msg);
         echo '<li>Site #' . (int) $blog_id . ': <code>' . esc_html($msg) . '</code>';
         if ($action) {
             echo ' — <strong>' . esc_html($action) . '</strong>';
@@ -186,23 +186,23 @@ function wpaic_ms_activate_error_notice() {
     if (defined('WP_DEBUG') && WP_DEBUG) {
         foreach ($errors as $blog_id => $msg) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('WPAIC MS activate error — site #' . (int) $blog_id . ': ' . $msg);
+            error_log('RAPLSAICH MS activate error — site #' . (int) $blog_id . ': ' . $msg);
         }
     }
     // Clear after showing once
-    delete_site_option('wpaic_ms_activate_errors');
+    delete_site_option('raplsaich_ms_activate_errors');
 }
-add_action('network_admin_notices', 'wpaic_ms_activate_error_notice');
+add_action('network_admin_notices', 'raplsaich_ms_activate_error_notice');
 
 /**
  * Plugin deactivation handler
  */
-function wpaic_deactivate()
+function raplsaich_deactivate()
 {
-    require_once WPAIC_PLUGIN_DIR . 'includes/class-deactivator.php';
-    WPAIC_Deactivator::deactivate();
+    require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-deactivator.php';
+    RAPLSAICH_Deactivator::deactivate();
 }
-register_deactivation_hook(__FILE__, 'wpaic_deactivate');
+register_deactivation_hook(__FILE__, 'raplsaich_deactivate');
 
 
 /**
@@ -211,38 +211,38 @@ register_deactivation_hook(__FILE__, 'wpaic_deactivate');
  * WordPress does not require mbstring, so these wrappers ensure the plugin
  * degrades gracefully (ASCII-only behaviour) instead of triggering a Fatal.
  */
-if (!function_exists('wpaic_mb_strtolower')) {
-    function wpaic_mb_strtolower(string $s): string {
+if (!function_exists('raplsaich_mb_strtolower')) {
+    function raplsaich_mb_strtolower(string $s): string {
         return function_exists('mb_strtolower') ? mb_strtolower($s) : strtolower($s);
     }
 }
-if (!function_exists('wpaic_mb_strlen')) {
-    function wpaic_mb_strlen(string $s): int {
+if (!function_exists('raplsaich_mb_strlen')) {
+    function raplsaich_mb_strlen(string $s): int {
         return function_exists('mb_strlen') ? mb_strlen($s) : strlen($s);
     }
 }
-if (!function_exists('wpaic_mb_strpos')) {
+if (!function_exists('raplsaich_mb_strpos')) {
     /**
      * @return int|false
      */
-    function wpaic_mb_strpos(string $haystack, string $needle, int $offset = 0) {
+    function raplsaich_mb_strpos(string $haystack, string $needle, int $offset = 0) {
         return function_exists('mb_strpos') ? mb_strpos($haystack, $needle, $offset) : strpos($haystack, $needle, $offset);
     }
 }
-if (!function_exists('wpaic_mb_substr')) {
-    function wpaic_mb_substr(string $s, int $start, ?int $length = null): string {
+if (!function_exists('raplsaich_mb_substr')) {
+    function raplsaich_mb_substr(string $s, int $start, ?int $length = null): string {
         if (function_exists('mb_substr')) {
             return $length === null ? mb_substr($s, $start) : mb_substr($s, $start, $length);
         }
         return $length === null ? substr($s, $start) : substr($s, $start, $length);
     }
 }
-if (!function_exists('wpaic_mb_substr_count')) {
-    function wpaic_mb_substr_count(string $haystack, string $needle): int {
+if (!function_exists('raplsaich_mb_substr_count')) {
+    function raplsaich_mb_substr_count(string $haystack, string $needle): int {
         return function_exists('mb_substr_count') ? mb_substr_count($haystack, $needle) : substr_count($haystack, $needle);
     }
 }
-if (!function_exists('wpaic_mb_convert_encoding')) {
+if (!function_exists('raplsaich_mb_convert_encoding')) {
     /**
      * Multibyte-safe encoding conversion with graceful fallback.
      *
@@ -251,7 +251,7 @@ if (!function_exists('wpaic_mb_convert_encoding')) {
      * @param string $from     Source encoding (optional).
      * @return string Converted string, or original if mbstring unavailable.
      */
-    function wpaic_mb_convert_encoding(string $s, string $to, string $from = ''): string {
+    function raplsaich_mb_convert_encoding(string $s, string $to, string $from = ''): string {
         if (function_exists('mb_convert_encoding')) {
             return $from ? mb_convert_encoding($s, $to, $from) : mb_convert_encoding($s, $to);
         }
@@ -265,39 +265,39 @@ if (!function_exists('wpaic_mb_convert_encoding')) {
  * Enforce the wp_unslash() → sanitize pattern in a single call,
  * preventing the common mistake of omitting wp_unslash().
  */
-if (!function_exists('wpaic_get_text')) {
-    function wpaic_get_text(array $src, string $key, string $default = ''): string {
+if (!function_exists('raplsaich_get_text')) {
+    function raplsaich_get_text(array $src, string $key, string $default = ''): string {
         return isset($src[$key]) ? sanitize_text_field(wp_unslash($src[$key])) : $default;
     }
 }
-if (!function_exists('wpaic_get_int')) {
-    function wpaic_get_int(array $src, string $key, int $default = 0): int {
+if (!function_exists('raplsaich_get_int')) {
+    function raplsaich_get_int(array $src, string $key, int $default = 0): int {
         return isset($src[$key]) ? absint(wp_unslash($src[$key])) : $default;
     }
 }
-if (!function_exists('wpaic_get_email')) {
-    function wpaic_get_email(array $src, string $key, string $default = ''): string {
+if (!function_exists('raplsaich_get_email')) {
+    function raplsaich_get_email(array $src, string $key, string $default = ''): string {
         return isset($src[$key]) ? sanitize_email(wp_unslash($src[$key])) : $default;
     }
 }
 
 /**
  * Plugin table suffix whitelist — single source of truth for runtime validation.
- * WPAIC_Activator::get_table_suffixes() delegates to this for consistency.
+ * RAPLSAICH_Activator::get_table_suffixes() delegates to this for consistency.
  *
  * @return string[] Table suffixes (without $wpdb->prefix).
  */
-if (!function_exists('wpaic_table_suffixes')) {
-    function wpaic_table_suffixes(): array {
+if (!function_exists('raplsaich_table_suffixes')) {
+    function raplsaich_table_suffixes(): array {
         return [
-            'aichat_conversations',
-            'aichat_messages',
-            'aichat_index',
-            'aichat_knowledge',
-            'aichat_leads',
-            'aichat_user_context',
-            'aichat_audit_log',
-            'aichat_knowledge_versions',
+            'raplsaich_conversations',
+            'raplsaich_messages',
+            'raplsaich_index',
+            'raplsaich_knowledge',
+            'raplsaich_leads',
+            'raplsaich_user_context',
+            'raplsaich_audit_log',
+            'raplsaich_knowledge_versions',
         ];
     }
 }
@@ -306,12 +306,12 @@ if (!function_exists('wpaic_table_suffixes')) {
  * Return a whitelist-validated plugin table name for safe SQL interpolation.
  * Returns backtick-quoted name ready for raw SQL, or '' if suffix is not in whitelist.
  *
- * @param string $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string $suffix Table suffix (e.g. 'raplsaich_messages').
  * @return string Backtick-quoted table name, or '' if invalid.
  */
-if (!function_exists('wpaic_validated_table')) {
-    function wpaic_validated_table(string $suffix): string {
-        if (!in_array($suffix, wpaic_table_suffixes(), true)) {
+if (!function_exists('raplsaich_validated_table')) {
+    function raplsaich_validated_table(string $suffix): string {
+        if (!in_array($suffix, raplsaich_table_suffixes(), true)) {
             return '';
         }
         global $wpdb;
@@ -323,17 +323,17 @@ if (!function_exists('wpaic_validated_table')) {
  * Validate table suffix and return backtick-quoted name, or '' with error log on failure.
  * Use at raw SQL entry points: if the return is '', abort the operation.
  *
- * @param string $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string $suffix Table suffix (e.g. 'raplsaich_messages').
  * @param string $caller Calling context for error log (e.g. 'cleanup_old_conversations').
  * @return string Backtick-quoted table name, or '' if invalid.
  */
-if (!function_exists('wpaic_require_table')) {
-    function wpaic_require_table(string $suffix, string $caller = ''): string {
-        $table = wpaic_validated_table($suffix);
+if (!function_exists('raplsaich_require_table')) {
+    function raplsaich_require_table(string $suffix, string $caller = ''): string {
+        $table = raplsaich_validated_table($suffix);
         if ($table === '') {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log(sprintf('WPAIC: invalid table suffix "%s" in %s', $suffix, $caller ?: 'unknown'));
+                error_log(sprintf('RAPLSAICH: invalid table suffix "%s" in %s', $suffix, $caller ?: 'unknown'));
             }
         }
         return $table;
@@ -349,26 +349,26 @@ if (!function_exists('wpaic_require_table')) {
  * without checking will silently corrupt the query.
  *
  * Usage pattern (REST handler):
- *   $table = wpaic_require_table_or_error('aichat_messages', __METHOD__);
+ *   $table = raplsaich_require_table_or_error('raplsaich_messages', __METHOD__);
  *   if (is_wp_error($table)) { return $table; }
  *   // $table is now a safe backtick-quoted string
  *
  * Calling convention for table validation helpers:
- *   - wpaic_validated_table()         → raw return (''/quoted), caller checks
- *   - wpaic_require_table()           → logs on empty, caller early-returns safely
- *   - wpaic_require_table_or_error()  → returns WP_Error, use in REST/AJAX handlers
- *   - wpaic_with_table()              → callback pattern, is_wp_error() handled internally (preferred for REST)
+ *   - raplsaich_validated_table()         → raw return (''/quoted), caller checks
+ *   - raplsaich_require_table()           → logs on empty, caller early-returns safely
+ *   - raplsaich_require_table_or_error()  → returns WP_Error, use in REST/AJAX handlers
+ *   - raplsaich_with_table()              → callback pattern, is_wp_error() handled internally (preferred for REST)
  *
- * @param string $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string $suffix Table suffix (e.g. 'raplsaich_messages').
  * @param string $caller Calling context for error message.
  * @return string|WP_Error Backtick-quoted table name, or WP_Error if invalid.
  */
-if (!function_exists('wpaic_require_table_or_error')) {
-    function wpaic_require_table_or_error(string $suffix, string $caller = '') {
-        $table = wpaic_require_table($suffix, $caller);
+if (!function_exists('raplsaich_require_table_or_error')) {
+    function raplsaich_require_table_or_error(string $suffix, string $caller = '') {
+        $table = raplsaich_require_table($suffix, $caller);
         if ($table === '') {
             return new WP_Error(
-                'wpaic_table_error',
+                'raplsaich_table_error',
                 sprintf(
                     /* translators: %s: calling context */
                     __('Internal configuration error in %s. Please contact the site administrator.', 'rapls-ai-chatbot'),
@@ -385,30 +385,30 @@ if (!function_exists('wpaic_require_table_or_error')) {
  * Execute a callback with a validated table name, or return WP_Error.
  *
  * Preferred pattern for REST handlers — eliminates the risk of
- * forgetting is_wp_error() on the return value of wpaic_require_table_or_error().
+ * forgetting is_wp_error() on the return value of raplsaich_require_table_or_error().
  *
  * The callback MAY itself return WP_Error (e.g. on $wpdb failure); the caller
  * should pass the return value through to WordPress (REST returns it as HTTP error).
- * For admin-ajax HTML endpoints, prefer wpaic_require_table() with early return
+ * For admin-ajax HTML endpoints, prefer raplsaich_require_table() with early return
  * instead of this helper, since wp_send_json_error() is the expected pattern there.
  *
  * Keep callbacks short — SQL execution only. Formatting, validation, and business
  * logic belong outside the closure to avoid deeply nested callback chains.
  *
  * Usage:
- *   return wpaic_with_table('aichat_messages', __METHOD__, function ($table) {
+ *   return raplsaich_with_table('raplsaich_messages', __METHOD__, function ($table) {
  *       global $wpdb;
  *       return $wpdb->get_results("SELECT * FROM {$table} LIMIT 10");
  *   });
  *
- * @param string   $suffix Table suffix (e.g. 'aichat_messages').
+ * @param string   $suffix Table suffix (e.g. 'raplsaich_messages').
  * @param string   $caller Calling context for error message.
  * @param callable $fn     Receives the backtick-quoted table name; its return value is passed through.
  * @return mixed|WP_Error  Return value of $fn, or WP_Error if table validation fails.
  */
-if (!function_exists('wpaic_with_table')) {
-    function wpaic_with_table(string $suffix, string $caller, callable $fn) {
-        $table = wpaic_require_table_or_error($suffix, $caller);
+if (!function_exists('raplsaich_with_table')) {
+    function raplsaich_with_table(string $suffix, string $caller, callable $fn) {
+        $table = raplsaich_require_table_or_error($suffix, $caller);
         if (is_wp_error($table)) {
             return $table;
         }
@@ -423,15 +423,15 @@ if (!function_exists('wpaic_with_table')) {
  *
  * @param string $context Description of the operation (e.g. 'Message::create').
  */
-if (!function_exists('wpaic_log_db_error')) {
-    function wpaic_log_db_error(string $context): void {
+if (!function_exists('raplsaich_log_db_error')) {
+    function raplsaich_log_db_error(string $context): void {
         if (!(defined('WP_DEBUG') && WP_DEBUG)) {
             return;
         }
         global $wpdb;
         if (!empty($wpdb->last_error)) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf('WPAIC DB error [%s]: %s', $context, $wpdb->last_error));
+            error_log(sprintf('RAPLSAICH DB error [%s]: %s', $context, $wpdb->last_error));
         }
     }
 }
@@ -442,18 +442,18 @@ if (!function_exists('wpaic_log_db_error')) {
  * Allows at most 1 log per $key per $interval seconds. Uses transients (object cache
  * when available, DB otherwise). WP_DEBUG-only by default.
  *
- * @param string $key      Unique throttle key (e.g. 'wpaic_log_chat_error').
+ * @param string $key      Unique throttle key (e.g. 'raplsaich_log_chat_error').
  * @param string $message  Message to log.
  * @param int    $interval Minimum seconds between logs for this key (default: 180).
  */
-if (!function_exists('wpaic_rate_limited_log')) {
-    function wpaic_rate_limited_log(string $key, string $message, int $interval = 180): void {
+if (!function_exists('raplsaich_rate_limited_log')) {
+    function raplsaich_rate_limited_log(string $key, string $message, int $interval = 180): void {
         if (!(defined('WP_DEBUG') && WP_DEBUG)) {
             return;
         }
-        /** @filter wpaic_rate_limited_log_interval Adjust per-key throttle (seconds). Min 10, recommended 180–600. */
-        $interval = max(10, (int) apply_filters('wpaic_rate_limited_log_interval', $interval, $key));
-        $transient_key = 'wpaic_rl_log_' . substr(md5($key), 0, 12);
+        /** @filter raplsaich_rate_limited_log_interval Adjust per-key throttle (seconds). Min 10, recommended 180–600. */
+        $interval = max(10, (int) apply_filters('raplsaich_rate_limited_log_interval', $interval, $key));
+        $transient_key = 'raplsaich_rl_log_' . substr(md5($key), 0, 12);
         if (get_transient($transient_key)) {
             return; // Already logged recently
         }
@@ -466,45 +466,45 @@ if (!function_exists('wpaic_rate_limited_log')) {
 /**
  * Load and run the main plugin class
  */
-function wpaic_run()
+function raplsaich_run()
 {
-    require_once WPAIC_PLUGIN_DIR . 'includes/helpers.php';
-    require_once WPAIC_PLUGIN_DIR . 'includes/class-loader.php';
-    require_once WPAIC_PLUGIN_DIR . 'includes/class-main.php';
+    require_once RAPLSAICH_PLUGIN_DIR . 'includes/helpers.php';
+    require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-loader.php';
+    require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-main.php';
 
-    $plugin = new WPAIC_Main();
+    $plugin = new RAPLSAICH_Main();
     $plugin->run();
 }
-wpaic_run();
+raplsaich_run();
 
 /**
  * WP Consent API: declare that this plugin is compatible.
  * When the WP Consent API plugin is active, this tells consent management
  * plugins that we respect consent categories for localStorage and tracking.
  */
-$wpaic_plugin_basename = plugin_basename(__FILE__);
-add_filter("wp_consent_api_registered_{$wpaic_plugin_basename}", '__return_true');
+$raplsaich_plugin_basename = plugin_basename(__FILE__);
+add_filter("wp_consent_api_registered_{$raplsaich_plugin_basename}", '__return_true');
 
 /**
  * Modify plugin action links
  */
-function wpaic_plugin_action_links($actions)
+function raplsaich_plugin_action_links($actions)
 {
     // Add settings link
-    $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=wpaic-dashboard')) . '">' .
+    $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=raplsaich-dashboard')) . '">' .
         esc_html__('Settings', 'rapls-ai-chatbot') . '</a>';
     array_unshift($actions, $settings_link);
 
     return $actions;
 }
-add_filter('plugin_action_links_' . WPAIC_PLUGIN_BASENAME, 'wpaic_plugin_action_links', 20);
+add_filter('plugin_action_links_' . RAPLSAICH_PLUGIN_BASENAME, 'raplsaich_plugin_action_links', 20);
 
 /**
  * Add row meta with Pro dependency notice
  */
-function wpaic_plugin_row_meta($plugin_meta, $plugin_file)
+function raplsaich_plugin_row_meta($plugin_meta, $plugin_file)
 {
-    if ($plugin_file === WPAIC_PLUGIN_BASENAME && get_option('wpaic_pro_active')) {
+    if ($plugin_file === RAPLSAICH_PLUGIN_BASENAME && get_option('raplsaich_pro_active')) {
         $last_key = array_key_last($plugin_meta);
         if ($last_key !== null) {
             $plugin_meta[$last_key] .= '<br><span style="color: #d63638;">' .
@@ -513,4 +513,4 @@ function wpaic_plugin_row_meta($plugin_meta, $plugin_file)
     }
     return $plugin_meta;
 }
-add_filter('plugin_row_meta', 'wpaic_plugin_row_meta', 10, 2);
+add_filter('plugin_row_meta', 'raplsaich_plugin_row_meta', 10, 2);

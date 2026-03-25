@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
+class RAPLSAICH_OpenRouter_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * API Key
@@ -124,7 +124,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
          *
          * @param int $timeout Timeout in seconds (clamped to 10-300).
          */
-        $requested = (int) apply_filters('wpaic_api_timeout', 120, $this->api_url, $this->model);
+        $requested = (int) apply_filters('raplsaich_api_timeout', 120, $this->api_url, $this->model);
         $max_exec = (int) ini_get('max_execution_time');
         if ($max_exec > 0) {
             $upper = min(300, max(10, $max_exec - 5));
@@ -140,7 +140,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
         ]);
 
         if (is_wp_error($response)) {
-            throw new WPAIC_Communication_Exception(
+            throw new RAPLSAICH_Communication_Exception(
                 esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message())
             );
         }
@@ -159,7 +159,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
     /**
      * Handle API error responses
      *
-     * @throws Exception|WPAIC_Quota_Exceeded_Exception
+     * @throws Exception|RAPLSAICH_Quota_Exceeded_Exception
      */
     private function handle_api_error(int $response_code, ?array $data, $raw_response = null): void {
         if (!is_array($data)) {
@@ -168,10 +168,10 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
         $error_message = $data['error']['message'] ?? __('Unknown error', 'rapls-ai-chatbot');
         $error_code = $data['error']['code'] ?? '';
 
-        wpaic_rate_limited_log(
+        raplsaich_rate_limited_log(
             'openrouter_api_error_' . $response_code,
             sprintf(
-                'WPAIC OpenRouter API Error: HTTP %d | code=%s | model=%s | message=%s',
+                'RAPLSAICH OpenRouter API Error: HTTP %d | code=%s | model=%s | message=%s',
                 $response_code,
                 $error_code,
                 $this->model,
@@ -187,7 +187,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
             $response_code === 429 ||
             stripos($error_message, 'quota') !== false ||
             stripos($error_message, 'credits') !== false) {
-            $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+            $ex = new RAPLSAICH_Quota_Exceeded_Exception(esc_html($error_message));
             if ($raw_response && !is_wp_error($raw_response)) {
                 $retry_after = wp_remote_retrieve_header($raw_response, 'retry-after');
                 if (is_numeric($retry_after) && (int) $retry_after > 0) {
@@ -281,7 +281,7 @@ class WPAIC_OpenRouter_Provider implements WPAIC_AI_Provider_Interface {
             return [];
         }
 
-        $cache_key = 'wpaic_models_openrouter_v2_' . md5($this->api_key);
+        $cache_key = 'raplsaich_models_openrouter_v2_' . md5($this->api_key);
         $cached = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;

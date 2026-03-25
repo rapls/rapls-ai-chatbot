@@ -1,0 +1,124 @@
+.raplsaich-knowledge-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.raplsaich-card-full {
+    grid-column: 1 / -1;
+}
+
+.raplsaich-count {
+    font-weight: normal;
+    font-size: 14px;
+    color: #666;
+}
+
+.raplsaich-filter {
+    margin-bottom: 15px;
+}
+
+.raplsaich-filter label {
+    margin-right: 8px;
+}
+
+.raplsaich-category-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.raplsaich-priority-select {
+    width: 70px;
+    padding: 3px 5px;
+    font-size: 12px;
+}
+
+.raplsaich-priority-select option[value="100"],
+.raplsaich-priority-select option[value="75"] {
+    background: #fff3cd;
+    font-weight: bold;
+}
+
+.raplsaich-priority-select option[value="50"],
+.raplsaich-priority-select option[value="25"] {
+    background: #e8f4fd;
+}
+
+.raplsaich-toggle {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+
+.raplsaich-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.raplsaich-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 22px;
+}
+
+.raplsaich-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.raplsaich-toggle input:checked + .raplsaich-toggle-slider {
+    background-color: #2271b1;
+}
+
+.raplsaich-toggle input:checked + .raplsaich-toggle-slider:before {
+    transform: translateX(18px);
+}
+
+.raplsaich-modal-large .raplsaich-modal-content {
+    max-width: 800px;
+}
+
+.required {
+    color: #d63638;
+}
+
+.raplsaich-draft-row {
+    background: #fff8e5 !important;
+}
+
+.raplsaich-draft-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #dba617;
+    color: #fff;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+@media (max-width: 782px) {
+    .raplsaich-knowledge-grid {
+        grid-template-columns: 1fr;
+    }
+}

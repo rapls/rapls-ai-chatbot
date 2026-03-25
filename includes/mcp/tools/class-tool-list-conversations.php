@@ -9,14 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Tool_List_Conversations {
+class RAPLSAICH_MCP_Tool_List_Conversations {
 
     /**
      * Register this tool with the registry.
      *
-     * @param WPAIC_MCP_Tool_Registry $registry Tool registry.
+     * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry.
      */
-    public function register(WPAIC_MCP_Tool_Registry $registry): void {
+    public function register(RAPLSAICH_MCP_Tool_Registry $registry): void {
         $registry->register('list_conversations', $this->get_schema(), [$this, 'execute']);
     }
 
@@ -70,14 +70,14 @@ class WPAIC_MCP_Tool_List_Conversations {
             $list_args['status'] = $status;
         }
 
-        $conversations = WPAIC_Conversation::get_list($list_args);
+        $conversations = RAPLSAICH_Conversation::get_list($list_args);
 
         // Batch message counts in a single query to avoid N+1
         $conv_ids = array_map(function ($c) { return (int) $c['id']; }, $conversations);
         $message_counts = [];
         if (!empty($conv_ids)) {
             global $wpdb;
-            $msg_table = trim(wpaic_validated_table('aichat_messages'), '`');
+            $msg_table = trim(raplsaich_validated_table('raplsaich_messages'), '`');
             $placeholders = implode(',', array_fill(0, count($conv_ids), '%d'));
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $rows = $wpdb->get_results($wpdb->prepare(

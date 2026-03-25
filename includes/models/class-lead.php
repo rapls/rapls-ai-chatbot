@@ -7,13 +7,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Lead {
+class RAPLSAICH_Lead {
 
     /**
-     * Table name — whitelist-validated via wpaic_validated_table().
+     * Table name — whitelist-validated via raplsaich_validated_table().
      */
     private static function get_table_name(): string {
-        return trim(wpaic_validated_table('aichat_leads'), '`');
+        return trim(raplsaich_validated_table('raplsaich_leads'), '`');
     }
 
     /**
@@ -83,7 +83,7 @@ class WPAIC_Lead {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%s', '%s', '%s']);
-        wpaic_log_db_error('Lead::create');
+        raplsaich_log_db_error('Lead::create');
 
         if ($result === false) {
             return false;

@@ -7,13 +7,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Content_Index {
+class RAPLSAICH_Content_Index {
 
     /**
-     * Table name — whitelist-validated via wpaic_validated_table().
+     * Table name — whitelist-validated via raplsaich_validated_table().
      */
     private static function get_table_name(): string {
-        return trim(wpaic_validated_table('aichat_index'), '`');
+        return trim(raplsaich_validated_table('raplsaich_index'), '`');
     }
 
     /**

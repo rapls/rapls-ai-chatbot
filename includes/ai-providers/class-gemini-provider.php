@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
+class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * @var string API Key
@@ -135,8 +135,8 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
 
         // Pass base URL (without API key) to the filter to prevent key leakage
         $filter_url = $this->api_url . $this->model . ':generateContent';
-        /** @see WPAIC_OpenAI_Provider::send_http_request() for filter docs */
-        $requested = (int) apply_filters('wpaic_api_timeout', 120, $filter_url, $this->model);
+        /** @see RAPLSAICH_OpenAI_Provider::send_http_request() for filter docs */
+        $requested = (int) apply_filters('raplsaich_api_timeout', 120, $filter_url, $this->model);
         $max_exec  = (int) ini_get('max_execution_time');
         $upper     = ($max_exec > 0) ? min(300, max(10, $max_exec - 5)) : 300;
         $timeout   = max(10, min($upper, $requested));
@@ -162,7 +162,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
         }
 
         if (is_wp_error($response)) {
-            throw new WPAIC_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
+            throw new RAPLSAICH_Communication_Exception(esc_html__('API communication error: ', 'rapls-ai-chatbot') . esc_html($response->get_error_message()));
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
@@ -177,10 +177,10 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             $error_status = $data['error']['status'] ?? '';
 
             // Rate-limited: under API outages, every chat request triggers this.
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'gemini_api_error_' . $response_code,
                 sprintf(
-                    'WPAIC Gemini API Error: HTTP %d | status=%s | model=%s | message=%s',
+                    'RAPLSAICH Gemini API Error: HTTP %d | status=%s | model=%s | message=%s',
                     $response_code,
                     $error_status,
                     $this->model,
@@ -200,7 +200,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
                 stripos($error_message, 'billing') !== false ||
                 stripos($error_message, 'exceeded') !== false ||
                 stripos($error_message, 'exhausted') !== false) {
-                $ex = new WPAIC_Quota_Exceeded_Exception(esc_html($error_message));
+                $ex = new RAPLSAICH_Quota_Exceeded_Exception(esc_html($error_message));
                 $retry_after = wp_remote_retrieve_header($response, 'retry-after');
                 if (is_numeric($retry_after) && (int) $retry_after > 0) {
                     $ex->set_retry_after((int) $retry_after);
@@ -353,7 +353,7 @@ class WPAIC_Gemini_Provider implements WPAIC_AI_Provider_Interface {
             return [];
         }
 
-        $cache_key = 'wpaic_models_gemini_v2_' . md5($this->api_key);
+        $cache_key = 'raplsaich_models_gemini_v2_' . md5($this->api_key);
         $cached = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;

@@ -7,13 +7,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Message {
+class RAPLSAICH_Message {
 
     /**
-     * Table name — whitelist-validated via wpaic_validated_table().
+     * Table name — whitelist-validated via raplsaich_validated_table().
      */
     private static function get_table_name(): string {
-        return trim(wpaic_validated_table('aichat_messages'), '`');
+        return trim(raplsaich_validated_table('raplsaich_messages'), '`');
     }
 
     /**
@@ -23,7 +23,7 @@ class WPAIC_Message {
         global $wpdb;
         $table = self::get_table_name();
 
-        $content = apply_filters('wpaic_message_content_save', $data['content'], $data);
+        $content = apply_filters('raplsaich_message_content_save', $data['content'], $data);
 
         $insert_data = [
             'conversation_id' => $data['conversation_id'],
@@ -38,11 +38,11 @@ class WPAIC_Message {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%d', '%d', '%d', '%s', '%s']);
-        wpaic_log_db_error('Message::create');
+        raplsaich_log_db_error('Message::create');
 
         if ($result) {
             // Keep conversation alive: update updated_at and reactivate if auto-closed
-            WPAIC_Conversation::touch($data['conversation_id']);
+            RAPLSAICH_Conversation::touch($data['conversation_id']);
             return self::get_by_id($wpdb->insert_id);
         }
 
@@ -63,7 +63,7 @@ class WPAIC_Message {
         ), ARRAY_A);
 
         if ($row && isset($row['content'])) {
-            $row['content'] = apply_filters('wpaic_message_content_load', $row['content'], $row);
+            $row['content'] = apply_filters('raplsaich_message_content_load', $row['content'], $row);
         }
 
         return $row;
@@ -86,7 +86,7 @@ class WPAIC_Message {
         ), ARRAY_A);
 
         foreach ($messages as &$msg) {
-            $msg['content'] = apply_filters('wpaic_message_content_load', $msg['content'], $msg);
+            $msg['content'] = apply_filters('raplsaich_message_content_load', $msg['content'], $msg);
         }
         unset($msg);
 
@@ -111,7 +111,7 @@ class WPAIC_Message {
         ), ARRAY_A);
 
         foreach ($messages as &$msg) {
-            $msg['content'] = apply_filters('wpaic_message_content_load', $msg['content'], $msg);
+            $msg['content'] = apply_filters('raplsaich_message_content_load', $msg['content'], $msg);
         }
         unset($msg);
 
@@ -219,7 +219,7 @@ class WPAIC_Message {
             ['%d'],
             ['%d']
         );
-        wpaic_log_db_error('Message::update_feedback');
+        raplsaich_log_db_error('Message::update_feedback');
 
         return $result !== false;
     }
@@ -293,8 +293,8 @@ class WPAIC_Message {
 
             if ($user_msg && !empty($user_msg['content'])) {
                 $examples[] = [
-                    'question' => wpaic_mb_substr($user_msg['content'], 0, 200),
-                    'answer'   => wpaic_mb_substr($msg['answer'], 0, 300),
+                    'question' => raplsaich_mb_substr($user_msg['content'], 0, 200),
+                    'answer'   => raplsaich_mb_substr($msg['answer'], 0, 300),
                 ];
 
                 if (count($examples) >= $limit) {
@@ -341,8 +341,8 @@ class WPAIC_Message {
 
             if ($user_msg && !empty($user_msg['content'])) {
                 $examples[] = [
-                    'question' => wpaic_mb_substr($user_msg['content'], 0, 200),
-                    'answer'   => wpaic_mb_substr($msg['answer'], 0, 500),
+                    'question' => raplsaich_mb_substr($user_msg['content'], 0, 200),
+                    'answer'   => raplsaich_mb_substr($msg['answer'], 0, 500),
                 ];
 
                 if (count($examples) >= $limit) {
@@ -417,9 +417,9 @@ class WPAIC_Message {
      */
     public static function build_cache_hash(string $message, string $context = '', string $bot_id = 'default'): string {
         // Allow Pro to normalize the message further (e.g., similar cache)
-        $message = apply_filters('wpaic_cache_hash_message', $message);
+        $message = apply_filters('raplsaich_cache_hash_message', $message);
         // Normalize: lowercase, trim whitespace; include bot_id so each bot has its own cache
-        $normalized = wpaic_mb_strtolower(trim($message)) . '||' . trim($context) . '||' . $bot_id;
+        $normalized = raplsaich_mb_strtolower(trim($message)) . '||' . trim($context) . '||' . $bot_id;
         return hash('sha256', $normalized);
     }
 

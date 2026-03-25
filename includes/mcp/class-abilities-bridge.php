@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Abilities_Bridge {
+class RAPLSAICH_Abilities_Bridge {
 
     /**
      * Category for all chatbot abilities.
@@ -25,16 +25,16 @@ class WPAIC_Abilities_Bridge {
     /**
      * Tool registry reference.
      *
-     * @var WPAIC_MCP_Tool_Registry
+     * @var RAPLSAICH_MCP_Tool_Registry
      */
-    private WPAIC_MCP_Tool_Registry $registry;
+    private RAPLSAICH_MCP_Tool_Registry $registry;
 
     /**
      * Constructor.
      *
-     * @param WPAIC_MCP_Tool_Registry $registry Tool registry with registered tools.
+     * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry with registered tools.
      */
-    public function __construct(WPAIC_MCP_Tool_Registry $registry) {
+    public function __construct(RAPLSAICH_MCP_Tool_Registry $registry) {
         $this->registry = $registry;
     }
 

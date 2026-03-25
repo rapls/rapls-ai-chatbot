@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_REST_Controller {
+class RAPLSAICH_REST_Controller {
 
     /**
      * Namespace
      */
-    private string $namespace = 'wp-ai-chatbot/v1';
+    private string $namespace = 'rapls-ai-chatbot/v1';
 
     /**
      * Add no-cache headers to a REST response.
@@ -60,7 +60,7 @@ class WPAIC_REST_Controller {
     /**
      * Build a "silent success" response for bot-detected requests.
      * Returns HTTP 200 with {'success': true} so bots learn nothing,
-     * but adds an X-WPAIC-Dropped header (reason) when WP_DEBUG is on
+     * but adds an X-RAPLSAICH-Dropped header (reason) when WP_DEBUG is on
      * or the current user has manage_options — allowing admins / support
      * to diagnose false positives from DevTools without exposing info to attackers.
      *
@@ -73,12 +73,12 @@ class WPAIC_REST_Controller {
         $body = ['success' => true, '_dropped' => true];
         $response = new WP_REST_Response($body, 200);
         // Prevent intermediate caches from storing and re-serving this response.
-        // Critical when X-WPAIC-Dropped is present: without no-store, an admin's
+        // Critical when X-RAPLSAICH-Dropped is present: without no-store, an admin's
         // response could be cached and served to general users, leaking the header.
         $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
         $this->append_header_csv($response, 'Vary', 'Cookie');
-        if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can(WPAIC_Admin::get_manage_cap())) {
-            $response->header('X-WPAIC-Dropped', $reason);
+        if ((defined('WP_DEBUG') && WP_DEBUG) || current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
+            $response->header('X-RAPLSAICH-Dropped', $reason);
         }
         return $response;
     }
@@ -88,7 +88,7 @@ class WPAIC_REST_Controller {
      * Gated on WP_DEBUG + WP_DEBUG_LOG (same policy as provider should_log).
      */
     private function should_log_dedup(): bool {
-        if (apply_filters('wpaic_debug_log_enabled', false)) {
+        if (apply_filters('raplsaich_debug_log_enabled', false)) {
             return true;
         }
         return defined('WP_DEBUG') && WP_DEBUG
@@ -149,16 +149,16 @@ class WPAIC_REST_Controller {
     /**
      * Enrich 403/429 responses with debug reason for admins.
      *
-     * Adds both a header (X-WPAIC-Debug-Reason) and a body field (debug_reason)
+     * Adds both a header (X-RAPLSAICH-Debug-Reason) and a body field (debug_reason)
      * so the reason is visible even when CDN/WAF strips custom headers.
      * Only exposed to users with the plugin's manage capability
-     * (WPAIC_Admin::get_manage_cap() — same getter used by all admin checks).
+     * (RAPLSAICH_Admin::get_manage_cap() — same getter used by all admin checks).
      *
      * Known error_code values (kept as a reference for support docs):
      *   rate_limited, origin_mismatch, recaptcha_required, recaptcha_failed,
      *   recaptcha_misconfigured, session_expired, session_missing,
      *   honeypot_triggered, timing_failed, pro_required,
-     *   wpaic_table_error, unknown
+     *   raplsaich_table_error, unknown
      *
      * @param mixed            $result  Response object.
      * @param WP_REST_Server   $server  REST server.
@@ -180,7 +180,7 @@ class WPAIC_REST_Controller {
         // Defensive: require both logged-in AND capability check.
         // Prevents cache/proxy edge cases from leaking debug info to anonymous users.
         // Same cap getter as all admin permission checks — must stay in sync.
-        if (!is_user_logged_in() || !current_user_can(WPAIC_Admin::get_manage_cap())) {
+        if (!is_user_logged_in() || !current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
             return $result;
         }
         $data = $result->get_data();
@@ -188,7 +188,7 @@ class WPAIC_REST_Controller {
             ? $data['error_code']
             : 'unknown';
         // Header: always set for admin (lightweight, not cached by APM/log tools as body)
-        $result->header('X-WPAIC-Debug-Reason', $reason);
+        $result->header('X-RAPLSAICH-Debug-Reason', $reason);
         // Body: only when WP_DEBUG is on — prevents debug_reason from persisting
         // in APM/monitoring/reverse-proxy logs that capture response bodies.
         if (is_array($data) && defined('WP_DEBUG') && WP_DEBUG) {
@@ -225,7 +225,7 @@ class WPAIC_REST_Controller {
         register_rest_route($this->namespace, '/session', [
             'methods'             => 'GET',
             'callback'            => [$this, 'get_session'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'allow_public_access'],
         ]);
 
         // Send chat message
@@ -246,7 +246,7 @@ class WPAIC_REST_Controller {
                     'validate_callback' => function ($value) {
                         // 8000 chars ≈ 2000 tokens — prevents DoS via giant payloads
                         // hitting AI provider and inflating API cost.
-                        $max = (int) apply_filters('wpaic_max_message_length', 8000);
+                        $max = (int) apply_filters('raplsaich_max_message_length', 8000);
                         if (mb_strlen((string) $value) > $max) {
                             return new WP_Error(
                                 'rest_invalid_param',
@@ -356,7 +356,7 @@ class WPAIC_REST_Controller {
         register_rest_route($this->namespace, '/lead-config', [
             'methods'             => 'GET',
             'callback'            => [$this, 'get_lead_config'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'allow_public_access'],
         ]);
 
         // Get message limit status
@@ -365,7 +365,7 @@ class WPAIC_REST_Controller {
         register_rest_route($this->namespace, '/message-limit', [
             'methods'             => 'GET',
             'callback'            => [$this, 'get_message_limit_status'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [$this, 'allow_public_access'],
         ]);
 
         // Submit message feedback (Free feature)
@@ -412,7 +412,7 @@ class WPAIC_REST_Controller {
         ]);
 
         // Pro-only routes: only register when Pro is active
-        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
         if ($pro_features->is_pro()) {
             // Get conversation summary (Pro feature)
             register_rest_route($this->namespace, '/summary/(?P<session_id>[a-zA-Z0-9-]+)', [
@@ -472,7 +472,7 @@ class WPAIC_REST_Controller {
             register_rest_route($this->namespace, '/offline-message', [
                 'methods'             => 'POST',
                 'callback'            => [$this, 'submit_offline_message'],
-                'permission_callback' => '__return_true',
+                'permission_callback' => [$this, 'allow_offline_submission'],
                 'args'                => [
                     'name' => [
                         'required'          => false,
@@ -561,14 +561,14 @@ class WPAIC_REST_Controller {
             return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
-        $session_version = get_option('wpaic_session_version', 1);
-        $settings = get_option('wpaic_settings', []);
+        $session_version = get_option('raplsaich_session_version', 1);
+        $settings = get_option('raplsaich_settings', []);
         $save_history = !empty($settings['save_history']);
 
         // Reuse existing session from cookie only when save_history is ON.
         // When OFF, always create a new session so conversations are not carried over.
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $existing_session = ($save_history && isset($_COOKIE['wpaic_session_id'])) ? sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) : '';
+        $existing_session = ($save_history && isset($_COOKIE['raplsaich_session_id'])) ? sanitize_text_field(wp_unslash($_COOKIE['raplsaich_session_id'])) : '';
         if (!empty($existing_session)) {
             // Strict format check: must be UUID4 (8-4-4-4-12 hex)
             if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $existing_session)) {
@@ -579,7 +579,7 @@ class WPAIC_REST_Controller {
 
         if (!empty($existing_session)) {
             // Short-lived cache to avoid hitting DB on every page view
-            $cache_key = 'wpaic_sess_' . substr(hash('sha256', $existing_session . wp_salt()), 0, 16);
+            $cache_key = 'raplsaich_sess_' . substr(hash('sha256', $existing_session . wp_salt()), 0, 16);
             $cached = get_transient($cache_key);
 
             if ($cached === 'exists') {
@@ -592,7 +592,7 @@ class WPAIC_REST_Controller {
             }
 
             // Only reuse if a conversation actually exists in DB
-            $conversation = WPAIC_Conversation::get_by_session($existing_session);
+            $conversation = RAPLSAICH_Conversation::get_by_session($existing_session);
             if ($conversation) {
                 set_transient($cache_key, 'exists', 60);
                 return new WP_REST_Response([
@@ -605,7 +605,7 @@ class WPAIC_REST_Controller {
 
             // No DB conversation — only accept if bootstrap transient exists
             // (proves this server issued the session_id recently)
-            $transient_key = 'wpaic_boot_' . substr(hash('sha256', $existing_session . wp_salt()), 0, 32);
+            $transient_key = 'raplsaich_boot_' . substr(hash('sha256', $existing_session . wp_salt()), 0, 32);
             if (get_transient($transient_key)) {
                 return new WP_REST_Response([
                     'success'         => true,
@@ -634,7 +634,7 @@ class WPAIC_REST_Controller {
         // IP-only rate limit for new session creation (prevents UA rotation bypass)
         $ip = $this->get_client_ip();
         if (!empty($ip)) {
-            $ip_key = 'wpaic_rl_snew_' . substr(hash('sha256', $ip . wp_salt()), 0, 24);
+            $ip_key = 'raplsaich_rl_snew_' . substr(hash('sha256', $ip . wp_salt()), 0, 24);
             $ip_count = $this->get_resilient_counter($ip_key, 600);
             if ($ip_count >= 5) {
                 return new WP_REST_Response([
@@ -647,7 +647,7 @@ class WPAIC_REST_Controller {
         }
 
         // Generate new session
-        $session_id = WPAIC_Conversation::generate_session_id();
+        $session_id = RAPLSAICH_Conversation::generate_session_id();
 
         // Set httpOnly cookie for session ownership verification
         $cookie_set = false;
@@ -655,12 +655,12 @@ class WPAIC_REST_Controller {
             /**
              * Filter the SameSite attribute for the session cookie.
              * Default 'Lax' is safe for same-site use. Set to 'None' for cross-site
-             * iframe embedding (forces Secure=true). Use wpaic_allowed_origins filter
+             * iframe embedding (forces Secure=true). Use raplsaich_allowed_origins filter
              * to also allow the embedding domain's origin.
              *
              * @param string $samesite SameSite attribute ('Lax', 'Strict', or 'None').
              */
-            $samesite = apply_filters('wpaic_cookie_samesite', 'Lax');
+            $samesite = apply_filters('raplsaich_cookie_samesite', 'Lax');
             /**
              * Filter the Secure flag for the session cookie.
              * Default: true when SameSite=None (required by spec), otherwise is_ssl().
@@ -670,8 +670,8 @@ class WPAIC_REST_Controller {
              * @param bool $secure Whether to set the Secure flag.
              */
             $secure_default = ($samesite === 'None') ? true : (is_ssl() || wp_is_using_https());
-            $secure = (bool) apply_filters('wpaic_cookie_secure', $secure_default);
-            setcookie('wpaic_session_id', $session_id, [
+            $secure = (bool) apply_filters('raplsaich_cookie_secure', $secure_default);
+            setcookie('raplsaich_session_id', $session_id, [
                 'expires'  => 0,
                 'path'     => '/',
                 'httponly'  => true,
@@ -682,7 +682,7 @@ class WPAIC_REST_Controller {
         } else {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC: headers_sent() prevented setting session cookie.');
+                error_log('RAPLSAICH: headers_sent() prevented setting session cookie.');
             }
         }
 
@@ -693,7 +693,7 @@ class WPAIC_REST_Controller {
             $ip = $this->get_client_ip();
             $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
             $bootstrap_hash = hash('sha256', $ip . $user_agent . wp_salt());
-            $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+            $transient_key = 'raplsaich_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
             set_transient($transient_key, $bootstrap_hash, 15 * MINUTE_IN_SECONDS);
         }
 
@@ -733,8 +733,8 @@ class WPAIC_REST_Controller {
         // Reject image if multimodal is not enabled (Pro feature)
         // Allow if screenshot/screen sharing is enabled
         if (!empty($image)) {
-            $pro_features_check = WPAIC_Pro_Features::get_instance();
-            $pro_settings_check = get_option('wpaic_settings', [])['pro_features'] ?? [];
+            $pro_features_check = RAPLSAICH_Pro_Features::get_instance();
+            $pro_settings_check = get_option('raplsaich_settings', [])['pro_features'] ?? [];
             $screenshot_allowed = !empty($pro_settings_check['screen_sharing_enabled']) && $pro_features_check->is_pro();
             if (!$screenshot_allowed && (!$pro_features_check->is_pro() || !$pro_features_check->is_multimodal_enabled())) {
                 return new WP_REST_Response([
@@ -767,15 +767,15 @@ class WPAIC_REST_Controller {
 
         // Multi-bot: resolve bot configuration (Pro feature)
         $bot_id = sanitize_key($request->get_param('bot_id') ?? 'default');
-        $bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($bot_id);
+        $bot_config = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($bot_id);
 
         // Multi-bot coordination (intent-based / round-robin routing)
-        $bot_config = apply_filters('wpaic_resolve_bot_config', $bot_config, $message);
+        $bot_config = apply_filters('raplsaich_resolve_bot_config', $bot_config, $message);
 
         // Session ownership already verified by check_session_permission()
 
         // Validate input
-        $max_length = (int) apply_filters('wpaic_max_message_length', 8000);
+        $max_length = (int) apply_filters('raplsaich_max_message_length', 8000);
         $message_length = function_exists('mb_strlen') ? mb_strlen($message) : strlen($message);
         if (empty($message) || $message_length > $max_length) {
             return new WP_REST_Response([
@@ -811,17 +811,17 @@ class WPAIC_REST_Controller {
                 static $hash_unexpected_logged = false;
                 if (!$hash_unexpected_logged) {
                     $hash_unexpected_logged = true;
-                    $ts_key  = 'wpaic_diag_hash_unexpected_ts';
+                    $ts_key  = 'raplsaich_diag_hash_unexpected_ts';
                     $last_ts = (int) get_option($ts_key, 0);
                     $now_ts  = time();
                     if (($now_ts - $last_ts) >= 60) {
                         update_option($ts_key, $now_ts, false);
-                        $opt_key = 'wpaic_diag_hash_unexpected';
+                        $opt_key = 'raplsaich_diag_hash_unexpected';
                         $count   = (int) get_option($opt_key, 0);
                         update_option($opt_key, $count + 1, false);
                         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                         error_log(sprintf(
-                            'WPAIC dedup: note=hash_unexpected | hash_len=%d | blog_id=%d | total=%d',
+                            'RAPLSAICH dedup: note=hash_unexpected | hash_len=%d | blog_id=%d | total=%d',
                             strlen($dedup_hash),
                             $blog_id,
                             $count + 1
@@ -829,7 +829,7 @@ class WPAIC_REST_Controller {
                     }
                 }
             }
-            $dedup_key  = 'wpaic_dedup_' . substr($dedup_hash, 0, 16);
+            $dedup_key  = 'raplsaich_dedup_' . substr($dedup_hash, 0, 16);
             $cached_result = get_transient($dedup_key);
             if ($cached_result !== false) {
                 // Flag as cache-originated so client can distinguish dedup hits
@@ -858,7 +858,7 @@ class WPAIC_REST_Controller {
                 if ($log_reason === 'malformed_data') {
                     // Per-source rate key: blog_id + keyhash (12 chars) for isolation.
                     // Debug mode: 3s cooldown (diagnostic). Non-debug: 10s cooldown.
-                    $rate_key    = 'wpaic_mf_' . $blog_id . '_' . $keyhash;
+                    $rate_key    = 'raplsaich_mf_' . $blog_id . '_' . $keyhash;
                     $cooldown    = $should_log ? 3 : 10;
                     $last_logged = (int) get_transient($rate_key);
                     // Static fallback: if object cache is unreliable during anomaly,
@@ -884,7 +884,7 @@ class WPAIC_REST_Controller {
                     }
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
-                        'WPAIC dedup: anomaly=%s | keyhash=%s | age=%s | object_cache=%s%s',
+                        'RAPLSAICH dedup: anomaly=%s | keyhash=%s | age=%s | object_cache=%s%s',
                         $log_reason,
                         $keyhash,
                         ($saved_at > 0) ? ($now - $saved_at) . 's' : 'n/a',
@@ -916,11 +916,11 @@ class WPAIC_REST_Controller {
 
         // Check rate limit (Pro enhanced or basic)
         // Bypass rate limit for handoff keyword messages so users can always reach support
-        $is_handoff = WPAIC_Pro_Features::get_instance()->is_handoff_keyword($message);
+        $is_handoff = RAPLSAICH_Pro_Features::get_instance()->is_handoff_keyword($message);
         if (!$is_handoff) {
             $rate_limit_result = $this->check_rate_limit();
             if ($rate_limit_result !== true) {
-                do_action('wpaic_rate_limit_exceeded', $this->get_client_ip());
+                do_action('raplsaich_rate_limit_exceeded', $this->get_client_ip());
                 $rate_limit_msg = is_string($rate_limit_result) && $rate_limit_result !== ''
                     ? $rate_limit_result
                     : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
@@ -933,7 +933,7 @@ class WPAIC_REST_Controller {
         }
 
         // Check monthly message limit
-        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
 
         // Check IP block (Pro feature)
         if ($pro_features->is_ip_blocked()) {
@@ -954,7 +954,7 @@ class WPAIC_REST_Controller {
         }
 
         // Check country blocking (Pro feature)
-        $country_blocked = apply_filters('wpaic_country_blocked', false);
+        $country_blocked = apply_filters('raplsaich_country_blocked', false);
         if ($country_blocked) {
             return new WP_REST_Response([
                 'success'    => false,
@@ -987,7 +987,7 @@ class WPAIC_REST_Controller {
 
         // Check banned words (Pro feature)
         if ($pro_features->contains_banned_words($message)) {
-            do_action('wpaic_banned_word_detected', $message, $this->get_client_ip());
+            do_action('raplsaich_banned_word_detected', $message, $this->get_client_ip());
             return new WP_REST_Response([
                 'success'    => false,
                 'error'      => $pro_features->get_banned_words_message(),
@@ -1005,7 +1005,7 @@ class WPAIC_REST_Controller {
         }
 
         // Pre-check API key
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         // Bot config may override the provider
         $provider_name = (is_array($bot_config) && !empty($bot_config['ai_provider']))
             ? $bot_config['ai_provider']
@@ -1041,7 +1041,7 @@ class WPAIC_REST_Controller {
 
             if ($save_history) {
                 // Get or create conversation
-                $conversation = WPAIC_Conversation::get_or_create($session_id, [
+                $conversation = RAPLSAICH_Conversation::get_or_create($session_id, [
                     'page_url'   => $page_url,
                     'visitor_ip' => $this->get_client_ip(),
                     'bot_id'     => $bot_id,
@@ -1067,7 +1067,7 @@ class WPAIC_REST_Controller {
                 if ($saved_image_url) {
                     $save_content .= "\n[image:" . $saved_image_url . ']';
                 }
-                WPAIC_Message::create([
+                RAPLSAICH_Message::create([
                     'conversation_id' => $conversation_id,
                     'role'            => 'user',
                     'content'         => $save_content,
@@ -1081,7 +1081,7 @@ class WPAIC_REST_Controller {
             if ($unavailable_message !== null) {
                 $unavail_msg_id = 0;
                 if ($save_history) {
-                    $ai_message = WPAIC_Message::create([
+                    $ai_message = RAPLSAICH_Message::create([
                         'conversation_id' => $conversation_id,
                         'role'            => 'assistant',
                         'content'         => $unavailable_message,
@@ -1103,7 +1103,7 @@ class WPAIC_REST_Controller {
             // Check message limit — if reached, try FAQ fallback instead of AI
             // get_monthly_ai_response_count() includes no-history counter automatically
             if ($pro_features->is_limit_reached()) {
-                $search_engine = new WPAIC_Search_Engine();
+                $search_engine = new RAPLSAICH_Search_Engine();
                 // Apply bot-specific knowledge filter for FAQ fallback
                 $faq_use_knowledge = $bot_config['use_knowledge'] ?? true;
                 if (!empty($bot_config['knowledge_categories'])) {
@@ -1121,7 +1121,7 @@ class WPAIC_REST_Controller {
                 // Save synthetic assistant message (only when history is enabled)
                 $limit_msg_id = 0;
                 if ($save_history) {
-                    $ai_message = WPAIC_Message::create([
+                    $ai_message = RAPLSAICH_Message::create([
                         'conversation_id' => $conversation_id,
                         'role'            => 'assistant',
                         'content'         => $faq_answer,
@@ -1144,7 +1144,7 @@ class WPAIC_REST_Controller {
             }
 
             // Check if conversation is in handoff or message triggers handoff — skip AI call
-            $handoff_response = apply_filters('wpaic_pre_ai_handoff_check', null, $conversation_id ?? 0, $session_id, $message);
+            $handoff_response = apply_filters('raplsaich_pre_ai_handoff_check', null, $conversation_id ?? 0, $session_id, $message);
             if (is_array($handoff_response)) {
                 return $this->no_cache(new WP_REST_Response([
                     'success' => true,
@@ -1156,7 +1156,7 @@ class WPAIC_REST_Controller {
             $ai_provider = $this->get_ai_provider($bot_config);
 
             // Search related content
-            $search_engine = new WPAIC_Search_Engine();
+            $search_engine = new RAPLSAICH_Search_Engine();
             // Apply bot-specific knowledge/crawl filters
             $bot_use_knowledge = $bot_config['use_knowledge'] ?? true;
             $bot_use_crawl = $bot_config['use_site_crawl'] ?? true;
@@ -1173,7 +1173,7 @@ class WPAIC_REST_Controller {
             $context = $search_engine->build_context($related_content, $this->get_max_context_chars(), $message);
 
             // Notify Pro features about knowledge hits (for auto-priority)
-            do_action('wpaic_knowledge_hits', $related_content);
+            do_action('raplsaich_knowledge_hits', $related_content);
 
             // Response cache check (Pro feature)
             $pro_settings = $settings['pro_features'] ?? [];
@@ -1182,15 +1182,15 @@ class WPAIC_REST_Controller {
 
             if ($cache_enabled) {
                 $cache_ttl = (int) ($pro_settings['cache_ttl_days'] ?? 7);
-                $cache_hash = WPAIC_Message::build_cache_hash($message, $context, $bot_id);
-                $cached = WPAIC_Message::find_cached_response($cache_hash, $cache_ttl);
+                $cache_hash = RAPLSAICH_Message::build_cache_hash($message, $context, $bot_id);
+                $cached = RAPLSAICH_Message::find_cached_response($cache_hash, $cache_ttl);
 
                 if ($cached) {
                     $cache_msg_id = 0;
 
                     if ($save_history) {
                         // Cache hit — save a copy as the new assistant message
-                        $ai_message = WPAIC_Message::create([
+                        $ai_message = RAPLSAICH_Message::create([
                             'conversation_id' => $conversation_id,
                             'role'            => 'assistant',
                             'content'         => $cached['content'],
@@ -1204,9 +1204,9 @@ class WPAIC_REST_Controller {
                         // Mark as cache hit and store hash
                         if ($ai_message) {
                             $cache_msg_id = $ai_message['id'];
-                            WPAIC_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
+                            RAPLSAICH_Message::store_cache_hash((int) $ai_message['id'], $cache_hash);
                             global $wpdb;
-                            $msg_table = trim(wpaic_validated_table('aichat_messages'), '`');
+                            $msg_table = trim(raplsaich_validated_table('raplsaich_messages'), '`');
                             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
                             $wpdb->update($msg_table, ['cache_hit' => 1], ['id' => $ai_message['id']], ['%d'], ['%d']);
                         }
@@ -1241,7 +1241,7 @@ class WPAIC_REST_Controller {
                     }
                     $remaining_messages = $pro_features->get_remaining_messages();
 
-                    $cached_content = apply_filters('wpaic_ai_response', $cached['content'], $message, $settings);
+                    $cached_content = apply_filters('raplsaich_ai_response', $cached['content'], $message, $settings);
 
                     $cache_response_data = [
                         'message_id'         => $cache_msg_id,
@@ -1291,7 +1291,7 @@ class WPAIC_REST_Controller {
                     }
 
                     /** This filter is documented above in the main response path. */
-                    $cache_response_data = apply_filters('wpaic_chat_response_data', $cache_response_data, $related_content, $message);
+                    $cache_response_data = apply_filters('raplsaich_chat_response_data', $cache_response_data, $related_content, $message);
 
                     return new WP_REST_Response([
                         'success' => true,
@@ -1317,7 +1317,7 @@ class WPAIC_REST_Controller {
              * @param string $system_prompt The system prompt.
              * @param array  $settings      The plugin settings.
              */
-            $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt, $settings);
+            $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt, $settings);
 
             // Response language instruction
             $response_lang = $settings['response_language'] ?? '';
@@ -1348,7 +1348,7 @@ class WPAIC_REST_Controller {
                 $feedback_prompt = '';
 
                 // Positive examples - what works well
-                $positive_examples = WPAIC_Message::get_positive_feedback_examples(3);
+                $positive_examples = RAPLSAICH_Message::get_positive_feedback_examples(3);
                 if (!empty($positive_examples)) {
                     $good_header = $settings['feedback_good_header'] ?? "[LEARNING FROM USER FEEDBACK - GOOD EXAMPLES]\nThe following responses received positive feedback. Use these as examples of good responses:";
                     $feedback_prompt .= "\n\n" . $good_header . "\n";
@@ -1358,7 +1358,7 @@ class WPAIC_REST_Controller {
                 }
 
                 // Negative examples - what to avoid
-                $negative_examples = WPAIC_Message::get_negative_feedback_examples(2);
+                $negative_examples = RAPLSAICH_Message::get_negative_feedback_examples(2);
                 if (!empty($negative_examples)) {
                     $bad_header = $settings['feedback_bad_header'] ?? "[LEARNING FROM USER FEEDBACK - AVOID THESE PATTERNS]\nThe following responses received negative feedback. AVOID responding in similar ways:";
                     $feedback_prompt .= "\n\n" . $bad_header . "\n";
@@ -1396,7 +1396,7 @@ class WPAIC_REST_Controller {
              * @param string $message  The user's message.
              * @param array  $settings The plugin settings.
              */
-            $context = apply_filters('wpaic_context', $context, $message, $settings);
+            $context = apply_filters('raplsaich_context', $context, $message, $settings);
 
             if (!empty($context)) {
                 // Check if context contains Q&A format
@@ -1436,7 +1436,7 @@ class WPAIC_REST_Controller {
             // Get conversation history
             $history_count = absint($settings['message_history_count'] ?? 10);
             $history = $save_history
-                ? WPAIC_Message::get_context_messages($conversation_id, $history_count)
+                ? RAPLSAICH_Message::get_context_messages($conversation_id, $history_count)
                 : $this->get_transient_context($session_id);
 
             // Build message array
@@ -1485,7 +1485,7 @@ class WPAIC_REST_Controller {
             }
 
             // Queue management: check availability before AI call
-            $queue_check = apply_filters('wpaic_queue_check', ['allowed' => true], $request_id);
+            $queue_check = apply_filters('raplsaich_queue_check', ['allowed' => true], $request_id);
             if (!$queue_check['allowed']) {
                 return new WP_REST_Response([
                     'success'      => false,
@@ -1500,18 +1500,18 @@ class WPAIC_REST_Controller {
                 ], 503);
             }
 
-            do_action('wpaic_ai_request_start', $request_id);
+            do_action('raplsaich_ai_request_start', $request_id);
 
             try {
                 $response = $ai_provider->send_message($messages, $send_options);
             } finally {
-                do_action('wpaic_ai_request_end', $request_id);
+                do_action('raplsaich_ai_request_end', $request_id);
             }
 
             // Save AI response
             $resp_msg_id = 0;
             if ($save_history) {
-                $ai_message = WPAIC_Message::create([
+                $ai_message = RAPLSAICH_Message::create([
                     'conversation_id' => $conversation_id,
                     'role'            => 'assistant',
                     'content'         => $response['content'],
@@ -1525,7 +1525,7 @@ class WPAIC_REST_Controller {
 
                 // Store cache hash on the new response
                 if ($cache_enabled && $cache_hash && $resp_msg_id) {
-                    WPAIC_Message::store_cache_hash($resp_msg_id, $cache_hash);
+                    RAPLSAICH_Message::store_cache_hash($resp_msg_id, $cache_hash);
                 }
             } else {
                 // save_history OFF — store in transient and increment counter
@@ -1534,7 +1534,7 @@ class WPAIC_REST_Controller {
             }
 
             // Budget alert check (Pro feature)
-            $msg_cost = WPAIC_Cost_Calculator::calculate_cost(
+            $msg_cost = RAPLSAICH_Cost_Calculator::calculate_cost(
                 $response['model'] ?? '',
                 $response['input_tokens'] ?? 0,
                 $response['output_tokens'] ?? 0
@@ -1567,13 +1567,13 @@ class WPAIC_REST_Controller {
 
             // Notify extensions of new message (Slack, etc.)
             if ($save_history && $conversation) {
-                do_action('wpaic_new_message', $conversation, $message, $response['content']);
+                do_action('raplsaich_new_message', $conversation, $message, $response['content']);
             }
 
             // Trigger webhook for new message (Pro feature)
-            if ($save_history && $conversation && class_exists('WPAIC_Webhook')) {
+            if ($save_history && $conversation && class_exists('RAPLSAICH_Webhook')) {
                 try {
-                    $webhook = WPAIC_Webhook::get_instance();
+                    $webhook = RAPLSAICH_Webhook::get_instance();
                     $webhook->trigger_new_message($conversation, $message, $response['content']);
                 } catch (\Throwable $e) {
                     // Webhook error - ignore
@@ -1590,7 +1590,7 @@ class WPAIC_REST_Controller {
              * @param string $message  The user's original message.
              * @param array  $settings The plugin settings.
              */
-            $response['content'] = apply_filters('wpaic_ai_response', $response['content'], $message, $settings);
+            $response['content'] = apply_filters('raplsaich_ai_response', $response['content'], $message, $settings);
 
             // Build response data
             $response_data = [
@@ -1665,7 +1665,7 @@ class WPAIC_REST_Controller {
              * @param array  $related_content  The search results used for context.
              * @param string $message          The user's original message.
              */
-            $response_data = apply_filters('wpaic_chat_response_data', $response_data, $related_content, $message);
+            $response_data = apply_filters('raplsaich_chat_response_data', $response_data, $related_content, $message);
 
             $result_body = [
                 'success'     => true,
@@ -1728,7 +1728,7 @@ class WPAIC_REST_Controller {
                 if (!$stored && $this->should_log_dedup()) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log(sprintf(
-                        'WPAIC dedup: set_transient failed | keyhash=%s | size=%d | object_cache=%s',
+                        'RAPLSAICH dedup: set_transient failed | keyhash=%s | size=%d | object_cache=%s',
                         $keyhash,
                         $dedup_size,
                         wp_using_ext_object_cache() ? 'yes' : 'no'
@@ -1739,13 +1739,13 @@ class WPAIC_REST_Controller {
             $rest_response = new WP_REST_Response($result_body, 200);
             // Expose request ID in response header for debugging/support correlation
             if (!empty($request_id)) {
-                $rest_response->header('X-WPAIC-Request-Id', $request_id);
+                $rest_response->header('X-RAPLSAICH-Request-Id', $request_id);
             }
             // Prevent CDN/cache plugins from caching per-user AI responses
             $this->append_header_csv($rest_response, 'Vary', 'Cookie');
             return $this->no_cache($rest_response);
 
-        } catch (WPAIC_Quota_Exceeded_Exception $e) {
+        } catch (RAPLSAICH_Quota_Exceeded_Exception $e) {
             // Return custom quota error message from settings
             $quota_message = $settings['quota_error_message'] ?? 'Currently recharging. Please try again later.';
             $quota_body = [
@@ -1764,16 +1764,16 @@ class WPAIC_REST_Controller {
 
             // Log detailed error for admin debugging (never log API keys).
             // Rate-limited: under API outages, every chat request would trigger this.
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'chat_error_' . $code,
-                sprintf('WPAIC Chat Error [%d]: %s (request_id=%s)', $code, $error_message, $request_id)
+                sprintf('RAPLSAICH Chat Error [%d]: %s (request_id=%s)', $code, $error_message, $request_id)
             );
 
-            do_action('wpaic_ai_error', $code, $error_message);
+            do_action('raplsaich_ai_error', $code, $error_message);
 
             // Build response body — include request_id for admin debugging
             $body = ['success' => false];
-            if (current_user_can(WPAIC_Admin::get_manage_cap())) {
+            if (current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
                 $body['debug'] = ['request_id' => $request_id, 'error_code' => $code];
             }
 
@@ -1796,8 +1796,8 @@ class WPAIC_REST_Controller {
                 return new WP_REST_Response($body, 409);
             }
 
-            // Timeout / network errors (WPAIC_Communication_Exception)
-            if ($e instanceof WPAIC_Communication_Exception) {
+            // Timeout / network errors (RAPLSAICH_Communication_Exception)
+            if ($e instanceof RAPLSAICH_Communication_Exception) {
                 $body['error'] = __('Could not reach the AI service. Please check your connection and try again.', 'rapls-ai-chatbot');
                 $body['retryable'] = true;
                 return new WP_REST_Response($body, 504);
@@ -1812,7 +1812,7 @@ class WPAIC_REST_Controller {
 
             // Generic fallback — unknown or unclassified error
             $body['error'] = __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot');
-            if (current_user_can(WPAIC_Admin::get_manage_cap())) {
+            if (current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
                 $body['error'] .= ' ' . sprintf(
                     /* translators: %s: request ID for support reference */
                     __('(Admin: request_id=%s — check error log for details)', 'rapls-ai-chatbot'),
@@ -1828,7 +1828,7 @@ class WPAIC_REST_Controller {
      */
     public function get_history(WP_REST_Request $request): WP_REST_Response {
         // When save_history is OFF, no messages are stored — return empty
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (empty($settings['save_history'])) {
             return new WP_REST_Response([
                 'success'  => true,
@@ -1838,7 +1838,7 @@ class WPAIC_REST_Controller {
 
         $session_id = sanitize_text_field($request->get_param('session_id'));
 
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
 
         if (!$conversation) {
             return new WP_REST_Response([
@@ -1849,7 +1849,7 @@ class WPAIC_REST_Controller {
 
         // Session ownership already verified by check_session_permission()
 
-        $messages = WPAIC_Message::get_by_conversation($conversation['id']);
+        $messages = RAPLSAICH_Message::get_by_conversation($conversation['id']);
 
         // Return only necessary information
         $formatted = array_map(function($msg) {
@@ -1870,9 +1870,9 @@ class WPAIC_REST_Controller {
     /**
      * Get AI provider
      */
-    private function get_ai_provider(?array $bot_config = null): WPAIC_AI_Provider_Interface {
-        $settings = get_option('wpaic_settings', []);
-        return wpaic_create_ai_provider($settings, $bot_config);
+    private function get_ai_provider(?array $bot_config = null): RAPLSAICH_AI_Provider_Interface {
+        $settings = get_option('raplsaich_settings', []);
+        return raplsaich_create_ai_provider($settings, $bot_config);
     }
 
     /**
@@ -1880,7 +1880,7 @@ class WPAIC_REST_Controller {
      * Conservative limits (~25% of model token window) to leave room for system prompt + response.
      */
     private function get_max_context_chars(): int {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $provider = $settings['ai_provider'] ?? 'openai';
 
         switch ($provider) {
@@ -1934,7 +1934,7 @@ class WPAIC_REST_Controller {
      * Decrypt API key — delegates to global helper.
      */
     private function decrypt_api_key(string $encrypted): string {
-        return wpaic_decrypt_api_key($encrypted);
+        return raplsaich_decrypt_api_key($encrypted);
     }
 
     public function validate_image_param( $value, $request, $param ) {
@@ -2015,7 +2015,7 @@ class WPAIC_REST_Controller {
             return new WP_Error('invalid_file', __('Invalid file format.', 'rapls-ai-chatbot'));
         }
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro_settings = $settings['pro_features'] ?? [];
         if (empty($pro_settings['file_upload_enabled'])) {
             return new WP_Error('file_upload_disabled', __('File upload is not enabled.', 'rapls-ai-chatbot'));
@@ -2160,7 +2160,7 @@ class WPAIC_REST_Controller {
     }
 
     private function get_client_ip(): string {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         // Trust Cloudflare header only when explicitly enabled
         if (!empty($settings['trust_cloudflare_ip'])) {
@@ -2181,7 +2181,7 @@ class WPAIC_REST_Controller {
             // Private/loopback REMOTE_ADDR means a local reverse proxy (Nginx, Docker, etc.).
             // Additional trusted proxies can be added via filter (IP or CIDR notation).
             // Validate filter output: only accept valid IPs or CIDR ranges.
-            $raw_proxies = (array) apply_filters('wpaic_trusted_proxies', []);
+            $raw_proxies = (array) apply_filters('raplsaich_trusted_proxies', []);
             $trusted_ips   = [];
             $trusted_cidrs = [];
             foreach ($raw_proxies as $entry) {
@@ -2201,7 +2201,7 @@ class WPAIC_REST_Controller {
                             $trusted_cidrs[] = $entry;
                         } elseif (defined('WP_DEBUG') && WP_DEBUG) {
                             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                            error_log('WPAIC: Rejected overly broad trusted proxy CIDR: ' . sanitize_text_field($entry));
+                            error_log('RAPLSAICH: Rejected overly broad trusted proxy CIDR: ' . sanitize_text_field($entry));
                         }
                     }
                 } elseif (filter_var($entry, FILTER_VALIDATE_IP)) {
@@ -2295,14 +2295,14 @@ class WPAIC_REST_Controller {
     /**
      * Extract session_id from a REST request.
      *
-     * Priority: X-WPAIC-Session header > URL path param / body param.
+     * Priority: X-RAPLSAICH-Session header > URL path param / body param.
      *
      * Security policy (since Round 99b):
-     * - GET: query-string ?session_id= is NOT accepted. Use the X-WPAIC-Session
+     * - GET: query-string ?session_id= is NOT accepted. Use the X-RAPLSAICH-Session
      *   header or URL path params (e.g. /history/{session_id}) only.
      * - POST: body params only (query string ignored).
      * - External tools (curl, monitoring) must send the header:
-     *     curl -H "X-WPAIC-Session: <uuid>" https://example.com/wp-json/wp-ai-chatbot/v1/pro-config
+     *     curl -H "X-RAPLSAICH-Session: <uuid>" https://example.com/wp-json/rapls-ai-chatbot/v1/pro-config
      *
      * @param WP_REST_Request $request REST request object.
      * @return string Sanitized session_id (may be empty).
@@ -2311,7 +2311,7 @@ class WPAIC_REST_Controller {
         // 1. Header (always preferred — never appears in URL/logs/APM body captures).
         //    When header is present, body session_id is intentionally ignored to
         //    prevent APM/WAF body logging from leaking the session identifier.
-        $from_header = $request->get_header('X_WPAIC_Session');
+        $from_header = $request->get_header('X_RAPLSAICH_Session');
         if (!empty($from_header)) {
             return sanitize_text_field($from_header);
         }
@@ -2329,6 +2329,35 @@ class WPAIC_REST_Controller {
         }
         $body_params = $request->get_body_params();
         return sanitize_text_field($body_params['session_id'] ?? '');
+    }
+
+    /**
+     * Permission callback for public GET endpoints (session, lead-config, message-limit).
+     *
+     * Intentionally public: these endpoints serve the chatbot widget for unauthenticated visitors.
+     * The chatbot must be enabled for access to be granted.
+     * Additional defenses (rate limiting, no-cache) are applied in the callbacks themselves.
+     *
+     * @return bool True if the chatbot is enabled.
+     */
+    public function allow_public_access(): bool {
+        return (bool) apply_filters('raplsaich_chatbot_enabled', true);
+    }
+
+    /**
+     * Permission callback for offline message submission (POST).
+     *
+     * Intentionally public: allows unauthenticated visitors to leave messages outside business hours.
+     * Requires Origin/Referer header to be present (same-origin policy).
+     * Additional defenses (rate limit, honeypot, timing, reCAPTCHA) are applied in the callback.
+     *
+     * @return bool True if origin headers are present.
+     */
+    public function allow_offline_submission(): bool {
+        if (!(bool) apply_filters('raplsaich_chatbot_enabled', true)) {
+            return false;
+        }
+        return $this->has_origin_headers();
     }
 
     /**
@@ -2377,22 +2406,22 @@ class WPAIC_REST_Controller {
         // Prefer check_session_permission() as permission_callback for REST routes.
         // This method is public so Pro can delegate instead of duplicating the logic.
         // Admins always pass
-        if (current_user_can(WPAIC_Admin::get_manage_cap())) {
+        if (current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
             return true;
         }
 
         // Primary: cookie set at session creation
-        if (isset($_COOKIE['wpaic_session_id'])) {
-            $cookie_session = sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id']));
+        if (isset($_COOKIE['raplsaich_session_id'])) {
+            $cookie_session = sanitize_text_field(wp_unslash($_COOKIE['raplsaich_session_id']));
             if (hash_equals($cookie_session, $session_id)) {
                 return true;
             }
         }
 
         // Secondary: HMAC-signed session token (IP-independent, works across mobile/VPN/proxy)
-        // Client stores token in localStorage and sends via X-WPAIC-Session-Token header
-        if (isset($_SERVER['HTTP_X_WPAIC_SESSION_TOKEN'])) {
-            $client_token = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION_TOKEN']));
+        // Client stores token in localStorage and sends via X-RAPLSAICH-Session-Token header
+        if (isset($_SERVER['HTTP_X_RAPLSAICH_SESSION_TOKEN'])) {
+            $client_token = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_RAPLSAICH_SESSION_TOKEN']));
             if ($this->verify_session_token($session_id, $client_token)) {
                 return true;
             }
@@ -2404,10 +2433,10 @@ class WPAIC_REST_Controller {
 
         // Header-based session verification (legacy localStorage fallback)
         // Requires matching IP+UA hash via bootstrap transient to prevent session_id-only spoofing
-        if (isset($_SERVER['HTTP_X_WPAIC_SESSION'])) {
-            $header_session = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
+        if (isset($_SERVER['HTTP_X_RAPLSAICH_SESSION'])) {
+            $header_session = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_RAPLSAICH_SESSION']));
             if (hash_equals($header_session, $session_id)) {
-                $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+                $transient_key = 'raplsaich_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
                 $stored_hash = get_transient($transient_key);
                 if ($stored_hash !== false && hash_equals($stored_hash, $current_hash)) {
                     return true;
@@ -2416,7 +2445,7 @@ class WPAIC_REST_Controller {
         }
 
         // Fallback 1: visitor IP + User-Agent hash match against conversation record
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
         if ($conversation && !empty($conversation['visitor_ip'])) {
             if (hash_equals($conversation['visitor_ip'], $current_hash)) {
                 return true;
@@ -2424,7 +2453,7 @@ class WPAIC_REST_Controller {
         }
 
         // Fallback 2: bootstrap transient (covers cookie-less first request after /session)
-        $transient_key = 'wpaic_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+        $transient_key = 'raplsaich_boot_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
         $stored_hash = get_transient($transient_key);
         if ($stored_hash !== false && hash_equals($stored_hash, $current_hash)) {
             return true;
@@ -2466,8 +2495,8 @@ class WPAIC_REST_Controller {
      */
     private function check_rate_limit() {
         // Check Pro enhanced rate limit first
-        $pro_features = WPAIC_Pro_Features::get_instance();
-        $pro_settings = get_option('wpaic_settings', []);
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
+        $pro_settings = get_option('raplsaich_settings', []);
         $pro_feat_settings = $pro_settings['pro_features'] ?? [];
 
         if ($pro_features->is_pro() && !empty($pro_feat_settings['enhanced_rate_limit_enabled'])) {
@@ -2481,7 +2510,7 @@ class WPAIC_REST_Controller {
         }
 
         // Basic rate limit (Free version fallback)
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $limit = (int) ($settings['rate_limit'] ?? 20);
         $window = (int) ($settings['rate_limit_window'] ?? 3600);
 
@@ -2498,15 +2527,15 @@ class WPAIC_REST_Controller {
         // If IP detection fails, fall back to session-based rate limiting
         // to prevent unlimited access from unknown-IP environments
         if (empty($ip)) {
-            // Use session cookie, X-WPAIC-Session header, or global fallback key
+            // Use session cookie, X-RAPLSAICH-Session header, or global fallback key
             $fallback_id = '';
-            if (isset($_COOKIE['wpaic_session_id'])) {
-                $fallback_id = sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id']));
-            } elseif (!empty($_SERVER['HTTP_X_WPAIC_SESSION'])) {
-                $fallback_id = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_WPAIC_SESSION']));
+            if (isset($_COOKIE['raplsaich_session_id'])) {
+                $fallback_id = sanitize_text_field(wp_unslash($_COOKIE['raplsaich_session_id']));
+            } elseif (!empty($_SERVER['HTTP_X_RAPLSAICH_SESSION'])) {
+                $fallback_id = sanitize_text_field(wp_unslash($_SERVER['HTTP_X_RAPLSAICH_SESSION']));
             }
             $rate_id = $fallback_id ?: 'global_noip';
-            $session_key = 'wpaic_noip_' . substr(hash('sha256', $rate_id . wp_salt()), 0, 32);
+            $session_key = 'raplsaich_noip_' . substr(hash('sha256', $rate_id . wp_salt()), 0, 32);
             $noip_count = (int) get_transient($session_key);
             if ($noip_count >= $limit) {
                 return __('Rate limit exceeded. Please wait a moment.', 'rapls-ai-chatbot');
@@ -2520,10 +2549,10 @@ class WPAIC_REST_Controller {
         // Burst protection: max 3 requests per 10 seconds
         // Prefer session-based key to avoid NAT/corporate proxy collisions;
         // fall back to IP-based key when session is unavailable
-        if (isset($_COOKIE['wpaic_session_id'])) {
-            $burst_key = 'wpaic_burst_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id'])) . wp_salt()), 0, 32);
+        if (isset($_COOKIE['raplsaich_session_id'])) {
+            $burst_key = 'raplsaich_burst_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['raplsaich_session_id'])) . wp_salt()), 0, 32);
         } else {
-            $burst_key = 'wpaic_burst_' . substr($ip_hash, 0, 32);
+            $burst_key = 'raplsaich_burst_' . substr($ip_hash, 0, 32);
         }
         $burst_count = (int) get_transient($burst_key);
         if ($burst_count >= 3) {
@@ -2534,10 +2563,10 @@ class WPAIC_REST_Controller {
         // Use session_id in key when available (from cookie) to reduce
         // false positives behind shared NAT/corporate networks
         $session_suffix = '';
-        if (isset($_COOKIE['wpaic_session_id'])) {
-            $session_suffix = '_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['wpaic_session_id']))), 0, 8);
+        if (isset($_COOKIE['raplsaich_session_id'])) {
+            $session_suffix = '_' . substr(hash('sha256', sanitize_text_field(wp_unslash($_COOKIE['raplsaich_session_id']))), 0, 8);
         }
-        $transient_key = 'wpaic_rate_' . substr($ip_hash, 0, 24) . $session_suffix;
+        $transient_key = 'raplsaich_rate_' . substr($ip_hash, 0, 24) . $session_suffix;
 
         $count = (int) get_transient($transient_key);
 
@@ -2548,7 +2577,7 @@ class WPAIC_REST_Controller {
         set_transient($transient_key, $count + 1, $window);
 
         // Also enforce a global per-IP limit (2x) to prevent abuse via multiple sessions
-        $global_key = 'wpaic_rate_ip_' . substr($ip_hash, 0, 32);
+        $global_key = 'raplsaich_rate_ip_' . substr($ip_hash, 0, 32);
         $global_count = (int) get_transient($global_key);
         $global_limit = $limit * 2;
 
@@ -2579,7 +2608,7 @@ class WPAIC_REST_Controller {
         // an extra factor that IP-rotating attackers must also spoof.
         $identity = ($ip ?: 'no-ip') . '|' . $ua;
         $identity_hash = hash('sha256', $identity . wp_salt());
-        $transient_key = 'wpaic_prl_' . $route_key . '_' . substr($identity_hash, 0, 24);
+        $transient_key = 'raplsaich_prl_' . $route_key . '_' . substr($identity_hash, 0, 24);
 
         $count = (int) get_transient($transient_key);
 
@@ -2615,7 +2644,7 @@ class WPAIC_REST_Controller {
             return;
         }
 
-        $key = 'wpaic_bot_drop_' . $type;
+        $key = 'raplsaich_bot_drop_' . $type;
 
         // future_ts events are rare (only client-clock-ahead) — always count exactly.
         // honeypot/timing can spike under bot attack — sample 1-in-10 to limit DB writes.
@@ -2623,8 +2652,8 @@ class WPAIC_REST_Controller {
 
         // Prefer object cache (Redis/Memcached) to avoid wp_options DB writes under attack.
         if (wp_using_ext_object_cache()) {
-            $count = (int) wp_cache_get($key, 'wpaic_bot');
-            wp_cache_set($key, $count + 1, 'wpaic_bot', HOUR_IN_SECONDS);
+            $count = (int) wp_cache_get($key, 'raplsaich_bot');
+            wp_cache_set($key, $count + 1, 'raplsaich_bot', HOUR_IN_SECONDS);
         } else {
             // Sample 1-in-10 to reduce DB writes when under bot attack.
             // Counter value is multiplied by 10 when displayed for approximate total.
@@ -2635,7 +2664,7 @@ class WPAIC_REST_Controller {
                 if ($ip !== '') {
                     // Rate-cap: 1 write/minute per IP to prevent abuse via crafted _ts values.
                     $ip_hash = substr(hash('sha256', $ip . wp_salt()), 0, 12);
-                    $cap_key = 'wpaic_fts_cap_' . $ip_hash;
+                    $cap_key = 'raplsaich_fts_cap_' . $ip_hash;
                     if (get_transient($cap_key)) {
                         return; // Already recorded for this IP within the window
                     }
@@ -2661,10 +2690,10 @@ class WPAIC_REST_Controller {
      * Uses the same sampling strategy as bot counters.
      */
     private function increment_xff_truncated(): void {
-        $key = 'wpaic_xff_truncated';
+        $key = 'raplsaich_xff_truncated';
         if (wp_using_ext_object_cache()) {
-            $count = (int) wp_cache_get($key, 'wpaic_bot');
-            wp_cache_set($key, $count + 1, 'wpaic_bot', HOUR_IN_SECONDS);
+            $count = (int) wp_cache_get($key, 'raplsaich_bot');
+            wp_cache_set($key, $count + 1, 'raplsaich_bot', HOUR_IN_SECONDS);
         } else {
             if (wp_rand(1, 10) !== 1) { return; }
             $count = (int) get_transient($key);
@@ -2674,7 +2703,7 @@ class WPAIC_REST_Controller {
 
     /**
      * Build the list of allowed origin hostnames for this site.
-     * Includes home_url, site_url, www variants, and the wpaic_allowed_origins filter.
+     * Includes home_url, site_url, www variants, and the raplsaich_allowed_origins filter.
      * Shared by check_same_origin() and verify_recaptcha() hostname validation.
      *
      * @return string[] Array of lowercase hostnames.
@@ -2703,7 +2732,7 @@ class WPAIC_REST_Controller {
          *
          * @param string[] $allowed Array of lowercase hostnames.
          */
-        $filtered = apply_filters('wpaic_allowed_origins', $allowed);
+        $filtered = apply_filters('raplsaich_allowed_origins', $allowed);
 
         // Re-sanitize filter output: normalize to lowercase hostnames, strip schemes/paths/ports.
         $sanitized = [];
@@ -2728,7 +2757,7 @@ class WPAIC_REST_Controller {
                 $host = preg_replace('/:\d+$/', '', $host);
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log('WPAIC: Port stripped from allowed origin host — port is ignored by design (Origin/Referer matching uses hostname only). Use hostname without :port in wpaic_allowed_origins filter.');
+                    error_log('RAPLSAICH: Port stripped from allowed origin host — port is ignored by design (Origin/Referer matching uses hostname only). Use hostname without :port in raplsaich_allowed_origins filter.');
                 }
             }
             if ($host !== '') {
@@ -2740,7 +2769,7 @@ class WPAIC_REST_Controller {
 
     /**
      * Add CORS headers for cross-site embed requests.
-     * Only applies to wp-ai-chatbot/v1 namespace.
+     * Only applies to rapls-ai-chatbot/v1 namespace.
      * Uses the same allowed origins list as the origin check.
      *
      * @param bool             $served  Whether the request has already been served.
@@ -2765,7 +2794,7 @@ class WPAIC_REST_Controller {
         if ($origin_host && in_array(strtolower($origin_host), $allowed, true)) {
             header('Access-Control-Allow-Origin: ' . esc_url_raw($origin));
             header('Access-Control-Allow-Credentials: true');
-            header('Access-Control-Allow-Headers: Content-Type, X-WP-Nonce, X-WPAIC-Session, X-WPAIC-Session-Token');
+            header('Access-Control-Allow-Headers: Content-Type, X-WP-Nonce, X-RAPLSAICH-Session, X-RAPLSAICH-Session-Token');
             header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
             header('Vary: Origin');
         }
@@ -2905,7 +2934,7 @@ class WPAIC_REST_Controller {
 
         // 3. Honeypot: reject if hidden field is filled (bots auto-fill)
         // Field name is unique to avoid collision with other plugins' forms.
-        $hp = $request->get_param('wpaic_hp');
+        $hp = $request->get_param('raplsaich_hp');
         if (!empty($hp)) {
             $this->increment_bot_counter('honeypot_' . $rate_key);
             return $this->silent_success('honeypot');
@@ -2937,7 +2966,7 @@ class WPAIC_REST_Controller {
 
         // 5. reCAPTCHA (when required)
         if ($require_captcha) {
-            $settings = get_option('wpaic_settings', []);
+            $settings = get_option('raplsaich_settings', []);
             $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
             $recaptcha_site_key = trim($settings['recaptcha_site_key'] ?? '');
             $recaptcha_secret_key = trim($settings['recaptcha_secret_key'] ?? '');
@@ -2945,7 +2974,7 @@ class WPAIC_REST_Controller {
             if (!$recaptcha_enabled) {
                 // User-friendly message (no internal details); admin sees setup hint
                 $user_msg = __('This form is temporarily unavailable. Please try again later, or contact the site administrator for assistance.', 'rapls-ai-chatbot');
-                if (current_user_can(WPAIC_Admin::get_manage_cap())) {
+                if (current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
                     $user_msg = sprintf(
                         /* translators: %s: feature name */
                         __('%s requires reCAPTCHA to be configured. Go to Rapls AI Chatbot → Settings → Security to set it up.', 'rapls-ai-chatbot'),
@@ -2994,7 +3023,7 @@ class WPAIC_REST_Controller {
      * @return bool|WP_Error True if verified, WP_Error on failure
      */
     private function verify_recaptcha( $token, string $expected_action = '' ) {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         // Skip if reCAPTCHA is disabled
         if (empty($settings['recaptcha_enabled'])) {
@@ -3007,7 +3036,7 @@ class WPAIC_REST_Controller {
         // Decrypt secret key if encrypted (GCM or legacy CBC)
         // Loop handles double-encryption caused by older sanitize_settings bug (max 3 layers)
         for ($i = 0; $i < 3 && !empty($secret_key) && (strpos($secret_key, 'encg:') === 0 || strpos($secret_key, 'enc:') === 0); $i++) {
-            $secret_key = WPAIC_Admin::decrypt_secret_static($secret_key);
+            $secret_key = RAPLSAICH_Admin::decrypt_secret_static($secret_key);
         }
         $secret_key = trim($secret_key);
 
@@ -3052,7 +3081,7 @@ class WPAIC_REST_Controller {
         if ($http_code !== 200 || !is_array($body)) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('[WPAIC reCAPTCHA] Google returned HTTP ' . $http_code . ', body: ' . substr($raw_body, 0, 500));
+                error_log('[RAPLSAICH reCAPTCHA] Google returned HTTP ' . $http_code . ', body: ' . substr($raw_body, 0, 500));
             }
             $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
             if ($fail_mode === 'open') {
@@ -3066,9 +3095,9 @@ class WPAIC_REST_Controller {
             // Debug: log Google's error response for troubleshooting
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('[WPAIC reCAPTCHA] Verification failed. Google error codes: ' . wp_json_encode($error_codes) . ' | Response: ' . wp_json_encode($body));
+                error_log('[RAPLSAICH reCAPTCHA] Verification failed. Google error codes: ' . wp_json_encode($error_codes) . ' | Response: ' . wp_json_encode($body));
             }
-            do_action('wpaic_recaptcha_failed', $error_codes);
+            do_action('raplsaich_recaptcha_failed', $error_codes);
 
             // Fail-open for transient/server-side errors (Google outage, token expiry, empty error codes)
             $fail_mode = $settings['recaptcha_fail_mode'] ?? 'open';
@@ -3126,8 +3155,8 @@ class WPAIC_REST_Controller {
 
         try {
             // Check if Pro feature is available
-            $pro_features = WPAIC_Pro_Features::get_instance();
-            if (!$pro_features->is_feature_available(WPAIC_Pro_Features::FEATURE_LEAD_CAPTURE)) {
+            $pro_features = RAPLSAICH_Pro_Features::get_instance();
+            if (!$pro_features->is_feature_available(RAPLSAICH_Pro_Features::FEATURE_LEAD_CAPTURE)) {
                 return new WP_REST_Response([
                     'success'    => false,
                     'error'      => __('Lead capture feature requires Pro license.', 'rapls-ai-chatbot'),
@@ -3139,7 +3168,7 @@ class WPAIC_REST_Controller {
             $ip = $this->get_client_ip();
             if (!empty($ip)) {
                 $ip_hash = hash('sha256', $ip . wp_salt());
-                $transient_key = 'wpaic_lead_rate_' . substr($ip_hash, 0, 32);
+                $transient_key = 'raplsaich_lead_rate_' . substr($ip_hash, 0, 32);
                 $count = (int) get_transient($transient_key);
                 if ($count >= 10) {
                     return new WP_REST_Response([
@@ -3190,7 +3219,7 @@ class WPAIC_REST_Controller {
             }
 
             // Email dedup: prevent same email from submitting leads more than 5 times per hour
-            $email_key = 'wpaic_lead_email_' . substr(hash('sha256', strtolower($email) . wp_salt()), 0, 24);
+            $email_key = 'raplsaich_lead_email_' . substr(hash('sha256', strtolower($email) . wp_salt()), 0, 24);
             $email_count = (int) get_transient($email_key);
             if ($email_count >= 5) {
                 return new WP_REST_Response([
@@ -3201,7 +3230,7 @@ class WPAIC_REST_Controller {
             set_transient($email_key, $email_count + 1, HOUR_IN_SECONDS);
 
             // Get or create conversation
-            $conversation = WPAIC_Conversation::get_or_create($session_id, [
+            $conversation = RAPLSAICH_Conversation::get_or_create($session_id, [
                 'page_url'   => $page_url,
                 'visitor_ip' => $this->get_client_ip(),
             ]);
@@ -3214,7 +3243,7 @@ class WPAIC_REST_Controller {
             }
 
             // Check if lead already exists for this conversation
-            $existing_lead = WPAIC_Lead::get_by_conversation($conversation['id']);
+            $existing_lead = RAPLSAICH_Lead::get_by_conversation($conversation['id']);
             if ($existing_lead) {
                 return new WP_REST_Response([
                     'success' => true,
@@ -3236,7 +3265,7 @@ class WPAIC_REST_Controller {
             if (!empty($custom_fields_data)) {
                 $lead_data['custom_fields'] = $custom_fields_data;
             }
-            $lead = WPAIC_Lead::create($lead_data);
+            $lead = RAPLSAICH_Lead::create($lead_data);
 
             if (!$lead) {
                 return new WP_REST_Response([
@@ -3246,17 +3275,17 @@ class WPAIC_REST_Controller {
             }
 
             // Notify extensions of lead capture (Slack, etc.)
-            do_action('wpaic_lead_captured', $lead, $conversation);
+            do_action('raplsaich_lead_captured', $lead, $conversation);
 
             // Trigger webhook for lead captured (Pro feature)
-            if (class_exists('WPAIC_Webhook')) {
+            if (class_exists('RAPLSAICH_Webhook')) {
                 try {
-                    $webhook = WPAIC_Webhook::get_instance();
+                    $webhook = RAPLSAICH_Webhook::get_instance();
                     $webhook->trigger_lead_captured($lead);
                 } catch (\Throwable $webhook_error) {
-                    wpaic_rate_limited_log(
+                    raplsaich_rate_limited_log(
                         'lead_webhook_error',
-                        'WPAIC Webhook Error: ' . $webhook_error->getMessage()
+                        'RAPLSAICH Webhook Error: ' . $webhook_error->getMessage()
                     );
                 }
             }
@@ -3265,9 +3294,9 @@ class WPAIC_REST_Controller {
             try {
                 $this->maybe_send_lead_notification($lead);
             } catch (\Throwable $notification_error) {
-                wpaic_rate_limited_log(
+                raplsaich_rate_limited_log(
                     'lead_notification_error',
-                    'WPAIC Notification Error: ' . $notification_error->getMessage()
+                    'RAPLSAICH Notification Error: ' . $notification_error->getMessage()
                 );
             }
 
@@ -3280,9 +3309,9 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (\Throwable $e) {
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'lead_submit_error',
-                'WPAIC Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine()
+                'RAPLSAICH Lead Submit Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine()
             );
             return new WP_REST_Response([
                 'success' => false,
@@ -3301,13 +3330,13 @@ class WPAIC_REST_Controller {
         }
 
         try {
-            $pro_features = WPAIC_Pro_Features::get_instance();
-            $settings = get_option('wpaic_settings', []);
-            $pro_settings = $settings['pro_features'] ?? WPAIC_Pro_Features::get_default_settings();
+            $pro_features = RAPLSAICH_Pro_Features::get_instance();
+            $settings = get_option('raplsaich_settings', []);
+            $pro_settings = $settings['pro_features'] ?? RAPLSAICH_Pro_Features::get_default_settings();
 
             // Check if lead capture is enabled and available
             $is_enabled = !empty($pro_settings['lead_capture_enabled']) &&
-                          $pro_features->is_feature_available(WPAIC_Pro_Features::FEATURE_LEAD_CAPTURE);
+                          $pro_features->is_feature_available(RAPLSAICH_Pro_Features::FEATURE_LEAD_CAPTURE);
 
             if (!$is_enabled) {
                 return new WP_REST_Response([
@@ -3364,9 +3393,9 @@ class WPAIC_REST_Controller {
             ], 200));
 
         } catch (\Throwable $e) {
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'lead_config_error',
-                'WPAIC Lead Config Error: ' . $e->getMessage()
+                'RAPLSAICH Lead Config Error: ' . $e->getMessage()
             );
             return new WP_REST_Response([
                 'success' => true,
@@ -3387,7 +3416,7 @@ class WPAIC_REST_Controller {
             return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
-        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
         $remaining = $pro_features->get_remaining_messages();
 
         // Return only UI-necessary fields.
@@ -3407,7 +3436,7 @@ class WPAIC_REST_Controller {
      * Send lead notification email to admin
      */
     private function maybe_send_lead_notification(array $lead): void {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro_settings = $settings['pro_features'] ?? [];
 
         // Check if notification is enabled
@@ -3424,13 +3453,13 @@ class WPAIC_REST_Controller {
         if (empty($to)) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC Lead Notification: No valid email address found');
+                error_log('RAPLSAICH Lead Notification: No valid email address found');
             }
             return;
         }
 
         $site_name = get_bloginfo('name');
-        $prefix = WPAIC_Pro_Features::get_email_subject_prefix();
+        $prefix = RAPLSAICH_Pro_Features::get_email_subject_prefix();
         $subject = sprintf(
             /* translators: %s: email subject prefix */
             __('[%s] New lead captured', 'rapls-ai-chatbot'),
@@ -3471,7 +3500,7 @@ class WPAIC_REST_Controller {
 
         $message_html .= sprintf(
             '</table><p style="margin-top: 20px;"><a href="%s">%s</a></p>',
-            esc_url(admin_url('admin.php?page=wpaic-leads')),
+            esc_url(admin_url('admin.php?page=raplsaich-leads')),
             __('View all leads', 'rapls-ai-chatbot')
         );
 
@@ -3484,7 +3513,7 @@ class WPAIC_REST_Controller {
             $lead['phone'] ?: '-',
             $lead['company'] ?: '-',
             $lead['created_at'],
-            admin_url('admin.php?page=wpaic-leads')
+            admin_url('admin.php?page=raplsaich-leads')
         );
 
         // Append custom fields to plain text
@@ -3506,7 +3535,7 @@ class WPAIC_REST_Controller {
 
         if (!$result && defined('WP_DEBUG') && WP_DEBUG) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('WPAIC Lead Notification: wp_mail() failed. To: ' . $to);
+            error_log('RAPLSAICH Lead Notification: wp_mail() failed. To: ' . $to);
         }
     }
 
@@ -3515,7 +3544,7 @@ class WPAIC_REST_Controller {
      */
     public function submit_feedback(WP_REST_Request $request): WP_REST_Response {
         // Feedback requires stored messages
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (empty($settings['save_history'])) {
             return new WP_REST_Response([
                 'success' => false,
@@ -3536,7 +3565,7 @@ class WPAIC_REST_Controller {
         }
 
         // Verify message exists
-        $message = WPAIC_Message::get_by_id($message_id);
+        $message = RAPLSAICH_Message::get_by_id($message_id);
         if (!$message) {
             return new WP_REST_Response([
                 'success' => false,
@@ -3553,7 +3582,7 @@ class WPAIC_REST_Controller {
         }
 
         // Verify message belongs to the given session
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
         if (!$conversation || (int) $conversation['id'] !== (int) $message['conversation_id']) {
             return new WP_REST_Response([
                 'success'    => false,
@@ -3565,7 +3594,7 @@ class WPAIC_REST_Controller {
         // Session ownership already verified by check_session_permission()
 
         // Update feedback
-        $result = WPAIC_Message::update_feedback($message_id, $feedback);
+        $result = RAPLSAICH_Message::update_feedback($message_id, $feedback);
 
         if (!$result) {
             return new WP_REST_Response([
@@ -3588,7 +3617,7 @@ class WPAIC_REST_Controller {
      */
     public function regenerate_response(WP_REST_Request $request): WP_REST_Response {
         // Regeneration requires stored messages
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (empty($settings['save_history'])) {
             return new WP_REST_Response([
                 'success' => false,
@@ -3597,7 +3626,7 @@ class WPAIC_REST_Controller {
         }
 
         // Check Pro license
-        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
         if (!$pro_features->is_pro()) {
             return new WP_REST_Response([
                 'success'    => false,
@@ -3610,7 +3639,7 @@ class WPAIC_REST_Controller {
         $session_id = sanitize_text_field($request->get_param('session_id'));
 
         // Get the message to regenerate
-        $message = WPAIC_Message::get_by_id($message_id);
+        $message = RAPLSAICH_Message::get_by_id($message_id);
         if (!$message || $message['role'] !== 'assistant') {
             return new WP_REST_Response([
                 'success' => false,
@@ -3619,7 +3648,7 @@ class WPAIC_REST_Controller {
         }
 
         // Get conversation
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
         if (!$conversation || (int) $conversation['id'] !== (int) $message['conversation_id']) {
             return new WP_REST_Response([
                 'success' => false,
@@ -3670,7 +3699,7 @@ class WPAIC_REST_Controller {
         }
 
         // Check country blocking (Pro feature)
-        $country_blocked = apply_filters('wpaic_country_blocked', false);
+        $country_blocked = apply_filters('raplsaich_country_blocked', false);
         if ($country_blocked) {
             return new WP_REST_Response([
                 'success'    => false,
@@ -3689,7 +3718,7 @@ class WPAIC_REST_Controller {
         }
 
         // Get messages before this one
-        $messages = WPAIC_Message::get_by_conversation($conversation['id']);
+        $messages = RAPLSAICH_Message::get_by_conversation($conversation['id']);
         $context_messages = [];
         foreach ($messages as $msg) {
             if ($msg['id'] >= $message_id) {
@@ -3722,7 +3751,7 @@ class WPAIC_REST_Controller {
         try {
             // Get AI provider (respect per-page bot_config if multi-bot is active)
             $bot_config = null;
-            $pro = WPAIC_Pro_Features::get_instance();
+            $pro = RAPLSAICH_Pro_Features::get_instance();
             if ($pro->is_pro() && !empty($settings['pro_features']['multi_bot_enabled'])) {
                 $page_url = $conversation['page_url'] ?? '';
                 $bots = $settings['pro_features']['bots'] ?? [];
@@ -3740,7 +3769,7 @@ class WPAIC_REST_Controller {
             $provider = $this->get_ai_provider($bot_config);
 
             // Search for related content (same logic as send_message)
-            $search = new WPAIC_Search_Engine();
+            $search = new RAPLSAICH_Search_Engine();
             // Apply bot-specific knowledge/crawl filters
             if ($bot_config) {
                 $bot_use_knowledge = $bot_config['use_knowledge'] ?? true;
@@ -3756,7 +3785,7 @@ class WPAIC_REST_Controller {
             $context = $search->build_context($related_content, $this->get_max_context_chars(), $user_message_content);
 
             /** This filter is documented in send_message(). */
-            $context = apply_filters('wpaic_context', $context, $user_message_content, $settings);
+            $context = apply_filters('raplsaich_context', $context, $user_message_content, $settings);
 
             // Build system prompt (bot config may override)
             if (is_array($bot_config) && !empty($bot_config['system_prompt'])) {
@@ -3766,7 +3795,7 @@ class WPAIC_REST_Controller {
             }
 
             /** This filter is documented in send_message(). */
-            $system_prompt = apply_filters('wpaic_system_prompt', $system_prompt, $settings);
+            $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt, $settings);
 
             // Response language instruction
             $response_lang = $settings['response_language'] ?? '';
@@ -3892,16 +3921,16 @@ class WPAIC_REST_Controller {
              * Filter the AI response before display.
              * This filter is documented in send_message().
              */
-            $response['content'] = apply_filters('wpaic_ai_response', $response['content'], $user_message_content, $settings);
+            $response['content'] = apply_filters('raplsaich_ai_response', $response['content'], $user_message_content, $settings);
 
             // Delete old message and create new one
             global $wpdb;
-            $table = trim(wpaic_validated_table('aichat_messages'), '`');
+            $table = trim(raplsaich_validated_table('raplsaich_messages'), '`');
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->delete($table, ['id' => $message_id], ['%d']);
 
             // Save new AI response
-            $new_message = WPAIC_Message::create([
+            $new_message = RAPLSAICH_Message::create([
                 'conversation_id' => $conversation['id'],
                 'role' => 'assistant',
                 'content' => $response['content'],
@@ -3988,7 +4017,7 @@ class WPAIC_REST_Controller {
             }
 
             /** This filter is documented in the main chat response path. */
-            $regen_response_data = apply_filters('wpaic_chat_response_data', $regen_response_data, $related_content, $user_message_content);
+            $regen_response_data = apply_filters('raplsaich_chat_response_data', $regen_response_data, $related_content, $user_message_content);
 
             return new WP_REST_Response([
                 'success' => true,
@@ -3996,9 +4025,9 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (Exception $e) {
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'regenerate_error',
-                'WPAIC Regenerate Error: ' . $e->getMessage()
+                'RAPLSAICH Regenerate Error: ' . $e->getMessage()
             );
             return new WP_REST_Response([
                 'success' => false,
@@ -4012,7 +4041,7 @@ class WPAIC_REST_Controller {
      */
     public function get_conversation_summary(WP_REST_Request $request): WP_REST_Response {
         // Summary requires stored messages
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (empty($settings['save_history'])) {
             return new WP_REST_Response([
                 'success' => true,
@@ -4024,7 +4053,7 @@ class WPAIC_REST_Controller {
         }
 
         // Check Pro license
-        $pro_features = WPAIC_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Pro_Features::get_instance();
         if (!$pro_features->is_pro()) {
             return new WP_REST_Response([
                 'success'    => false,
@@ -4046,7 +4075,7 @@ class WPAIC_REST_Controller {
 
         // Session ownership already verified by check_session_permission()
 
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
 
         if (!$conversation) {
             return new WP_REST_Response([
@@ -4056,7 +4085,7 @@ class WPAIC_REST_Controller {
         }
 
         // Get all messages
-        $messages = WPAIC_Message::get_by_conversation($conversation['id'], 100);
+        $messages = RAPLSAICH_Message::get_by_conversation($conversation['id'], 100);
 
         if (count($messages) < 4) {
             return new WP_REST_Response([
@@ -4101,9 +4130,9 @@ class WPAIC_REST_Controller {
             ], 200);
 
         } catch (Exception $e) {
-            wpaic_rate_limited_log(
+            raplsaich_rate_limited_log(
                 'summary_error',
-                'WPAIC Summary Error: ' . $e->getMessage()
+                'RAPLSAICH Summary Error: ' . $e->getMessage()
             );
             return new WP_REST_Response([
                 'success' => false,
@@ -4118,7 +4147,7 @@ class WPAIC_REST_Controller {
     public function get_related_suggestions(WP_REST_Request $request): WP_REST_Response {
         try {
             // Check Pro license
-            $pro_features = WPAIC_Pro_Features::get_instance();
+            $pro_features = RAPLSAICH_Pro_Features::get_instance();
             if (!$pro_features->is_pro()) {
                 return new WP_REST_Response([
                     'success' => true,
@@ -4135,7 +4164,7 @@ class WPAIC_REST_Controller {
             }
 
             // Check if related suggestions are enabled
-            $settings = get_option('wpaic_settings', []);
+            $settings = get_option('raplsaich_settings', []);
             $pro_settings = $settings['pro_features'] ?? [];
             if (empty($pro_settings['related_suggestions_enabled'])) {
                 return new WP_REST_Response([
@@ -4147,7 +4176,7 @@ class WPAIC_REST_Controller {
             $session_id    = sanitize_text_field($request->get_param('session_id'));
             $last_response = sanitize_textarea_field($request->get_param('last_response') ?? '');
 
-            $conversation = WPAIC_Conversation::get_by_session($session_id);
+            $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
             if (!$conversation) {
                 return new WP_REST_Response([
                     'success' => true,
@@ -4156,7 +4185,7 @@ class WPAIC_REST_Controller {
             }
 
             // Get recent messages for context
-            $messages = WPAIC_Message::get_context_messages($conversation['id'], 4);
+            $messages = RAPLSAICH_Message::get_context_messages($conversation['id'], 4);
 
             if (empty($messages)) {
                 return new WP_REST_Response([
@@ -4217,7 +4246,7 @@ class WPAIC_REST_Controller {
     public function get_autocomplete(WP_REST_Request $request): WP_REST_Response {
         try {
             // Check Pro license
-            $pro_features = WPAIC_Pro_Features::get_instance();
+            $pro_features = RAPLSAICH_Pro_Features::get_instance();
             if (!$pro_features->is_pro()) {
                 return new WP_REST_Response([
                     'success' => true,
@@ -4226,7 +4255,7 @@ class WPAIC_REST_Controller {
             }
 
             // Check if autocomplete is enabled
-            $settings = get_option('wpaic_settings', []);
+            $settings = get_option('raplsaich_settings', []);
             $pro_settings = $settings['pro_features'] ?? [];
             if (empty($pro_settings['autocomplete_enabled'])) {
                 return new WP_REST_Response([
@@ -4251,7 +4280,7 @@ class WPAIC_REST_Controller {
 
             // 1. Extract matching Q&A questions from knowledge base content
             try {
-                $kb_table = wpaic_validated_table('aichat_knowledge');
+                $kb_table = raplsaich_validated_table('raplsaich_knowledge');
 
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $kb_rows = $wpdb->get_col($wpdb->prepare(
@@ -4267,11 +4296,11 @@ class WPAIC_REST_Controller {
                     foreach ($kb_rows as $content) {
                         // Extract "Question: ..." lines that match the query
                         if (preg_match_all('/Question:\s*(.+)/u', $content, $matches)) {
-                            $q_lower = wpaic_mb_strtolower($query);
+                            $q_lower = raplsaich_mb_strtolower($query);
                             foreach ($matches[1] as $q) {
                                 $q = trim($q);
-                                $q_check = wpaic_mb_strtolower($q);
-                                if (wpaic_mb_strpos($q_check, $q_lower) !== false && wpaic_mb_strlen($q) <= 100) {
+                                $q_check = raplsaich_mb_strtolower($q);
+                                if (raplsaich_mb_strpos($q_check, $q_lower) !== false && raplsaich_mb_strlen($q) <= 100) {
                                     $suggestions[] = $q;
                                 }
                             }
@@ -4284,7 +4313,7 @@ class WPAIC_REST_Controller {
 
             // 2. Search indexed page titles
             try {
-                $index_table = wpaic_validated_table('aichat_index');
+                $index_table = raplsaich_validated_table('raplsaich_index');
 
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                 $page_titles = $wpdb->get_col($wpdb->prepare(
@@ -4308,10 +4337,10 @@ class WPAIC_REST_Controller {
             // 3. Search past user messages from THIS session only (privacy: never expose other users' questions)
             try {
                 $session_id = sanitize_text_field($request->get_param('session_id'));
-                $conversation = WPAIC_Conversation::get_by_session($session_id);
+                $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
 
                 if ($conversation) {
-                    $msg_table = wpaic_validated_table('aichat_messages');
+                    $msg_table = raplsaich_validated_table('raplsaich_messages');
 
                     // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
                     $past_questions = $wpdb->get_col($wpdb->prepare(
@@ -4381,12 +4410,12 @@ class WPAIC_REST_Controller {
 
         // If content has a title matching the query closely, return the content as-is
         $title = $best['title'] ?? '';
-        $query_lower = wpaic_mb_strtolower($query);
-        $title_lower = wpaic_mb_strtolower($title);
+        $query_lower = raplsaich_mb_strtolower($query);
+        $title_lower = raplsaich_mb_strtolower($title);
 
         if (!empty($title) && (
-            wpaic_mb_strpos($title_lower, $query_lower) !== false ||
-            wpaic_mb_strpos($query_lower, $title_lower) !== false
+            raplsaich_mb_strpos($title_lower, $query_lower) !== false ||
+            raplsaich_mb_strpos($query_lower, $title_lower) !== false
         )) {
             return $content;
         }
@@ -4407,7 +4436,7 @@ class WPAIC_REST_Controller {
         $session_id = sanitize_text_field($request->get_param('session_id'));
         $goal       = sanitize_text_field($request->get_param('goal') ?? '');
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro_settings = $settings['pro_features'] ?? [];
 
         if (empty($pro_settings['conversion_tracking_enabled'])) {
@@ -4417,7 +4446,7 @@ class WPAIC_REST_Controller {
             ], 400);
         }
 
-        $result = WPAIC_Conversation::mark_converted($session_id, $goal);
+        $result = RAPLSAICH_Conversation::mark_converted($session_id, $goal);
 
         return new WP_REST_Response([
             'success' => $result,
@@ -4432,7 +4461,7 @@ class WPAIC_REST_Controller {
         $session_id      = sanitize_text_field($request->get_param('session_id'));
         $last_message_id = absint($request->get_param('last_message_id'));
 
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
         if (!$conversation) {
             return new WP_REST_Response([
                 'success' => false,
@@ -4440,13 +4469,13 @@ class WPAIC_REST_Controller {
             ], 404);
         }
 
-        $pro = WPAIC_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Pro_Features::get_instance();
         $status = $pro->get_handoff_status((int) $conversation['id']);
 
         // Get new operator messages since last_message_id
         $messages = [];
         if ($status && $last_message_id >= 0) {
-            $table = wpaic_require_table('aichat_messages', 'get_handoff_status');
+            $table = raplsaich_require_table('raplsaich_messages', 'get_handoff_status');
             if ($table) {
                 global $wpdb;
                 // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -4483,7 +4512,7 @@ class WPAIC_REST_Controller {
     public function cancel_handoff(WP_REST_Request $request): WP_REST_Response {
         $session_id = sanitize_text_field($request->get_param('session_id'));
 
-        $conversation = WPAIC_Conversation::get_by_session($session_id);
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
         if (!$conversation) {
             return new WP_REST_Response([
                 'success' => false,
@@ -4491,7 +4520,7 @@ class WPAIC_REST_Controller {
             ], 404);
         }
 
-        $pro = WPAIC_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Pro_Features::get_instance();
         $pro->cancel_handoff((int) $conversation['id']);
 
         return new WP_REST_Response([
@@ -4540,7 +4569,7 @@ class WPAIC_REST_Controller {
             ], 400);
         }
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $pro_settings = $settings['pro_features'] ?? [];
 
         if (empty($pro_settings['offline_message_enabled'])) {
@@ -4554,7 +4583,7 @@ class WPAIC_REST_Controller {
         $ip = $this->get_client_ip();
         if (!empty($ip)) {
             $ip_hash = hash('sha256', $ip . wp_salt());
-            $transient_key = 'wpaic_offline_rate_' . substr($ip_hash, 0, 32);
+            $transient_key = 'raplsaich_offline_rate_' . substr($ip_hash, 0, 32);
             $count = (int) get_transient($transient_key);
             if ($count >= 5) {
                 return new WP_REST_Response([
@@ -4571,7 +4600,7 @@ class WPAIC_REST_Controller {
             $dedup_session = $this->get_session_id($request);
             $dedup_id      = !empty($dedup_session) ? $dedup_session : $ip_hash;
             $dedup_hash    = substr(hash('sha256', $email . '|' . $message . '|' . $dedup_id), 0, 24);
-            $dedup_key  = 'wpaic_offl_dd_' . $dedup_hash;
+            $dedup_key  = 'raplsaich_offl_dd_' . $dedup_hash;
             if (get_transient($dedup_key)) {
                 // Already submitted — return success to avoid leaking dedup signal
                 return new WP_REST_Response([
@@ -4584,7 +4613,7 @@ class WPAIC_REST_Controller {
 
         // Email dedup: prevent same email from submitting more than 3 times per hour
         if (!empty($email)) {
-            $email_key = 'wpaic_offl_email_' . substr(hash('sha256', strtolower($email) . wp_salt()), 0, 24);
+            $email_key = 'raplsaich_offl_email_' . substr(hash('sha256', strtolower($email) . wp_salt()), 0, 24);
             $email_count = (int) get_transient($email_key);
             if ($email_count >= 3) {
                 return new WP_REST_Response([
@@ -4595,8 +4624,8 @@ class WPAIC_REST_Controller {
             set_transient($email_key, $email_count + 1, HOUR_IN_SECONDS);
         }
 
-        // Save via WPAIC_Lead::create() for consistent sanitization and format specifiers
-        $lead = WPAIC_Lead::create([
+        // Save via RAPLSAICH_Lead::create() for consistent sanitization and format specifiers
+        $lead = RAPLSAICH_Lead::create([
             'conversation_id' => 0,
             'name'            => $name,
             'email'           => $email,
@@ -4615,7 +4644,7 @@ class WPAIC_REST_Controller {
         }
 
         // Notify extensions of offline message (Slack, etc.)
-        do_action('wpaic_offline_message', $lead);
+        do_action('raplsaich_offline_message', $lead);
 
         // Send email notification
         if (!empty($pro_settings['offline_notification_enabled'])) {
@@ -4624,7 +4653,7 @@ class WPAIC_REST_Controller {
                 $to = get_option('admin_email');
             }
 
-            $prefix = WPAIC_Pro_Features::get_email_subject_prefix();
+            $prefix = RAPLSAICH_Pro_Features::get_email_subject_prefix();
             $subject = sprintf(
                 /* translators: %s: email subject prefix */
                 __('[%s] New Offline Message', 'rapls-ai-chatbot'),
@@ -4649,9 +4678,9 @@ class WPAIC_REST_Controller {
         }
 
         // Trigger webhook
-        if (class_exists('WPAIC_Webhook')) {
+        if (class_exists('RAPLSAICH_Webhook')) {
             try {
-                $webhook = WPAIC_Webhook::get_instance();
+                $webhook = RAPLSAICH_Webhook::get_instance();
                 $webhook->send('offline_message_received', [
                     'name'     => $name,
                     'email'    => $email,
@@ -4676,7 +4705,7 @@ class WPAIC_REST_Controller {
      * Used when save_history is OFF to keep multi-turn context without DB writes.
      */
     private function get_context_transient_key(string $session_id): string {
-        return 'wpaic_ctx_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
+        return 'raplsaich_ctx_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
     }
 
     /**
@@ -4715,7 +4744,7 @@ class WPAIC_REST_Controller {
      */
     private function increment_no_history_monthly_count(): void {
         $month_key = wp_date('Y_m');
-        $counts = (array) get_option('wpaic_nohist_msg_counts', []);
+        $counts = (array) get_option('raplsaich_nohist_msg_counts', []);
         $counts[$month_key] = ((int) ($counts[$month_key] ?? 0)) + 1;
 
         // Prune entries older than 3 months to prevent unbounded growth.
@@ -4727,7 +4756,7 @@ class WPAIC_REST_Controller {
             }
         }
 
-        update_option('wpaic_nohist_msg_counts', $counts, false);
+        update_option('raplsaich_nohist_msg_counts', $counts, false);
     }
 
     /**
@@ -4749,7 +4778,7 @@ class WPAIC_REST_Controller {
         // Transient miss — check if external object cache may have lost it.
         // Hash the key for DB storage to avoid bloating wp_options with long transient keys.
         if (wp_using_ext_object_cache()) {
-            $store = (array) get_option('wpaic_rl_fallback', []);
+            $store = (array) get_option('raplsaich_rl_fallback', []);
             $hashed = substr(hash('sha256', $key), 0, 16);
             if (isset($store[$hashed]) && ($store[$hashed]['exp'] ?? 0) > time()) {
                 return (int) ($store[$hashed]['c'] ?? 0);
@@ -4777,7 +4806,7 @@ class WPAIC_REST_Controller {
         // If transient write failed and we're using external cache, fall back to DB.
         // Hash the key for DB storage to avoid bloating wp_options with long transient keys.
         if (!$written && wp_using_ext_object_cache()) {
-            $store = (array) get_option('wpaic_rl_fallback', []);
+            $store = (array) get_option('raplsaich_rl_fallback', []);
             $now = time();
             $hashed = substr(hash('sha256', $key), 0, 16);
 
@@ -4797,7 +4826,7 @@ class WPAIC_REST_Controller {
             }
 
             $store[$hashed] = ['c' => $new_count, 'exp' => $now + $window];
-            update_option('wpaic_rl_fallback', $store, false);
+            update_option('raplsaich_rl_fallback', $store, false);
         }
     }
 

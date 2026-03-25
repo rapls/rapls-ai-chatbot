@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Chatbot_Widget {
+class RAPLSAICH_Chatbot_Widget {
 
     /**
      * Whether currently rendering an inline shortcode
@@ -35,18 +35,18 @@ class WPAIC_Chatbot_Widget {
         $this->is_inline = true;
 
         // Ensure scripts/styles are enqueued (shortcode may appear before wp_enqueue_scripts)
-        if (!wp_script_is('wpaic-chatbot', 'enqueued')) {
+        if (!wp_script_is('raplsaich-chatbot', 'enqueued')) {
             $this->enqueue_styles();
             $this->enqueue_scripts();
         }
 
         // Tell JS to use inline mode
-        wp_add_inline_script('wpaic-chatbot',
-            'if(window.wpAiChatbotConfig) wpAiChatbotConfig.inlineMode = true;',
+        wp_add_inline_script('raplsaich-chatbot',
+            'if(window.raplsaichConfig) raplsaichConfig.inlineMode = true;',
             'before'
         );
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $bot_name = $settings['bot_name'] ?? 'Assistant';
         $bot_avatar_raw = $settings['bot_avatar'] ?? '🤖';
         $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
@@ -54,7 +54,7 @@ class WPAIC_Chatbot_Widget {
 
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
-        $is_pro_active = get_option('wpaic_pro_active');
+        $is_pro_active = get_option('raplsaich_pro_active');
 
         if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
             $widget_theme = 'default';
@@ -86,7 +86,7 @@ class WPAIC_Chatbot_Widget {
         $shortcode_bot_id = '';
         if (!empty($atts['bot'])) {
             $shortcode_bot_id = sanitize_key($atts['bot']);
-            $sc_bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($shortcode_bot_id);
+            $sc_bot_config = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($shortcode_bot_id);
             if ($sc_bot_config) {
                 if (!empty($sc_bot_config['name'])) {
                     $bot_name = $sc_bot_config['name'];
@@ -121,10 +121,10 @@ class WPAIC_Chatbot_Widget {
                     $settings['pro_features']['badge_icon_emoji'] = $sc_bot_config['badge_icon_emoji'] ?? '';
                 }
                 // Set bot_id in JS config via inline script
-                wp_add_inline_script('wpaic-chatbot',
-                    'if(window.wpAiChatbotConfig){wpAiChatbotConfig.bot_id=' . wp_json_encode($shortcode_bot_id) . ';' .
-                    (!empty($sc_bot_config['welcome_message']) ? 'wpAiChatbotConfig.welcome_message=' . wp_json_encode($sc_bot_config['welcome_message']) . ';' : '') .
-                    (!empty($sc_bot_config['name']) ? 'wpAiChatbotConfig.bot_name=' . wp_json_encode($sc_bot_config['name']) . ';' : '') .
+                wp_add_inline_script('raplsaich-chatbot',
+                    'if(window.raplsaichConfig){raplsaichConfig.bot_id=' . wp_json_encode($shortcode_bot_id) . ';' .
+                    (!empty($sc_bot_config['welcome_message']) ? 'raplsaichConfig.welcome_message=' . wp_json_encode($sc_bot_config['welcome_message']) . ';' : '') .
+                    (!empty($sc_bot_config['name']) ? 'raplsaichConfig.bot_name=' . wp_json_encode($sc_bot_config['name']) . ';' : '') .
                     '}',
                     'before'
                 );
@@ -140,10 +140,10 @@ class WPAIC_Chatbot_Widget {
         ob_start();
         // Output bot-specific primary color override (shortcode runs after wp_head)
         if (!empty($primary_color) && $primary_color !== ($settings['primary_color'] ?? '#007bff')) {
-            echo '<style>:root{--wpaic-primary:' . esc_attr($primary_color) . ';--wpaic-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
+            echo '<style>:root{--raplsaich-primary:' . esc_attr($primary_color) . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
         }
-        echo '<div class="wpaic-inline" style="height:' . esc_attr($height) . '">';
-        include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
+        echo '<div class="raplsaich-inline" style="height:' . esc_attr($height) . '">';
+        include RAPLSAICH_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
         echo '</div>';
         return ob_get_clean();
     }
@@ -157,14 +157,14 @@ class WPAIC_Chatbot_Widget {
         }
 
         wp_enqueue_style(
-            'wpaic-chatbot',
-            WPAIC_PLUGIN_URL . 'assets/css/chatbot.css',
+            'raplsaich-chatbot',
+            RAPLSAICH_PLUGIN_URL . 'assets/css/chatbot.css',
             [],
-            WPAIC_VERSION
+            RAPLSAICH_VERSION
         );
 
         // Apply custom colors
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $primary_color = $settings['primary_color'] ?? '#007bff';
         if (empty($primary_color) || !preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $primary_color)) {
             $primary_color = '#007bff';
@@ -173,9 +173,9 @@ class WPAIC_Chatbot_Widget {
         // Multi-bot: override primary color if a bot is assigned to this page
         $page_id = get_queried_object_id();
         if ($page_id) {
-            $bot_id = WPAIC_Pro_Features::get_instance()->get_bot_for_page($page_id);
+            $bot_id = RAPLSAICH_Pro_Features::get_instance()->get_bot_for_page($page_id);
             if ($bot_id !== 'default') {
-                $bot_cfg = WPAIC_Pro_Features::get_instance()->resolve_bot_config($bot_id);
+                $bot_cfg = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($bot_id);
                 if ($bot_cfg && !empty($bot_cfg['primary_color'])) {
                     $bot_color = sanitize_hex_color($bot_cfg['primary_color']);
                     if ($bot_color) {
@@ -207,8 +207,8 @@ class WPAIC_Chatbot_Widget {
 
         $custom_css = "
             :root {
-                --wpaic-primary: {$primary_color};
-                --wpaic-primary-dark: " . $this->darken_color($primary_color, 20) . ";
+                --raplsaich-primary: {$primary_color};
+                --raplsaich-primary-dark: " . $this->darken_color($primary_color, 20) . ";
             }
             .wp-ai-chatbot {
                 {$position_css}
@@ -217,7 +217,7 @@ class WPAIC_Chatbot_Widget {
 
         // Powered by footer is now conditionally rendered in the template (not hidden via CSS)
         $pro_settings = $settings['pro_features'] ?? [];
-        $pro = WPAIC_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Pro_Features::get_instance();
 
         // White label: custom CSS (strip dangerous strings to prevent style breakout)
         if ($pro->is_pro() && !empty($pro_settings['custom_css'])) {
@@ -229,7 +229,7 @@ class WPAIC_Chatbot_Widget {
             $custom_css .= "\n" . $safe_css;
         }
 
-        wp_add_inline_style('wpaic-chatbot', $custom_css);
+        wp_add_inline_style('raplsaich-chatbot', $custom_css);
     }
 
     /**
@@ -240,7 +240,7 @@ class WPAIC_Chatbot_Widget {
             return;
         }
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         // Load reCAPTCHA script (only if enabled and not using existing)
         $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
@@ -249,10 +249,10 @@ class WPAIC_Chatbot_Widget {
 
         if ($recaptcha_enabled && !empty($recaptcha_site_key) && !$recaptcha_use_existing) {
             // Check if reCAPTCHA is already loaded (by us or another plugin)
-            if (!wp_script_is('wpaic-recaptcha', 'enqueued') &&
+            if (!wp_script_is('raplsaich-recaptcha', 'enqueued') &&
                 !wp_script_is('google-recaptcha', 'enqueued') && !wp_script_is('google-recaptcha', 'registered')) {
                 wp_enqueue_script(
-                    'wpaic-recaptcha',
+                    'raplsaich-recaptcha',
                     'https://www.google.com/recaptcha/api.js?render=' . esc_attr($recaptcha_site_key),
                     [],
                     '3.0', // reCAPTCHA v3
@@ -261,11 +261,11 @@ class WPAIC_Chatbot_Widget {
             }
         }
 
-        $chatbot_js_mtime = @filemtime(WPAIC_PLUGIN_DIR . 'assets/js/chatbot.js');
-        $chatbot_js_ver = WPAIC_VERSION . '.' . ($chatbot_js_mtime ?: '0');
+        $chatbot_js_mtime = @filemtime(RAPLSAICH_PLUGIN_DIR . 'assets/js/chatbot.js');
+        $chatbot_js_ver = RAPLSAICH_VERSION . '.' . ($chatbot_js_mtime ?: '0');
         wp_enqueue_script(
-            'wpaic-chatbot',
-            WPAIC_PLUGIN_URL . 'assets/js/chatbot.js',
+            'raplsaich-chatbot',
+            RAPLSAICH_PLUGIN_URL . 'assets/js/chatbot.js',
             [],
             $chatbot_js_ver,
             true
@@ -284,9 +284,9 @@ class WPAIC_Chatbot_Widget {
         $multimodal_enabled = !empty($pro_features['multimodal_enabled']);
         $multimodal_max_size = (int) ($pro_features['multimodal_max_size'] ?? 2048);
 
-        wp_localize_script('wpaic-chatbot', 'wpAiChatbotConfig', [
-            'restUrl'             => rest_url('wp-ai-chatbot/v1/'),
-            'api_base'            => rest_url('wp-ai-chatbot/v1'),
+        wp_localize_script('raplsaich-chatbot', 'raplsaichConfig', [
+            'restUrl'             => rest_url('rapls-ai-chatbot/v1/'),
+            'api_base'            => rest_url('rapls-ai-chatbot/v1'),
             'nonce'               => wp_create_nonce('wp_rest'),
             'bot_id'              => 'default',
             'bot_name'            => $settings['bot_name'] ?? 'Assistant',
@@ -297,8 +297,8 @@ class WPAIC_Chatbot_Widget {
             'response_language'   => $settings['response_language'] ?? '',
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
-            'is_pro'              => (bool) get_option('wpaic_pro_active'),
-            'session_version'     => get_option('wpaic_session_version', 1),
+            'is_pro'              => (bool) get_option('raplsaich_pro_active'),
+            'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
             'show_regenerate'     => (bool) $show_regenerate,
@@ -310,6 +310,7 @@ class WPAIC_Chatbot_Widget {
             'file_upload_max_size' => (int) ($pro_features['file_upload_max_size'] ?? 5120),
             'file_upload_types'   => $pro_features['file_upload_types'] ?? ['pdf', 'doc', 'docx', 'txt', 'csv'],
             'screenshot_enabled'  => !empty($pro_features['screen_sharing_enabled']),
+            'html2canvas_url'     => RAPLSAICH_PLUGIN_URL . 'assets/vendor/html2canvas/html2canvas.min.js',
             'voice_input_enabled' => !empty($pro_features['voice_input_enabled']),
             'tts_enabled'         => !empty($pro_features['tts_enabled']),
             'tts_lang'            => $pro_features['tts_lang'] ?? '',
@@ -330,17 +331,17 @@ class WPAIC_Chatbot_Widget {
             'offline_message'      => $this->get_offline_config($pro_features),
             'badge_position'       => $badge_position,
             'save_history'         => !empty($settings['save_history']),
-            'quick_replies'        => WPAIC_Pro_Features::get_instance()->get_quick_replies(),
+            'quick_replies'        => RAPLSAICH_Pro_Features::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
-            // wpaic_frontend_debug filter: always include a capability check in callbacks.
+            // raplsaich_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
             // Minimum cap (default edit_posts) required even when filter overrides,
             // to prevent misuse granting debug to all logged-in subscribers.
-            // Use wpaic_frontend_debug_min_cap filter to change the minimum capability.
-            'debug'                => is_user_logged_in() && current_user_can($this->get_debug_min_cap()) && (bool) apply_filters('wpaic_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
+            // Use raplsaich_frontend_debug_min_cap filter to change the minimum capability.
+            'debug'                => is_user_logged_in() && current_user_can($this->get_debug_min_cap()) && (bool) apply_filters('raplsaich_frontend_debug', defined('WP_DEBUG') && WP_DEBUG && current_user_can('manage_options')),
             // Lightweight admin flag (no WP_DEBUG requirement) for dev-aid warnings
             // like unmapped error_code console.warn — works on production too.
-            'is_plugin_admin'      => is_user_logged_in() && current_user_can(WPAIC_Admin::get_manage_cap()),
+            'is_plugin_admin'      => is_user_logged_in() && current_user_can(RAPLSAICH_Admin::get_manage_cap()),
             'strings'              => [
                 'error_occurred'         => __('An error occurred.', 'rapls-ai-chatbot'),
                 'error_rate_limit'       => __('Too many requests. Please try again in a moment.', 'rapls-ai-chatbot'),
@@ -447,7 +448,7 @@ class WPAIC_Chatbot_Widget {
             return;
         }
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $bot_name = $settings['bot_name'] ?? 'Assistant';
         $bot_avatar_raw = $settings['bot_avatar'] ?? '🤖';
         $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
@@ -456,7 +457,7 @@ class WPAIC_Chatbot_Widget {
         // Get widget theme
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
-        $is_pro_active = get_option('wpaic_pro_active');
+        $is_pro_active = get_option('raplsaich_pro_active');
 
         // Only allow free themes if Pro is not active
         if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
@@ -484,9 +485,9 @@ class WPAIC_Chatbot_Widget {
         $primary_color = '';
         $page_id = get_queried_object_id();
         if ($page_id) {
-            $page_bot_id = WPAIC_Pro_Features::get_instance()->get_bot_for_page($page_id);
+            $page_bot_id = RAPLSAICH_Pro_Features::get_instance()->get_bot_for_page($page_id);
             if ($page_bot_id !== 'default') {
-                $page_bot_config = WPAIC_Pro_Features::get_instance()->resolve_bot_config($page_bot_id);
+                $page_bot_config = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($page_bot_id);
                 if ($page_bot_config) {
                     if (!empty($page_bot_config['name'])) {
                         $bot_name = $page_bot_config['name'];
@@ -521,10 +522,10 @@ class WPAIC_Chatbot_Widget {
                         $settings['pro_features']['badge_icon_emoji'] = $page_bot_config['badge_icon_emoji'] ?? '';
                     }
                     // Override JS config for page-rule bot
-                    wp_add_inline_script('wpaic-chatbot',
-                        'if(window.wpAiChatbotConfig){wpAiChatbotConfig.bot_id=' . wp_json_encode($page_bot_id) . ';' .
-                        (!empty($page_bot_config['welcome_message']) ? 'wpAiChatbotConfig.welcome_message=' . wp_json_encode($page_bot_config['welcome_message']) . ';' : '') .
-                        (!empty($page_bot_config['name']) ? 'wpAiChatbotConfig.bot_name=' . wp_json_encode($page_bot_config['name']) . ';' : '') .
+                    wp_add_inline_script('raplsaich-chatbot',
+                        'if(window.raplsaichConfig){raplsaichConfig.bot_id=' . wp_json_encode($page_bot_id) . ';' .
+                        (!empty($page_bot_config['welcome_message']) ? 'raplsaichConfig.welcome_message=' . wp_json_encode($page_bot_config['welcome_message']) . ';' : '') .
+                        (!empty($page_bot_config['name']) ? 'raplsaichConfig.bot_name=' . wp_json_encode($page_bot_config['name']) . ';' : '') .
                         '}',
                         'before'
                     );
@@ -534,10 +535,10 @@ class WPAIC_Chatbot_Widget {
 
         // Output bot-specific primary color override (after wp_head, so inline <style> is needed)
         if (!empty($primary_color) && $primary_color !== ($settings['primary_color'] ?? '#007bff')) {
-            echo '<style>:root{--wpaic-primary:' . esc_attr($primary_color) . ';--wpaic-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
+            echo '<style>:root{--raplsaich-primary:' . esc_attr($primary_color) . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20)) . ';}</style>';
         }
 
-        include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
+        include RAPLSAICH_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php';
     }
 
     /**
@@ -545,7 +546,7 @@ class WPAIC_Chatbot_Widget {
      * Outputs minimal HTML (no theme) with chatbot only, then exits.
      */
     public function maybe_render_embed_page(): void {
-        if (!get_query_var('wpaic_embed')) {
+        if (!get_query_var('raplsaich_embed')) {
             return;
         }
 
@@ -557,13 +558,13 @@ class WPAIC_Chatbot_Widget {
          *
          * @param string[] $origins List of allowed origin URLs, or ['*'] for any.
          */
-        $allowed = apply_filters('wpaic_embed_allowed_origins', ['*']);
+        $allowed = apply_filters('raplsaich_embed_allowed_origins', ['*']);
         $origins = implode(' ', array_map(function ($o) {
             return $o === '*' ? '*' : esc_url($o);
         }, $allowed));
         header('Content-Security-Policy: frame-ancestors ' . $origins);
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $bot_name = esc_html($settings['bot_name'] ?? 'Assistant');
         $bot_avatar_raw = $settings['bot_avatar'] ?? "\xF0\x9F\xA4\x96";
         $bot_avatar_is_image = filter_var($bot_avatar_raw, FILTER_VALIDATE_URL) || preg_match('/^\//', $bot_avatar_raw) || preg_match('/\.(jpg|jpeg|png|gif|svg|webp)$/i', $bot_avatar_raw);
@@ -571,7 +572,7 @@ class WPAIC_Chatbot_Widget {
 
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
-        $is_pro_active = get_option('wpaic_pro_active');
+        $is_pro_active = get_option('raplsaich_pro_active');
 
         if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
             $widget_theme = 'default';
@@ -596,18 +597,18 @@ class WPAIC_Chatbot_Widget {
         $this->enqueue_scripts();
 
         // Add embed-specific inline config
-        wp_add_inline_script('wpaic-chatbot',
-            'if(window.wpAiChatbotConfig){wpAiChatbotConfig.inlineMode=true;wpAiChatbotConfig.embedMode=true;}',
+        wp_add_inline_script('raplsaich-chatbot',
+            'if(window.raplsaichConfig){raplsaichConfig.inlineMode=true;raplsaichConfig.embedMode=true;}',
             'before'
         );
 
         // Add embed-specific CSS
-        wp_add_inline_style('wpaic-chatbot', '
+        wp_add_inline_style('raplsaich-chatbot', '
             html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: transparent; }
-            .wpaic-inline { height: 100vh; width: 100%; }
-            .wpaic-inline .wp-ai-chatbot { position: relative; width: 100%; height: 100%; }
-            .wpaic-inline .chatbot-badge { display: none !important; }
-            .wpaic-inline .chatbot-window { display: flex !important; position: relative; width: 100%; height: 100%;
+            .raplsaich-inline { height: 100vh; width: 100%; }
+            .raplsaich-inline .wp-ai-chatbot { position: relative; width: 100%; height: 100%; }
+            .raplsaich-inline .chatbot-badge { display: none !important; }
+            .raplsaich-inline .chatbot-window { display: flex !important; position: relative; width: 100%; height: 100%;
                 border-radius: 0; box-shadow: none; max-height: none; }
         ');
 
@@ -620,9 +621,9 @@ class WPAIC_Chatbot_Widget {
 <meta name="robots" content="noindex, nofollow">
 <?php wp_head(); ?>
 </head>
-<body class="wpaic-embed-body">
-<div class="wpaic-inline wpaic-embed" style="height:100vh">
-<?php include WPAIC_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php'; ?>
+<body class="raplsaich-embed-body">
+<div class="raplsaich-inline raplsaich-embed" style="height:100vh">
+<?php include RAPLSAICH_PLUGIN_DIR . 'templates/frontend/chatbot-widget.php'; ?>
 </div>
 <?php wp_footer(); ?>
 <script>
@@ -630,14 +631,14 @@ class WPAIC_Chatbot_Widget {
     var origin=window.location.origin;
     // Notify parent frame that embed is ready
     if(window.parent!==window){
-        window.parent.postMessage({type:'wpaic:ready'},origin);
+        window.parent.postMessage({type:'raplsaich:ready'},origin);
     }
     // Listen for close button and notify parent
     document.addEventListener('click',function(e){
         if(e.target.closest('.chatbot-close')){
             e.preventDefault();
             if(window.parent!==window){
-                window.parent.postMessage({type:'wpaic:close'},origin);
+                window.parent.postMessage({type:'raplsaich:close'},origin);
             }
         }
     });
@@ -657,10 +658,10 @@ class WPAIC_Chatbot_Widget {
             return false;
         }
 
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         // Allow developers to override via filter
-        $enabled = apply_filters('wpaic_chatbot_enabled', true);
+        $enabled = apply_filters('raplsaich_chatbot_enabled', true);
         if (!$enabled) {
             return false;
         }
@@ -728,7 +729,7 @@ class WPAIC_Chatbot_Widget {
         }
 
         // Check if currently outside business hours
-        $pro = WPAIC_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Pro_Features::get_instance();
         $is_offline = !$pro->is_within_business_hours();
 
         if (!$is_offline) {
@@ -744,12 +745,12 @@ class WPAIC_Chatbot_Widget {
 
     /**
      * Get the minimum capability required for frontend debug mode.
-     * Defaults to 'edit_posts'; filterable via wpaic_frontend_debug_min_cap.
+     * Defaults to 'edit_posts'; filterable via raplsaich_frontend_debug_min_cap.
      * Falls back to default if filter returns non-string or empty value.
      */
     private function get_debug_min_cap(): string {
         $default = 'edit_posts';
-        $cap = apply_filters('wpaic_frontend_debug_min_cap', $default);
+        $cap = apply_filters('raplsaich_frontend_debug_min_cap', $default);
         return (is_string($cap) && $cap !== '') ? $cap : $default;
     }
 
@@ -778,7 +779,7 @@ class WPAIC_Chatbot_Widget {
 /**
  * Get badge preset SVG markup
  */
-function wpaic_get_badge_preset_svg(string $preset): string {
+function raplsaich_get_badge_preset_svg(string $preset): string {
     $presets = [
         // Communication
         'headset' => '<svg class="badge-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c-4.97 0-9 4.03-9 9v7c0 1.66 1.34 3 3 3h3v-8H5v-2c0-3.87 3.13-7 7-7s7 3.13 7 7v2h-4v8h3c1.66 0 3-1.34 3-3v-7c0-4.97-4.03-9-9-9z"/></svg>',
@@ -864,7 +865,7 @@ function wpaic_get_badge_preset_svg(string $preset): string {
 /**
  * Get allowed HTML tags for SVG output via wp_kses
  */
-function wpaic_get_svg_allowed_tags(): array {
+function raplsaich_get_svg_allowed_tags(): array {
     return [
         'svg' => [
             'class' => true,

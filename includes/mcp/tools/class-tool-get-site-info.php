@@ -9,14 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Tool_Get_Site_Info {
+class RAPLSAICH_MCP_Tool_Get_Site_Info {
 
     /**
      * Register this tool with the registry.
      *
-     * @param WPAIC_MCP_Tool_Registry $registry Tool registry.
+     * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry.
      */
-    public function register(WPAIC_MCP_Tool_Registry $registry): void {
+    public function register(RAPLSAICH_MCP_Tool_Registry $registry): void {
         $registry->register('get_site_info', $this->get_schema(), [$this, 'execute']);
     }
 
@@ -44,31 +44,31 @@ class WPAIC_MCP_Tool_Get_Site_Info {
      * @return array Site information.
      */
     public function execute(array $args): array {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         // Count knowledge entries
         $knowledge_count = 0;
-        if (class_exists('WPAIC_Knowledge')) {
-            $knowledge_count = WPAIC_Knowledge::get_count();
+        if (class_exists('RAPLSAICH_Knowledge')) {
+            $knowledge_count = RAPLSAICH_Knowledge::get_count();
         }
 
         // Count indexed content
         $index_count = 0;
-        if (class_exists('WPAIC_Content_Index')) {
-            $index_count = WPAIC_Content_Index::get_count();
+        if (class_exists('RAPLSAICH_Content_Index')) {
+            $index_count = RAPLSAICH_Content_Index::get_count();
         }
 
         // Conversation stats
-        $conversation_count = WPAIC_Conversation::get_count();
-        $today_count = WPAIC_Conversation::get_today_count();
+        $conversation_count = RAPLSAICH_Conversation::get_count();
+        $today_count = RAPLSAICH_Conversation::get_today_count();
 
         return [
             'site_name'          => get_bloginfo('name'),
             'site_url'           => home_url(),
             'site_language'      => get_locale(),
             'wordpress_version'  => get_bloginfo('version'),
-            'plugin_version'     => defined('WPAIC_VERSION') ? WPAIC_VERSION : 'unknown',
-            'is_pro'             => WPAIC_Pro_Features::get_instance()->is_pro(),
+            'plugin_version'     => defined('RAPLSAICH_VERSION') ? RAPLSAICH_VERSION : 'unknown',
+            'is_pro'             => RAPLSAICH_Pro_Features::get_instance()->is_pro(),
             'ai_provider'        => $settings['ai_provider'] ?? 'openai',
             'ai_model'           => $this->get_active_model($settings),
             'knowledge_count'    => $knowledge_count,

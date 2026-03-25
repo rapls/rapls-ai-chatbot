@@ -9,14 +9,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_MCP_Tool_Get_Conversation {
+class RAPLSAICH_MCP_Tool_Get_Conversation {
 
     /**
      * Register this tool with the registry.
      *
-     * @param WPAIC_MCP_Tool_Registry $registry Tool registry.
+     * @param RAPLSAICH_MCP_Tool_Registry $registry Tool registry.
      */
-    public function register(WPAIC_MCP_Tool_Registry $registry): void {
+    public function register(RAPLSAICH_MCP_Tool_Registry $registry): void {
         $registry->register('get_conversation', $this->get_schema(), [$this, 'execute']);
     }
 
@@ -55,13 +55,13 @@ class WPAIC_MCP_Tool_Get_Conversation {
             return ['error' => __('conversation_id is required.', 'rapls-ai-chatbot')];
         }
 
-        $conversation = WPAIC_Conversation::get_by_id($conversation_id);
+        $conversation = RAPLSAICH_Conversation::get_by_id($conversation_id);
 
         if (!$conversation) {
             return ['error' => __('Conversation not found.', 'rapls-ai-chatbot')];
         }
 
-        $messages = WPAIC_Message::get_by_conversation($conversation_id, 200);
+        $messages = RAPLSAICH_Message::get_by_conversation($conversation_id, 200);
 
         $formatted_messages = [];
         foreach ($messages as $msg) {

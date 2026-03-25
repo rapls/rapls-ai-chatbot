@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-interface WPAIC_AI_Provider_Interface {
+interface RAPLSAICH_AI_Provider_Interface {
 
     /**
      * Set API key

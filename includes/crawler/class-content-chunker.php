@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Content_Chunker {
+class RAPLSAICH_Content_Chunker {
 
     /**
      * Default chunk size (characters)
@@ -33,7 +33,7 @@ class WPAIC_Content_Chunker {
         $chunk_size = $chunk_size ?? $this->chunk_size;
 
         // Return as-is if text is short
-        if (wpaic_mb_strlen($text) <= $chunk_size) {
+        if (raplsaich_mb_strlen($text) <= $chunk_size) {
             return [$text];
         }
 
@@ -43,7 +43,7 @@ class WPAIC_Content_Chunker {
         // Split by sentences if any chunk is too large
         $final_chunks = [];
         foreach ($chunks as $chunk) {
-            if (wpaic_mb_strlen($chunk) > $chunk_size * 1.5) {
+            if (raplsaich_mb_strlen($chunk) > $chunk_size * 1.5) {
                 $sub_chunks = $this->split_by_sentences($chunk, $chunk_size);
                 $final_chunks = array_merge($final_chunks, $sub_chunks);
             } else {
@@ -70,7 +70,7 @@ class WPAIC_Content_Chunker {
 
             $potential_chunk = $current_chunk . ($current_chunk ? "\n\n" : '') . $paragraph;
 
-            if (wpaic_mb_strlen($potential_chunk) <= $chunk_size) {
+            if (raplsaich_mb_strlen($potential_chunk) <= $chunk_size) {
                 $current_chunk = $potential_chunk;
             } else {
                 if (!empty($current_chunk)) {
@@ -104,7 +104,7 @@ class WPAIC_Content_Chunker {
 
             $potential_chunk = $current_chunk . ($current_chunk ? ' ' : '') . $sentence;
 
-            if (wpaic_mb_strlen($potential_chunk) <= $chunk_size) {
+            if (raplsaich_mb_strlen($potential_chunk) <= $chunk_size) {
                 $current_chunk = $potential_chunk;
             } else {
                 if (!empty($current_chunk)) {
@@ -112,7 +112,7 @@ class WPAIC_Content_Chunker {
                 }
 
                 // Force split if single sentence exceeds chunk size
-                if (wpaic_mb_strlen($sentence) > $chunk_size) {
+                if (raplsaich_mb_strlen($sentence) > $chunk_size) {
                     $forced_chunks = $this->force_split($sentence, $chunk_size);
                     $chunks = array_merge($chunks, array_slice($forced_chunks, 0, -1));
                     $current_chunk = end($forced_chunks);
@@ -134,12 +134,12 @@ class WPAIC_Content_Chunker {
      */
     private function force_split(string $text, int $chunk_size): array {
         $chunks = [];
-        $length = wpaic_mb_strlen($text);
+        $length = raplsaich_mb_strlen($text);
         $position = 0;
         $step = max(1, $chunk_size - $this->overlap);
 
         while ($position < $length) {
-            $chunk = wpaic_mb_substr($text, $position, $chunk_size);
+            $chunk = raplsaich_mb_substr($text, $position, $chunk_size);
             $chunks[] = $chunk;
             $position += $step;
         }

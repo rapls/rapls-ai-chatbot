@@ -1,0 +1,12 @@
+.raplsaich-badge-position-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 260px; }
+.raplsaich-badge-pos-option { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.raplsaich-badge-pos-option input[type="radio"] { display: none; }
+.raplsaich-badge-pos-box { display: block; width: 80px; height: 50px; border: 2px solid #ddd; border-radius: 6px; background: #f9f9f9; position: relative; transition: border-color 0.2s, background 0.2s; }
+.raplsaich-badge-pos-option:hover .raplsaich-badge-pos-box { border-color: #999; }
+.raplsaich-badge-pos-option.active .raplsaich-badge-pos-box { border-color: #007bff; background: #f0f6ff; }
+.raplsaich-badge-pos-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #999; transition: background 0.2s; }
+.raplsaich-badge-pos-option.active .raplsaich-badge-pos-dot { background: #007bff; }
+.raplsaich-badge-pos-label { font-size: 12px; margin-top: 4px; color: #666; }
+.raplsaich-badge-pos-option.active .raplsaich-badge-pos-label { color: #007bff; font-weight: 600; }
+.raplsaich-badge-margin-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.raplsaich-badge-margin-label { font-weight: 600; }

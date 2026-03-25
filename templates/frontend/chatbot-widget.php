@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 ?>
-<div id="wp-ai-chatbot" class="wp-ai-chatbot wpaic-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed" data-position="<?php echo esc_attr($badge_position ?? 'bottom-right'); ?>">
+<div id="wp-ai-chatbot" class="wp-ai-chatbot raplsaich-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed" data-position="<?php echo esc_attr($badge_position ?? 'bottom-right'); ?>">
 
     <!-- バッジ（閉じた状態） -->
     <button class="chatbot-badge" aria-label="<?php esc_attr_e('Open chat', 'rapls-ai-chatbot'); ?>">
         <?php if ($badge_icon_type === 'preset' && !empty($badge_icon_preset)) : ?>
-            <?php echo wp_kses(wpaic_get_badge_preset_svg($badge_icon_preset), wpaic_get_svg_allowed_tags()); ?>
+            <?php echo wp_kses(raplsaich_get_badge_preset_svg($badge_icon_preset), raplsaich_get_svg_allowed_tags()); ?>
         <?php elseif ($badge_icon_type === 'image' && !empty($badge_icon_image)) : ?>
             <img class="badge-icon-image" src="<?php echo esc_url($badge_icon_image); ?>" alt="">
         <?php elseif ($badge_icon_type === 'emoji' && !empty($badge_icon_emoji)) : ?>
@@ -133,7 +133,7 @@ if (!defined('ABSPATH')) {
                 </svg>
             </button>
             <textarea
-                name="wpaic_message_<?php echo esc_attr(uniqid()); ?>"
+                name="raplsaich_message_<?php echo esc_attr(uniqid()); ?>"
                 placeholder="<?php esc_attr_e('Type a message...', 'rapls-ai-chatbot'); ?>"
                 rows="1"
                 aria-label="<?php esc_attr_e('Message input', 'rapls-ai-chatbot'); ?>"
@@ -150,7 +150,7 @@ if (!defined('ABSPATH')) {
         <?php
         // Pro white-label footer (opt-in via Pro settings)
         $wl_footer = $settings['pro_features']['white_label_footer'] ?? '';
-        if ($wl_footer !== '' && WPAIC_Pro_Features::get_instance()->is_pro()) :
+        if ($wl_footer !== '' && RAPLSAICH_Pro_Features::get_instance()->is_pro()) :
             $wl_url = $settings['pro_features']['white_label_footer_url'] ?? '';
             $wl_target = $settings['pro_features']['white_label_footer_target'] ?? '_blank';
         ?>

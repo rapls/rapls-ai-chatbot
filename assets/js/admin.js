@@ -9,7 +9,7 @@
      * Destructive AJAX helper — handles two-step confirmation tokens.
      * First call returns confirm_required + token; second call sends token back.
      */
-    window.wpaicDestructiveAjax = function(opts) {
+    window.raplsaichDestructiveAjax = function(opts) {
         var data = $.extend({}, opts.data);
         $.post(opts.url || ajaxurl, data, function(response) {
             if (response.success && response.data && response.data.confirm_required) {
@@ -35,30 +35,30 @@
     $(document).ready(function() {
 
         // タブ切り替え
-        $('.wpaic-settings-tabs .nav-tab').on('click', function(e) {
+        $('.raplsaich-settings-tabs .nav-tab').on('click', function(e) {
             e.preventDefault();
 
             var targetId = $(this).attr('href');
 
             // タブの状態を更新
-            $('.wpaic-settings-tabs .nav-tab').removeClass('nav-tab-active');
+            $('.raplsaich-settings-tabs .nav-tab').removeClass('nav-tab-active');
             $(this).addClass('nav-tab-active');
 
             // コンテンツの表示を切り替え
-            $('.wpaic-settings-tabs .tab-content').removeClass('active');
+            $('.raplsaich-settings-tabs .tab-content').removeClass('active');
             $(targetId).addClass('active');
 
             // URLハッシュを更新
             history.replaceState(null, null, targetId);
 
             // タブをlocalStorageに保存（設定保存後も維持するため）
-            try { localStorage.setItem('wpaic_active_tab', targetId); } catch (e) { /* storage unavailable */ }
+            try { localStorage.setItem('raplsaich_active_tab', targetId); } catch (e) { /* storage unavailable */ }
 
             // Pro機能タブのときはグローバル保存ボタンを非表示
             if (targetId === '#tab-pro') {
-                $('#wpaic-global-submit').hide();
+                $('#raplsaich-global-submit').hide();
             } else {
-                $('#wpaic-global-submit').show();
+                $('#raplsaich-global-submit').show();
             }
         });
 
@@ -68,7 +68,7 @@
 
         if (window.location.hash) {
             // URLハッシュがある場合はそのタブを表示
-            var $tab = $('.wpaic-settings-tabs .nav-tab').filter(function() {
+            var $tab = $('.raplsaich-settings-tabs .nav-tab').filter(function() {
                 return $(this).attr('href') === window.location.hash;
             });
             if ($tab.length) {
@@ -76,9 +76,9 @@
             }
         } else if (settingsUpdated) {
             // 設定保存後は保存されたタブを復元
-            var savedTab = null; try { savedTab = localStorage.getItem('wpaic_active_tab'); } catch (e) { /* storage unavailable */ }
+            var savedTab = null; try { savedTab = localStorage.getItem('raplsaich_active_tab'); } catch (e) { /* storage unavailable */ }
             if (savedTab) {
-                var $tab = $('.wpaic-settings-tabs .nav-tab').filter(function() {
+                var $tab = $('.raplsaich-settings-tabs .nav-tab').filter(function() {
                     return $(this).attr('href') === savedTab;
                 });
                 if ($tab.length) {
@@ -87,7 +87,7 @@
             }
         } else {
             // 通常のページ遷移時はlocalStorageをクリア（最初のタブを表示）
-            try { localStorage.removeItem('wpaic_active_tab'); } catch (e) { /* storage unavailable */ }
+            try { localStorage.removeItem('raplsaich_active_tab'); } catch (e) { /* storage unavailable */ }
         }
 
         // AIプロバイダー切り替え時の表示制御
@@ -102,25 +102,25 @@
         }).trigger('change');
 
         // APIキー削除 — sets hidden delete flag; key removed on save
-        $('.wpaic-clear-api-key').on('click', function() {
+        $('.raplsaich-clear-api-key').on('click', function() {
             var targetId = $(this).data('target');
             var $input = $('#' + targetId);
             var $deleteFlag = $('#delete_' + targetId);
-            var $wrapper = $(this).closest('.wpaic-api-key-wrapper');
+            var $wrapper = $(this).closest('.raplsaich-api-key-wrapper');
 
-            if (confirm(wpaicAdmin.i18n.confirmDeleteApiKey || 'Delete this API key?\nPlease save settings after deletion.')) {
+            if (confirm(raplsaichAdmin.i18n.confirmDeleteApiKey || 'Delete this API key?\nPlease save settings after deletion.')) {
                 $input.val('').attr('placeholder', '');
                 $deleteFlag.val('1');
                 $(this).hide();
-                $wrapper.find('.wpaic-key-status')
-                    .removeClass('wpaic-key-set')
-                    .addClass('wpaic-key-empty')
-                    .text(wpaicAdmin.i18n.keyUnset || 'Not set (will be deleted on save)');
+                $wrapper.find('.raplsaich-key-status')
+                    .removeClass('raplsaich-key-set')
+                    .addClass('raplsaich-key-empty')
+                    .text(raplsaichAdmin.i18n.keyUnset || 'Not set (will be deleted on save)');
             }
         });
 
         // API接続テスト — uses entered key, or saved key via 'use_saved' flag
-        $('.wpaic-test-api').on('click', function() {
+        $('.raplsaich-test-api').on('click', function() {
             var $button = $(this);
             var provider = $button.data('provider');
             var $input = $button.siblings('input[type="password"]');
@@ -128,18 +128,18 @@
             var useSaved = !apiKey && $input.attr('placeholder');
 
             if (!apiKey && !useSaved) {
-                alert(wpaicAdmin.i18n.enterApiKey || 'Please enter an API key.');
+                alert(raplsaichAdmin.i18n.enterApiKey || 'Please enter an API key.');
                 return;
             }
 
-            $button.prop('disabled', true).text(wpaicAdmin.i18n.testing || 'Testing...');
+            $button.prop('disabled', true).text(raplsaichAdmin.i18n.testing || 'Testing...');
 
             $.ajax({
-                url: wpaicAdmin.ajaxUrl,
+                url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wpaic_test_api',
-                    nonce: wpaicAdmin.nonce,
+                    action: 'raplsaich_test_api',
+                    nonce: raplsaichAdmin.nonce,
                     provider: provider,
                     api_key: apiKey,
                     use_saved: useSaved ? '1' : ''
@@ -154,10 +154,10 @@
                     }
                 },
                 error: function() {
-                    alert(wpaicAdmin.i18n.error || 'Error');
+                    alert(raplsaichAdmin.i18n.error || 'Error');
                 },
                 complete: function() {
-                    $button.prop('disabled', false).text(wpaicAdmin.i18n.connectionTest || 'Connection test');
+                    $button.prop('disabled', false).text(raplsaichAdmin.i18n.connectionTest || 'Connection test');
                 }
             });
         });
@@ -170,12 +170,12 @@
          * Fetch models from API and update dropdown
          */
         function fetchModels(provider, apiKey, useSaved, forceRefresh) {
-            var selectId = '#wpaic-' + provider + '-model';
+            var selectId = '#raplsaich-' + provider + '-model';
             var $select = $(selectId);
             if (!$select.length) return;
 
             var currentValue = $select.val();
-            var i18n = wpaicAdmin.i18n || {};
+            var i18n = raplsaichAdmin.i18n || {};
 
             // Disable dropdown and show loading
             $select.prop('disabled', true);
@@ -184,8 +184,8 @@
             $select.html($loading);
 
             var data = {
-                action: 'wpaic_fetch_models',
-                nonce: wpaicAdmin.nonce,
+                action: 'raplsaich_fetch_models',
+                nonce: raplsaichAdmin.nonce,
                 provider: provider,
                 use_saved: useSaved ? 1 : 0,
                 force_refresh: forceRefresh ? 1 : 0
@@ -195,7 +195,7 @@
             }
 
             $.ajax({
-                url: wpaicAdmin.ajaxUrl,
+                url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 data: data,
                 success: function(response) {
@@ -258,7 +258,7 @@
         (function() {
             var providers = ['openai', 'claude', 'gemini'];
             $.each(providers, function(_, provider) {
-                var $select = $('#wpaic-' + provider + '-model');
+                var $select = $('#raplsaich-' + provider + '-model');
                 var $keyInput = $('#' + provider + '_api_key');
                 // Only fetch if API key is configured (has placeholder indicating it's set)
                 if ($select.length && $keyInput.length) {
@@ -284,7 +284,7 @@
         });
 
         // Trigger 3: Refresh button click
-        $('.wpaic-refresh-models').on('click', function() {
+        $('.raplsaich-refresh-models').on('click', function() {
             var provider = $(this).data('provider');
             var $keyInput = $('#' + provider + '_api_key');
             var apiKey = $keyInput.val();
@@ -294,24 +294,24 @@
         });
 
         // 手動クロール
-        $('#wpaic-manual-crawl').on('click', function() {
+        $('#raplsaich-manual-crawl').on('click', function() {
             var $button = $(this);
             var $status = $('#crawl-status');
 
-            if (!confirm(wpaicAdmin.i18n.confirmCrawl || 'Run site-wide learning?\nThis may take a while depending on the number of pages.')) {
+            if (!confirm(raplsaichAdmin.i18n.confirmCrawl || 'Run site-wide learning?\nThis may take a while depending on the number of pages.')) {
                 return;
             }
 
             $button.prop('disabled', true);
-            $status.text(wpaicAdmin.i18n.crawling || 'Learning...');
+            $status.text(raplsaichAdmin.i18n.crawling || 'Learning...');
 
             $.ajax({
-                url: wpaicAdmin.ajaxUrl,
+                url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 timeout: 300000, // 5 minutes — manual crawl processes all content
                 data: {
-                    action: 'wpaic_manual_crawl',
-                    nonce: wpaicAdmin.nonce
+                    action: 'raplsaich_manual_crawl',
+                    nonce: raplsaichAdmin.nonce
                 },
                 success: function(response) {
                     if (response.success) {
@@ -325,7 +325,7 @@
                     }
                 },
                 error: function() {
-                    $status.text('✗ ' + (wpaicAdmin.i18n.error || 'Error'));
+                    $status.text('✗ ' + (raplsaichAdmin.i18n.error || 'Error'));
                 },
                 complete: function() {
                     $button.prop('disabled', false);
@@ -338,19 +338,19 @@
         // 必要に応じて共通化可能
 
         // Webhookテスト
-        $('#wpaic-test-webhook').on('click', function() {
+        $('#raplsaich-test-webhook').on('click', function() {
             var $button = $(this);
-            var $result = $('#wpaic-webhook-test-result');
+            var $result = $('#raplsaich-webhook-test-result');
 
             $button.prop('disabled', true);
-            $result.text((wpaicAdmin.i18n && wpaicAdmin.i18n.testing) || 'Testing...').css('color', '#666');
+            $result.text((raplsaichAdmin.i18n && raplsaichAdmin.i18n.testing) || 'Testing...').css('color', '#666');
 
             $.ajax({
-                url: wpaicAdmin.ajaxUrl,
+                url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wpaic_test_webhook',
-                    nonce: wpaicAdmin.nonce
+                    action: 'raplsaich_test_webhook',
+                    nonce: raplsaichAdmin.nonce
                 },
                 success: function(response) {
                     if (response.success) {
@@ -360,7 +360,7 @@
                     }
                 },
                 error: function() {
-                    $result.text('✗ ' + ((wpaicAdmin.i18n && wpaicAdmin.i18n.error) || 'An error occurred.')).css('color', '#721c24');
+                    $result.text('✗ ' + ((raplsaichAdmin.i18n && raplsaichAdmin.i18n.error) || 'An error occurred.')).css('color', '#721c24');
                 },
                 complete: function() {
                     $button.prop('disabled', false);
@@ -369,20 +369,20 @@
         });
 
         // 会話エクスポート
-        $('#wpaic-export-conversations').on('click', function() {
+        $('#raplsaich-export-conversations').on('click', function() {
             var $button = $(this);
-            var format = $('#wpaic-export-format').val() || 'csv';
-            var dateFrom = $('#wpaic-export-date-from').val() || '';
-            var dateTo = $('#wpaic-export-date-to').val() || '';
+            var format = $('#raplsaich-export-format').val() || 'csv';
+            var dateFrom = $('#raplsaich-export-date-from').val() || '';
+            var dateTo = $('#raplsaich-export-date-to').val() || '';
 
-            $button.prop('disabled', true).text(wpaicAdmin.i18n.exporting || 'Exporting...');
+            $button.prop('disabled', true).text(raplsaichAdmin.i18n.exporting || 'Exporting...');
 
             $.ajax({
-                url: wpaicAdmin.ajaxUrl,
+                url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wpaic_export_conversations',
-                    nonce: wpaicAdmin.nonce,
+                    action: 'raplsaich_export_conversations',
+                    nonce: raplsaichAdmin.nonce,
                     format: format,
                     date_from: dateFrom,
                     date_to: dateTo
@@ -391,33 +391,33 @@
                     if (response.success) {
                         downloadExport(response.data);
                     } else {
-                        alert((wpaicAdmin.i18n.exportFailed || 'Export failed.') + ' ' + response.data);
+                        alert((raplsaichAdmin.i18n.exportFailed || 'Export failed.') + ' ' + response.data);
                     }
                 },
                 error: function() {
-                    alert(wpaicAdmin.i18n.error || 'Error');
+                    alert(raplsaichAdmin.i18n.error || 'Error');
                 },
                 complete: function() {
-                    $button.prop('disabled', false).text(wpaicAdmin.i18n.exportConversations || 'Export');
+                    $button.prop('disabled', false).text(raplsaichAdmin.i18n.exportConversations || 'Export');
                 }
             });
         });
 
         // リードエクスポート
-        $('#wpaic-export-leads').on('click', function() {
+        $('#raplsaich-export-leads').on('click', function() {
             var $button = $(this);
-            var format = $('#wpaic-leads-export-format').val() || 'csv';
-            var dateFrom = $('#wpaic-leads-export-date-from').val() || '';
-            var dateTo = $('#wpaic-leads-export-date-to').val() || '';
+            var format = $('#raplsaich-leads-export-format').val() || 'csv';
+            var dateFrom = $('#raplsaich-leads-export-date-from').val() || '';
+            var dateTo = $('#raplsaich-leads-export-date-to').val() || '';
 
-            $button.prop('disabled', true).text(wpaicAdmin.i18n.exporting || 'Exporting...');
+            $button.prop('disabled', true).text(raplsaichAdmin.i18n.exporting || 'Exporting...');
 
             $.ajax({
-                url: wpaicAdmin.ajaxUrl,
+                url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 data: {
-                    action: 'wpaic_export_leads',
-                    nonce: wpaicAdmin.nonce,
+                    action: 'raplsaich_export_leads',
+                    nonce: raplsaichAdmin.nonce,
                     format: format,
                     date_from: dateFrom,
                     date_to: dateTo
@@ -426,81 +426,81 @@
                     if (response.success) {
                         downloadExport(response.data);
                     } else {
-                        alert((wpaicAdmin.i18n.exportFailed || 'Export failed.') + ' ' + response.data);
+                        alert((raplsaichAdmin.i18n.exportFailed || 'Export failed.') + ' ' + response.data);
                     }
                 },
                 error: function() {
-                    alert(wpaicAdmin.i18n.error || 'Error');
+                    alert(raplsaichAdmin.i18n.error || 'Error');
                 },
                 complete: function() {
-                    $button.prop('disabled', false).text(wpaicAdmin.i18n.exportConversations || 'Export');
+                    $button.prop('disabled', false).text(raplsaichAdmin.i18n.exportConversations || 'Export');
                 }
             });
         });
 
         // クイックリプライ動的管理
-        var $quickRepliesContainer = $('#wpaic-quick-replies');
-        var quickReplyIndex = $quickRepliesContainer.find('.wpaic-quick-reply-item').length;
+        var $quickRepliesContainer = $('#raplsaich-quick-replies');
+        var quickReplyIndex = $quickRepliesContainer.find('.raplsaich-quick-reply-item').length;
 
-        $('#wpaic-add-quick-reply').on('click', function() {
-            var html = '<div class="wpaic-quick-reply-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
-                '<input type="text" name="wpaic_settings[pro_features][quick_replies][' + quickReplyIndex + '][text]" ' +
-                'class="regular-text" placeholder="' + (wpaicAdmin.i18n.quickReplyPlaceholder || 'e.g., What are your business hours?') + '">' +
-                '<button type="button" class="button wpaic-remove-quick-reply">×</button>' +
+        $('#raplsaich-add-quick-reply').on('click', function() {
+            var html = '<div class="raplsaich-quick-reply-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
+                '<input type="text" name="raplsaich_settings[pro_features][quick_replies][' + quickReplyIndex + '][text]" ' +
+                'class="regular-text" placeholder="' + (raplsaichAdmin.i18n.quickReplyPlaceholder || 'e.g., What are your business hours?') + '">' +
+                '<button type="button" class="button raplsaich-remove-quick-reply">×</button>' +
                 '</div>';
             $quickRepliesContainer.append(html);
             quickReplyIndex++;
         });
 
-        $quickRepliesContainer.on('click', '.wpaic-remove-quick-reply', function() {
-            $(this).closest('.wpaic-quick-reply-item').remove();
+        $quickRepliesContainer.on('click', '.raplsaich-remove-quick-reply', function() {
+            $(this).closest('.raplsaich-quick-reply-item').remove();
         });
 
         // 休日動的管理
-        var $holidaysContainer = $('#wpaic-holidays');
-        var holidayIndex = $holidaysContainer.find('.wpaic-holiday-item').length;
+        var $holidaysContainer = $('#raplsaich-holidays');
+        var holidayIndex = $holidaysContainer.find('.raplsaich-holiday-item').length;
 
-        $('#wpaic-add-holiday').on('click', function() {
-            var html = '<div class="wpaic-holiday-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
-                '<input type="date" name="wpaic_settings[pro_features][holidays][' + holidayIndex + '][date]">' +
-                '<input type="text" name="wpaic_settings[pro_features][holidays][' + holidayIndex + '][name]" ' +
-                'class="regular-text" placeholder="' + (wpaicAdmin.i18n.holidayNamePlaceholder || 'Holiday name (optional)') + '">' +
-                '<button type="button" class="button wpaic-remove-holiday">×</button>' +
+        $('#raplsaich-add-holiday').on('click', function() {
+            var html = '<div class="raplsaich-holiday-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
+                '<input type="date" name="raplsaich_settings[pro_features][holidays][' + holidayIndex + '][date]">' +
+                '<input type="text" name="raplsaich_settings[pro_features][holidays][' + holidayIndex + '][name]" ' +
+                'class="regular-text" placeholder="' + (raplsaichAdmin.i18n.holidayNamePlaceholder || 'Holiday name (optional)') + '">' +
+                '<button type="button" class="button raplsaich-remove-holiday">×</button>' +
                 '</div>';
             $holidaysContainer.append(html);
             holidayIndex++;
         });
 
-        $holidaysContainer.on('click', '.wpaic-remove-holiday', function() {
-            $(this).closest('.wpaic-holiday-item').remove();
+        $holidaysContainer.on('click', '.raplsaich-remove-holiday', function() {
+            $(this).closest('.raplsaich-holiday-item').remove();
         });
 
         // プロンプトテンプレート動的管理
-        var $templatesContainer = $('#wpaic-prompt-templates');
-        var templateIndex = $templatesContainer.find('.wpaic-prompt-template-item').length;
+        var $templatesContainer = $('#raplsaich-prompt-templates');
+        var templateIndex = $templatesContainer.find('.raplsaich-prompt-template-item').length;
 
-        $('#wpaic-add-template').on('click', function() {
-            var html = '<div class="wpaic-prompt-template-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">' +
+        $('#raplsaich-add-template').on('click', function() {
+            var html = '<div class="raplsaich-prompt-template-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">' +
                 '<div style="margin-bottom: 10px;">' +
-                '<input type="text" name="wpaic_settings[pro_features][prompt_templates][' + templateIndex + '][name]" ' +
-                'placeholder="' + (wpaicAdmin.i18n.templateNamePlaceholder || 'Template name') + '" class="regular-text">' +
-                '<button type="button" class="button wpaic-remove-template">×</button>' +
+                '<input type="text" name="raplsaich_settings[pro_features][prompt_templates][' + templateIndex + '][name]" ' +
+                'placeholder="' + (raplsaichAdmin.i18n.templateNamePlaceholder || 'Template name') + '" class="regular-text">' +
+                '<button type="button" class="button raplsaich-remove-template">×</button>' +
                 '</div>' +
-                '<textarea name="wpaic_settings[pro_features][prompt_templates][' + templateIndex + '][prompt]" ' +
-                'rows="3" class="large-text" placeholder="' + (wpaicAdmin.i18n.templatePromptPlaceholder || 'System prompt for this template...') + '"></textarea>' +
+                '<textarea name="raplsaich_settings[pro_features][prompt_templates][' + templateIndex + '][prompt]" ' +
+                'rows="3" class="large-text" placeholder="' + (raplsaichAdmin.i18n.templatePromptPlaceholder || 'System prompt for this template...') + '"></textarea>' +
                 '</div>';
             $templatesContainer.append(html);
             templateIndex++;
         });
 
-        $templatesContainer.on('click', '.wpaic-remove-template', function() {
-            $(this).closest('.wpaic-prompt-template-item').remove();
+        $templatesContainer.on('click', '.raplsaich-remove-template', function() {
+            $(this).closest('.raplsaich-prompt-template-item').remove();
         });
 
         // Pro機能セクションの有効/無効切り替え
-        $('.wpaic-pro-toggle').on('change', function() {
-            var $section = $(this).closest('.wpaic-pro-section');
-            var $content = $section.find('.wpaic-pro-section-content');
+        $('.raplsaich-pro-toggle').on('change', function() {
+            var $section = $(this).closest('.raplsaich-pro-section');
+            var $content = $section.find('.raplsaich-pro-section-content');
             if ($(this).is(':checked')) {
                 $content.slideDown();
             } else {
@@ -509,8 +509,8 @@
         });
 
         // 初期状態で無効なセクションを閉じる
-        $('.wpaic-pro-toggle:not(:checked)').each(function() {
-            $(this).closest('.wpaic-pro-section').find('.wpaic-pro-section-content').hide();
+        $('.raplsaich-pro-toggle:not(:checked)').each(function() {
+            $(this).closest('.raplsaich-pro-section').find('.raplsaich-pro-section-content').hide();
         });
 
         // エクスポートダウンロード
@@ -568,7 +568,7 @@
         };
 
         // テーマセレクター
-        $('.wpaic-theme-option').on('click', function(e) {
+        $('.raplsaich-theme-option').on('click', function(e) {
             var $option = $(this);
 
             // disabled状態の場合は何もしない
@@ -587,7 +587,7 @@
             $radio.prop('checked', true);
 
             // 全てのテーマオプションからselectedを削除
-            $('.wpaic-theme-option').removeClass('selected');
+            $('.raplsaich-theme-option').removeClass('selected');
 
             // クリックしたオプションにselectedを追加
             $option.addClass('selected');
@@ -595,7 +595,7 @@
             // テーマに対応するプライマリカラーを設定
             var themeValue = $radio.val();
             if (themeColors[themeValue]) {
-                var $colorField = $('#wpaic_primary_color');
+                var $colorField = $('#raplsaich_primary_color');
                 if ($colorField.length && $.fn.wpColorPicker) {
                     $colorField.wpColorPicker('color', themeColors[themeValue]);
                 } else {
@@ -606,19 +606,19 @@
             // ダーク系テーマの場合はダークモードをオンに、それ以外はオフに
             var darkThemes = ['dark', 'modern', 'neon'];
             if (darkThemes.indexOf(themeValue) !== -1) {
-                $('input[name="wpaic_settings[dark_mode]"]').prop('checked', true);
+                $('input[name="raplsaich_settings[dark_mode]"]').prop('checked', true);
             } else {
-                $('input[name="wpaic_settings[dark_mode]"]').prop('checked', false);
+                $('input[name="raplsaich_settings[dark_mode]"]').prop('checked', false);
             }
         });
 
         // ============================================
         // タブリセットボタン
         // ============================================
-        $('.wpaic-reset-tab-btn').on('click', function() {
+        $('.raplsaich-reset-tab-btn').on('click', function() {
             var tabId = $(this).data('tab');
-            var i18n = wpaicAdmin.i18n || {};
-            var defaults = wpaicAdmin.defaults || {};
+            var i18n = raplsaichAdmin.i18n || {};
+            var defaults = raplsaichAdmin.defaults || {};
 
             if (!confirm(i18n.confirmResetTab || 'Reset all settings in this tab to defaults?')) {
                 return;
@@ -637,15 +637,15 @@
                 var name = $field.attr('name');
                 if (!name) return;
 
-                // wpaic_settings[field_name] 形式から field_name を抽出
-                var match = name.match(/wpaic_settings\[([^\]]+)\]/);
+                // raplsaich_settings[field_name] 形式から field_name を抽出
+                var match = name.match(/raplsaich_settings\[([^\]]+)\]/);
                 if (!match) return;
 
                 var fieldName = match[1];
                 var defaultValue = defaults[fieldName];
 
                 // pro_features の場合
-                var proMatch = name.match(/wpaic_settings\[pro_features\]\[([^\]]+)\]/);
+                var proMatch = name.match(/raplsaich_settings\[pro_features\]\[([^\]]+)\]/);
                 if (proMatch && defaults.pro_features) {
                     fieldName = proMatch[1];
                     defaultValue = defaults.pro_features[fieldName];
@@ -670,21 +670,21 @@
             // テーマセレクター特別処理
             if (tabId === 'tab-display') {
                 var defaultTheme = defaults.widget_theme || 'default';
-                $('.wpaic-theme-option').removeClass('selected');
-                $('input[name="wpaic_settings[widget_theme]"][value="' + defaultTheme + '"]')
+                $('.raplsaich-theme-option').removeClass('selected');
+                $('input[name="raplsaich_settings[widget_theme]"][value="' + defaultTheme + '"]')
                     .prop('checked', true)
-                    .closest('.wpaic-theme-option').addClass('selected');
+                    .closest('.raplsaich-theme-option').addClass('selected');
             }
         }
 
         // ============================================
         // フィールドリセットボタン（新形式）
         // ============================================
-        $('.wpaic-field-reset').on('click', function() {
+        $('.raplsaich-field-reset').on('click', function() {
             var $btn = $(this);
             var fieldName = $btn.data('field');
-            var i18n = wpaicAdmin.i18n || {};
-            var defaults = wpaicAdmin.defaults || {};
+            var i18n = raplsaichAdmin.i18n || {};
+            var defaults = raplsaichAdmin.defaults || {};
 
             if (!confirm(i18n.confirmResetField || 'Reset this field to default?')) {
                 return;
@@ -720,14 +720,14 @@
         // ============================================
         // フィールドリセットボタン（既存形式）
         // ============================================
-        $('.wpaic-reset-field').on('click', function() {
+        $('.raplsaich-reset-field').on('click', function() {
             var $btn = $(this);
             var targetId = $btn.data('target');
             var defaultValue = $btn.data('default');
 
             if (targetId && defaultValue !== undefined) {
                 var $field = $('#' + targetId);
-                if ($field.hasClass('wpaic-color-field') && $.fn.wpColorPicker) {
+                if ($field.hasClass('raplsaich-color-field') && $.fn.wpColorPicker) {
                     $field.wpColorPicker('color', defaultValue);
                 } else {
                     $field.val(defaultValue).trigger('change');
@@ -737,59 +737,59 @@
 
         // Initialize WordPress color picker
         if ($.fn.wpColorPicker) {
-            $('.wpaic-color-field').wpColorPicker();
+            $('.raplsaich-color-field').wpColorPicker();
         }
 
     });
 
     // Advanced section toggle (checkbox-gated, state persisted in localStorage)
-    $('.wpaic-advanced-toggle').each(function () {
-        var key = 'wpaic_adv_' + this.id;
+    $('.raplsaich-advanced-toggle').each(function () {
+        var key = 'raplsaich_adv_' + this.id;
         if ((function() { try { return localStorage.getItem(key); } catch (e) { return null; } })() === '1') {
             this.checked = true;
-            $('#' + $(this).data('target')).removeClass('wpaic-advanced-disabled');
+            $('#' + $(this).data('target')).removeClass('raplsaich-advanced-disabled');
         }
     }).on('change', function () {
         var targetId = $(this).data('target');
         var $section = $('#' + targetId);
-        var key = 'wpaic_adv_' + this.id;
+        var key = 'raplsaich_adv_' + this.id;
         if (this.checked) {
-            $section.removeClass('wpaic-advanced-disabled');
+            $section.removeClass('raplsaich-advanced-disabled');
             try { localStorage.setItem(key, '1'); } catch (e) { /* storage unavailable */ }
         } else {
-            $section.addClass('wpaic-advanced-disabled');
+            $section.addClass('raplsaich-advanced-disabled');
             try { localStorage.removeItem(key); } catch (e) { /* storage unavailable */ }
         }
     });
 
     // Per-language welcome messages: show/hide based on response_language
-    $('#wpaic_response_language').on('change', function() {
-        $('#wpaic-per-language-welcome').toggle($(this).val() === 'auto');
+    $('#raplsaich_response_language').on('change', function() {
+        $('#raplsaich-per-language-welcome').toggle($(this).val() === 'auto');
     });
 
     // Clear individual per-language welcome message
-    $(document).on('click', '.wpaic-reset-welcome-lang', function() {
+    $(document).on('click', '.raplsaich-reset-welcome-lang', function() {
         var targetId = $(this).data('target');
         $('#' + targetId).val('');
     });
 
     // Clear all per-language welcome messages
-    $('#wpaic-reset-all-welcome-langs').on('click', function() {
-        $('#wpaic-per-language-welcome textarea').val('');
+    $('#raplsaich-reset-all-welcome-langs').on('click', function() {
+        $('#raplsaich-per-language-welcome textarea').val('');
     });
 
     // Badge position: update active state and margin labels
-    $('input[name="wpaic_settings[badge_position]"]').on('change', function() {
+    $('input[name="raplsaich_settings[badge_position]"]').on('change', function() {
         var pos = $(this).val();
         var isLeft = (pos === 'bottom-left' || pos === 'top-left');
         var isTop = (pos === 'top-right' || pos === 'top-left');
-        var i18n = (typeof wpaicAdmin !== 'undefined' && wpaicAdmin.i18n) ? wpaicAdmin.i18n : {};
+        var i18n = (typeof raplsaichAdmin !== 'undefined' && raplsaichAdmin.i18n) ? raplsaichAdmin.i18n : {};
         // Update active class on grid
-        $('.wpaic-badge-pos-option').removeClass('active');
-        $(this).closest('.wpaic-badge-pos-option').addClass('active');
+        $('.raplsaich-badge-pos-option').removeClass('active');
+        $(this).closest('.raplsaich-badge-pos-option').addClass('active');
         // Update margin labels
-        $('#wpaic_margin_h_label').text(isLeft ? (i18n.leftLabel || 'Left:') : (i18n.rightLabel || 'Right:'));
-        $('#wpaic_margin_v_label').text(isTop ? (i18n.topLabel || 'Top:') : (i18n.bottomLabel || 'Bottom:'));
+        $('#raplsaich_margin_h_label').text(isLeft ? (i18n.leftLabel || 'Left:') : (i18n.rightLabel || 'Right:'));
+        $('#raplsaich_margin_v_label').text(isTop ? (i18n.topLabel || 'Top:') : (i18n.bottomLabel || 'Bottom:'));
     });
 
 })(jQuery);

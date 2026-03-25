@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_DOCX_Parser {
+class RAPLSAICH_DOCX_Parser {
 
     /**
      * Extract text content from a DOCX file.

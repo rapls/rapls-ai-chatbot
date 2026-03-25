@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class WPAIC_Site_Crawler {
+class RAPLSAICH_Site_Crawler {
 
     /**
      * Transient key for crawl lock (prevent overlapping runs).
      */
-    const LOCK_KEY = 'wpaic_crawl_lock';
+    const LOCK_KEY = 'raplsaich_crawl_lock';
 
     /**
      * Lock timeout in seconds (1 hour).
@@ -22,24 +22,24 @@ class WPAIC_Site_Crawler {
     /**
      * Option key for incremental crawl progress.
      */
-    const PROGRESS_KEY = 'wpaic_crawl_progress';
+    const PROGRESS_KEY = 'raplsaich_crawl_progress';
 
     /**
      * Content extractor
      */
-    private WPAIC_Content_Extractor $extractor;
+    private RAPLSAICH_Content_Extractor $extractor;
 
     /**
      * Content chunker
      */
-    private WPAIC_Content_Chunker $chunker;
+    private RAPLSAICH_Content_Chunker $chunker;
 
     /**
      * Constructor
      */
     public function __construct() {
-        $this->extractor = new WPAIC_Content_Extractor();
-        $this->chunker = new WPAIC_Content_Chunker();
+        $this->extractor = new RAPLSAICH_Content_Extractor();
+        $this->chunker = new RAPLSAICH_Content_Chunker();
     }
 
     /**
@@ -47,7 +47,7 @@ class WPAIC_Site_Crawler {
      * Uses a transient lock to prevent overlapping runs.
      */
     public function crawl_all(): array {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
 
         if (empty($settings['crawler_enabled'])) {
             return ['skipped' => 'Crawler disabled'];
@@ -78,15 +78,15 @@ class WPAIC_Site_Crawler {
         set_transient(self::LOCK_KEY, time(), self::LOCK_TIMEOUT);
 
         // Signal to content extractor that we are in crawl context (avoid shortcode side effects)
-        if (!defined('WPAIC_CRAWLING')) {
-            define('WPAIC_CRAWLING', true);
+        if (!defined('RAPLSAICH_CRAWLING')) {
+            define('RAPLSAICH_CRAWLING', true);
         }
 
         try {
             // Reset incremental progress so we start fresh
             delete_option(self::PROGRESS_KEY);
 
-            $settings = get_option('wpaic_settings', []);
+            $settings = get_option('raplsaich_settings', []);
             $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
             $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
             $exclude_ids = array_map('absint', $settings['crawler_exclude_ids'] ?? []);
@@ -162,8 +162,8 @@ class WPAIC_Site_Crawler {
      * Run one incremental batch.
      */
     private function run_incremental_crawl(array $settings): array {
-        if (!defined('WPAIC_CRAWLING')) {
-            define('WPAIC_CRAWLING', true);
+        if (!defined('RAPLSAICH_CRAWLING')) {
+            define('RAPLSAICH_CRAWLING', true);
         }
         $post_types = $settings['crawler_post_types'] ?? ['post', 'page'];
         $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
@@ -260,15 +260,15 @@ class WPAIC_Site_Crawler {
      */
     private function finish_crawl_cycle(array $results): void {
         delete_option(self::PROGRESS_KEY);
-        update_option('wpaic_last_crawl', current_time('mysql'));
-        update_option('wpaic_last_crawl_results', $results);
+        update_option('raplsaich_last_crawl', current_time('mysql'));
+        update_option('raplsaich_last_crawl_results', $results);
 
         /**
          * Fires after a crawl cycle completes.
          *
          * @param array $results Crawl results with indexed/updated/skipped/errors counts.
          */
-        do_action('wpaic_after_crawl', $results);
+        do_action('raplsaich_after_crawl', $results);
     }
 
     /**
@@ -296,18 +296,18 @@ class WPAIC_Site_Crawler {
         $content_hash = hash('sha256', $content);
 
         // Skip if no changes (differential crawl)
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         $diff_crawl = $settings['pro_features']['diff_crawl_enabled'] ?? true;
-        if ($diff_crawl && WPAIC_Content_Index::hash_exists($post->ID, $content_hash)) {
+        if ($diff_crawl && RAPLSAICH_Content_Index::hash_exists($post->ID, $content_hash)) {
             return 'skipped';
         }
 
         // Check if existing index exists
-        $existing = WPAIC_Content_Index::get_by_post_id($post->ID);
+        $existing = RAPLSAICH_Content_Index::get_by_post_id($post->ID);
         $is_update = !empty($existing);
 
         // Delete existing index
-        WPAIC_Content_Index::delete_by_post_id($post->ID);
+        RAPLSAICH_Content_Index::delete_by_post_id($post->ID);
 
         // Split into chunks
         $chunk_size = $settings['crawler_chunk_size'] ?? 1000;
@@ -318,7 +318,7 @@ class WPAIC_Site_Crawler {
         global $wpdb;
         $chunk_ids = [];
         foreach ($chunks as $index => $chunk) {
-            $insert_result = WPAIC_Content_Index::create([
+            $insert_result = RAPLSAICH_Content_Index::create([
                 'post_id'      => $post->ID,
                 'post_type'    => $post->post_type,
                 'title'        => $post->post_title,
@@ -330,7 +330,7 @@ class WPAIC_Site_Crawler {
             if ($insert_result && $wpdb->insert_id > 0) {
                 $chunk_ids[] = $wpdb->insert_id;
             } else {
-                wpaic_rate_limited_log('crawler_insert_fail', 'WPAIC Crawler: Failed to insert chunk ' . $index . ' for post ' . $post->ID);
+                raplsaich_rate_limited_log('crawler_insert_fail', 'RAPLSAICH Crawler: Failed to insert chunk ' . $index . ' for post ' . $post->ID);
             }
         }
 
@@ -347,12 +347,12 @@ class WPAIC_Site_Crawler {
      * @param int[]    $chunk_ids Corresponding DB row IDs
      */
     private function maybe_generate_embeddings(array $chunks, array $chunk_ids): void {
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (empty($settings['embedding_enabled'])) {
             return;
         }
 
-        $generator = new WPAIC_Embedding_Generator($settings);
+        $generator = new RAPLSAICH_Embedding_Generator($settings);
         if (!$generator->is_configured()) {
             return;
         }
@@ -361,9 +361,9 @@ class WPAIC_Site_Crawler {
             $embeddings = $generator->generate_batch($chunks);
             foreach ($embeddings as $i => $emb) {
                 if ($emb && isset($chunk_ids[$i]) && $chunk_ids[$i] > 0) {
-                    WPAIC_Content_Index::update_embedding(
+                    RAPLSAICH_Content_Index::update_embedding(
                         $chunk_ids[$i],
-                        WPAIC_Vector_Search::pack_embedding($emb),
+                        RAPLSAICH_Vector_Search::pack_embedding($emb),
                         $generator->get_model()
                     );
                 }
@@ -371,7 +371,7 @@ class WPAIC_Site_Crawler {
         } catch (Exception $e) {
             if (defined('WP_DEBUG') && WP_DEBUG) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log('WPAIC embedding generation error: ' . $e->getMessage());
+                error_log('RAPLSAICH embedding generation error: ' . $e->getMessage());
             }
         }
     }
@@ -390,7 +390,7 @@ class WPAIC_Site_Crawler {
         }
 
         // Check settings
-        $settings = get_option('wpaic_settings', []);
+        $settings = get_option('raplsaich_settings', []);
         if (empty($settings['crawler_enabled'])) {
             return;
         }
@@ -416,7 +416,7 @@ class WPAIC_Site_Crawler {
         if ($post->post_status === 'publish') {
             $this->index_post($post);
         } else {
-            WPAIC_Content_Index::delete_by_post_id($post_id);
+            RAPLSAICH_Content_Index::delete_by_post_id($post_id);
         }
     }
 
@@ -424,22 +424,22 @@ class WPAIC_Site_Crawler {
      * Hook on post delete
      */
     public function on_delete_post(int $post_id): void {
-        WPAIC_Content_Index::delete_by_post_id($post_id);
+        RAPLSAICH_Content_Index::delete_by_post_id($post_id);
     }
 
     /**
      * Get crawl status
      */
     public function get_status(): array {
-        $settings = get_option('wpaic_settings', []);
-        $last_crawl = get_option('wpaic_last_crawl', '');
-        $last_results = get_option('wpaic_last_crawl_results', []);
+        $settings = get_option('raplsaich_settings', []);
+        $last_crawl = get_option('raplsaich_last_crawl', '');
+        $last_results = get_option('raplsaich_last_crawl_results', []);
 
         return [
             'enabled'       => !empty($settings['crawler_enabled']),
             'post_types'    => $settings['crawler_post_types'] ?? ['post', 'page'],
             'interval'      => $settings['crawler_interval'] ?? 'daily',
-            'indexed_count' => WPAIC_Content_Index::get_count(),
+            'indexed_count' => RAPLSAICH_Content_Index::get_count(),
             'last_crawl'    => $last_crawl,
             'last_results'  => $last_results,
         ];
