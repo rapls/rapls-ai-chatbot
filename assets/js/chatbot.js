@@ -89,19 +89,17 @@
         selectedImage: null,
         selectedImageData: null,
 
-        // ハンドオフ状態
-        handoffStatus: null,
-        handoffPollTimer: null,
-        lastOperatorMessageId: 0,
-
         // 設定
         config: window.raplsaichConfig || {},
+
+        // Pro extension hooks — registered by chatbot-pro.js
+        _proHooks: {},
 
         /**
          * 初期化
          */
         init: function() {
-            this.bookmarkKey = 'raplsaich_bookmarks_' + (this.config.restUrl || window.location.hostname).replace(/[^a-zA-Z0-9]/g, '_');
+            // bookmarkKey — initialized by Pro
             this.cacheElements();
             if (!this.container) return;
             this.applyBrowserLanguagePlaceholders();
@@ -113,39 +111,13 @@
 
             this.createResizeHandle();
             this.bindEvents();
-            this.loadSession();  // loadLeadConfigはloadSession内で呼ばれる
+            this.loadSession();
             this.loadWindowSize();
-            this.setupAutocomplete();
-            this.setupImageUpload();
-            this.setupScreenshot();
-            this.setupVoiceInput();
-            this.initWelcomeScreen();
-            this.initFullscreenMode();
-            this.initResponseDelay();
-            this.initNotificationSound();
-            this.bindLeadFormEvents();
-            this.initOfflineForm();
-            this.initConversionTracking();
-            this.initChatSearch();
-            this.initBookmarkNav();
-            this.initConversationSharing();
             this.listenForConsentChange();
-            this.initTooltips();
             this.isInitialized = true;
-        },
 
-        /**
-         * ツールチップ初期化: aria-label を title 属性にコピー
-         */
-        initTooltips: function() {
-            if (!this.config.tooltips_enabled) return;
-            var buttons = this.container.querySelectorAll('[aria-label]');
-            for (var i = 0; i < buttons.length; i++) {
-                var label = buttons[i].getAttribute('aria-label');
-                if (label && !buttons[i].title) {
-                    buttons[i].title = label;
-                }
-            }
+            // Pro features initialize here (registered by chatbot-pro.js)
+            this.runProHook('init');
         },
 
         /**
@@ -1016,78 +988,6 @@
         },
 
         /**
-         * Start polling for handoff status and operator messages
-         */
-        startHandoffPolling: function() {
-            var self = this;
-            this.stopHandoffPolling();
-            this.handoffPollTimer = setInterval(function() {
-                self.pollHandoffStatus();
-            }, 5000);
-        },
-
-        /**
-         * Stop handoff polling
-         */
-        stopHandoffPolling: function() {
-            if (this.handoffPollTimer) {
-                clearInterval(this.handoffPollTimer);
-                this.handoffPollTimer = null;
-            }
-        },
-
-        /**
-         * Poll handoff status endpoint
-         */
-        pollHandoffStatus: function() {
-            var self = this;
-            if (!this.sessionId) return;
-
-            var endpoint = '/handoff-status/' + encodeURIComponent(this.sessionId);
-            if (!this.config.is_pro) return;
-            if (this.lastOperatorMessageId) {
-                endpoint += '?last_message_id=' + this.lastOperatorMessageId;
-            }
-
-            this.proApiRequest('GET', endpoint)
-            .then(function(result) {
-                if (!result || !result.success) return;
-                var data = result.data || {};
-
-                // Status change detection
-                if (data.handoff_status !== self.handoffStatus) {
-                    var prevStatus = self.handoffStatus;
-                    self.handoffStatus = data.handoff_status;
-                    var s = self.config.strings || {};
-
-                    if (data.handoff_status === 'active' && prevStatus === 'pending') {
-                        self.addSystemMessage(s.handoff_active || 'Connected with support');
-                    } else if (data.handoff_status === 'resolved' || data.handoff_status === null) {
-                        self.addSystemMessage(s.handoff_resolved || 'Support session ended. You are now chatting with AI again.');
-                        self.stopHandoffPolling();
-                        self.handoffStatus = null;
-                    }
-                    self.showHandoffIndicator(data.handoff_status);
-                }
-
-                // Render new operator messages
-                if (data.messages && data.messages.length > 0) {
-                    data.messages.forEach(function(msg) {
-                        if (msg.role === 'operator') {
-                            self.addMessage('operator', msg.content, null, msg.id);
-                            if (msg.id > self.lastOperatorMessageId) {
-                                self.lastOperatorMessageId = msg.id;
-                            }
-                        }
-                    });
-                }
-            })
-            .catch(function() {
-                // Polling errors are non-critical
-            });
-        },
-
-        /**
          * Add system message (centered notification)
          */
         addSystemMessage: function(text) {
@@ -1154,31 +1054,6 @@
                 });
                 indicator.appendChild(cancelBtn);
             }
-        },
-
-        /**
-         * Cancel handoff and return to AI chat
-         */
-        cancelHandoff: function() {
-            var self = this;
-            var s = this.config.strings || {};
-
-            this.stopHandoffPolling();
-
-            // Call server to reset handoff
-            if (!this.sessionId) return;
-
-            this.proApiRequest('POST', '/handoff-cancel', { session_id: this.sessionId })
-            .then(function() {
-                self.handoffStatus = null;
-                self.showHandoffIndicator(null);
-                self.addSystemMessage(s.handoff_cancelled || 'Returned to AI chat.');
-            })
-            .catch(function() {
-                self.handoffStatus = null;
-                self.showHandoffIndicator(null);
-                self.addSystemMessage(s.handoff_cancelled || 'Returned to AI chat.');
-            });
         },
 
         /**
@@ -1290,20 +1165,7 @@
             contentEl.className = 'chatbot-message__content';
 
             // Add sentiment indicator (Pro feature) - small colored dot
-            if (role === 'bot' && sentiment && sentiment !== 'neutral') {
-                var sentimentEl = document.createElement('span');
-                sentimentEl.className = 'chatbot-sentiment chatbot-sentiment--' + sentiment;
-                var s = this.config.strings || {};
-                var sentimentTitles = {
-                    'frustrated': s.sentiment_frustrated || 'Frustrated',
-                    'confused': s.sentiment_confused || 'Confused',
-                    'urgent': s.sentiment_urgent || 'Urgent',
-                    'positive': s.sentiment_positive || 'Positive',
-                    'negative': s.sentiment_negative || 'Negative'
-                };
-                sentimentEl.title = sentimentTitles[sentiment] || sentiment;
-                contentEl.appendChild(sentimentEl);
-            }
+            // Sentiment indicator — added by Pro via message hook
 
             // Bot/operator messages: safe HTML formatting (line breaks + auto-links, or markdown)
             // User messages: plain text only (no formatting needed)
@@ -1548,69 +1410,7 @@
             }
 
             // Scenario UI (Pro conversation scenarios)
-            if (scenarioData) {
-                var scenarioEl = document.createElement('div');
-                scenarioEl.className = 'chatbot-scenario-ui';
-
-                // Progress bar
-                if (typeof scenarioData.progress === 'number') {
-                    var progressEl = document.createElement('div');
-                    progressEl.className = 'chatbot-scenario-progress';
-
-                    var labelEl = document.createElement('div');
-                    labelEl.className = 'chatbot-scenario-progress__label';
-                    var nameSpan = document.createElement('span');
-                    nameSpan.textContent = scenarioData.name || '';
-                    labelEl.appendChild(nameSpan);
-                    var pctSpan = document.createElement('span');
-                    pctSpan.textContent = scenarioData.progress + '%';
-                    labelEl.appendChild(pctSpan);
-                    progressEl.appendChild(labelEl);
-
-                    var barEl = document.createElement('div');
-                    barEl.className = 'chatbot-scenario-progress__bar';
-                    var fillEl = document.createElement('div');
-                    fillEl.className = 'chatbot-scenario-progress__fill';
-                    fillEl.style.width = scenarioData.progress + '%';
-                    barEl.appendChild(fillEl);
-                    progressEl.appendChild(barEl);
-
-                    scenarioEl.appendChild(progressEl);
-                }
-
-                // Select options as clickable buttons (for input steps with select type)
-                if (scenarioData.input && scenarioData.input.options && scenarioData.input.options.length > 0) {
-                    var optionsEl = document.createElement('div');
-                    optionsEl.className = 'chatbot-scenario-options';
-                    scenarioData.input.options.forEach(function(opt) {
-                        var optBtn = document.createElement('button');
-                        optBtn.type = 'button';
-                        optBtn.className = 'chatbot-scenario-option-btn';
-                        optBtn.textContent = opt;
-                        optBtn.onclick = function() {
-                            optionsEl.remove();
-                            if (self.inputTextarea) {
-                                self.inputTextarea.value = opt;
-                            }
-                            self.handleSubmit();
-                        };
-                        optionsEl.appendChild(optBtn);
-                    });
-                    scenarioEl.appendChild(optionsEl);
-                }
-
-                // Completion indicator
-                if (scenarioData.status === 'completed') {
-                    var completeEl = document.createElement('div');
-                    completeEl.className = 'chatbot-scenario-complete';
-                    completeEl.textContent = '\u2713 ' + (scenarioData.name || ((self.config.strings && self.config.strings.scenario) || 'Scenario')) + ' ' + ((self.config.strings && self.config.strings.scenario_completed) || 'completed');
-                    scenarioEl.appendChild(completeEl);
-                }
-
-                if (scenarioEl.childNodes.length > 0) {
-                    contentEl.appendChild(scenarioEl);
-                }
-            }
+            // Scenario UI — added by Pro via message hook
 
             // Add feedback buttons for bot messages
             if (role === 'bot' && messageId) {
@@ -1641,41 +1441,9 @@
                     actionsEl.appendChild(feedbackEl);
                 }
 
-                // Regenerate button (Pro only, can be disabled in settings)
-                if (this.config.is_pro && this.config.show_regenerate) {
-                    var regenerateBtn = document.createElement('button');
-                    regenerateBtn.type = 'button';
-                    regenerateBtn.className = 'chatbot-regenerate-btn';
-                    regenerateBtn.innerHTML = '🔄';
-                    regenerateBtn.title = (self.config.strings && self.config.strings.regenerate) || 'Regenerate response';
-                    // Read current message_id from DOM each time (may change after regeneration)
-                    regenerateBtn.onclick = function() {
-                        var currentMessageId = parseInt(messageEl.getAttribute('data-message-id'), 10);
-                        self.regenerateResponse(currentMessageId, messageEl);
-                    };
-                    actionsEl.appendChild(regenerateBtn);
-                }
+            // Regenerate UI — added by Pro via message hook
 
-                // Bookmark button (Pro)
-                if (this.config.is_pro && this.config.chat_bookmarks_enabled) {
-                    var bookmarkBtn = document.createElement('button');
-                    bookmarkBtn.type = 'button';
-                    bookmarkBtn.className = 'chatbot-bookmark-btn';
-                    bookmarkBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
-                    bookmarkBtn.title = (self.config.strings && self.config.strings.bookmark) || 'Bookmark this message';
-                    // Check if already bookmarked
-                    var bookmarks = JSON.parse(raplsaichLsGet(self.bookmarkKey) || '[]');
-                    var bmkNumId = parseInt(messageId, 10);
-                    var isBookmarked = !isNaN(bmkNumId) && bookmarks.some(function(b) { return parseInt(b.id, 10) === bmkNumId; });
-                    if (isBookmarked) {
-                        bookmarkBtn.classList.add('raplsaich-bookmarked');
-                        bookmarkBtn.title = (self.config.strings && self.config.strings.bookmarked) || 'Bookmarked';
-                    }
-                    bookmarkBtn.onclick = function() {
-                        self.toggleBookmark(messageId, contentEl, this);
-                    };
-                    actionsEl.appendChild(bookmarkBtn);
-                }
+            // Bookmark UI — added by Pro via message hook
 
                 contentEl.appendChild(actionsEl);
             }
@@ -1683,14 +1451,13 @@
             this.messagesEl.appendChild(messageEl);
 
             // TTS: speak bot responses
-            if (role === 'bot' && content && this.ttsEnabled && this.ttsActive) {
-                this.speakText(content);
-            }
+            // TTS auto-play — handled by Pro via message hook
 
-            // Notification sound on bot message (Pro)
-            if (role === 'bot' && content) {
-                this.playNotificationSound();
-            }
+            // Pro extensions: regenerate, bookmark, sentiment, scenario, TTS, notification sound
+            this.runProHook('message', role, messageEl, {
+                messageId: messageId, content: content, sources: sources,
+                sentiment: sentiment, scenarioData: scenarioData
+            });
 
             // スクロール
             this.scrollToBottom();
@@ -1726,258 +1493,6 @@
             })
             .catch(function(error) {
                 if (self.config.debug) console.error('Feedback error:', error);
-            });
-        },
-
-        /**
-         * Regenerate AI response (Pro feature)
-         */
-        regenerateResponse: function(messageId, messageEl) {
-            var self = this;
-
-            if (this.isLoading) return;
-
-            // Show loading
-            this.setLoading(true);
-
-            // Add loading class to message
-            messageEl.classList.add('chatbot-message--regenerating');
-
-            this.proApiRequest('POST', '/regenerate', {
-                message_id: messageId,
-                session_id: this.sessionId,
-            })
-            .then(function(data) {
-                self.setLoading(false);
-                messageEl.classList.remove('chatbot-message--regenerating');
-
-                if (data.success) {
-                    // Update message content
-                    var contentEl = messageEl.querySelector('.chatbot-message__content');
-                    if (!contentEl) return;
-                    var actionsEl = contentEl.querySelector('.chatbot-message__actions');
-
-                    var formatted = self.formatBotMessage(data.data.content);
-                    contentEl.innerHTML = '';
-                    var textSpan = document.createElement('span');
-                    if (self.config.markdown_enabled) {
-                        textSpan.className = 'raplsaich-markdown';
-                    }
-                    textSpan.appendChild(formatted);
-                    contentEl.appendChild(textSpan);
-
-                    // Re-add sources if any
-                    if (data.data.sources && data.data.sources.length > 0) {
-                        var sourcesEl = document.createElement('div');
-                        sourcesEl.className = 'chatbot-message__sources';
-
-                        var titleEl = document.createElement('div');
-                        titleEl.className = 'chatbot-message__sources-title';
-                        titleEl.textContent = '📄 ' + ((self.config.strings && self.config.strings.sources_title) || 'Reference pages:');
-                        sourcesEl.appendChild(titleEl);
-
-                        data.data.sources.forEach(function(url) {
-                            try {
-                                var parsed = new URL(url);
-                                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
-                            } catch (e) { return; }
-                            var linkEl = document.createElement('a');
-                            linkEl.href = url;
-                            linkEl.target = '_blank';
-                            linkEl.rel = 'noopener noreferrer';
-                            linkEl.textContent = url;
-                            sourcesEl.appendChild(linkEl);
-                        });
-
-                        contentEl.appendChild(sourcesEl);
-                    }
-
-                    // Re-add web sources if any
-                    if (data.data.web_sources && data.data.web_sources.length > 0) {
-                        var webSourcesEl = document.createElement('div');
-                        webSourcesEl.className = 'chatbot-message__sources chatbot-message__web-sources';
-                        var webTitleEl = document.createElement('div');
-                        webTitleEl.className = 'chatbot-message__sources-title';
-                        webTitleEl.textContent = '\uD83C\uDF10 ' + ((self.config.strings && self.config.strings.web_sources_title) || 'Web sources:');
-                        webSourcesEl.appendChild(webTitleEl);
-                        data.data.web_sources.forEach(function(src) {
-                            var wUrl = src.url || '';
-                            var wTitle = src.title || '';
-                            try {
-                                var parsed = new URL(wUrl);
-                                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
-                            } catch (e) { return; }
-                            var linkEl = document.createElement('a');
-                            linkEl.href = wUrl;
-                            linkEl.target = '_blank';
-                            linkEl.rel = 'noopener noreferrer';
-                            linkEl.textContent = wTitle || wUrl;
-                            webSourcesEl.appendChild(linkEl);
-                        });
-                        contentEl.appendChild(webSourcesEl);
-                    }
-
-                    // Re-add content cards if any (RAG source links)
-                    if (data.data.content_cards && data.data.content_cards.length > 0) {
-                        var regenCcContainer = document.createElement('div');
-                        regenCcContainer.className = 'chatbot-content-cards';
-                        data.data.content_cards.forEach(function(cc) {
-                            var ccUrl = cc.url || '';
-                            try {
-                                var parsed = new URL(ccUrl);
-                                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return;
-                            } catch (e) { return; }
-                            var ccLink = document.createElement('a');
-                            ccLink.className = 'chatbot-content-card';
-                            ccLink.href = ccUrl;
-                            ccLink.target = '_blank';
-                            ccLink.rel = 'noopener noreferrer';
-                            var ccType = document.createElement('div');
-                            ccType.className = 'chatbot-content-card__type';
-                            ccType.textContent = cc.type || 'page';
-                            ccLink.appendChild(ccType);
-                            var ccTitle = document.createElement('div');
-                            ccTitle.className = 'chatbot-content-card__title';
-                            ccTitle.textContent = cc.title || ccUrl;
-                            ccLink.appendChild(ccTitle);
-                            if (cc.excerpt) {
-                                var ccExcerpt = document.createElement('div');
-                                ccExcerpt.className = 'chatbot-content-card__excerpt';
-                                ccExcerpt.textContent = cc.excerpt;
-                                ccLink.appendChild(ccExcerpt);
-                            }
-                            regenCcContainer.appendChild(ccLink);
-                        });
-                        contentEl.appendChild(regenCcContainer);
-                    }
-
-                    // Re-add product cards if any (Pro WooCommerce)
-                    if (data.data.product_cards && data.data.product_cards.length > 0) {
-                        var cardsContainer = document.createElement('div');
-                        cardsContainer.className = 'chatbot-product-cards';
-                        data.data.product_cards.forEach(function(card) {
-                            // Validate URL protocol
-                            try {
-                                var rCardParsed = new URL(card.url);
-                                if (rCardParsed.protocol !== 'http:' && rCardParsed.protocol !== 'https:') return;
-                            } catch (e) { return; }
-                            var cardLink = document.createElement('a');
-                            cardLink.className = 'chatbot-product-card';
-                            cardLink.href = card.url;
-                            cardLink.target = '_blank';
-                            cardLink.rel = 'noopener noreferrer';
-                            if (card.image) {
-                                var imgEl = document.createElement('img');
-                                imgEl.className = 'chatbot-product-card__image';
-                                imgEl.src = card.image;
-                                imgEl.alt = card.name;
-                                imgEl.loading = 'lazy';
-                                cardLink.appendChild(imgEl);
-                            }
-                            var infoEl = document.createElement('div');
-                            infoEl.className = 'chatbot-product-card__info';
-                            var nameEl = document.createElement('div');
-                            nameEl.className = 'chatbot-product-card__name';
-                            nameEl.textContent = card.name;
-                            infoEl.appendChild(nameEl);
-                            if (card.price_html) {
-                                var priceEl = document.createElement('div');
-                                priceEl.className = 'chatbot-product-card__price';
-                                priceEl.textContent = card.price_html;
-                                infoEl.appendChild(priceEl);
-                            }
-                            if (!card.in_stock) {
-                                var stockEl = document.createElement('span');
-                                stockEl.className = 'chatbot-product-card__out-of-stock';
-                                stockEl.textContent = (self.config.strings && self.config.strings.out_of_stock) || 'Out of stock';
-                                infoEl.appendChild(stockEl);
-                            }
-                            cardLink.appendChild(infoEl);
-                            cardsContainer.appendChild(cardLink);
-                        });
-                        contentEl.appendChild(cardsContainer);
-                    }
-
-                    // Re-add action buttons if any (Pro intent recognition)
-                    if (data.data.action) {
-                        var regenAction = data.data.action;
-                        var regenActionEl = document.createElement('div');
-                        regenActionEl.className = 'chatbot-action-buttons';
-                        if (regenAction.type === 'redirect' && regenAction.url) {
-                            // Validate URL protocol
-                            try {
-                                var raParsed = new URL(regenAction.url);
-                                if (raParsed.protocol !== 'http:' && raParsed.protocol !== 'https:') regenAction = null;
-                            } catch (e) { regenAction = null; }
-                        }
-                        if (regenAction && regenAction.type === 'redirect' && regenAction.url) {
-                            var rBtn = document.createElement('a');
-                            rBtn.href = regenAction.url;
-                            rBtn.target = '_blank';
-                            rBtn.rel = 'noopener noreferrer';
-                            rBtn.className = 'chatbot-action-btn';
-                            rBtn.textContent = regenAction.label || ((self.config.strings && self.config.strings.open) || 'Open');
-                            regenActionEl.appendChild(rBtn);
-                        } else if (regenAction && regenAction.type === 'link_buttons' && regenAction.links) {
-                            regenAction.links.forEach(function(link) {
-                                // Validate URL protocol
-                                try {
-                                    var rlParsed = new URL(link.url);
-                                    if (rlParsed.protocol !== 'http:' && rlParsed.protocol !== 'https:') return;
-                                } catch (e) { return; }
-                                var lBtn = document.createElement('a');
-                                lBtn.href = link.url;
-                                lBtn.target = '_blank';
-                                lBtn.rel = 'noopener noreferrer';
-                                lBtn.className = 'chatbot-action-btn';
-                                lBtn.textContent = link.label;
-                                regenActionEl.appendChild(lBtn);
-                            });
-                        } else if (regenAction && regenAction.type === 'notify_email' && regenAction.message) {
-                            var rNotice = document.createElement('div');
-                            rNotice.className = 'chatbot-action-notice';
-                            rNotice.textContent = regenAction.message;
-                            regenActionEl.appendChild(rNotice);
-                        }
-                        if (regenActionEl.hasChildNodes()) contentEl.appendChild(regenActionEl);
-                    }
-
-                    // Re-add actions
-                    if (actionsEl) {
-                        contentEl.appendChild(actionsEl);
-                    }
-
-                    // Update message ID
-                    messageEl.setAttribute('data-message-id', data.data.message_id);
-                } else {
-                    if (self.config.debug) console.error('Regenerate error:', data.error);
-                }
-            })
-            .catch(function(error) {
-                self.setLoading(false);
-                messageEl.classList.remove('chatbot-message--regenerating');
-                if (self.config.debug) console.error('Regenerate error:', error);
-            });
-        },
-
-        /**
-         * Fetch and display related question suggestions (Pro feature)
-         */
-        fetchSuggestions: function() {
-            var self = this;
-
-            if (!this.config.is_pro || !this.config.related_suggestions || !this.sessionId) {
-                return;
-            }
-
-            this.proApiRequest('POST', '/suggestions', { session_id: this.sessionId })
-            .then(function(data) {
-                if (data && data.success && data.data && data.data.suggestions && data.data.suggestions.length > 0) {
-                    self.showSuggestions(data.data.suggestions);
-                }
-            })
-            .catch(function() {
-                // Silently ignore errors
             });
         },
 
@@ -2023,68 +1538,6 @@
         },
 
         /**
-         * Setup autocomplete for input (Pro feature)
-         */
-        setupAutocomplete: function() {
-            var self = this;
-
-            if (!this.config.is_pro || !this.config.autocomplete) return;
-
-            // Create autocomplete dropdown
-            this.autocompleteEl = document.createElement('div');
-            this.autocompleteEl.className = 'chatbot-autocomplete';
-            this.autocompleteEl.hidden = true;
-            this.inputForm.appendChild(this.autocompleteEl);
-
-            var debounceTimer;
-            this.inputTextarea.addEventListener('input', function() {
-                clearTimeout(debounceTimer);
-                var query = this.value.trim();
-
-                if (query.length < 2) {
-                    self.autocompleteEl.hidden = true;
-                    return;
-                }
-
-                debounceTimer = setTimeout(function() {
-                    self.fetchAutocomplete(query);
-                }, 300);
-            });
-
-            // Hide on blur
-            var blurTimer = null;
-            this.inputTextarea.addEventListener('blur', function() {
-                if (blurTimer) clearTimeout(blurTimer);
-                blurTimer = setTimeout(function() {
-                    self.autocompleteEl.hidden = true;
-                    blurTimer = null;
-                }, 200);
-            });
-        },
-
-        /**
-         * Fetch autocomplete suggestions
-         */
-        fetchAutocomplete: function(query) {
-            var self = this;
-
-            this.proApiRequest('POST', '/autocomplete', {
-                query: query,
-                session_id: this.sessionId
-            })
-            .then(function(data) {
-                if (data && data.success && data.data && data.data.suggestions && data.data.suggestions.length > 0) {
-                    self.showAutocomplete(data.data.suggestions);
-                } else {
-                    self.autocompleteEl.hidden = true;
-                }
-            })
-            .catch(function() {
-                self.autocompleteEl.hidden = true;
-            });
-        },
-
-        /**
          * Show autocomplete dropdown
          */
         showAutocomplete: function(suggestions) {
@@ -2107,109 +1560,6 @@
             });
 
             this.autocompleteEl.hidden = false;
-        },
-
-        /**
-         * 画像アップロード機能をセットアップ（Pro: マルチモーダル）
-         */
-        setupImageUpload: function() {
-            var self = this;
-            var imageEnabled = this.config.multimodal_enabled;
-            var fileEnabled = this.config.file_upload_enabled;
-
-            // どちらも無効の場合は何もしない
-            if (!imageEnabled && !fileEnabled) {
-                return;
-            }
-
-            // accept属性を構築
-            if (this.imageInput) {
-                var acceptTypes = [];
-                if (imageEnabled) {
-                    acceptTypes.push('image/jpeg', 'image/png', 'image/gif', 'image/webp');
-                }
-                if (fileEnabled) {
-                    var extMap = {
-                        pdf: '.pdf', doc: '.doc', docx: '.docx',
-                        txt: '.txt', csv: '.csv', xls: '.xls',
-                        xlsx: '.xlsx', pptx: '.pptx', rtf: '.rtf', json: '.json'
-                    };
-                    var types = this.config.file_upload_types || [];
-                    for (var i = 0; i < types.length; i++) {
-                        if (extMap[types[i]]) acceptTypes.push(extMap[types[i]]);
-                    }
-                }
-                this.imageInput.setAttribute('accept', acceptTypes.join(','));
-            }
-
-            // アップロードボタンを表示
-            if (this.imageBtn) {
-                this.imageBtn.hidden = false;
-
-                this.imageBtn.addEventListener('click', function() {
-                    self.imageInput.click();
-                });
-            }
-
-            // ファイル選択時の処理
-            if (this.imageInput) {
-                this.imageInput.addEventListener('change', function(e) {
-                    var file = e.target.files[0];
-                    if (file) {
-                        self.handleImageSelect(file);
-                    }
-                });
-            }
-
-            // プレビュー削除ボタン
-            if (this.imagePreviewRemove) {
-                this.imagePreviewRemove.addEventListener('click', function() {
-                    self.clearSelectedImage();
-                });
-            }
-        },
-
-        /**
-         * 画像選択時の処理
-         */
-        handleImageSelect: function(file) {
-            var self = this;
-            var isImage = file.type.indexOf('image/') === 0;
-            var maxSizeKB = isImage
-                ? (this.config.multimodal_max_size || 2048)
-                : (this.config.file_upload_max_size || 5120);
-            var maxSize = maxSizeKB * 1024;
-
-            // ファイルサイズチェック
-            if (file.size > maxSize) {
-                alert(((this.config.strings && this.config.strings.image_too_large) || 'Image is too large. Please select an image under %sKB.').replace('%s', maxSizeKB));
-                this.imageInput.value = '';
-                return;
-            }
-
-            if (isImage) {
-                // 画像タイプチェック
-                var allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                if (allowedTypes.indexOf(file.type) === -1) {
-                    alert((this.config.strings && this.config.strings.image_invalid_format) || 'Unsupported image format. Please select JPEG, PNG, GIF, or WebP.');
-                    this.imageInput.value = '';
-                    return;
-                }
-            }
-
-            // ファイルをBase64に変換
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                self.selectedImage = file;
-                self.selectedImageData = e.target.result;
-                self._selectedFileName = file.name;
-                if (isImage) {
-                    self.showImagePreview(e.target.result);
-                } else {
-                    self.showFilePreview(file.name);
-                }
-            };
-            reader.readAsDataURL(file);
         },
 
         /**
@@ -2263,21 +1613,6 @@
                 this.imagePreviewImg.src = '';
                 this.imagePreviewImg.style.display = '';
             }
-        },
-
-        /**
-         * スクリーンショット機能をセットアップ
-         */
-        setupScreenshot: function() {
-            if (!this.config.screenshot_enabled || !this.screenshotBtn) {
-                return;
-            }
-            var self = this;
-            this.screenshotBtn.hidden = false;
-
-            this.screenshotBtn.addEventListener('click', function() {
-                self.captureScreenshot();
-            });
         },
 
         /**
@@ -2341,80 +1676,6 @@
                     // html2canvas 失敗時: getDisplayMedia フォールバック
                     self._captureViaDisplayMedia();
                 });
-            });
-        },
-
-        /**
-         * html2canvas をローカルから動的に読み込み
-         */
-        _loadHtml2Canvas: function(callback) {
-            if (typeof html2canvas !== 'undefined') {
-                callback();
-                return;
-            }
-            var self = this;
-            var script = document.createElement('script');
-            script.src = this.config.html2canvas_url;
-            script.onload = callback;
-            script.onerror = function() {
-                // CDN 失敗時: getDisplayMedia フォールバック
-                if (self.screenshotBtn) {
-                    self.screenshotBtn.classList.remove('capturing');
-                    self.screenshotBtn.disabled = false;
-                }
-                self._captureViaDisplayMedia();
-            };
-            document.head.appendChild(script);
-        },
-
-        /**
-         * getDisplayMedia フォールバック（画面キャプチャ API）
-         */
-        _captureViaDisplayMedia: function() {
-            var self = this;
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-                return;
-            }
-            navigator.mediaDevices.getDisplayMedia({ video: true }).then(function(stream) {
-                var track = stream.getVideoTracks()[0];
-                // ImageCapture が使える場合
-                if (typeof ImageCapture !== 'undefined') {
-                    var capture = new ImageCapture(track);
-                    capture.grabFrame().then(function(bitmap) {
-                        track.stop();
-                        var canvas = document.createElement('canvas');
-                        canvas.width = bitmap.width;
-                        canvas.height = bitmap.height;
-                        canvas.getContext('2d').drawImage(bitmap, 0, 0);
-                        canvas.toBlob(function(blob) {
-                            if (!blob) return;
-                            var fileName = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png';
-                            var file = new File([blob], fileName, { type: 'image/png' });
-                            self.handleImageSelect(file);
-                        }, 'image/png');
-                    }).catch(function() { track.stop(); });
-                } else {
-                    // video element フォールバック
-                    var video = document.createElement('video');
-                    video.srcObject = stream;
-                    video.onerror = function() { track.stop(); };
-                    video.onloadedmetadata = function() {
-                        video.play().catch(function() {});
-                        var canvas = document.createElement('canvas');
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        canvas.getContext('2d').drawImage(video, 0, 0);
-                        track.stop();
-                        canvas.toBlob(function(blob) {
-                            if (!blob) return;
-                            var fileName = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.png';
-                            var file = new File([blob], fileName, { type: 'image/png' });
-                            self.handleImageSelect(file);
-                        }, 'image/png');
-                    };
-                }
-            }).catch(function() {
-                // ユーザーがキャンセル、またはAPI不可
             });
         },
 
@@ -2633,30 +1894,6 @@
         },
 
         /**
-         * リードフォームのイベントをバインド
-         */
-        bindLeadFormEvents: function() {
-            var self = this;
-
-            if (!this.leadForm) return;
-
-            // フォーム送信
-            this.leadForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                self.submitLeadForm();
-            });
-
-            // スキップボタン
-            var skipBtn = this.leadForm.querySelector('.lead-skip-btn');
-            if (skipBtn) {
-                skipBtn.addEventListener('click', function() {
-                    self.hideLeadForm();
-                    self.showChat();
-                });
-            }
-        },
-
-        /**
          * リードフォームを表示すべきかチェック
          */
         shouldShowLeadForm: function() {
@@ -2664,121 +1901,6 @@
                    this.leadConfig.enabled &&
                    !this.leadSubmitted &&
                    this.leadFormEl;
-        },
-
-        /**
-         * リードフォームを表示
-         */
-        showLeadForm: function() {
-            if (!this.leadConfig || !this.leadFormEl) return;
-
-            var config = this.leadConfig;
-
-            // タイトルと説明を設定
-            var titleEl = this.leadFormEl.querySelector('.lead-form-title');
-            var descEl = this.leadFormEl.querySelector('.lead-form-description');
-            if (titleEl) {
-                titleEl.textContent = config.title || '';
-                titleEl.hidden = !config.title;
-            }
-            if (descEl) descEl.textContent = config.description || '';
-
-            // フィールドを設定
-            var fields = config.fields || {};
-            var formEl = this.leadForm;
-            var buttonsEl = formEl ? formEl.querySelector('.lead-form-buttons') : null;
-
-            // Remove previously injected custom fields (re-show safety)
-            var oldCustom = formEl ? formEl.querySelectorAll('.lead-field-custom') : [];
-            for (var oc = 0; oc < oldCustom.length; oc++) {
-                if (oldCustom[oc].parentNode) {
-                    oldCustom[oc].parentNode.removeChild(oldCustom[oc]);
-                }
-            }
-
-            for (var fieldName in fields) {
-                var fieldConfig = fields[fieldName];
-                var fieldEl = this.leadFormEl.querySelector('.lead-field-' + fieldName);
-
-                if (fieldEl) {
-                    // Built-in field (name, email, phone, company)
-                    fieldEl.hidden = false;
-                    var label = fieldEl.querySelector('label');
-                    var input = fieldEl.querySelector('input');
-
-                    if (label && fieldConfig.label) {
-                        label.textContent = fieldConfig.label;
-                        if (fieldConfig.required) {
-                            var reqSpan = document.createElement('span');
-                            reqSpan.className = 'required';
-                            reqSpan.textContent = '*';
-                            label.appendChild(document.createTextNode(' '));
-                            label.appendChild(reqSpan);
-                        }
-                    }
-                    if (input) {
-                        input.required = fieldConfig.required;
-                    }
-                } else if (fieldConfig.custom && formEl && buttonsEl) {
-                    // Dynamic custom field
-                    var cfDiv = document.createElement('div');
-                    cfDiv.className = 'lead-field lead-field-custom';
-
-                    var cfLabel = document.createElement('label');
-                    cfLabel.setAttribute('for', 'lead-cf-' + fieldName);
-                    cfLabel.textContent = fieldConfig.label || fieldName;
-                    if (fieldConfig.required) {
-                        var cfReq = document.createElement('span');
-                        cfReq.className = 'required';
-                        cfReq.textContent = '*';
-                        cfLabel.appendChild(document.createTextNode(' '));
-                        cfLabel.appendChild(cfReq);
-                    }
-                    cfDiv.appendChild(cfLabel);
-
-                    var cfInput;
-                    if (fieldConfig.type === 'textarea') {
-                        cfInput = document.createElement('textarea');
-                        cfInput.rows = 3;
-                    } else if (fieldConfig.type === 'select') {
-                        cfInput = document.createElement('select');
-                        var defaultOpt = document.createElement('option');
-                        defaultOpt.value = '';
-                        defaultOpt.textContent = '— ' + (fieldConfig.label || fieldName) + ' —';
-                        cfInput.appendChild(defaultOpt);
-                        if (fieldConfig.options && fieldConfig.options.length) {
-                            fieldConfig.options.forEach(function(opt) {
-                                var optEl = document.createElement('option');
-                                optEl.value = opt;
-                                optEl.textContent = opt;
-                                cfInput.appendChild(optEl);
-                            });
-                        }
-                    } else {
-                        cfInput = document.createElement('input');
-                        cfInput.type = fieldConfig.type || 'text';
-                    }
-                    cfInput.id = 'lead-cf-' + fieldName;
-                    cfInput.name = fieldName;
-                    if (fieldConfig.required) {
-                        cfInput.required = true;
-                    }
-                    cfDiv.appendChild(cfInput);
-
-                    formEl.insertBefore(cfDiv, buttonsEl);
-                }
-            }
-
-            // スキップボタンの表示/非表示
-            var skipBtn = this.leadFormEl.querySelector('.lead-skip-btn');
-            if (skipBtn) {
-                skipBtn.hidden = config.required;
-            }
-
-            // フォームを表示、チャットを非表示
-            this.leadFormEl.hidden = false;
-            this.messagesEl.hidden = true;
-            this.inputForm.hidden = true;
         },
 
         /**
@@ -2808,214 +1930,6 @@
             setTimeout(function() {
                 self.scrollToBottom();
             }, 50);
-        },
-
-        /**
-         * リードフォームを送信
-         */
-        submitLeadForm: function() {
-            var self = this;
-
-            if (!this.leadForm) return;
-
-            var submitBtn = this.leadForm.querySelector('.lead-submit-btn');
-            var errorEl = this.leadForm.querySelector('.lead-form-error');
-
-            // エラーをクリア
-            if (errorEl) {
-                errorEl.hidden = true;
-                errorEl.textContent = '';
-            }
-
-            // フォームデータを収集
-            var formData = {
-                session_id: this.sessionId,
-                page_url: window.location.href,
-                name: '',
-                email: '',
-                phone: '',
-                company: ''
-            };
-
-            var nameInput = this.leadForm.querySelector('#lead-name');
-            var emailInput = this.leadForm.querySelector('#lead-email');
-            var phoneInput = this.leadForm.querySelector('#lead-phone');
-            var companyInput = this.leadForm.querySelector('#lead-company');
-
-            if (nameInput) formData.name = nameInput.value.trim();
-            if (emailInput) formData.email = emailInput.value.trim();
-            if (phoneInput) formData.phone = phoneInput.value.trim();
-            if (companyInput) formData.company = companyInput.value.trim();
-
-            // Collect custom field values
-            var customFields = {};
-            var cfEls = this.leadForm.querySelectorAll('.lead-field-custom');
-            for (var ci = 0; ci < cfEls.length; ci++) {
-                var cfInputEl = cfEls[ci].querySelector('input, textarea, select');
-                if (cfInputEl && cfInputEl.name) {
-                    customFields[cfInputEl.name] = (cfInputEl.value || '').trim();
-                }
-            }
-            if (Object.keys(customFields).length > 0) {
-                formData.custom_fields = customFields;
-            }
-
-            // バリデーション
-            var hasError = false;
-            this.leadForm.querySelectorAll('input[required], textarea[required], select[required]').forEach(function(input) {
-                if (!input.value.trim()) {
-                    input.classList.add('error');
-                    hasError = true;
-                } else {
-                    input.classList.remove('error');
-                }
-            });
-
-            // メールバリデーション
-            if (emailInput && emailInput.value && !self.isValidEmail(emailInput.value)) {
-                emailInput.classList.add('error');
-                hasError = true;
-            }
-
-            if (hasError) {
-                if (errorEl) {
-                    errorEl.textContent = (self.config.strings && self.config.strings.required_fields) || 'Please fill in all required fields.';
-                    errorEl.hidden = false;
-                }
-                return;
-            }
-
-            // 送信中状態
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = (self.config.strings && self.config.strings.sending) || 'Sending...';
-            }
-
-            // reCAPTCHAトークンを取得してから送信
-            this.getRecaptchaToken('lead').then(function(token) {
-                if (token) {
-                    formData.recaptcha_token = token;
-                } else if (self.config.recaptcha_enabled) {
-                    // reCAPTCHA is configured but token is empty (script not loaded yet)
-                    if (errorEl) {
-                        errorEl.textContent = (self.config.strings && self.config.strings.recaptcha_loading) || 'Security verification loading. Please try again in a moment.';
-                        errorEl.hidden = false;
-                    }
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = (self.config.strings && self.config.strings.start_chat) || 'Start chat';
-                    }
-                    return Promise.reject('recaptcha_not_ready');
-                }
-
-                return self.proApiRequest('POST', '/lead', formData);
-            })
-            .then(function(data) {
-                if (data.success) {
-                    self.leadSubmitted = true;
-                    raplsaichSsSet('raplsaich_lead_submitted_' + self.sessionId, 'true');
-                    self.hideLeadForm();
-                    self.showChat();
-                } else {
-                    var errMsg = data.error || (self.config.strings && self.config.strings.send_failed) || 'Failed to send.';
-                    if (self.config.debug && data.debug) {
-                        console.error('Server error debug:', data.debug);
-                    }
-                    throw new Error(errMsg);
-                }
-            })
-            .catch(function(error) {
-                // Skip if already handled (e.g. recaptcha_not_ready)
-                if (error === 'recaptcha_not_ready') return;
-                if (self.config.debug) console.error('Lead submit error:', error);
-                if (errorEl) {
-                    errorEl.textContent = error.message || (self.config.strings && self.config.strings.send_failed) || 'Failed to send.';
-                    errorEl.hidden = false;
-                }
-            })
-            .finally(function() {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = (self.config.strings && self.config.strings.start_chat) || 'Start chat';
-                }
-            });
-        },
-
-        /**
-         * Setup voice input (STT) and text-to-speech (TTS)
-         */
-        setupVoiceInput: function() {
-            var self = this;
-            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-            // Voice input (STT)
-            this.micBtn = this.container.querySelector('.chatbot-mic-btn');
-            this.recognition = null;
-            this.isRecording = false;
-
-            if (SpeechRecognition && this.micBtn && this.config.voice_input_enabled) {
-                this.micBtn.hidden = false;
-
-                this.recognition = new SpeechRecognition();
-                this.recognition.continuous = false;
-                this.recognition.interimResults = true;
-                this.recognition.lang = this.config.tts_lang || document.documentElement.lang || 'ja';
-
-                this.recognition.onresult = function(event) {
-                    var transcript = '';
-                    for (var i = event.resultIndex; i < event.results.length; i++) {
-                        transcript += event.results[i][0].transcript;
-                    }
-                    if (self.inputTextarea) {
-                        self.inputTextarea.value = transcript;
-                        self.inputTextarea.style.height = 'auto';
-                        self.inputTextarea.style.height = Math.min(self.inputTextarea.scrollHeight, 100) + 'px';
-                    }
-                };
-
-                this.recognition.onend = function() {
-                    self.stopRecording();
-                    // Auto-send if we got text
-                    if (self.inputTextarea && self.inputTextarea.value.trim()) {
-                        self.inputForm.dispatchEvent(new Event('submit', { cancelable: true }));
-                    }
-                };
-
-                this.recognition.onerror = function(event) {
-                    self.stopRecording();
-                    if (event.error !== 'aborted' && event.error !== 'no-speech') {
-                        if (self.config.debug) {
-                            console.warn('RAPLSAICH Voice: SpeechRecognition error:', event.error);
-                        }
-                    }
-                };
-
-                this.micBtn.addEventListener('click', function() {
-                    if (self.isRecording) {
-                        self.recognition.stop();
-                    } else {
-                        self.startRecording();
-                    }
-                });
-            }
-
-            // TTS toggle
-            this.ttsEnabled = this.config.tts_enabled && ('speechSynthesis' in window);
-            this.ttsActive = false;
-            this.ttsToggle = this.container.querySelector('.chatbot-tts-toggle');
-            if (this.ttsEnabled && this.ttsToggle) {
-                this.ttsToggle.hidden = false;
-                if (this.config.tooltips_enabled) {
-                    this.ttsToggle.title = this.ttsToggle.getAttribute('aria-label') || '';
-                }
-                this.ttsToggle.addEventListener('click', function() {
-                    self.ttsActive = !self.ttsActive;
-                    self.ttsToggle.classList.toggle('active', self.ttsActive);
-                    if (!self.ttsActive) {
-                        window.speechSynthesis.cancel();
-                    }
-                });
-            }
         },
 
         startRecording: function() {
@@ -3073,31 +1987,6 @@
             utterance.lang = this.config.tts_lang || document.documentElement.lang || 'ja';
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
-        },
-
-        /**
-         * Initialize welcome screen (Pro)
-         */
-        initWelcomeScreen: function() {
-            if (!this.config.is_pro || !this.config.welcome_screen_enabled) return;
-            var self = this;
-            var title = this.config.welcome_screen_title || '';
-            var message = this.config.welcome_screen_message || '';
-            if (!title && !message) return;
-
-            this._welcomeScreenActive = true;
-            this._welcomeShown = false;
-            // Guard against double-wrapping if initWelcomeScreen is called twice
-            if (this._welcomeOpenWrapped) return;
-            this._welcomeOpenWrapped = true;
-            var origOpen = this.open.bind(this);
-            this.open = function() {
-                origOpen();
-                if (!self._welcomeShown) {
-                    self._welcomeShown = true;
-                    self._showWelcomeScreenOverlay();
-                }
-            };
         },
 
         /**
@@ -3177,257 +2066,10 @@
         },
 
         /**
-         * Initialize fullscreen mode (Pro)
-         */
-        initFullscreenMode: function() {
-            if (!this.config.is_pro || !this.config.fullscreen_mode) return;
-            if (!this.window) return;
-
-            var self = this;
-            var fsBtn = document.createElement('button');
-            fsBtn.type = 'button';
-            fsBtn.className = 'chatbot-fullscreen-btn';
-            fsBtn.innerHTML = '&#x26F6;';
-            fsBtn.title = (this.config.strings && this.config.strings.fullscreen) || 'Fullscreen';
-            fsBtn.onclick = function() {
-                self.window.classList.toggle('chatbot-window--fullscreen');
-                fsBtn.innerHTML = self.window.classList.contains('chatbot-window--fullscreen') ? '&#x2716;' : '&#x26F6;';
-            };
-
-            var header = this.window.querySelector('.chatbot-header');
-            if (header) {
-                header.style.position = 'relative';
-                fsBtn.style.cssText = 'position: absolute; right: 40px; top: 50%; transform: translateY(-50%); background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; opacity: 0.7;';
-                header.appendChild(fsBtn);
-            }
-        },
-
-        /**
-         * Initialize response delay typing effect (Pro)
-         */
-        initResponseDelay: function() {
-            if (!this.config.is_pro || !this.config.response_delay_enabled) return;
-            this._responseDelayMs = this.config.response_delay_ms || 500;
-        },
-
-        /**
-         * Initialize notification sound (Pro)
-         */
-        initNotificationSound: function() {
-            if (!this.config.is_pro || !this.config.notification_sound_enabled) return;
-            this._notifSoundEnabled = true;
-        },
-
-        /**
-         * Play notification sound when bot message arrives
-         */
-        playNotificationSound: function() {
-            if (!this._notifSoundEnabled) return;
-            try {
-                if (!this._audioCtx) {
-                    this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                var ctx = this._audioCtx;
-                var osc = ctx.createOscillator();
-                var gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = 880;
-                osc.type = 'sine';
-                gain.gain.value = 0.1;
-                osc.start();
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-                osc.stop(ctx.currentTime + 0.3);
-            } catch (e) {
-                // AudioContext not available
-            }
-        },
-
-        initOfflineForm: function() {
-            var config = window.raplsaichConfig || {};
-            var offline = config.offline_message;
-
-            if (!offline || !offline.enabled) return;
-
-            this.isOfflineMode = true;
-
-            // Replace chat area with offline form (DOM API — no innerHTML)
-            var messagesArea = this.messagesEl || this.container.querySelector('.chatbot-messages');
-            if (!messagesArea) return;
-
-            var self = this;
-            var _s = self.config.strings || {};
-
-            // Helper: create element with attributes
-            var el = function(tag, attrs, children) {
-                var node = document.createElement(tag);
-                if (attrs) {
-                    for (var k in attrs) {
-                        if (attrs.hasOwnProperty(k)) { node.setAttribute(k, attrs[k]); }
-                    }
-                }
-                if (children) {
-                    for (var i = 0; i < children.length; i++) {
-                        if (typeof children[i] === 'string') {
-                            node.appendChild(document.createTextNode(children[i]));
-                        } else if (children[i]) {
-                            node.appendChild(children[i]);
-                        }
-                    }
-                }
-                return node;
-            };
-
-            var form = el('form', { id: 'raplsaich-offline-form' }, [
-                el('div', { 'class': 'raplsaich-offline-field' }, [
-                    el('input', { type: 'text', name: 'name', placeholder: (_s.offline_name || 'Name'), 'class': 'raplsaich-offline-input' })
-                ]),
-                el('div', { 'class': 'raplsaich-offline-field' }, [
-                    el('input', { type: 'email', name: 'email', placeholder: (_s.offline_email || 'Email') + ' *', required: '', 'class': 'raplsaich-offline-input' })
-                ]),
-                el('div', { 'class': 'raplsaich-offline-field' }, [
-                    el('textarea', { name: 'message', placeholder: (_s.offline_message || 'Message') + ' *', required: '', rows: '4', 'class': 'raplsaich-offline-input' })
-                ]),
-                // Honeypot field: hidden from real users, bots auto-fill it
-                el('div', { style: 'position:absolute;left:-9999px;top:-9999px;', 'aria-hidden': 'true', tabindex: '-1' }, [
-                    el('input', { type: 'text', name: 'raplsaich_hp', autocomplete: 'off', tabindex: '-1' })
-                ]),
-                // Timing field: records when form was rendered
-                el('input', { type: 'hidden', name: '_ts', value: String(Math.floor(Date.now() / 1000)) }),
-                el('button', { type: 'submit', 'class': 'raplsaich-offline-submit' }, [(_s.offline_send || 'Send Message')]),
-                el('div', { 'class': 'raplsaich-offline-status' })
-            ]);
-
-            var wrapper = el('div', { 'class': 'raplsaich-offline-form' }, [
-                el('div', { 'class': 'raplsaich-offline-header' }, [
-                    el('h3', null, [offline.title || '']),
-                    el('p', null, [offline.description || ''])
-                ]),
-                form
-            ]);
-
-            messagesArea.innerHTML = '';
-            messagesArea.appendChild(wrapper);
-
-            // Hide input area
-            var inputArea = this.container.querySelector('.chatbot-input');
-            if (inputArea) inputArea.style.display = 'none';
-
-            // Bind form submit
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                self.submitOfflineForm(form);
-            });
-        },
-
-        /**
          * Submit offline message form
          */
         /** Timer ID for _dropped retry hint — cleared on re-submit to prevent stale overwrite. */
         _droppedTimer: null,
-
-        submitOfflineForm: function(form) {
-            var self = this;
-            var config = window.raplsaichConfig || {};
-            var statusEl = form.querySelector('.raplsaich-offline-status');
-            var submitBtn = form.querySelector('.raplsaich-offline-submit');
-
-            // Cancel any pending _dropped retry timer from a previous submission.
-            if (self._droppedTimer) {
-                clearTimeout(self._droppedTimer);
-                self._droppedTimer = null;
-            }
-
-            var nameEl = form.querySelector('[name="name"]');
-            var emailEl = form.querySelector('[name="email"]');
-            var messageEl = form.querySelector('[name="message"]');
-
-            var name = nameEl ? nameEl.value : '';
-            var email = emailEl ? emailEl.value : '';
-            var message = messageEl ? messageEl.value : '';
-
-            if (!email || !message) return;
-
-            // Prevent duplicate submission of identical content within 30s.
-            // Uses sessionStorage so the guard survives page reloads within the same tab.
-            var dedupKey = email + '|' + message;
-            try {
-                var lastDedup = JSON.parse(raplsaichSsGet('raplsaich_offline_dedup') || '{}');
-                if (lastDedup.k === dedupKey && lastDedup.t && (Date.now() - lastDedup.t) < 30000) {
-                    return;
-                }
-            } catch (e) { /* sessionStorage unavailable — skip dedup */ }
-
-            submitBtn.disabled = true;
-            var _s = self.config.strings || {};
-            statusEl.textContent = _s.sending || 'Sending...';
-            statusEl.className = 'raplsaich-offline-status';
-
-            // Honeypot (raplsaich_hp) and timing (_ts) for bot detection
-            var honeypot = form.querySelector('[name="raplsaich_hp"]');
-            var tsField = form.querySelector('[name="_ts"]');
-
-            // Ensure _ts is set even if form was rendered late (JS optimization/deferred load)
-            var tsValue = tsField ? parseInt(tsField.value, 10) : 0;
-            if (!tsValue) {
-                tsValue = Math.floor(Date.now() / 1000);
-            }
-
-            var requestBody = {
-                name: name,
-                email: email,
-                message: message,
-                page_url: window.location.href,
-                raplsaich_hp: honeypot ? honeypot.value : '',
-                _ts: tsValue
-            };
-
-            // reCAPTCHAトークンを取得してから送信
-            this.getRecaptchaToken('offline').then(function(token) {
-                if (token) {
-                    requestBody.recaptcha_token = token;
-                } else if (config.recaptcha_enabled) {
-                    // reCAPTCHA is configured but token is empty (script not loaded yet)
-                    statusEl.textContent = _s.recaptcha_loading || 'Security verification loading. Please try again in a moment.';
-                    statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
-                    submitBtn.disabled = false;
-                    return Promise.reject('recaptcha_not_ready');
-                }
-
-                return self.proApiRequest('POST', '/offline-message', requestBody);
-            })
-            .then(function(data) {
-                if (data.success && data._dropped) {
-                    // Request was silently dropped by server-side validation.
-                    // Show a generic processing message, then a retry hint after delay.
-                    // No specific reason is revealed to avoid giving attackers clues.
-                    statusEl.textContent = _s.processing || 'Processing...';
-                    statusEl.className = 'raplsaich-offline-status';
-                    self._droppedTimer = setTimeout(function() {
-                        self._droppedTimer = null;
-                        statusEl.textContent = _s.offline_reload_request || 'Could not complete the request. Please reload the page and try again.';
-                        statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
-                    }, 3000);
-                } else if (data.success) {
-                    try { raplsaichSsSet('raplsaich_offline_dedup', JSON.stringify({ k: dedupKey, t: Date.now() })); } catch (e) { /* ignore */ }
-                    statusEl.textContent = data.data.message || _s.message_sent || 'Message sent!';
-                    statusEl.className = 'raplsaich-offline-status raplsaich-offline-success';
-                    form.reset();
-                } else {
-                    statusEl.textContent = data.error || _s.send_failed || 'Failed to send.';
-                    statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
-                }
-            })
-            .catch(function(err) {
-                // Skip if already handled (e.g. recaptcha_not_ready)
-                if (err === 'recaptcha_not_ready') return;
-                statusEl.textContent = _s.send_failed_retry || 'Failed to send. Please try again.';
-                statusEl.className = 'raplsaich-offline-status raplsaich-offline-error';
-            })
-            .finally(function() {
-                submitBtn.disabled = false;
-            });
-        },
 
         /**
          * Generate a unique request ID for deduplication.
@@ -3751,53 +2393,6 @@
          */
         conversionTrackingInitialized: false,
 
-        initConversionTracking: function() {
-            var config = window.raplsaichConfig || {};
-            if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
-                return;
-            }
-            // WP Consent API: conversion tracking requires statistics or marketing consent
-            if (!raplsaichHasConsent('statistics') && !raplsaichHasConsent('marketing')) {
-                return;
-            }
-
-            var self = this;
-            var goals = config.conversion_goals;
-
-            // Check current URL against goals on page load (for SPA or redirect-back scenarios)
-            this.checkConversionGoals(goals);
-
-            // Only install History API hooks once to prevent accumulation on consent changes
-            if (this.conversionTrackingInitialized) {
-                return;
-            }
-            this.conversionTrackingInitialized = true;
-
-            // Monitor navigation via History API
-            var originalPushState = history.pushState;
-            history.pushState = function() {
-                originalPushState.apply(this, arguments);
-                // Re-check consent at call time (may have been revoked since hook was installed)
-                if (raplsaichHasConsent('statistics') || raplsaichHasConsent('marketing')) {
-                    self.checkConversionGoals(goals);
-                }
-            };
-
-            var originalReplaceState = history.replaceState;
-            history.replaceState = function() {
-                originalReplaceState.apply(this, arguments);
-                if (raplsaichHasConsent('statistics') || raplsaichHasConsent('marketing')) {
-                    self.checkConversionGoals(goals);
-                }
-            };
-
-            window.addEventListener('popstate', function() {
-                if (raplsaichHasConsent('statistics') || raplsaichHasConsent('marketing')) {
-                    self.checkConversionGoals(goals);
-                }
-            });
-        },
-
         /**
          * Re-check conversion goals after session is ready
          */
@@ -3847,218 +2442,6 @@
         },
 
         /**
-         * Send conversion tracking API call
-         */
-        trackConversion: function(sessionId, goalName, trackingKey) {
-            var self = this;
-            this.proApiRequest('POST', '/conversion', {
-                session_id: sessionId,
-                goal: goalName
-            }).then(function(data) {
-                if (data.success && trackingKey) {
-                    raplsaichSsSet(trackingKey, '1');
-                }
-            }).catch(function() {
-                // Silently fail - will retry on next page load
-            });
-        },
-
-        /**
-         * Toggle bookmark for a message
-         */
-        toggleBookmark: function(messageId, textEl, btnEl) {
-            var numId = parseInt(messageId, 10);
-            if (isNaN(numId)) return;
-            var bookmarks = JSON.parse(raplsaichLsGet(this.bookmarkKey) || '[]');
-            var idx = -1;
-            for (var i = 0; i < bookmarks.length; i++) {
-                if (parseInt(bookmarks[i].id, 10) === numId) { idx = i; break; }
-            }
-            if (idx >= 0) {
-                bookmarks.splice(idx, 1);
-                btnEl.classList.remove('raplsaich-bookmarked');
-                btnEl.title = (this.config.strings && this.config.strings.bookmark) || 'Bookmark this message';
-            } else {
-                bookmarks.push({
-                    id: numId,
-                    content: textEl ? textEl.textContent.substring(0, 500) : '',
-                    timestamp: Date.now()
-                });
-                btnEl.classList.add('raplsaich-bookmarked');
-                btnEl.title = (this.config.strings && this.config.strings.bookmarked) || 'Bookmarked';
-            }
-            raplsaichLsSet(this.bookmarkKey, JSON.stringify(bookmarks));
-        },
-
-        /**
-         * Initialize chat search (Pro)
-         */
-        initChatSearch: function() {
-            if (!this.config.is_pro || !this.config.chat_search_enabled) return;
-            if (!this.window) return;
-
-            var self = this;
-            var header = this.window.querySelector('.chatbot-header');
-            if (!header) return;
-
-            // Search toggle button in header
-            var searchBtn = document.createElement('button');
-            searchBtn.type = 'button';
-            searchBtn.className = 'chatbot-search-btn';
-            searchBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>';
-            searchBtn.title = (this.config.strings && this.config.strings.search_placeholder) || 'Search messages...';
-            var closeBtn = header.querySelector('.chatbot-close');
-            if (closeBtn) {
-                header.insertBefore(searchBtn, closeBtn);
-            } else {
-                header.appendChild(searchBtn);
-            }
-
-            // Search bar (hidden by default)
-            var searchBar = document.createElement('div');
-            searchBar.className = 'chatbot-search-bar';
-            searchBar.hidden = true;
-
-            var searchInput = document.createElement('input');
-            searchInput.type = 'text';
-            searchInput.className = 'chatbot-search-input';
-            searchInput.placeholder = (this.config.strings && this.config.strings.search_placeholder) || 'Search messages...';
-
-            // Navigation buttons ▲▼
-            var searchNav = document.createElement('div');
-            searchNav.className = 'chatbot-search-nav';
-
-            var prevBtn = document.createElement('button');
-            prevBtn.type = 'button';
-            prevBtn.className = 'chatbot-search-nav-btn';
-            prevBtn.innerHTML = '&#9650;';
-            prevBtn.title = (this.config.strings && this.config.strings.search_prev) || 'Previous match';
-
-            var nextBtn = document.createElement('button');
-            nextBtn.type = 'button';
-            nextBtn.className = 'chatbot-search-nav-btn';
-            nextBtn.innerHTML = '&#9660;';
-            nextBtn.title = (this.config.strings && this.config.strings.search_next) || 'Next match';
-
-            var countEl = document.createElement('span');
-            countEl.className = 'chatbot-search-count';
-
-            searchNav.appendChild(countEl);
-            searchNav.appendChild(prevBtn);
-            searchNav.appendChild(nextBtn);
-
-            searchBar.appendChild(searchInput);
-            searchBar.appendChild(searchNav);
-
-            // Insert search bar after header
-            var messagesEl = this.window.querySelector('.chatbot-messages');
-            if (messagesEl) {
-                messagesEl.parentNode.insertBefore(searchBar, messagesEl);
-            }
-
-            // Search state
-            var searchMatches = [];
-            var currentMatchIdx = -1;
-
-            function updateSearchMatches(query) {
-                // Clear previous
-                searchMatches = [];
-                currentMatchIdx = -1;
-                var messages = self.messagesEl.querySelectorAll('.chatbot-message');
-                for (var i = 0; i < messages.length; i++) {
-                    var msg = messages[i];
-                    msg.classList.remove('chatbot-search-highlight', 'chatbot-search-current');
-                    if (!query) {
-                        msg.style.display = '';
-                    } else {
-                        var text = msg.textContent.toLowerCase();
-                        if (text.indexOf(query) !== -1) {
-                            msg.style.display = '';
-                            msg.classList.add('chatbot-search-highlight');
-                            searchMatches.push(msg);
-                        } else {
-                            msg.style.display = 'none';
-                        }
-                    }
-                }
-                updateCountDisplay();
-                if (searchMatches.length > 0) {
-                    jumpToMatch(0);
-                }
-            }
-
-            function jumpToMatch(idx) {
-                if (searchMatches.length === 0) return;
-                // Remove current marker from previous
-                if (currentMatchIdx >= 0 && currentMatchIdx < searchMatches.length) {
-                    searchMatches[currentMatchIdx].classList.remove('chatbot-search-current');
-                }
-                currentMatchIdx = idx;
-                var el = searchMatches[currentMatchIdx];
-                el.classList.add('chatbot-search-current');
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                updateCountDisplay();
-            }
-
-            function updateCountDisplay() {
-                if (searchMatches.length === 0) {
-                    countEl.textContent = searchInput.value.trim() ? '0/0' : '';
-                } else {
-                    countEl.textContent = (currentMatchIdx + 1) + '/' + searchMatches.length;
-                }
-            }
-
-            // Toggle search bar
-            searchBtn.onclick = function() {
-                searchBar.hidden = !searchBar.hidden;
-                if (!searchBar.hidden) {
-                    searchInput.focus();
-                } else {
-                    searchInput.value = '';
-                    self.clearSearchHighlight();
-                    searchMatches = [];
-                    currentMatchIdx = -1;
-                    countEl.textContent = '';
-                }
-            };
-
-            // Filter messages on input
-            searchInput.addEventListener('input', function() {
-                updateSearchMatches(this.value.toLowerCase().trim());
-            });
-
-            // ▲ Previous match
-            prevBtn.onclick = function() {
-                if (searchMatches.length === 0) return;
-                var idx = currentMatchIdx - 1;
-                if (idx < 0) idx = searchMatches.length - 1;
-                jumpToMatch(idx);
-            };
-
-            // ▼ Next match
-            nextBtn.onclick = function() {
-                if (searchMatches.length === 0) return;
-                var idx = currentMatchIdx + 1;
-                if (idx >= searchMatches.length) idx = 0;
-                jumpToMatch(idx);
-            };
-
-            // Enter = next, Shift+Enter = previous
-            searchInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (e.shiftKey) {
-                        prevBtn.onclick();
-                    } else {
-                        nextBtn.onclick();
-                    }
-                } else if (e.key === 'Escape') {
-                    searchBtn.onclick();
-                }
-            });
-        },
-
-        /**
          * Clear search highlight from messages
          */
         clearSearchHighlight: function() {
@@ -4068,206 +2451,6 @@
                 messages[i].style.display = '';
                 messages[i].classList.remove('chatbot-search-highlight', 'chatbot-search-current');
             }
-        },
-
-        /**
-         * Initialize bookmark navigation (Pro)
-         */
-        initBookmarkNav: function() {
-            if (!this.config.is_pro || !this.config.chat_bookmarks_enabled) return;
-            if (!this.window) return;
-
-            var self = this;
-            var header = this.window.querySelector('.chatbot-header');
-            if (!header) return;
-
-            // Bookmark toggle button in header
-            var bmkBtn = document.createElement('button');
-            bmkBtn.type = 'button';
-            bmkBtn.className = 'chatbot-bookmark-nav-toggle';
-            bmkBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>';
-            bmkBtn.title = (this.config.strings && this.config.strings.bookmark_nav) || 'Navigate bookmarks';
-            var closeBtn = header.querySelector('.chatbot-close');
-            var searchBtn = header.querySelector('.chatbot-search-btn');
-            // Insert after search button, or before close
-            var insertRef = searchBtn ? searchBtn.nextSibling : closeBtn;
-            if (insertRef) {
-                header.insertBefore(bmkBtn, insertRef);
-            } else {
-                header.appendChild(bmkBtn);
-            }
-
-            // Navigation bar (hidden by default)
-            var navBar = document.createElement('div');
-            navBar.className = 'chatbot-bookmark-bar';
-            navBar.hidden = true;
-
-            var prevBtn = document.createElement('button');
-            prevBtn.type = 'button';
-            prevBtn.className = 'chatbot-search-nav-btn';
-            prevBtn.innerHTML = '&#9650;';
-            prevBtn.title = (this.config.strings && this.config.strings.bookmark_prev) || 'Previous bookmark';
-
-            var nextBtn = document.createElement('button');
-            nextBtn.type = 'button';
-            nextBtn.className = 'chatbot-search-nav-btn';
-            nextBtn.innerHTML = '&#9660;';
-            nextBtn.title = (this.config.strings && this.config.strings.bookmark_next) || 'Next bookmark';
-
-            var countEl = document.createElement('span');
-            countEl.className = 'chatbot-search-count';
-
-            var labelEl = document.createElement('span');
-            labelEl.className = 'chatbot-bookmark-bar-label';
-            labelEl.textContent = (this.config.strings && this.config.strings.bookmarked) || 'Bookmarked';
-
-            navBar.appendChild(labelEl);
-            navBar.appendChild(countEl);
-            navBar.appendChild(prevBtn);
-            navBar.appendChild(nextBtn);
-
-            // Insert after header (before search bar or messages)
-            var messagesEl = this.window.querySelector('.chatbot-messages');
-            var searchBar = this.window.querySelector('.chatbot-search-bar');
-            var insertBeforeEl = searchBar || messagesEl;
-            if (insertBeforeEl && insertBeforeEl.parentNode) {
-                insertBeforeEl.parentNode.insertBefore(navBar, insertBeforeEl);
-            }
-
-            // State
-            var bmkMatches = [];
-            var currentBmkIdx = -1;
-
-            function collectBookmarkedMessages() {
-                bmkMatches = [];
-                currentBmkIdx = -1;
-                var bookmarks = JSON.parse(raplsaichLsGet(self.bookmarkKey) || '[]');
-                if (bookmarks.length === 0) return;
-                var bmkIds = {};
-                for (var i = 0; i < bookmarks.length; i++) {
-                    bmkIds[parseInt(bookmarks[i].id, 10)] = true;
-                }
-                var messages = self.messagesEl.querySelectorAll('.chatbot-message[data-message-id]');
-                for (var j = 0; j < messages.length; j++) {
-                    var mid = parseInt(messages[j].getAttribute('data-message-id'), 10);
-                    if (bmkIds[mid]) {
-                        bmkMatches.push(messages[j]);
-                    }
-                }
-            }
-
-            function jumpToBmk(idx) {
-                if (bmkMatches.length === 0) return;
-                // Remove previous highlight
-                if (currentBmkIdx >= 0 && currentBmkIdx < bmkMatches.length) {
-                    bmkMatches[currentBmkIdx].classList.remove('chatbot-bookmark-current');
-                }
-                currentBmkIdx = idx;
-                var el = bmkMatches[currentBmkIdx];
-                el.classList.add('chatbot-bookmark-current');
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                updateBmkCount();
-            }
-
-            function updateBmkCount() {
-                if (bmkMatches.length === 0) {
-                    countEl.textContent = '0/0';
-                } else {
-                    countEl.textContent = (currentBmkIdx + 1) + '/' + bmkMatches.length;
-                }
-            }
-
-            function clearBmkHighlight() {
-                for (var i = 0; i < bmkMatches.length; i++) {
-                    bmkMatches[i].classList.remove('chatbot-bookmark-current');
-                }
-                bmkMatches = [];
-                currentBmkIdx = -1;
-            }
-
-            // Toggle bookmark nav bar
-            bmkBtn.onclick = function() {
-                navBar.hidden = !navBar.hidden;
-                if (!navBar.hidden) {
-                    collectBookmarkedMessages();
-                    updateBmkCount();
-                    if (bmkMatches.length > 0) {
-                        jumpToBmk(0);
-                    }
-                } else {
-                    clearBmkHighlight();
-                    countEl.textContent = '';
-                }
-            };
-
-            prevBtn.onclick = function() {
-                if (bmkMatches.length === 0) return;
-                var idx = currentBmkIdx - 1;
-                if (idx < 0) idx = bmkMatches.length - 1;
-                jumpToBmk(idx);
-            };
-
-            nextBtn.onclick = function() {
-                if (bmkMatches.length === 0) return;
-                var idx = currentBmkIdx + 1;
-                if (idx >= bmkMatches.length) idx = 0;
-                jumpToBmk(idx);
-            };
-        },
-
-        /**
-         * Initialize conversation sharing (Pro)
-         */
-        initConversationSharing: function() {
-            if (!this.config.is_pro || !this.config.conversation_sharing_enabled) return;
-            if (!this.window) return;
-
-            var self = this;
-            var header = this.window.querySelector('.chatbot-header');
-            if (!header) return;
-
-            var shareBtn = document.createElement('button');
-            shareBtn.type = 'button';
-            shareBtn.className = 'chatbot-share-btn';
-            shareBtn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
-            shareBtn.title = (this.config.strings && this.config.strings.share_conversation) || 'Copy conversation';
-
-            // Insert before close button
-            var closeBtn = header.querySelector('.chatbot-close');
-            if (closeBtn) {
-                header.insertBefore(shareBtn, closeBtn);
-            } else {
-                header.appendChild(shareBtn);
-            }
-
-            shareBtn.onclick = function() {
-                var messages = self.messagesEl.querySelectorAll('.chatbot-message');
-                var text = '';
-                for (var i = 0; i < messages.length; i++) {
-                    var msg = messages[i];
-                    var role = 'AI';
-                    if (msg.classList.contains('chatbot-message--user')) role = 'User';
-                    else if (msg.classList.contains('chatbot-message--operator')) role = 'Operator';
-                    else if (msg.classList.contains('chatbot-message--system')) role = 'System';
-                    var contentEl = msg.querySelector('.chatbot-message__content');
-                    if (contentEl) {
-                        text += role + ': ' + contentEl.textContent.trim() + '\n\n';
-                    }
-                }
-                if (!text) return;
-
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(text.trim()).then(function() {
-                        var origTitle = shareBtn.title;
-                        shareBtn.title = (self.config.strings && self.config.strings.share_copied) || 'Conversation copied to clipboard';
-                        shareBtn.classList.add('chatbot-share-btn--copied');
-                        setTimeout(function() {
-                            shareBtn.title = origTitle;
-                            shareBtn.classList.remove('chatbot-share-btn--copied');
-                        }, 2000);
-                    }).catch(function() { /* clipboard permission denied */ });
-                }
-            };
         },
 
 
@@ -4280,6 +2463,27 @@
                 return Promise.resolve({ success: false, error: 'Pro required' });
             }
             return this.apiRequest(method, endpoint, data);
+        },
+
+        /**
+         * Register a Pro extension hook.
+         * @param {string}   name  Hook name ('init', 'message', 'open', 'close').
+         * @param {function} fn    Callback, invoked with this = RaplsaichChatbot.
+         */
+        registerProHook: function(name, fn) {
+            if (!this._proHooks[name]) this._proHooks[name] = [];
+            this._proHooks[name].push(fn);
+        },
+
+        /**
+         * Execute all registered Pro hooks for a given name.
+         */
+        runProHook: function(name) {
+            var hooks = this._proHooks[name];
+            if (!hooks || !hooks.length) return;
+            var args = Array.prototype.slice.call(arguments, 1);
+            var self = this;
+            hooks.forEach(function(fn) { fn.apply(self, args); });
         },
 
         isValidEmail: function(email) {
