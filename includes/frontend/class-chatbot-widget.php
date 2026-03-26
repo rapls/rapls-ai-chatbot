@@ -453,7 +453,10 @@ class RAPLSAICH_Chatbot_Widget {
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
 
-        // Only allow free themes if Pro is not active
+        // Fall back to default if the selected theme's CSS is not available
+        if (!in_array($widget_theme, $free_themes, true) && !wp_style_is('raplsaich-pro-themes', 'registered')) {
+            $widget_theme = 'default';
+        }
 
         $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
 
@@ -564,6 +567,10 @@ class RAPLSAICH_Chatbot_Widget {
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
 
+        // Fall back to default if the selected theme's CSS is not available
+        if (!in_array($widget_theme, $free_themes, true) && !wp_style_is('raplsaich-pro-themes', 'registered')) {
+            $widget_theme = 'default';
+        }
 
         $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
         if (!empty($settings['dark_mode'])) {
