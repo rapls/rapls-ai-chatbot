@@ -1044,11 +1044,12 @@
             if (!this.sessionId) return;
 
             var endpoint = '/handoff-status/' + encodeURIComponent(this.sessionId);
+            if (!this.config.is_pro) return;
             if (this.lastOperatorMessageId) {
                 endpoint += '?last_message_id=' + this.lastOperatorMessageId;
             }
 
-            this.apiRequest('GET', endpoint)
+            this.proApiRequest('GET', endpoint)
             .then(function(result) {
                 if (!result || !result.success) return;
                 var data = result.data || {};
@@ -1167,7 +1168,7 @@
             // Call server to reset handoff
             if (!this.sessionId) return;
 
-            this.apiRequest('POST', '/handoff-cancel', { session_id: this.sessionId })
+            this.proApiRequest('POST', '/handoff-cancel', { session_id: this.sessionId })
             .then(function() {
                 self.handoffStatus = null;
                 self.showHandoffIndicator(null);
@@ -1742,7 +1743,7 @@
             // Add loading class to message
             messageEl.classList.add('chatbot-message--regenerating');
 
-            this.apiRequest('POST', '/regenerate', {
+            this.proApiRequest('POST', '/regenerate', {
                 message_id: messageId,
                 session_id: this.sessionId,
             })
@@ -1969,7 +1970,7 @@
                 return;
             }
 
-            this.apiRequest('POST', '/suggestions', { session_id: this.sessionId })
+            this.proApiRequest('POST', '/suggestions', { session_id: this.sessionId })
             .then(function(data) {
                 if (data && data.success && data.data && data.data.suggestions && data.data.suggestions.length > 0) {
                     self.showSuggestions(data.data.suggestions);
@@ -2067,7 +2068,7 @@
         fetchAutocomplete: function(query) {
             var self = this;
 
-            this.apiRequest('POST', '/autocomplete', {
+            this.proApiRequest('POST', '/autocomplete', {
                 query: query,
                 session_id: this.sessionId
             })
@@ -2907,7 +2908,7 @@
                     return Promise.reject('recaptcha_not_ready');
                 }
 
-                return self.apiRequest('POST', '/lead', formData);
+                return self.proApiRequest('POST', '/lead', formData);
             })
             .then(function(data) {
                 if (data.success) {
@@ -3393,7 +3394,7 @@
                     return Promise.reject('recaptcha_not_ready');
                 }
 
-                return self.apiRequest('POST', '/offline-message', requestBody);
+                return self.proApiRequest('POST', '/offline-message', requestBody);
             })
             .then(function(data) {
                 if (data.success && data._dropped) {
@@ -3850,7 +3851,7 @@
          */
         trackConversion: function(sessionId, goalName, trackingKey) {
             var self = this;
-            this.apiRequest('POST', '/conversion', {
+            this.proApiRequest('POST', '/conversion', {
                 session_id: sessionId,
                 goal: goalName
             }).then(function(data) {
@@ -4267,6 +4268,18 @@
                     }).catch(function() { /* clipboard permission denied */ });
                 }
             };
+        },
+
+
+        /**
+         * Pro API request — delegates to apiRequest only when Pro is active.
+         * Free version never calls Pro endpoints directly.
+         */
+        proApiRequest: function(method, endpoint, data) {
+            if (!this.config.is_pro) {
+                return Promise.resolve({ success: false, error: 'Pro required' });
+            }
+            return this.apiRequest(method, endpoint, data);
         },
 
         isValidEmail: function(email) {

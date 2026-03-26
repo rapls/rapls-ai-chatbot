@@ -71,11 +71,11 @@ class RAPLSAICH_Chatbot_Widget {
         $theme_class = trim($theme_class);
 
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
-        $pro_features = $settings['pro_features'] ?? [];
-        $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
-        $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
-        $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
-        $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
+        $ext_settings = $settings['pro_features'] ?? [];
+        $badge_icon_type = $ext_settings['badge_icon_type'] ?? 'default';
+        $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
+        $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
+        $badge_icon_emoji = $ext_settings['badge_icon_emoji'] ?? '';
 
         // Multi-bot: shortcode bot attribute overrides widget settings (Pro)
         $primary_color = '';
@@ -273,7 +273,7 @@ class RAPLSAICH_Chatbot_Widget {
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
 
         // Pro features settings (values read by filter, not by Free directly)
-        $pro_features = $settings['pro_features'] ?? [];
+        $ext_settings = $settings['pro_features'] ?? [];
 
         $config = [
             'restUrl'             => rest_url('rapls-ai-chatbot/v1/'),
@@ -292,7 +292,7 @@ class RAPLSAICH_Chatbot_Widget {
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
-            'show_regenerate'      => !empty($pro_features['show_regenerate_button']),
+            'show_regenerate'      => !empty($ext_settings['show_regenerate_button']),
             'badge_position'       => $badge_position,
             'save_history'         => !empty($settings['save_history']),
             'quick_replies'        => RAPLSAICH_Extensions::get_instance()->get_quick_replies(),
@@ -367,7 +367,7 @@ class RAPLSAICH_Chatbot_Widget {
          * @param array $settings Plugin settings.
          * @param array $pro_features Pro features settings.
          */
-        $config = apply_filters('raplsaich_frontend_config', $config, $settings, $pro_features);
+        $config = apply_filters('raplsaich_frontend_config', $config, $settings, $ext_settings);
 
         wp_localize_script('raplsaich-chatbot', 'raplsaichConfig', $config);
     }
@@ -411,11 +411,11 @@ class RAPLSAICH_Chatbot_Widget {
 
         // Badge icon settings
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
-        $pro_features = $settings['pro_features'] ?? [];
-        $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
-        $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
-        $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
-        $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
+        $ext_settings = $settings['pro_features'] ?? [];
+        $badge_icon_type = $ext_settings['badge_icon_type'] ?? 'default';
+        $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
+        $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
+        $badge_icon_emoji = $ext_settings['badge_icon_emoji'] ?? '';
 
         // Multi-bot: check page rules for bot assignment (Pro)
         $primary_color = '';
@@ -521,11 +521,11 @@ class RAPLSAICH_Chatbot_Widget {
         $theme_class = trim($theme_class);
 
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
-        $pro_features = $settings['pro_features'] ?? [];
-        $badge_icon_type = $pro_features['badge_icon_type'] ?? 'default';
-        $badge_icon_preset = $pro_features['badge_icon_preset'] ?? '';
-        $badge_icon_image = $pro_features['badge_icon_image'] ?? '';
-        $badge_icon_emoji = $pro_features['badge_icon_emoji'] ?? '';
+        $ext_settings = $settings['pro_features'] ?? [];
+        $badge_icon_type = $ext_settings['badge_icon_type'] ?? 'default';
+        $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
+        $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
+        $badge_icon_emoji = $ext_settings['badge_icon_emoji'] ?? '';
 
         // Enqueue styles/scripts (needed for wp_head output)
         $this->is_inline = true;
@@ -650,8 +650,8 @@ wp_footer();
     /**
      * Get offline message configuration for frontend
      */
-    private function get_offline_config(array $pro_features): array {
-        if (empty($pro_features['offline_message_enabled'])) {
+    private function get_offline_config(array $ext_settings): array {
+        if (empty($ext_settings['offline_message_enabled'])) {
             return ['enabled' => false];
         }
 
@@ -665,8 +665,8 @@ wp_footer();
 
         return [
             'enabled'     => true,
-            'title'       => $pro_features['offline_form_title'] ?? __('We are currently offline', 'rapls-ai-chatbot'),
-            'description' => $pro_features['offline_form_description'] ?? __('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
+            'title'       => $ext_settings['offline_form_title'] ?? __('We are currently offline', 'rapls-ai-chatbot'),
+            'description' => $ext_settings['offline_form_description'] ?? __('Please leave a message and we will get back to you.', 'rapls-ai-chatbot'),
         ];
     }
 

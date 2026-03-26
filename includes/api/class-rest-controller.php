@@ -927,12 +927,12 @@ class RAPLSAICH_REST_Controller {
             do_action('raplsaich_knowledge_hits', $related_content);
 
             // Response cache check (Pro feature)
-            $pro_settings = $settings['pro_features'] ?? [];
-            $cache_enabled = !empty($pro_settings['response_cache_enabled']);
+            $ext_settings = $settings['pro_features'] ?? [];
+            $cache_enabled = !empty($ext_settings['response_cache_enabled']);
             $cache_hash = null;
 
             if ($cache_enabled) {
-                $cache_ttl = (int) ($pro_settings['cache_ttl_days'] ?? 7);
+                $cache_ttl = (int) ($ext_settings['cache_ttl_days'] ?? 7);
                 $cache_hash = RAPLSAICH_Message::build_cache_hash($message, $context, $bot_id);
                 $cached = RAPLSAICH_Message::find_cached_response($cache_hash, $cache_ttl);
 
@@ -1752,13 +1752,13 @@ class RAPLSAICH_REST_Controller {
         }
 
         $settings = get_option('raplsaich_settings', []);
-        $pro_settings = $settings['pro_features'] ?? [];
-        if (empty($pro_settings['file_upload_enabled'])) {
+        $ext_settings = $settings['pro_features'] ?? [];
+        if (empty($ext_settings['file_upload_enabled'])) {
             return new WP_Error('file_upload_disabled', __('File upload is not enabled.', 'rapls-ai-chatbot'));
         }
 
         // Check file size
-        $max_size_kb = (int) ($pro_settings['file_upload_max_size'] ?? 5120);
+        $max_size_kb = (int) ($ext_settings['file_upload_max_size'] ?? 5120);
         $comma_pos = strpos($value, ',');
         if ($comma_pos === false) {
             return new WP_Error('invalid_file', __('Invalid file data.', 'rapls-ai-chatbot'));
@@ -1780,7 +1780,7 @@ class RAPLSAICH_REST_Controller {
         }
 
         // Validate MIME type against allowed file types
-        $allowed_types = $pro_settings['file_upload_types'] ?? ['pdf', 'doc', 'docx', 'txt', 'csv'];
+        $allowed_types = $ext_settings['file_upload_types'] ?? ['pdf', 'doc', 'docx', 'txt', 'csv'];
         $ext_to_mime = [
             'pdf'  => ['application/pdf'],
             'doc'  => ['application/msword'],
@@ -2233,7 +2233,7 @@ class RAPLSAICH_REST_Controller {
         // Check Pro enhanced rate limit first
         $pro_features = RAPLSAICH_Extensions::get_instance();
         $pro_settings = get_option('raplsaich_settings', []);
-        $pro_feat_settings = $pro_settings['pro_features'] ?? [];
+        $pro_feat_settings = $ext_settings['pro_features'] ?? [];
 
         // Enhanced rate limit hook (Pro adds via filter)
         $enhanced_result = apply_filters('raplsaich_enhanced_rate_limit', null, $pro_feat_settings);
@@ -2885,11 +2885,11 @@ class RAPLSAICH_REST_Controller {
 
         try {
             $settings = get_option('raplsaich_settings', []);
-            $pro_settings = $settings['pro_features'] ?? [];
+            $ext_settings = $settings['pro_features'] ?? [];
 
             // Lead capture requires Pro to be active AND setting enabled.
             // Prevents stale DB values from enabling lead form when Pro is deactivated.
-            $is_enabled = raplsaich_is_pro_active() && !empty($pro_settings['lead_capture_enabled']);
+            $is_enabled = raplsaich_is_pro_active() && !empty($ext_settings['lead_capture_enabled']);
 
             if (!$is_enabled) {
                 return new WP_REST_Response([
@@ -2903,7 +2903,7 @@ class RAPLSAICH_REST_Controller {
 
             // Build fields configuration
             $fields = [];
-            $lead_fields = $pro_settings['lead_fields'] ?? [];
+            $lead_fields = $ext_settings['lead_fields'] ?? [];
 
             foreach ($lead_fields as $field_name => $field_config) {
                 if (!empty($field_config['enabled'])) {
@@ -2916,7 +2916,7 @@ class RAPLSAICH_REST_Controller {
             }
 
             // Append custom fields
-            $custom_fields = $pro_settings['lead_custom_fields'] ?? [];
+            $custom_fields = $ext_settings['lead_custom_fields'] ?? [];
             foreach ($custom_fields as $cf) {
                 $key = $cf['key'] ?? '';
                 if ($key === '') {
@@ -2938,9 +2938,9 @@ class RAPLSAICH_REST_Controller {
                 'success' => true,
                 'data'    => [
                     'enabled'     => true,
-                    'required'    => !empty($pro_settings['lead_capture_required']),
-                    'title'       => $pro_settings['lead_form_title'] ?? __('Before we start', 'rapls-ai-chatbot'),
-                    'description' => $pro_settings['lead_form_description'] ?? __('Please enter your information', 'rapls-ai-chatbot'),
+                    'required'    => !empty($ext_settings['lead_capture_required']),
+                    'title'       => $ext_settings['lead_form_title'] ?? __('Before we start', 'rapls-ai-chatbot'),
+                    'description' => $ext_settings['lead_form_description'] ?? __('Please enter your information', 'rapls-ai-chatbot'),
                     'fields'      => $fields,
                 ],
             ], 200));
