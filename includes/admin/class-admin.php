@@ -913,7 +913,7 @@ class RAPLSAICH_Admin {
         $usage_stats = RAPLSAICH_Cost_Calculator::get_usage_stats(30);
         $chart_data = RAPLSAICH_Cost_Calculator::get_chart_data(30);
 
-        $pro = RAPLSAICH_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Extensions::get_instance();
         $message_limit = $pro->get_message_limit();
         $is_unlimited = ($message_limit === PHP_INT_MAX);
         $remaining_messages = $is_unlimited ? null : $pro->get_remaining_messages();
@@ -1998,7 +1998,7 @@ class RAPLSAICH_Admin {
             wp_send_json_error(__('Invalid conversation ID.', 'rapls-ai-chatbot'));
         }
 
-        $pro = RAPLSAICH_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Extensions::get_instance();
         $pro->cancel_handoff($conversation_id);
 
         wp_send_json_success(__('Handoff status reset.', 'rapls-ai-chatbot'));
@@ -2028,7 +2028,7 @@ class RAPLSAICH_Admin {
         }
 
         // Check FAQ limit (always passes in Free — no artificial limits)
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Extensions::get_instance();
         if (!$pro_features->can_add_faq()) {
             wp_send_json_error(__('Unable to add knowledge entry.', 'rapls-ai-chatbot'));
         }
@@ -2092,7 +2092,7 @@ class RAPLSAICH_Admin {
             }
 
             // Check FAQ limit (always passes in Free — no artificial limits)
-            $pro_features = RAPLSAICH_Pro_Features::get_instance();
+            $pro_features = RAPLSAICH_Extensions::get_instance();
             if (!$pro_features->can_add_faq()) {
                 wp_send_json_error(__('Unable to import knowledge file.', 'rapls-ai-chatbot'));
             }

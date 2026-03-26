@@ -11,11 +11,11 @@ if (!defined('ABSPATH')) {
 }
 
 // Guard: if the real Pro implementation was loaded first, skip this stub.
-if (class_exists('RAPLSAICH_Pro_Features', false)) {
+if (class_exists('RAPLSAICH_Extensions', false)) {
     return;
 }
 
-class RAPLSAICH_Pro_Features {
+class RAPLSAICH_Extensions {
 
     /**
      * Free version limits (no artificial limits — users pay their own API costs)
@@ -26,12 +26,12 @@ class RAPLSAICH_Pro_Features {
     /**
      * Singleton instance (protected for Pro override)
      */
-    protected static ?RAPLSAICH_Pro_Features $instance = null;
+    protected static ?RAPLSAICH_Extensions $instance = null;
 
     /**
      * Get singleton instance
      */
-    public static function get_instance(): RAPLSAICH_Pro_Features {
+    public static function get_instance(): RAPLSAICH_Extensions {
         if (self::$instance === null) {
             self::$instance = new self();
         }
@@ -41,7 +41,7 @@ class RAPLSAICH_Pro_Features {
     /**
      * Set instance (for Pro plugin override)
      */
-    public static function set_instance(RAPLSAICH_Pro_Features $instance): void {
+    public static function set_instance(RAPLSAICH_Extensions $instance): void {
         self::$instance = $instance;
     }
 

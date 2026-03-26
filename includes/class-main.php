@@ -84,8 +84,8 @@ class RAPLSAICH_Main {
      */
     private function load_dependencies() {
         // Pro features stubs (for compatibility — skipped if Pro already loaded)
-        if (!class_exists('RAPLSAICH_Pro_Features', false)) {
-            require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-pro-features.php';
+        if (!class_exists('RAPLSAICH_Extensions', false)) {
+            require_once RAPLSAICH_PLUGIN_DIR . 'includes/class-extensions.php';
         }
 
         // Parsers

@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 }
 
 $total_pages = ceil($total / 20);
-$pro_features = RAPLSAICH_Pro_Features::get_instance();
+$pro_features = RAPLSAICH_Extensions::get_instance();
 $faq_count = RAPLSAICH_Knowledge::get_count();
 $faq_limit = $pro_features->get_faq_limit();
 $faq_limit_reached = !$pro_features->can_add_faq();

@@ -571,7 +571,7 @@ class RAPLSAICH_REST_Controller {
 
         // Multi-bot: resolve bot configuration (Pro feature)
         $bot_id = sanitize_key($request->get_param('bot_id') ?? 'default');
-        $bot_config = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($bot_id);
+        $bot_config = RAPLSAICH_Extensions::get_instance()->resolve_bot_config($bot_id);
 
         // Multi-bot coordination (intent-based / round-robin routing)
         $bot_config = apply_filters('raplsaich_resolve_bot_config', $bot_config, $message);
@@ -720,7 +720,7 @@ class RAPLSAICH_REST_Controller {
 
         // Check rate limit (Pro enhanced or basic)
         // Bypass rate limit for handoff keyword messages so users can always reach support
-        $is_handoff = RAPLSAICH_Pro_Features::get_instance()->is_handoff_keyword($message);
+        $is_handoff = RAPLSAICH_Extensions::get_instance()->is_handoff_keyword($message);
         if (!$is_handoff) {
             $rate_limit_result = $this->check_rate_limit();
             if ($rate_limit_result !== true) {
@@ -736,7 +736,7 @@ class RAPLSAICH_REST_Controller {
             }
         }
 
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Extensions::get_instance();
 
         /**
          * Filter: Pre-chat validation hook.
@@ -2231,7 +2231,7 @@ class RAPLSAICH_REST_Controller {
      */
     private function check_rate_limit() {
         // Check Pro enhanced rate limit first
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Extensions::get_instance();
         $pro_settings = get_option('raplsaich_settings', []);
         $pro_feat_settings = $pro_settings['pro_features'] ?? [];
 
@@ -2969,7 +2969,7 @@ class RAPLSAICH_REST_Controller {
             return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
+        $pro_features = RAPLSAICH_Extensions::get_instance();
         $remaining = $pro_features->get_remaining_messages();
 
         // Return only UI-necessary fields.

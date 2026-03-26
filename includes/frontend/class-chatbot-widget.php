@@ -82,7 +82,7 @@ class RAPLSAICH_Chatbot_Widget {
         $shortcode_bot_id = '';
         if (!empty($atts['bot'])) {
             $shortcode_bot_id = sanitize_key($atts['bot']);
-            $sc_bot_config = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($shortcode_bot_id);
+            $sc_bot_config = RAPLSAICH_Extensions::get_instance()->resolve_bot_config($shortcode_bot_id);
             if ($sc_bot_config) {
                 if (!empty($sc_bot_config['name'])) {
                     $bot_name = $sc_bot_config['name'];
@@ -169,9 +169,9 @@ class RAPLSAICH_Chatbot_Widget {
         // Multi-bot: override primary color if a bot is assigned to this page
         $page_id = get_queried_object_id();
         if ($page_id) {
-            $bot_id = RAPLSAICH_Pro_Features::get_instance()->get_bot_for_page($page_id);
+            $bot_id = RAPLSAICH_Extensions::get_instance()->get_bot_for_page($page_id);
             if ($bot_id !== 'default') {
-                $bot_cfg = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($bot_id);
+                $bot_cfg = RAPLSAICH_Extensions::get_instance()->resolve_bot_config($bot_id);
                 if ($bot_cfg && !empty($bot_cfg['primary_color'])) {
                     $bot_color = sanitize_hex_color($bot_cfg['primary_color']);
                     if ($bot_color) {
@@ -213,7 +213,7 @@ class RAPLSAICH_Chatbot_Widget {
 
         // Powered by footer is now conditionally rendered in the template (not hidden via CSS)
         $pro_settings = $settings['pro_features'] ?? [];
-        $pro = RAPLSAICH_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Extensions::get_instance();
 
         // White label: custom CSS (strip dangerous strings to prevent style breakout)
         if (!empty($pro_settings['custom_css'])) {
@@ -295,7 +295,7 @@ class RAPLSAICH_Chatbot_Widget {
             'show_regenerate'      => !empty($pro_features['show_regenerate_button']),
             'badge_position'       => $badge_position,
             'save_history'         => !empty($settings['save_history']),
-            'quick_replies'        => RAPLSAICH_Pro_Features::get_instance()->get_quick_replies(),
+            'quick_replies'        => RAPLSAICH_Extensions::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
             // raplsaich_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
@@ -421,9 +421,9 @@ class RAPLSAICH_Chatbot_Widget {
         $primary_color = '';
         $page_id = get_queried_object_id();
         if ($page_id) {
-            $page_bot_id = RAPLSAICH_Pro_Features::get_instance()->get_bot_for_page($page_id);
+            $page_bot_id = RAPLSAICH_Extensions::get_instance()->get_bot_for_page($page_id);
             if ($page_bot_id !== 'default') {
-                $page_bot_config = RAPLSAICH_Pro_Features::get_instance()->resolve_bot_config($page_bot_id);
+                $page_bot_config = RAPLSAICH_Extensions::get_instance()->resolve_bot_config($page_bot_id);
                 if ($page_bot_config) {
                     if (!empty($page_bot_config['name'])) {
                         $bot_name = $page_bot_config['name'];
@@ -656,7 +656,7 @@ wp_footer();
         }
 
         // Check if currently outside business hours
-        $pro = RAPLSAICH_Pro_Features::get_instance();
+        $pro = RAPLSAICH_Extensions::get_instance();
         $is_offline = !$pro->is_within_business_hours();
 
         if (!$is_offline) {
