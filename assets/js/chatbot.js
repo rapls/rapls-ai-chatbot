@@ -503,7 +503,7 @@
                 }
                 // セッション確定後にコンバージョンゴールを再チェック
                 // （initConversionTracking時点ではsessionIdが未設定の場合があるため）
-                self.recheckConversionGoals();
+                // conversion tracking handled by Pro
             };
 
             if (!this.sessionId) {
@@ -924,7 +924,7 @@
                                 self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario, response.data.related_knowledge);
                                 self.fetchSuggestions();
                                 self.saveContext();
-                                self.recheckConversionGoals();
+                                // conversion tracking handled by Pro
                             }
 
                             if (response.data && response.data.handoff_triggered) {
@@ -1497,104 +1497,6 @@
         },
 
         /**
-         * Display suggestion buttons
-         */
-        showSuggestions: function(suggestions) {
-            var self = this;
-
-            // Remove existing suggestions
-            var existing = this.messagesEl.querySelector('.chatbot-suggestions');
-            if (existing) existing.remove();
-
-            var suggestionsEl = document.createElement('div');
-            suggestionsEl.className = 'chatbot-suggestions';
-
-            var titleEl = document.createElement('div');
-            titleEl.className = 'chatbot-suggestions__title';
-            titleEl.textContent = (this.config.strings && this.config.strings.suggestions_title) || 'You might also ask:';
-            suggestionsEl.appendChild(titleEl);
-
-            var buttonsEl = document.createElement('div');
-            buttonsEl.className = 'chatbot-suggestions__buttons';
-
-            suggestions.forEach(function(suggestion) {
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'chatbot-suggestion-btn';
-                btn.textContent = suggestion;
-                btn.onclick = function() {
-                    suggestionsEl.remove();
-                    if (self.inputTextarea) {
-                        self.inputTextarea.value = suggestion;
-                    }
-                    self.handleSubmit();
-                };
-                buttonsEl.appendChild(btn);
-            });
-
-            suggestionsEl.appendChild(buttonsEl);
-            this.messagesEl.appendChild(suggestionsEl);
-            this.scrollToBottom();
-        },
-
-        /**
-         * Show autocomplete dropdown
-         */
-        showAutocomplete: function(suggestions) {
-            var self = this;
-
-            this.autocompleteEl.innerHTML = '';
-
-            suggestions.forEach(function(suggestion) {
-                var item = document.createElement('div');
-                item.className = 'chatbot-autocomplete__item';
-                item.textContent = suggestion;
-                item.onclick = function() {
-                    if (self.inputTextarea) {
-                        self.inputTextarea.value = suggestion;
-                        self.inputTextarea.focus();
-                    }
-                    self.autocompleteEl.hidden = true;
-                };
-                self.autocompleteEl.appendChild(item);
-            });
-
-            this.autocompleteEl.hidden = false;
-        },
-
-        /**
-         * ファイルプレビューを表示（非画像）
-         */
-        showFilePreview: function(fileName) {
-            if (this.imagePreview) {
-                if (this.imagePreviewImg) {
-                    this.imagePreviewImg.style.display = 'none';
-                }
-                // ファイル名を表示
-                var nameEl = this.imagePreview.querySelector('.file-preview-name');
-                if (!nameEl) {
-                    nameEl = document.createElement('span');
-                    nameEl.className = 'file-preview-name';
-                    nameEl.style.cssText = 'padding:8px 12px;font-size:13px;color:#333;display:flex;align-items:center;gap:6px;';
-                    this.imagePreview.insertBefore(nameEl, this.imagePreview.firstChild);
-                }
-                nameEl.textContent = '📄 ' + fileName;
-                nameEl.style.display = 'flex';
-                this.imagePreview.hidden = false;
-            }
-        },
-
-        /**
-         * 画像プレビューを表示
-         */
-        showImagePreview: function(dataUrl) {
-            if (this.imagePreview && this.imagePreviewImg) {
-                this.imagePreviewImg.src = dataUrl;
-                this.imagePreview.hidden = false;
-            }
-        },
-
-        /**
          * 選択した画像をクリア
          */
         clearSelectedImage: function() {
@@ -1613,70 +1515,6 @@
                 this.imagePreviewImg.src = '';
                 this.imagePreviewImg.style.display = '';
             }
-        },
-
-        /**
-         * スクリーンショットをキャプチャ
-         */
-        captureScreenshot: function() {
-            var self = this;
-            var btn = this.screenshotBtn;
-            btn.classList.add('capturing');
-            btn.disabled = true;
-
-            // html2canvas を動的に読み込み
-            this._loadHtml2Canvas(function() {
-                // ページ全体（チャットウィジェット含む）をキャプチャ
-                // eslint-disable-next-line no-undef
-                html2canvas(document.body, {
-                    useCORS: true,
-                    allowTaint: true,
-                    scale: 1,
-                    logging: false,
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                    x: window.scrollX,
-                    y: window.scrollY
-                }).then(function(canvas) {
-                    btn.classList.remove('capturing');
-                    btn.disabled = false;
-
-                    // Canvas → Blob → File (JPEG for smaller size)
-                    canvas.toBlob(function(blob) {
-                        if (!blob) return;
-                        // 2MB制限チェック — 超えた場合は縮小
-                        if (blob.size > 1900000) {
-                            var img = new Image();
-                            img.onload = function() {
-                                var ratio = Math.sqrt(1900000 / blob.size);
-                                var c = document.createElement('canvas');
-                                c.width = Math.round(img.width * ratio);
-                                c.height = Math.round(img.height * ratio);
-                                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-                                c.toBlob(function(smallBlob) {
-                                    if (!smallBlob) return;
-                                    var fn = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.jpg';
-                                    self.handleImageSelect(new File([smallBlob], fn, { type: 'image/jpeg' }));
-                                }, 'image/jpeg', 0.7);
-                                URL.revokeObjectURL(img.src);
-                            };
-                            img.onerror = function() {
-                                URL.revokeObjectURL(img.src);
-                            };
-                            img.src = URL.createObjectURL(blob);
-                            return;
-                        }
-                        var fileName = 'screenshot-' + new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.jpg';
-                        var file = new File([blob], fileName, { type: 'image/jpeg' });
-                        self.handleImageSelect(file);
-                    }, 'image/jpeg', 0.8);
-                }).catch(function() {
-                    btn.classList.remove('capturing');
-                    btn.disabled = false;
-                    // html2canvas 失敗時: getDisplayMedia フォールバック
-                    self._captureViaDisplayMedia();
-                });
-            });
         },
 
         /**
@@ -1930,125 +1768,6 @@
             setTimeout(function() {
                 self.scrollToBottom();
             }, 50);
-        },
-
-        startRecording: function() {
-            if (!this.recognition) return;
-            try {
-                this.isRecording = true;
-                this.micBtn.classList.add('recording');
-                this.micBtn.querySelector('.chatbot-mic-icon').style.display = 'none';
-                this.micBtn.querySelector('.chatbot-mic-stop-icon').style.display = '';
-                if (this.inputTextarea) {
-                    this.inputTextarea.value = '';
-                    this.inputTextarea.placeholder = (this.config.strings && this.config.strings.listening) || 'Listening...';
-                }
-                this.recognition.start();
-            } catch (e) {
-                this.stopRecording();
-            }
-        },
-
-        stopRecording: function() {
-            this.isRecording = false;
-            if (this.micBtn) {
-                this.micBtn.classList.remove('recording');
-                var micIcon = this.micBtn.querySelector('.chatbot-mic-icon');
-                var stopIcon = this.micBtn.querySelector('.chatbot-mic-stop-icon');
-                if (micIcon) micIcon.style.display = '';
-                if (stopIcon) stopIcon.style.display = 'none';
-            }
-            if (this.inputTextarea) {
-                this.inputTextarea.placeholder = (this.config.strings && this.config.strings.placeholder) || 'Type a message...';
-            }
-        },
-
-        /**
-         * Speak text using browser TTS
-         */
-        speakText: function(text) {
-            if (!this.ttsEnabled || !this.ttsActive) return;
-            // Strip markdown/HTML for cleaner speech
-            var clean = text
-                .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // [text](url) → text
-                .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')  // ![alt](url) → alt
-                .replace(/```[\s\S]*?```/g, '')             // code blocks
-                .replace(/`([^`]+)`/g, '$1')                // inline code
-                .replace(/<[^>]*>/g, '')                     // HTML tags
-                .replace(/[#*_~>|]/g, '')                    // remaining markdown chars
-                .replace(/\n{2,}/g, '. ')                    // paragraphs to pauses
-                .trim();
-            if (!clean) return;
-            // Limit to first 500 chars to avoid long speeches
-            if (clean.length > 500) {
-                clean = clean.substring(0, 500);
-            }
-            var utterance = new SpeechSynthesisUtterance(clean);
-            utterance.lang = this.config.tts_lang || document.documentElement.lang || 'ja';
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        },
-
-        /**
-         * Build and display the welcome screen overlay (Pro)
-         */
-        _showWelcomeScreenOverlay: function() {
-            var self = this;
-            var title = this.config.welcome_screen_title || '';
-            var message = this.config.welcome_screen_message || '';
-            var buttons = this.config.welcome_screen_buttons || [];
-
-            var welcomeEl = document.createElement('div');
-            welcomeEl.className = 'chatbot-welcome-screen';
-            if (title) {
-                var titleEl = document.createElement('div');
-                titleEl.className = 'chatbot-welcome-title';
-                titleEl.textContent = title;
-                welcomeEl.appendChild(titleEl);
-            }
-            if (message) {
-                var msgEl = document.createElement('div');
-                msgEl.className = 'chatbot-welcome-message';
-                msgEl.textContent = message;
-                welcomeEl.appendChild(msgEl);
-            }
-            if (buttons.length > 0) {
-                var btnsEl = document.createElement('div');
-                btnsEl.className = 'chatbot-welcome-buttons';
-                buttons.forEach(function(btn) {
-                    var btnEl = document.createElement('button');
-                    btnEl.type = 'button';
-                    btnEl.className = 'chatbot-welcome-btn';
-                    btnEl.textContent = btn;
-                    btnEl.onclick = function() {
-                        self._dismissWelcomeScreen();
-                        if (self.inputTextarea) {
-                            self.inputTextarea.value = btn;
-                        }
-                        self.handleSubmit();
-                    };
-                    btnsEl.appendChild(btnEl);
-                });
-                welcomeEl.appendChild(btnsEl);
-            }
-            // "Start Chat" button if no custom buttons
-            if (buttons.length === 0) {
-                var startBtn = document.createElement('button');
-                startBtn.type = 'button';
-                startBtn.className = 'chatbot-welcome-btn';
-                startBtn.textContent = (this.config.strings && this.config.strings.start_chat) || 'Start Chat';
-                startBtn.onclick = function() {
-                    self._dismissWelcomeScreen();
-                };
-                welcomeEl.appendChild(startBtn);
-            }
-
-            this._welcomeScreenEl = welcomeEl;
-            // Insert as overlay on top of messages area
-            if (this.messagesEl) {
-                this.messagesEl.parentNode.insertBefore(welcomeEl, this.messagesEl);
-                this.messagesEl.style.display = 'none';
-            }
         },
 
         /**
@@ -2392,66 +2111,6 @@
          * Initialize conversion tracking
          */
         conversionTrackingInitialized: false,
-
-        /**
-         * Re-check conversion goals after session is ready
-         */
-        recheckConversionGoals: function() {
-            var config = window.raplsaichConfig || {};
-            if (!config.conversion_tracking || !config.conversion_goals || !config.conversion_goals.length) {
-                return;
-            }
-            if (!raplsaichHasConsent('statistics') && !raplsaichHasConsent('marketing')) {
-                return;
-            }
-            if (!this.sessionId) return;
-            this.checkConversionGoals(config.conversion_goals);
-        },
-
-        /**
-         * Check current URL against conversion goals
-         */
-        checkConversionGoals: function(goals) {
-            var currentUrl = window.location.href;
-            var sessionId = this.sessionId;
-
-            if (!sessionId) return;
-
-            // Check if already tracked this session
-            var trackingKey = 'raplsaich_converted_' + sessionId;
-            if (raplsaichSsGet(trackingKey)) return;
-
-            for (var i = 0; i < goals.length; i++) {
-                var goal = goals[i];
-                if (!goal.url_pattern) continue;
-
-                var matched = false;
-                try {
-                    var regex = new RegExp(goal.url_pattern);
-                    matched = regex.test(currentUrl);
-                } catch (e) {
-                    // Invalid regex pattern - try simple contains match
-                    matched = currentUrl.indexOf(goal.url_pattern) !== -1;
-                }
-
-                if (matched) {
-                    this.trackConversion(sessionId, goal.name || '', trackingKey);
-                    break;
-                }
-            }
-        },
-
-        /**
-         * Clear search highlight from messages
-         */
-        clearSearchHighlight: function() {
-            if (!this.messagesEl) return;
-            var messages = this.messagesEl.querySelectorAll('.chatbot-message');
-            for (var i = 0; i < messages.length; i++) {
-                messages[i].style.display = '';
-                messages[i].classList.remove('chatbot-search-highlight', 'chatbot-search-current');
-            }
-        },
 
 
         /**
