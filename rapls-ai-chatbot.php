@@ -474,6 +474,42 @@ function raplsaich_run()
 
     $plugin = new RAPLSAICH_Main();
     $plugin->run();
+
+    // Backward-compatibility aliases for Pro plugin (which still uses WPAIC_ prefix).
+    // These allow Pro to reference the old class names without fatal errors.
+    $raplsaich_aliases = [
+        'WPAIC_Pro_Features'      => 'RAPLSAICH_Pro_Features',
+        'WPAIC_Admin'             => 'RAPLSAICH_Admin',
+        'WPAIC_REST_Controller'   => 'RAPLSAICH_REST_Controller',
+        'WPAIC_Main'              => 'RAPLSAICH_Main',
+        'WPAIC_Conversation'      => 'RAPLSAICH_Conversation',
+        'WPAIC_Message'           => 'RAPLSAICH_Message',
+        'WPAIC_Knowledge'         => 'RAPLSAICH_Knowledge',
+        'WPAIC_Lead'              => 'RAPLSAICH_Lead',
+        'WPAIC_Content_Index'     => 'RAPLSAICH_Content_Index',
+        'WPAIC_Site_Crawler'      => 'RAPLSAICH_Site_Crawler',
+        'WPAIC_Search_Engine'     => 'RAPLSAICH_Search_Engine',
+        'WPAIC_Cost_Calculator'   => 'RAPLSAICH_Cost_Calculator',
+        'WPAIC_Activator'         => 'RAPLSAICH_Activator',
+        'WPAIC_OpenAI_Provider'   => 'RAPLSAICH_OpenAI_Provider',
+        'WPAIC_Claude_Provider'   => 'RAPLSAICH_Claude_Provider',
+        'WPAIC_Gemini_Provider'   => 'RAPLSAICH_Gemini_Provider',
+        'WPAIC_OpenRouter_Provider' => 'RAPLSAICH_OpenRouter_Provider',
+        'WPAIC_Vector_Search'     => 'RAPLSAICH_Vector_Search',
+        'WPAIC_Embedding_Generator' => 'RAPLSAICH_Embedding_Generator',
+        'WPAIC_Content_Extractor' => 'RAPLSAICH_Content_Extractor',
+        'WPAIC_Content_Chunker'   => 'RAPLSAICH_Content_Chunker',
+        'WPAIC_Chatbot_Widget'    => 'RAPLSAICH_Chatbot_Widget',
+        'WPAIC_Loader'            => 'RAPLSAICH_Loader',
+        'WPAIC_MCP_Server'        => 'RAPLSAICH_MCP_Server',
+        'WPAIC_DOCX_Parser'       => 'RAPLSAICH_DOCX_Parser',
+        'WPAIC_PDF_Parser'        => 'RAPLSAICH_PDF_Parser',
+    ];
+    foreach ($raplsaich_aliases as $old => $new) {
+        if (class_exists($new, false) && !class_exists($old, false)) {
+            class_alias($new, $old);
+        }
+    }
 }
 raplsaich_run();
 
