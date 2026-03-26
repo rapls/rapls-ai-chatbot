@@ -31,7 +31,8 @@ $is_pro = raplsaich_is_pro_active();
                     <tr>
                         <th><label for="knowledge-title"><?php esc_html_e('Title', 'rapls-ai-chatbot'); ?> <span class="required">*</span></label></th>
                         <td>
-                            <?php $prefill_question = isset($_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_question'])) : ''; ?>
+                            <?php $prefill_question = isset(// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin page display
+$_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_question'])) : ''; ?>
                             <input type="text" id="knowledge-title" name="title" class="regular-text" required
                                 value="<?php echo esc_attr($prefill_question); ?>">
                             <p class="description"><?php esc_html_e('A title to identify the knowledge', 'rapls-ai-chatbot'); ?></p>

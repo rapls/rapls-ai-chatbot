@@ -48,7 +48,8 @@ $is_pro_active = raplsaich_is_pro_active();
 
     <!-- Search & Filter -->
     <form method="get" class="raplsaich-conversation-filters" style="display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap;">
-        <input type="hidden" name="page" value="<?php echo esc_attr(sanitize_text_field(wp_unslash($_GET['page'] ?? ''))); ?>">
+        <input type="hidden" name="page" value="<?php echo esc_attr(sanitize_text_field(wp_unslash(// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin page display
+$_GET['page'] ?? ''))); ?>">
         <input type="hidden" name="orderby" value="<?php echo esc_attr($orderby); ?>">
         <input type="hidden" name="order" value="<?php echo esc_attr($order); ?>">
 
@@ -72,7 +73,8 @@ $is_pro_active = raplsaich_is_pro_active();
         <?php submit_button(__('Filter', 'rapls-ai-chatbot'), 'secondary', 'filter_action', false); ?>
 
         <?php if ($has_filters): ?>
-            <a href="<?php echo esc_url(admin_url('admin.php?page=' . sanitize_text_field(wp_unslash($_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-chatbot'); ?></a>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=' . sanitize_text_field(wp_unslash(// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin page display
+$_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-chatbot'); ?></a>
         <?php endif; ?>
     </form>
 

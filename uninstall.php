@@ -5,6 +5,7 @@
 
 // Prevent direct access outside WordPress
 if (!defined('WP_UNINSTALL_PLUGIN')) {
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names validated before use
     exit;
 }
 
