@@ -288,6 +288,7 @@ class RAPLSAICH_Chatbot_Widget {
             'response_language'   => $settings['response_language'] ?? '',
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
+            'is_pro'              => false, // Pro overrides to true via raplsaich_frontend_config filter
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
