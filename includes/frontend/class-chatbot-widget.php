@@ -291,8 +291,10 @@ class RAPLSAICH_Chatbot_Widget {
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
+            'show_regenerate'      => !empty($pro_features['show_regenerate_button']),
             'badge_position'       => $badge_position,
             'save_history'         => !empty($settings['save_history']),
+            'quick_replies'        => RAPLSAICH_Pro_Features::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
             // raplsaich_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
