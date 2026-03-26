@@ -2458,6 +2458,18 @@
          * Pro API request — delegates to apiRequest only when Pro is active.
          * Free version never calls Pro endpoints directly.
          */
+        // No-op stubs for Pro methods called from Free code paths.
+        // Pro overrides these via Object.assign in chatbot-pro.js.
+        showLeadForm: function() {},
+        fetchSuggestions: function() {},
+        stopHandoffPolling: function() {},
+        startHandoffPolling: function() {},
+        cancelHandoff: function() {},
+        trackConversion: function() {},
+        initConversionTracking: function() {},
+        handleImageSelect: function() {},
+        _captureViaDisplayMedia: function() {},
+
         proApiRequest: function(method, endpoint, data) {
             if (!this.config.is_pro) {
                 return Promise.resolve({ success: false, error: 'Pro required' });
