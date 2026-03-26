@@ -68,21 +68,10 @@ class RAPLSAICH_MCP_Tool_Send_Message {
 
         $settings = get_option('raplsaich_settings', []);
 
-        // Check banned words (Pro feature)
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
-        if ($pro_features->contains_banned_words($message)) {
-            return ['error' => $pro_features->get_banned_words_message()];
-        }
-
-        // Check message limit
-        $limit_check = $pro_features->check_message_limit();
-        if (is_wp_error($limit_check)) {
-            return ['error' => $limit_check->get_error_message()];
-        }
-
-        // Check budget cap (Pro feature)
-        if ($pro_features->check_budget_limit()) {
-            return ['error' => $pro_features->get_budget_block_message()];
+        // Pre-check hook (Pro: banned words, message limit, budget checks)
+        $pre_check_error = apply_filters('raplsaich_mcp_pre_send_check', null, $message);
+        if (is_array($pre_check_error) && !empty($pre_check_error['error'])) {
+            return $pre_check_error;
         }
 
         // Create or get session

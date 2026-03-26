@@ -732,10 +732,9 @@ class RAPLSAICH_REST_Controller {
         // Reject image if multimodal is not enabled (Pro feature)
         // Allow if screenshot/screen sharing is enabled
         if (!empty($image)) {
-            $pro_features_check = RAPLSAICH_Pro_Features::get_instance();
             $pro_settings_check = get_option('raplsaich_settings', [])['pro_features'] ?? [];
-            $screenshot_allowed = !empty($pro_settings_check['screen_sharing_enabled']) && $pro_features_check->is_pro();
-            if (!$screenshot_allowed && (!$pro_features_check->is_pro() || !$pro_features_check->is_multimodal_enabled())) {
+            $multimodal_allowed = !empty($pro_settings_check['multimodal_enabled']) || !empty($pro_settings_check['screen_sharing_enabled']);
+            if (!$multimodal_allowed) {
                 return new WP_REST_Response([
                     'success'    => false,
                     'error'      => __('Image upload is not available.', 'rapls-ai-chatbot'),
@@ -931,77 +930,24 @@ class RAPLSAICH_REST_Controller {
             }
         }
 
-        // Check monthly message limit
         $pro_features = RAPLSAICH_Pro_Features::get_instance();
 
-        // Check IP block (Pro feature)
-        if ($pro_features->is_ip_blocked()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_ip_block_message(),
-                'error_code' => 'ip_blocked',
-            ], 403);
+        /**
+         * Filter: Pre-chat validation hook.
+         * Pro plugin uses this for IP blocking, banned words, spam detection, budget limits, etc.
+         * Return a WP_REST_Response to reject the message, or null to continue.
+         *
+         * @param WP_REST_Response|null $result  Null to continue, WP_REST_Response to reject.
+         * @param string               $message The user's message.
+         * @param WP_REST_Request       $request The full REST request.
+         */
+        $pre_check = apply_filters('raplsaich_pre_chat_check', null, $message, $request);
+        if ($pre_check instanceof WP_REST_Response) {
+            return $pre_check;
         }
 
-        // Check IP whitelist (Pro feature)
-        if (!$pro_features->check_ip_whitelist()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_ip_block_message(),
-                'error_code' => 'ip_not_whitelisted',
-            ], 403);
-        }
-
-        // Check country blocking (Pro feature)
-        $country_blocked = apply_filters('raplsaich_country_blocked', false);
-        if ($country_blocked) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => is_string($country_blocked) ? $country_blocked : __('Access denied from your region.', 'rapls-ai-chatbot'),
-                'error_code' => 'country_blocked',
-            ], 403);
-        }
-
-        // Check role-based access (Pro feature)
-        if (!$pro_features->is_chat_allowed_for_user()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => __('Chat is not available for your account.', 'rapls-ai-chatbot'),
-                'error_code' => 'role_denied',
-            ], 403);
-        }
-
-        // Check business hours and holidays (Pro feature) — checked here but
-        // response deferred until after user message is saved to conversation history.
-        $unavailable_message = $pro_features->get_unavailable_message();
-
-        // Check budget limit (Pro feature)
-        if ($pro_features->check_budget_limit()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_budget_block_message(),
-                'error_code' => 'budget_exceeded',
-            ], 429);
-        }
-
-        // Check banned words (Pro feature)
-        if ($pro_features->contains_banned_words($message)) {
-            do_action('raplsaich_banned_word_detected', $message, $this->get_client_ip());
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_banned_words_message(),
-                'error_code' => 'banned_words',
-            ], 400);
-        }
-
-        // Check spam detection (Pro feature)
-        if ($pro_features->is_spam($message)) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_spam_message(),
-                'error_code' => 'spam_detected',
-            ], 400);
-        }
+        // Business hours message (deferred until after user message is saved)
+        $unavailable_message = apply_filters('raplsaich_unavailable_message', null);
 
         // Pre-check API key
         $settings = get_option('raplsaich_settings', []);
@@ -1176,7 +1122,7 @@ class RAPLSAICH_REST_Controller {
 
             // Response cache check (Pro feature)
             $pro_settings = $settings['pro_features'] ?? [];
-            $cache_enabled = !empty($pro_settings['response_cache_enabled']) && $pro_features->is_pro();
+            $cache_enabled = !empty($pro_settings['response_cache_enabled']);
             $cache_hash = null;
 
             if ($cache_enabled) {
@@ -1334,12 +1280,8 @@ class RAPLSAICH_REST_Controller {
                 $system_prompt .= "\n\nIMPORTANT: Always respond in {$lang_name}.";
             }
 
-            // Add sentiment analysis (Pro feature)
-            $sentiment = $pro_features->analyze_sentiment($message);
-            $sentiment_prompt = $pro_features->get_sentiment_prompt($sentiment);
-            if (!empty($sentiment_prompt)) {
-                $system_prompt .= $sentiment_prompt;
-            }
+            // Sentiment analysis hook (Pro adds via filter)
+            $system_prompt = apply_filters('raplsaich_system_prompt_sentiment', $system_prompt, $message);
 
             // Add feedback examples for learning (if feedback is enabled)
             // Skip feedback examples when bot has knowledge/crawl disabled (prevents info leak from other bots)
@@ -1372,20 +1314,9 @@ class RAPLSAICH_REST_Controller {
                 }
             }
 
-            // Add context memory (Pro feature)
-            // Context key is derived server-side from session_id via HMAC — never from client-supplied user_id.
-            // This prevents cross-user context leakage (an attacker cannot guess/manipulate the key).
+            // Context memory hook (Pro adds via filter)
             $session_id_for_context = sanitize_text_field($request->get_param('session_id') ?? '');
-            if (!empty($session_id_for_context) && $pro_features->is_context_memory_enabled()) {
-                $context_key = $pro_features->derive_context_key($session_id_for_context);
-                if (!empty($context_key)) {
-                    $user_context = $pro_features->get_user_context($context_key);
-                    $context_prompt = $pro_features->build_context_memory_prompt($user_context);
-                    if (!empty($context_prompt)) {
-                        $system_prompt .= $context_prompt;
-                    }
-                }
-            }
+            $system_prompt = apply_filters('raplsaich_system_prompt_context', $system_prompt, $session_id_for_context);
             $web_search_enabled = !empty($settings['web_search_enabled']);
 
             /**
@@ -2498,17 +2429,13 @@ class RAPLSAICH_REST_Controller {
         $pro_settings = get_option('raplsaich_settings', []);
         $pro_feat_settings = $pro_settings['pro_features'] ?? [];
 
-        if ($pro_features->is_pro() && !empty($pro_feat_settings['enhanced_rate_limit_enabled'])) {
-            $result = $pro_features->check_enhanced_rate_limit();
-            if ($result['blocked']) {
-                return !empty($result['message'])
-                    ? $result['message']
-                    : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
-            }
-            return true;
+        // Enhanced rate limit hook (Pro adds via filter)
+        $enhanced_result = apply_filters('raplsaich_enhanced_rate_limit', null, $pro_feat_settings);
+        if ($enhanced_result !== null) {
+            return $enhanced_result;
         }
 
-        // Basic rate limit (Free version fallback)
+        // Basic rate limit
         $settings = get_option('raplsaich_settings', []);
         $limit = (int) ($settings['rate_limit'] ?? 20);
         $window = (int) ($settings['rate_limit_window'] ?? 3600);
@@ -3651,50 +3578,10 @@ class RAPLSAICH_REST_Controller {
             ], 429);
         }
 
-        // Check message limit
-        $limit_check = $pro_features->check_message_limit();
-        if (is_wp_error($limit_check)) {
-            return new WP_REST_Response([
-                'success' => false,
-                'error'   => $limit_check->get_error_message(),
-            ], 429);
-        }
-
-        // Check IP block (Pro feature)
-        if ($pro_features->is_ip_blocked()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_ip_block_message(),
-                'error_code' => 'ip_blocked',
-            ], 403);
-        }
-
-        // Check IP whitelist (Pro feature)
-        if (!$pro_features->check_ip_whitelist()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_ip_block_message(),
-                'error_code' => 'ip_not_whitelisted',
-            ], 403);
-        }
-
-        // Check country blocking (Pro feature)
-        $country_blocked = apply_filters('raplsaich_country_blocked', false);
-        if ($country_blocked) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => is_string($country_blocked) ? $country_blocked : __('Access denied from your region.', 'rapls-ai-chatbot'),
-                'error_code' => 'country_blocked',
-            ], 403);
-        }
-
-        // Check budget limit (Pro feature)
-        if ($pro_features->check_budget_limit()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_budget_block_message(),
-                'error_code' => 'budget_exceeded',
-            ], 429);
+        // Pre-regenerate validation hook (Pro: IP/budget/limit checks)
+        $pre_check = apply_filters('raplsaich_pre_chat_check', null, '', $request);
+        if ($pre_check instanceof WP_REST_Response) {
+            return $pre_check;
         }
 
         // Get messages before this one
@@ -3732,7 +3619,7 @@ class RAPLSAICH_REST_Controller {
             // Get AI provider (respect per-page bot_config if multi-bot is active)
             $bot_config = null;
             $pro = RAPLSAICH_Pro_Features::get_instance();
-            if ($pro->is_pro() && !empty($settings['pro_features']['multi_bot_enabled'])) {
+            if (!empty($settings['pro_features']['multi_bot_enabled'])) {
                 $page_url = $conversation['page_url'] ?? '';
                 $bots = $settings['pro_features']['bots'] ?? [];
                 foreach ($bots as $bot) {
@@ -4032,14 +3919,10 @@ class RAPLSAICH_REST_Controller {
             ], 200);
         }
 
-        // Check budget limit
-        $pro_features = RAPLSAICH_Pro_Features::get_instance();
-        if ($pro_features->check_budget_limit()) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => $pro_features->get_budget_block_message(),
-                'error_code' => 'budget_exceeded',
-            ], 429);
+        // Pre-check hook (Pro: budget limits)
+        $pre_check = apply_filters('raplsaich_pre_chat_check', null, '', $request);
+        if ($pre_check instanceof WP_REST_Response) {
+            return $pre_check;
         }
 
         $session_id = sanitize_text_field($request->get_param('session_id'));
@@ -4119,21 +4002,6 @@ class RAPLSAICH_REST_Controller {
         try {
             // Check Pro license
             $pro_features = RAPLSAICH_Pro_Features::get_instance();
-            if (!$pro_features->is_pro()) {
-                return new WP_REST_Response([
-                    'success' => true,
-                    'data'    => ['suggestions' => []],
-                ], 200);
-            }
-
-            // Check budget limit
-            if ($pro_features->check_budget_limit()) {
-                return new WP_REST_Response([
-                    'success' => true,
-                    'data'    => ['suggestions' => []],
-                ], 200);
-            }
-
             // Check if related suggestions are enabled
             $settings = get_option('raplsaich_settings', []);
             $pro_settings = $settings['pro_features'] ?? [];
@@ -4216,15 +4084,6 @@ class RAPLSAICH_REST_Controller {
      */
     public function get_autocomplete(WP_REST_Request $request): WP_REST_Response {
         try {
-            // Check Pro license
-            $pro_features = RAPLSAICH_Pro_Features::get_instance();
-            if (!$pro_features->is_pro()) {
-                return new WP_REST_Response([
-                    'success' => true,
-                    'data'    => ['suggestions' => []],
-                ], 200);
-            }
-
             // Check if autocomplete is enabled
             $settings = get_option('raplsaich_settings', []);
             $pro_settings = $settings['pro_features'] ?? [];

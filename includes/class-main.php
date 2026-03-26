@@ -287,15 +287,13 @@ class RAPLSAICH_Main {
     }
 
     /**
-     * Register crawler hooks if Pro is active (Site Learning is Pro-only)
+     * Register crawler hooks (Site Learning available in all versions)
      */
     public function maybe_register_crawler_hooks() {
-        if (RAPLSAICH_Pro_Features::get_instance()->is_pro()) {
-            $crawler = new RAPLSAICH_Site_Crawler();
-            add_action('raplsaich_crawl_site', [$crawler, 'crawl_all']);
-            add_action('save_post', [$crawler, 'on_save_post'], 10, 2);
-            add_action('delete_post', [$crawler, 'on_delete_post']);
-        }
+        $crawler = new RAPLSAICH_Site_Crawler();
+        add_action('raplsaich_crawl_site', [$crawler, 'crawl_all']);
+        add_action('save_post', [$crawler, 'on_save_post'], 10, 2);
+        add_action('delete_post', [$crawler, 'on_delete_post']);
     }
 
     /**

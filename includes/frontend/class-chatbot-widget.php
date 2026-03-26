@@ -54,22 +54,18 @@ class RAPLSAICH_Chatbot_Widget {
 
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
-        $is_pro_active = get_option('raplsaich_pro_active');
 
-        if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
-            $widget_theme = 'default';
-        }
 
         // Allow shortcode theme override
         if (!empty($atts['theme'])) {
             $override = sanitize_key($atts['theme']);
-            if ($is_pro_active || in_array($override, $free_themes)) {
+            if (in_array($override, $free_themes)) {
                 $widget_theme = $override;
             }
         }
 
         $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
-        if ($is_pro_active && !empty($settings['dark_mode'])) {
+        if (!empty($settings['dark_mode'])) {
             $theme_class .= ' dark-mode';
         }
         $theme_class = trim($theme_class);
@@ -98,10 +94,10 @@ class RAPLSAICH_Chatbot_Widget {
                 }
                 if (!empty($sc_bot_config['theme'])) {
                     $override_theme = sanitize_key($sc_bot_config['theme']);
-                    if ($is_pro_active || in_array($override_theme, $free_themes)) {
+                    if (in_array($override_theme, $free_themes)) {
                         $widget_theme = $override_theme;
                         $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
-                        if ($is_pro_active && !empty($settings['dark_mode'])) {
+                        if (!empty($settings['dark_mode'])) {
                             $theme_class .= ' dark-mode';
                         }
                         $theme_class = trim($theme_class);
@@ -220,7 +216,7 @@ class RAPLSAICH_Chatbot_Widget {
         $pro = RAPLSAICH_Pro_Features::get_instance();
 
         // White label: custom CSS (strip dangerous strings to prevent style breakout)
-        if ($pro->is_pro() && !empty($pro_settings['custom_css'])) {
+        if (!empty($pro_settings['custom_css'])) {
             $safe_css = $pro_settings['custom_css'];
             $safe_css = preg_replace('/<\/?style[^>]*>/i', '', $safe_css);
             $safe_css = preg_replace('/<\/?script[^>]*>/i', '', $safe_css);
@@ -456,17 +452,13 @@ class RAPLSAICH_Chatbot_Widget {
         // Get widget theme
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
-        $is_pro_active = get_option('raplsaich_pro_active');
 
         // Only allow free themes if Pro is not active
-        if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
-            $widget_theme = 'default';
-        }
 
         $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
 
         // Dark mode (Pro only)
-        if ($is_pro_active && !empty($settings['dark_mode'])) {
+        if (!empty($settings['dark_mode'])) {
             $theme_class .= ' dark-mode';
         }
 
@@ -498,10 +490,10 @@ class RAPLSAICH_Chatbot_Widget {
                     }
                     if (!empty($page_bot_config['theme'])) {
                         $override_theme = sanitize_key($page_bot_config['theme']);
-                        if ($is_pro_active || in_array($override_theme, $free_themes)) {
+                        if (in_array($override_theme, $free_themes)) {
                             $widget_theme = $override_theme;
                             $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
-                            if ($is_pro_active && !empty($settings['dark_mode'])) {
+                            if (!empty($settings['dark_mode'])) {
                                 $theme_class .= ' dark-mode';
                             }
                             $theme_class = trim($theme_class);
@@ -571,14 +563,10 @@ class RAPLSAICH_Chatbot_Widget {
 
         $widget_theme = $settings['widget_theme'] ?? 'default';
         $free_themes = ['default', 'simple', 'classic', 'light', 'minimal', 'flat'];
-        $is_pro_active = get_option('raplsaich_pro_active');
 
-        if (!$is_pro_active && !in_array($widget_theme, $free_themes)) {
-            $widget_theme = 'default';
-        }
 
         $theme_class = $widget_theme !== 'default' ? 'theme-' . $widget_theme : '';
-        if ($is_pro_active && !empty($settings['dark_mode'])) {
+        if (!empty($settings['dark_mode'])) {
             $theme_class .= ' dark-mode';
         }
         $theme_class = trim($theme_class);

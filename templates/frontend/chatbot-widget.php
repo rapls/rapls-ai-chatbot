@@ -150,7 +150,7 @@ if (!defined('ABSPATH')) {
         <?php
         // Pro white-label footer (opt-in via Pro settings)
         $wl_footer = $settings['pro_features']['white_label_footer'] ?? '';
-        if ($wl_footer !== '' && RAPLSAICH_Pro_Features::get_instance()->is_pro()) :
+        if ($wl_footer !== '') :
             $wl_url = $settings['pro_features']['white_label_footer_url'] ?? '';
             $wl_target = $settings['pro_features']['white_label_footer_target'] ?? '_blank';
         ?>
