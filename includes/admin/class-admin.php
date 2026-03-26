@@ -89,7 +89,7 @@ class RAPLSAICH_Admin {
             [$this, 'render_knowledge_page']
         );
 
-        $is_pro = RAPLSAICH_Pro_Features::get_instance()->is_pro();
+        $is_pro = get_option('raplsaich_pro_active');
 
         // Pro menus - show as locked when Pro is not active
         // When Pro is active, the Pro plugin adds its own menus
@@ -852,7 +852,7 @@ class RAPLSAICH_Admin {
             'nonce'     => wp_create_nonce('raplsaich_admin_nonce'),
             'restUrl'   => esc_url_raw(rest_url()),
             'restNonce' => wp_create_nonce('wp_rest'),
-            'isPro'     => RAPLSAICH_Pro_Features::get_instance()->is_pro(),
+            'isPro'     => get_option('raplsaich_pro_active'),
             'defaults' => self::get_all_defaults(),
             'i18n'    => [
                 'confirmDelete' => __('Are you sure you want to delete?', 'rapls-ai-chatbot'),
@@ -2524,8 +2524,9 @@ class RAPLSAICH_Admin {
             'embedding_enabled'     => false,
             'embedding_provider'    => 'auto',
 
-            // Pro Features
-            'pro_features'          => RAPLSAICH_Pro_Features::get_default_settings(),
+            // Pro features are managed by the Pro plugin via filters.
+            // This key preserves existing values during settings operations.
+            'pro_features'          => [],
         ];
     }
 

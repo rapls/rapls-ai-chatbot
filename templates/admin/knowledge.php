@@ -12,7 +12,7 @@ $pro_features = RAPLSAICH_Pro_Features::get_instance();
 $faq_count = RAPLSAICH_Knowledge::get_count();
 $faq_limit = $pro_features->get_faq_limit();
 $faq_limit_reached = !$pro_features->can_add_faq();
-$is_pro = $pro_features->is_pro();
+$is_pro = get_option('raplsaich_pro_active');
 ?>
 <div class="wrap raplsaich-admin">
     <h1><?php esc_html_e('AI Chatbot - Knowledge', 'rapls-ai-chatbot'); ?></h1>
@@ -480,6 +480,6 @@ wp_localize_script("raplsaich-admin-knowledge", "raplsaichKB", [
     "historyFail" => __("Failed to load version history.", "rapls-ai-chatbot"),
     "restoreFail" => __("Failed to restore version.", "rapls-ai-chatbot"),
     "ajaxError" => __("AJAX error.", "rapls-ai-chatbot"),
-    "isPro" => RAPLSAICH_Pro_Features::get_instance()->is_pro(),
+    "isPro" => get_option('raplsaich_pro_active'),
 ]);
 ?>

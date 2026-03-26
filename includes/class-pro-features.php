@@ -18,15 +18,6 @@ if (class_exists('RAPLSAICH_Pro_Features', false)) {
 class RAPLSAICH_Pro_Features {
 
     /**
-     * Feature constants (used by Pro plugin via is_feature_available)
-     */
-    const FEATURE_MESSAGE_LIMIT = 'message_limit';
-    const FEATURE_LEAD_CAPTURE = 'lead_capture';
-    const FEATURE_EXPORT = 'conversation_export';
-    const FEATURE_WHITE_LABEL = 'white_label';
-    const FEATURE_WEBHOOK = 'webhook';
-
-    /**
      * Free version limits (no artificial limits — users pay their own API costs)
      */
     const FREE_MESSAGE_LIMIT = PHP_INT_MAX;
@@ -63,13 +54,6 @@ class RAPLSAICH_Pro_Features {
      * Check if user has Pro - always false in Free version
      */
     public function is_pro(): bool {
-        return false;
-    }
-
-    /**
-     * Check if a specific feature is available - always false in Free version
-     */
-    public function is_feature_available(string $feature): bool {
         return false;
     }
 
