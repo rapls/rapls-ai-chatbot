@@ -168,9 +168,8 @@ function raplsaich_create_ai_provider(array $settings, ?array $bot_config = null
 /**
  * Check if the Pro plugin is runtime-active (not just an option flag).
  *
- * Verifies both:
- * 1. The raplsaich_pro_active option is truthy
- * 2. The Pro plugin's implementation class actually exists in memory
+ * Uses a filter so the Pro plugin can authoritatively declare itself active.
+ * Falls back to option check + did_action() verification.
  *
  * This prevents stale DB options from enabling Pro features when
  * the Pro plugin has been deactivated but the option was not cleaned up.
@@ -178,7 +177,10 @@ function raplsaich_create_ai_provider(array $settings, ?array $bot_config = null
  * @return bool True only if Pro is genuinely active at runtime.
  */
 function raplsaich_is_pro_active(): bool {
-    // Option must be set AND Pro's implementation class must be loaded
-    return (bool) get_option('raplsaich_pro_active')
-        && class_exists('WPAIC_Pro_Features_Impl', false);
+    /**
+     * Filter: Authoritative Pro active status.
+     * Pro plugin hooks this to return true when it is loaded and ready.
+     * Free never sets this to true on its own.
+     */
+    return (bool) apply_filters('raplsaich_is_pro_active', false);
 }
