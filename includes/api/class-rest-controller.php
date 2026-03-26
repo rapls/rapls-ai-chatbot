@@ -2887,8 +2887,9 @@ class RAPLSAICH_REST_Controller {
             $settings = get_option('raplsaich_settings', []);
             $pro_settings = $settings['pro_features'] ?? [];
 
-            // Check if lead capture is enabled (setting managed by Pro plugin)
-            $is_enabled = !empty($pro_settings['lead_capture_enabled']);
+            // Lead capture requires Pro to be active AND setting enabled.
+            // Prevents stale DB values from enabling lead form when Pro is deactivated.
+            $is_enabled = get_option('raplsaich_pro_active') && !empty($pro_settings['lead_capture_enabled']);
 
             if (!$is_enabled) {
                 return new WP_REST_Response([

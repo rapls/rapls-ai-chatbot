@@ -51,13 +51,6 @@ class RAPLSAICH_Pro_Features {
     protected function __construct() {}
 
     /**
-     * Check if user has Pro - always false in Free version
-     */
-    public function is_pro(): bool {
-        return false;
-    }
-
-    /**
      * Get monthly message limit
      */
     public function get_message_limit(): int {
