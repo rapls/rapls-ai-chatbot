@@ -56,36 +56,10 @@ if (!defined('ABSPATH')) {
             </button>
         </header>
 
-        <!-- リード獲得フォーム（Pro機能） -->
-        <div class="chatbot-lead-form" hidden>
-            <div class="lead-form-content">
-                <h3 class="lead-form-title" hidden></h3>
-                <p class="lead-form-description"></p>
-                <form class="lead-form" novalidate>
-                    <div class="lead-field lead-field-name" hidden>
-                        <label for="lead-name"><?php esc_html_e('Name', 'rapls-ai-chatbot'); ?></label>
-                        <input type="text" id="lead-name" name="name" autocomplete="name">
-                    </div>
-                    <div class="lead-field lead-field-email" hidden>
-                        <label for="lead-email"><?php esc_html_e('Email', 'rapls-ai-chatbot'); ?></label>
-                        <input type="email" id="lead-email" name="email" autocomplete="email">
-                    </div>
-                    <div class="lead-field lead-field-phone" hidden>
-                        <label for="lead-phone"><?php esc_html_e('Phone', 'rapls-ai-chatbot'); ?></label>
-                        <input type="tel" id="lead-phone" name="phone" autocomplete="tel">
-                    </div>
-                    <div class="lead-field lead-field-company" hidden>
-                        <label for="lead-company"><?php esc_html_e('Company', 'rapls-ai-chatbot'); ?></label>
-                        <input type="text" id="lead-company" name="company" autocomplete="organization">
-                    </div>
-                    <div class="lead-form-buttons">
-                        <button type="submit" class="lead-submit-btn"><?php esc_html_e('Start Chat', 'rapls-ai-chatbot'); ?></button>
-                        <button type="button" class="lead-skip-btn" hidden><?php esc_html_e('Skip', 'rapls-ai-chatbot'); ?></button>
-                    </div>
-                    <div class="lead-form-error" hidden></div>
-                </form>
-            </div>
-        </div>
+        <?php
+        // Lead form placeholder — Pro plugin injects the actual form via this action.
+        do_action('raplsaich_widget_lead_form');
+        ?>
 
         <!-- メッセージエリア -->
         <div class="chatbot-messages" role="log" aria-live="polite">

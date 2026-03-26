@@ -2884,13 +2884,11 @@ class RAPLSAICH_REST_Controller {
         }
 
         try {
-            $pro_features = RAPLSAICH_Pro_Features::get_instance();
             $settings = get_option('raplsaich_settings', []);
-            $pro_settings = $settings['pro_features'] ?? RAPLSAICH_Pro_Features::get_default_settings();
+            $pro_settings = $settings['pro_features'] ?? [];
 
-            // Check if lead capture is enabled and available
-            $is_enabled = !empty($pro_settings['lead_capture_enabled']) &&
-                          $pro_features->is_feature_available(RAPLSAICH_Pro_Features::FEATURE_LEAD_CAPTURE);
+            // Check if lead capture is enabled (setting managed by Pro plugin)
+            $is_enabled = !empty($pro_settings['lead_capture_enabled']);
 
             if (!$is_enabled) {
                 return new WP_REST_Response([
