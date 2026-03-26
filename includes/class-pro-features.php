@@ -308,55 +308,6 @@ class RAPLSAICH_Pro_Features {
         return true;
     }
 
-    public function is_holiday(): bool {
-        return false;
-    }
-
-    public function get_unavailable_message(): ?string {
-        return null;
-    }
-
-    public function contains_banned_words(string $message): bool {
-        return false;
-    }
-
-    public function get_banned_words_message(): string {
-        return __('Your message contains prohibited content.', 'rapls-ai-chatbot');
-    }
-
-    public function is_ip_blocked(?string $ip = null): bool {
-        return false;
-    }
-
-    public function get_ip_block_message(): string {
-        return __('Access denied.', 'rapls-ai-chatbot');
-    }
-
-    /**
-     * Stub: Check IP whitelist
-     */
-    public function check_ip_whitelist(?string $ip = null): bool {
-        return true; // Allow all when Pro is not active
-    }
-
-    /**
-     * Stub: Check spam
-     */
-    public function is_spam(string $message): bool {
-        return false;
-    }
-
-    public function get_spam_message(): string {
-        return __('Your message was flagged as spam.', 'rapls-ai-chatbot');
-    }
-
-    /**
-     * Stub: Check enhanced rate limit
-     */
-    public function check_enhanced_rate_limit(?string $ip = null): array {
-        return ['blocked' => false, 'message' => ''];
-    }
-
     public function get_quick_replies(): array {
         return [];
     }
@@ -369,110 +320,10 @@ class RAPLSAICH_Pro_Features {
     }
 
     /**
-     * Stub: Analyze sentiment
-     */
-    public function analyze_sentiment(string $message): string {
-        return 'neutral';
-    }
-
-    /**
-     * Stub: Get sentiment prompt
-     */
-    public function get_sentiment_prompt(string $sentiment): string {
-        return '';
-    }
-
-    /**
-     * Stub: Check if context memory is enabled
-     */
-    public function is_context_memory_enabled(): bool {
-        return false;
-    }
-
-    /**
-     * Derive a stable, server-side context key from session_id.
-     * Uses HMAC so the key cannot be guessed or manipulated by the client.
-     * Stub returns '' (Pro overrides with actual implementation).
-     *
-     * @param string $session_id Session ID (UUID v4).
-     * @return string Context key (hex, max 64 chars) or '' if unavailable.
-     */
-    public function derive_context_key(string $session_id): string {
-        return '';
-    }
-
-    /**
-     * Stub: Get user context
-     */
-    public function get_user_context(string $context_key): array {
-        return [];
-    }
-
-    /**
-     * Stub: Save user context
-     */
-    public function save_user_context(string $context_key, array $context): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Build context memory prompt
-     */
-    public function build_context_memory_prompt(array $user_context): string {
-        return '';
-    }
-
-    /**
-     * Stub: Check if multimodal is enabled
-     */
-    public function is_multimodal_enabled(): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get multimodal config
-     */
-    public function get_multimodal_config(): array {
-        return [
-            'enabled' => false,
-            'max_size' => 2048,
-            'formats' => ['jpg', 'png', 'gif', 'webp'],
-        ];
-    }
-
-    /**
-     * Stub: Check budget limit
-     */
-    public function check_budget_limit(): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get budget block message
-     */
-    public function get_budget_block_message(): string {
-        return '';
-    }
-
-    /**
      * Stub: Maybe send budget alert
      */
     public function maybe_send_budget_alert(float $cost): void {
         // no-op in Free
-    }
-
-    /**
-     * Stub: Check if WooCommerce product cards are enabled
-     */
-    public function is_woocommerce_cards_enabled(): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get defined actions
-     */
-    public function get_actions(): array {
-        return [];
     }
 
     /**
@@ -484,30 +335,9 @@ class RAPLSAICH_Pro_Features {
     }
 
     /**
-     * Stub: Check if message triggers handoff to human operator
-     */
-    public function check_handoff_trigger(string $message, int $conversation_id): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get handoff status for a conversation
-     */
-    public function get_handoff_status(int $conversation_id): ?string {
-        return null;
-    }
-
-    /**
      * Stub: Cancel handoff for a conversation
      */
     public function cancel_handoff(int $conversation_id): void {
-    }
-
-    /**
-     * Stub: Process handoff escalation
-     */
-    public function process_handoff(int $conversation_id, string $session_id): array {
-        return ['escalated' => false];
     }
 
     /**
@@ -530,126 +360,5 @@ class RAPLSAICH_Pro_Features {
      */
     public function get_bot_for_page(int $page_id): string {
         return 'default';
-    }
-
-    /**
-     * Stub: Get role-based message limit for current user.
-     * Free version ignores roles and returns site-wide limit.
-     */
-    public function get_role_message_limit(): int {
-        return $this->get_message_limit();
-    }
-
-    /**
-     * Stub: Check if chat is allowed for current user based on role.
-     * Free version always allows.
-     */
-    public function is_chat_allowed_for_user(): bool {
-        return true;
-    }
-
-    /**
-     * Stub: Get settings change history
-     */
-    public function get_change_history(): array {
-        return [];
-    }
-
-    /**
-     * Stub: Rollback settings to a specific version
-     */
-    public function rollback_settings(int $version_index): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get staging settings
-     */
-    public function get_staging_settings(): ?array {
-        return null;
-    }
-
-    /**
-     * Stub: Publish staging settings
-     */
-    public function publish_staging(): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get pending approval changes
-     */
-    public function get_pending_approvals(): array {
-        return [];
-    }
-
-    /**
-     * Stub: Run vulnerability scan
-     */
-    public function run_vulnerability_scan(): array {
-        return [];
-    }
-
-    /**
-     * Stub: Get queue status
-     */
-    public function get_queue_status(): array {
-        return ['pending' => 0, 'processing' => 0, 'max' => 5];
-    }
-
-    /**
-     * Stub: Find similar knowledge entries
-     */
-    public function find_similar_questions(int $knowledge_id): array {
-        return [];
-    }
-
-    /**
-     * Stub: Merge knowledge entries
-     */
-    public function merge_knowledge_entries(array $ids, int $primary_id): bool {
-        return false;
-    }
-
-    /**
-     * Stub: Get context memory retention days
-     */
-    public function get_context_memory_days(): int {
-        return 30;
-    }
-
-    /**
-     * Stub: Get active prompt template text
-     */
-    public function get_active_prompt_template_text(): ?string {
-        return null;
-    }
-
-    /**
-     * Stub: Calculate spam score for a message
-     */
-    public function calculate_spam_score(string $message): int {
-        return 0;
-    }
-
-    /**
-     * Stub: Mask PII in content
-     */
-    public function mask_pii(string $content): string {
-        return $content;
-    }
-
-    /**
-     * Stub: Send Slack notification
-     */
-    public function send_slack_notification(string $event, array $data): void {
-        // No-op in Free version
-    }
-
-    /**
-     * Stub: Send lead data to Google Sheets
-     */
-    public function send_to_google_sheets(array $lead_data): void {
-        // No-op in Free version
     }
 }
