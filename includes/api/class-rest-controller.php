@@ -2889,7 +2889,7 @@ class RAPLSAICH_REST_Controller {
 
             // Lead capture requires Pro to be active AND setting enabled.
             // Prevents stale DB values from enabling lead form when Pro is deactivated.
-            $is_enabled = get_option('raplsaich_pro_active') && !empty($pro_settings['lead_capture_enabled']);
+            $is_enabled = raplsaich_is_pro_active() && !empty($pro_settings['lead_capture_enabled']);
 
             if (!$is_enabled) {
                 return new WP_REST_Response([

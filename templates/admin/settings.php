@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
         <?php endif; ?>
     </h1>
 
-    <?php $is_pro_active = get_option('raplsaich_pro_active'); ?>
+    <?php $is_pro_active = raplsaich_is_pro_active(); ?>
     <?php if (!$is_pro_active) : ?>
     <div class="raplsaich-pro-settings-banner">
         <span class="dashicons dashicons-star-filled"></span>

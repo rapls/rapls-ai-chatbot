@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
 <div class="wrap raplsaich-admin">
     <h1><?php esc_html_e('AI Chatbot - Dashboard', 'rapls-ai-chatbot'); ?></h1>
 
-    <?php if (!get_option('raplsaich_pro_active')): ?>
+    <?php if (!raplsaich_is_pro_active()): ?>
     <!-- Pro Version Notice (single, dismissible) -->
     <div class="notice notice-info is-dismissible">
         <p>
@@ -64,7 +64,7 @@ if (!defined('ABSPATH')) {
             // Cache stats (Pro feature)
             $dashboard_settings = get_option('raplsaich_settings', []);
             $dashboard_pro_settings = $dashboard_settings['pro_features'] ?? [];
-            if (!empty($dashboard_pro_settings['response_cache_enabled']) && get_option('raplsaich_pro_active')):
+            if (!empty($dashboard_pro_settings['response_cache_enabled']) && raplsaich_is_pro_active()):
                 $cache_stats = RAPLSAICH_Message::get_cache_stats(30);
                 if ($cache_stats['total_requests'] > 0):
             ?>

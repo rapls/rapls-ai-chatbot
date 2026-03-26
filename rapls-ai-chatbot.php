@@ -506,7 +506,7 @@ add_filter('plugin_action_links_' . RAPLSAICH_PLUGIN_BASENAME, 'raplsaich_plugin
  */
 function raplsaich_plugin_row_meta($plugin_meta, $plugin_file)
 {
-    if ($plugin_file === RAPLSAICH_PLUGIN_BASENAME && get_option('raplsaich_pro_active')) {
+    if ($plugin_file === RAPLSAICH_PLUGIN_BASENAME && raplsaich_is_pro_active()) {
         $last_key = array_key_last($plugin_meta);
         if ($last_key !== null) {
             $plugin_meta[$last_key] .= '<br><span style="color: #d63638;">' .

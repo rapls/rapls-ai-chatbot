@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
 }
 
 $total_pages = ceil($total / 20);
-$is_pro_active = get_option('raplsaich_pro_active');
+$is_pro_active = raplsaich_is_pro_active();
 ?>
 <!-- Conversation styles loaded via wp_enqueue_style('raplsaich-conversations') -->
 <div class="wrap raplsaich-admin">

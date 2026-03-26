@@ -68,7 +68,7 @@ class RAPLSAICH_MCP_Tool_Get_Site_Info {
             'site_language'      => get_locale(),
             'wordpress_version'  => get_bloginfo('version'),
             'plugin_version'     => defined('RAPLSAICH_VERSION') ? RAPLSAICH_VERSION : 'unknown',
-            'is_pro'             => get_option('raplsaich_pro_active'),
+            'is_pro'             => raplsaich_is_pro_active(),
             'ai_provider'        => $settings['ai_provider'] ?? 'openai',
             'ai_model'           => $this->get_active_model($settings),
             'knowledge_count'    => $knowledge_count,
