@@ -272,15 +272,10 @@ class RAPLSAICH_Chatbot_Widget {
 
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
 
-        // Get pro_features settings
+        // Pro features settings (values read by filter, not by Free directly)
         $pro_features = $settings['pro_features'] ?? [];
-        $show_regenerate = $pro_features['show_regenerate_button'] ?? true;
-        $related_suggestions = !empty($pro_features['related_suggestions_enabled']);
-        $autocomplete = !empty($pro_features['autocomplete_enabled']);
-        $multimodal_enabled = !empty($pro_features['multimodal_enabled']);
-        $multimodal_max_size = (int) ($pro_features['multimodal_max_size'] ?? 2048);
 
-        wp_localize_script('raplsaich-chatbot', 'raplsaichConfig', [
+        $config = [
             'restUrl'             => rest_url('rapls-ai-chatbot/v1/'),
             'api_base'            => rest_url('rapls-ai-chatbot/v1'),
             'nonce'               => wp_create_nonce('wp_rest'),
@@ -293,41 +288,11 @@ class RAPLSAICH_Chatbot_Widget {
             'response_language'   => $settings['response_language'] ?? '',
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
-            'is_pro'              => (bool) get_option('raplsaich_pro_active'),
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
-            'show_regenerate'     => (bool) $show_regenerate,
-            'related_suggestions' => $related_suggestions,
-            'autocomplete'        => $autocomplete,
-            'multimodal_enabled'  => $multimodal_enabled,
-            'multimodal_max_size' => $multimodal_max_size,
-            'file_upload_enabled' => !empty($pro_features['file_upload_enabled']),
-            'file_upload_max_size' => (int) ($pro_features['file_upload_max_size'] ?? 5120),
-            'file_upload_types'   => $pro_features['file_upload_types'] ?? ['pdf', 'doc', 'docx', 'txt', 'csv'],
-            'screenshot_enabled'  => !empty($pro_features['screen_sharing_enabled']),
-            'html2canvas_url'     => RAPLSAICH_PLUGIN_URL . 'assets/vendor/html2canvas/html2canvas.min.js',
-            'voice_input_enabled' => !empty($pro_features['voice_input_enabled']),
-            'tts_enabled'         => !empty($pro_features['tts_enabled']),
-            'tts_lang'            => $pro_features['tts_lang'] ?? '',
-            'fullscreen_mode'     => !empty($pro_features['fullscreen_mode']),
-            'welcome_screen_enabled' => !empty($pro_features['welcome_screen_enabled']),
-            'welcome_screen_title'   => $pro_features['welcome_screen_title'] ?? '',
-            'welcome_screen_message' => $pro_features['welcome_screen_message'] ?? '',
-            'welcome_screen_buttons' => !empty($pro_features['welcome_screen_buttons']) ? $pro_features['welcome_screen_buttons'] : [],
-            'response_delay_enabled' => !empty($pro_features['response_delay_enabled']),
-            'response_delay_ms'      => (int) ($pro_features['response_delay_ms'] ?? 500),
-            'notification_sound_enabled' => !empty($pro_features['notification_sound_enabled']),
-            'tooltips_enabled'     => !empty($pro_features['tooltips_enabled']),
-            'conversion_tracking'  => !empty($pro_features['conversion_tracking_enabled']),
-            'conversion_goals'     => !empty($pro_features['conversion_tracking_enabled']) ? ($pro_features['conversion_goals'] ?? []) : [],
-            'chat_bookmarks_enabled' => !empty($pro_features['chat_bookmarks_enabled']),
-            'chat_search_enabled'  => !empty($pro_features['chat_search_enabled']),
-            'conversation_sharing_enabled' => !empty($pro_features['conversation_sharing_enabled']),
-            'offline_message'      => $this->get_offline_config($pro_features),
             'badge_position'       => $badge_position,
             'save_history'         => !empty($settings['save_history']),
-            'quick_replies'        => RAPLSAICH_Pro_Features::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
             // raplsaich_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
@@ -358,15 +323,9 @@ class RAPLSAICH_Chatbot_Widget {
                     'recaptcha_unavailable'  => '__use_server_message__',
                     'origin_mismatch'        => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'honeypot_triggered'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
-                    'queue_full'             => '__use_server_message__',
-                    'country_blocked'        => '__use_server_message__',
-                    'ip_blocked'             => '__use_server_message__',
-                    'ip_not_whitelisted'     => '__use_server_message__',
-                    'role_denied'            => __('Chat is not available for your account.', 'rapls-ai-chatbot'),
-                    'budget_exceeded'        => '__use_server_message__',
-                    'banned_words'           => '__use_server_message__',
-                    'spam_detected'          => '__use_server_message__',
                     'invalid_message'        => __('Please enter a valid message.', 'rapls-ai-chatbot'),
+                    // Pro error codes (queue_full, country_blocked, ip_blocked, etc.)
+                    // are added by Pro via raplsaich_frontend_config filter.
                 ],
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
@@ -385,49 +344,29 @@ class RAPLSAICH_Chatbot_Widget {
                 /* translators: %s: maximum image size in KB */
                 'image_too_large'        => __('Image is too large. Please select an image under %sKB.', 'rapls-ai-chatbot'),
                 'image_invalid_format'   => __('Unsupported image format. Please select JPEG, PNG, GIF, or WebP.', 'rapls-ai-chatbot'),
-                'offline_name'           => __('Name', 'rapls-ai-chatbot'),
-                'offline_email'          => __('Email', 'rapls-ai-chatbot'),
-                'offline_message'        => __('Message', 'rapls-ai-chatbot'),
-                'offline_send'           => __('Send Message', 'rapls-ai-chatbot'),
-                'offline_reload_request' => __('Could not complete the request. Please reload the page and try again.', 'rapls-ai-chatbot'),
-                'sentiment_frustrated'   => __('Frustrated', 'rapls-ai-chatbot'),
-                'sentiment_confused'     => __('Confused', 'rapls-ai-chatbot'),
-                'sentiment_urgent'       => __('Urgent', 'rapls-ai-chatbot'),
-                'sentiment_positive'     => __('Positive', 'rapls-ai-chatbot'),
-                'sentiment_negative'     => __('Negative', 'rapls-ai-chatbot'),
-                'out_of_stock'           => __('Out of stock', 'rapls-ai-chatbot'),
-                'related_knowledge'      => __('Related', 'rapls-ai-chatbot'),
-                'handoff_waiting'        => __('Waiting for support representative...', 'rapls-ai-chatbot'),
-                'handoff_pending'        => __('A support representative has been notified. Please wait...', 'rapls-ai-chatbot'),
-                'handoff_active'         => __('Connected with support', 'rapls-ai-chatbot'),
-                'handoff_resolved'       => __('Support session ended. You are now chatting with AI again.', 'rapls-ai-chatbot'),
-                'handoff_cancel'         => __('Back to AI', 'rapls-ai-chatbot'),
-                'handoff_cancelled'      => __('Returned to AI chat.', 'rapls-ai-chatbot'),
-                'operator_label'         => __('Support', 'rapls-ai-chatbot'),
-                'bookmark'               => __('Bookmark this message', 'rapls-ai-chatbot'),
-                'bookmarked'             => __('Bookmarked', 'rapls-ai-chatbot'),
-                'bookmark_nav'           => __('Navigate bookmarks', 'rapls-ai-chatbot'),
-                'bookmark_prev'          => __('Previous bookmark', 'rapls-ai-chatbot'),
-                'bookmark_next'          => __('Next bookmark', 'rapls-ai-chatbot'),
-                'search_placeholder'     => __('Search messages...', 'rapls-ai-chatbot'),
-                'search_prev'            => __('Previous match', 'rapls-ai-chatbot'),
-                'search_next'            => __('Next match', 'rapls-ai-chatbot'),
-                'share_conversation'     => __('Copy conversation', 'rapls-ai-chatbot'),
-                'share_copied'           => __('Conversation copied to clipboard', 'rapls-ai-chatbot'),
                 'placeholder'            => __('Type a message...', 'rapls-ai-chatbot'),
                 'resize_window'          => __('Resize window', 'rapls-ai-chatbot'),
-                'fullscreen'             => __('Fullscreen', 'rapls-ai-chatbot'),
                 'web_sources_title'      => __('Web sources:', 'rapls-ai-chatbot'),
-                'listening'              => __('Listening...', 'rapls-ai-chatbot'),
                 'dedup_truncated'        => __('Your message was received and processed. Please reload the page to see the response.', 'rapls-ai-chatbot'),
                 'dedup_stale'            => __('A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.', 'rapls-ai-chatbot'),
                 'dedup_truncated_no_history' => __('Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.', 'rapls-ai-chatbot'),
-                'scenario'               => __('Scenario', 'rapls-ai-chatbot'),
-                'scenario_completed'     => __('completed', 'rapls-ai-chatbot'),
-                'open'                   => __('Open', 'rapls-ai-chatbot'),
                 'api_error'              => __('API error', 'rapls-ai-chatbot'),
+                // Pro strings (offline, sentiment, handoff, bookmark, search, share, etc.)
+                // are added by Pro via raplsaich_frontend_config filter.
             ],
-        ]);
+        ];
+
+        /**
+         * Filter the frontend chatbot configuration.
+         * Pro plugin uses this to add Pro-specific keys (multimodal, voice, fullscreen, etc.)
+         *
+         * @param array $config Configuration array for raplsaichConfig JS object.
+         * @param array $settings Plugin settings.
+         * @param array $pro_features Pro features settings.
+         */
+        $config = apply_filters('raplsaich_frontend_config', $config, $settings, $pro_features);
+
+        wp_localize_script('raplsaich-chatbot', 'raplsaichConfig', $config);
     }
 
     /**
