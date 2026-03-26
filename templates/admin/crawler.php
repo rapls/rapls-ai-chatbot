@@ -6,6 +6,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- template variables, not true globals
 
 $settings = get_option('raplsaich_settings', []);
 $post_types = get_post_types(['public' => true], 'objects');

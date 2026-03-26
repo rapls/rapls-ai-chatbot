@@ -9,6 +9,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from raplsaich_require_table() cannot use placeholders
 
 // Guard: if the real Pro implementation was loaded first, skip this stub.
 if (class_exists('RAPLSAICH_Extensions', false)) {

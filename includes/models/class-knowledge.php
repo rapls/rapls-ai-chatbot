@@ -6,6 +6,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names from raplsaich_require_table() cannot use placeholders
 
 class RAPLSAICH_Knowledge {
 

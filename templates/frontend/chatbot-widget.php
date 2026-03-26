@@ -6,6 +6,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- template variables, not true globals
 ?>
 <div id="wp-ai-chatbot" class="wp-ai-chatbot raplsaich-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed" data-position="<?php echo esc_attr($badge_position ?? 'bottom-right'); ?>">
 

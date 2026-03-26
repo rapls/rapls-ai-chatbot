@@ -6,6 +6,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- template variables, not true globals
 ?>
 <div class="wrap raplsaich-admin">
     <h1><?php esc_html_e('AI Chatbot - Dashboard', 'rapls-ai-chatbot'); ?></h1>

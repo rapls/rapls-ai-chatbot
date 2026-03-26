@@ -6,6 +6,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- admin page display reads, nonce verified by WordPress
 
 class RAPLSAICH_Admin {
 

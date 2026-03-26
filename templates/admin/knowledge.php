@@ -6,6 +6,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- template variables, not true globals
 
 $total_pages = ceil($total / 20);
 $pro_features = RAPLSAICH_Extensions::get_instance();
