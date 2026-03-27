@@ -1051,7 +1051,17 @@
                 cancelBtn.type = 'button';
                 cancelBtn.textContent = s.handoff_cancel || 'Back to AI';
                 cancelBtn.addEventListener('click', function() {
-                    typeof self.cancelHandoff === "function" && self.cancelHandoff();
+                    if (typeof self.cancelHandoff === 'function') {
+                        self.cancelHandoff();
+                    } else {
+                        // Fallback: reset UI directly if Pro method not available
+                        self.handoffStatus = null;
+                        self.showHandoffIndicator(null);
+                        self.addSystemMessage(s.handoff_cancelled || 'Returned to AI chat.');
+                        if (self.sessionId) {
+                            self.apiRequest('POST', '/handoff-cancel', { session_id: self.sessionId }).catch(function(){});
+                        }
+                    }
                 });
                 indicator.appendChild(cancelBtn);
             }
