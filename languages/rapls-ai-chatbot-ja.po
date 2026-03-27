@@ -7585,3 +7585,7 @@ msgstr "コンプライアンスとセキュリティのために管理操作を
 
 msgid "Unlock all Pro features including lead capture, business hours, webhooks, and more."
 msgstr "リード獲得、営業時間、Webhook などすべての Pro 機能をアンロックします。"
+
+#: templates/admin/settings.php
+msgid "10 additional themes available:"
+msgstr "10種類の追加テーマが利用可能:"
