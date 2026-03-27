@@ -90,89 +90,16 @@ class RAPLSAICH_Admin {
             [$this, 'render_knowledge_page']
         );
 
-        $is_pro = raplsaich_is_pro_active();
-
-        // Pro menus - show as locked when Pro is not active
-        // When Pro is active, the Pro plugin adds its own menus
-        if (!$is_pro) {
+        // When Pro is not active, show a single "Pro Features" overview page.
+        // When Pro is active, Pro plugin adds its own menus (Site Learning, Conversations, etc.)
+        if (!raplsaich_is_pro_active()) {
             add_submenu_page(
                 'raplsaich-dashboard',
-                __('Pro Settings', 'rapls-ai-chatbot'),
-                __('Pro Settings', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
+                __('Pro Features', 'rapls-ai-chatbot'),
+                __('Pro Features', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
                 $cap,
-                'raplsaich-pro-settings',
-                [$this, 'render_pro_upsell_page']
-            );
-        }
-
-        // Site Learning — Pro only
-        if ($is_pro) {
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Site Learning', 'rapls-ai-chatbot'),
-                __('Site Learning', 'rapls-ai-chatbot'),
-                $cap,
-                'raplsaich-crawler',
-                [$this, 'render_crawler_page']
-            );
-        } else {
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Site Learning', 'rapls-ai-chatbot'),
-                __('Site Learning', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
-                $cap,
-                'raplsaich-crawler',
-                [$this, 'render_pro_upsell_page']
-            );
-        }
-
-        // Conversation History — Pro only
-        if ($is_pro) {
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Conversations', 'rapls-ai-chatbot'),
-                __('Conversations', 'rapls-ai-chatbot'),
-                $cap,
-                'raplsaich-conversations',
-                [$this, 'render_conversations_page']
-            );
-        } else {
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Conversations', 'rapls-ai-chatbot'),
-                __('Conversations', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
-                $cap,
-                'raplsaich-conversations',
-                [$this, 'render_pro_upsell_page']
-            );
-        }
-
-        if (!$is_pro) {
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Analytics', 'rapls-ai-chatbot'),
-                __('Analytics', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
-                $cap,
-                'raplsaich-analytics',
-                [$this, 'render_pro_upsell_page']
-            );
-
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Leads', 'rapls-ai-chatbot'),
-                __('Leads', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
-                $cap,
-                'raplsaich-leads',
-                [$this, 'render_pro_upsell_page']
-            );
-
-            add_submenu_page(
-                'raplsaich-dashboard',
-                __('Audit Log', 'rapls-ai-chatbot'),
-                __('Audit Log', 'rapls-ai-chatbot') . ' <span class="raplsaich-pro-menu-badge">PRO</span>',
-                $cap,
-                'raplsaich-audit-log',
-                [$this, 'render_pro_upsell_page']
+                'raplsaich-pro-features',
+                [$this, 'render_pro_features_page']
             );
         }
     }
@@ -2775,38 +2702,21 @@ class RAPLSAICH_Admin {
     /**
      * Render Pro upsell page (for Leads and Analytics)
      */
-    public function render_pro_upsell_page(): void {
-        $current_page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
-
-        $previews = [
-            'raplsaich-pro-settings'  => 'render_pro_settings_preview',
-            'raplsaich-crawler'       => 'render_crawler_preview',
-            'raplsaich-conversations' => 'render_conversations_preview',
-            'raplsaich-analytics'     => 'render_analytics_preview',
-            'raplsaich-leads'         => 'render_leads_preview',
-            'raplsaich-audit-log'     => 'render_audit_log_preview',
-        ];
-
-        if (isset($previews[$current_page])) {
-            $this->{$previews[$current_page]}();
-            return;
-        }
-    }
-
     /**
-     * Render upgrade banner (shared by all upsell pages)
+     * Render the unified Pro Features overview page.
+     * Single page with all Pro feature categories.
      */
-    private function render_pro_upgrade_banner(string $title, string $description, array $features = []): void {
+    public function render_pro_features_page(): void {
         ?>
         <div class="wrap raplsaich-admin">
-            <h1><?php echo esc_html($title); ?></h1>
+            <h1><?php esc_html_e('Pro Features', 'rapls-ai-chatbot'); ?></h1>
 
             <div class="raplsaich-pro-upgrade-banner">
                 <div class="raplsaich-pro-upgrade-content">
                     <span class="dashicons dashicons-star-filled"></span>
                     <div>
                         <strong><?php esc_html_e('Upgrade to Pro', 'rapls-ai-chatbot'); ?></strong>
-                        <p><?php echo esc_html($description); ?></p>
+                        <p><?php esc_html_e('Extend your AI chatbot with analytics, lead capture, automation, and more.', 'rapls-ai-chatbot'); ?></p>
                     </div>
                     <a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" class="button button-primary">
                         <?php esc_html_e('Get Pro Version', 'rapls-ai-chatbot'); ?>
@@ -2814,133 +2724,98 @@ class RAPLSAICH_Admin {
                 </div>
             </div>
 
-            <?php if (!empty($features)) : ?>
-            <div class="raplsaich-pro-features-list">
-                <h3><?php esc_html_e('Pro Features Include:', 'rapls-ai-chatbot'); ?></h3>
-                <ul>
-                    <?php foreach ($features as $feature) : ?>
-                    <li><span class="dashicons dashicons-yes"></span> <?php echo esc_html($feature); ?></li>
-                    <?php endforeach; ?>
-                </ul>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-top:20px;">
+
+                <?php $this->render_feature_card(
+                    __('Analytics Dashboard', 'rapls-ai-chatbot'),
+                    __('Track chatbot performance with detailed analytics and reports.', 'rapls-ai-chatbot'),
+                    [
+                        __('Conversation and message statistics', 'rapls-ai-chatbot'),
+                        __('User satisfaction scores', 'rapls-ai-chatbot'),
+                        __('FAQ ranking and unresolved questions', 'rapls-ai-chatbot'),
+                        __('API cost tracking per model', 'rapls-ai-chatbot'),
+                        __('PDF report export', 'rapls-ai-chatbot'),
+                    ]
+                ); ?>
+
+                <?php $this->render_feature_card(
+                    __('Lead Capture', 'rapls-ai-chatbot'),
+                    __('Capture and manage leads from chatbot conversations.', 'rapls-ai-chatbot'),
+                    [
+                        __('Customizable lead capture forms', 'rapls-ai-chatbot'),
+                        __('Export leads (CSV/JSON)', 'rapls-ai-chatbot'),
+                        __('Email notifications on new leads', 'rapls-ai-chatbot'),
+                        __('Webhook integration (Slack, Zapier, CRM)', 'rapls-ai-chatbot'),
+                    ]
+                ); ?>
+
+                <?php $this->render_feature_card(
+                    __('Site Learning', 'rapls-ai-chatbot'),
+                    __('Enhance your AI with site-wide content indexing.', 'rapls-ai-chatbot'),
+                    [
+                        __('Auto-learn site content on schedule', 'rapls-ai-chatbot'),
+                        __('Vector embedding for semantic search', 'rapls-ai-chatbot'),
+                        __('Enhanced HTML content extraction', 'rapls-ai-chatbot'),
+                        __('WooCommerce product data auto-crawl', 'rapls-ai-chatbot'),
+                    ]
+                ); ?>
+
+                <?php $this->render_feature_card(
+                    __('Conversations', 'rapls-ai-chatbot'),
+                    __('View, manage, and export all chatbot conversations.', 'rapls-ai-chatbot'),
+                    [
+                        __('Full conversation history with search', 'rapls-ai-chatbot'),
+                        __('Export conversations (CSV/JSON)', 'rapls-ai-chatbot'),
+                        __('Operator mode for live chat takeover', 'rapls-ai-chatbot'),
+                        __('Sentiment analysis per conversation', 'rapls-ai-chatbot'),
+                    ]
+                ); ?>
+
+                <?php $this->render_feature_card(
+                    __('Audit Log', 'rapls-ai-chatbot'),
+                    __('Track administrative actions for compliance and security.', 'rapls-ai-chatbot'),
+                    [
+                        __('Detailed admin action history', 'rapls-ai-chatbot'),
+                        __('Export audit log (CSV)', 'rapls-ai-chatbot'),
+                        __('Configurable retention policy', 'rapls-ai-chatbot'),
+                    ]
+                ); ?>
+
+                <?php $this->render_feature_card(
+                    __('Pro Settings', 'rapls-ai-chatbot'),
+                    __('Unlock all Pro features and customization options.', 'rapls-ai-chatbot'),
+                    [
+                        __('Business hours & holiday schedules', 'rapls-ai-chatbot'),
+                        __('Webhook & LINE integration', 'rapls-ai-chatbot'),
+                        __('Human handoff & operator mode', 'rapls-ai-chatbot'),
+                        __('Voice input & text-to-speech', 'rapls-ai-chatbot'),
+                        __('Response caching & performance tools', 'rapls-ai-chatbot'),
+                        __('Settings backup, rollback & staging', 'rapls-ai-chatbot'),
+                    ]
+                ); ?>
+
             </div>
-            <?php endif; ?>
         </div>
         <?php
     }
 
     /**
-     * Site Learning preview — text-only upgrade notice
+     * Render a single Pro feature card.
      */
-    private function render_crawler_preview(): void {
-        $this->render_pro_upgrade_banner(
-            __('Site Learning', 'rapls-ai-chatbot'),
-            __('Enhance your AI chatbot with site-wide content indexing and vector embeddings.', 'rapls-ai-chatbot'),
-            [
-                __('Auto-learn site content on schedule', 'rapls-ai-chatbot'),
-                __('Vector embedding for semantic search', 'rapls-ai-chatbot'),
-                __('Enhanced HTML content extraction', 'rapls-ai-chatbot'),
-                __('WooCommerce product data auto-crawl', 'rapls-ai-chatbot'),
-                __('Differential crawl (index changes only)', 'rapls-ai-chatbot'),
-                __('Exclude specific pages from indexing', 'rapls-ai-chatbot'),
-            ]
-        );
+    private function render_feature_card(string $title, string $description, array $features): void {
+        ?>
+        <div class="raplsaich-pro-features-list">
+            <h3><?php echo esc_html($title); ?></h3>
+            <p style="color:#666;margin-top:0;"><?php echo esc_html($description); ?></p>
+            <ul>
+                <?php foreach ($features as $feature) : ?>
+                <li><span class="dashicons dashicons-yes"></span> <?php echo esc_html($feature); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+        <?php
     }
 
-    /**
-     * Conversations preview — text-only upgrade notice
-     */
-    private function render_conversations_preview(): void {
-        $this->render_pro_upgrade_banner(
-            __('Conversations', 'rapls-ai-chatbot'),
-            __('View, manage, and export all chatbot conversations.', 'rapls-ai-chatbot'),
-            [
-                __('Full conversation history with search', 'rapls-ai-chatbot'),
-                __('Export conversations (CSV/JSON)', 'rapls-ai-chatbot'),
-                __('Operator mode for live chat takeover', 'rapls-ai-chatbot'),
-                __('Conversation tags and archiving', 'rapls-ai-chatbot'),
-                __('AI-powered response improvement suggestions', 'rapls-ai-chatbot'),
-                __('Sentiment analysis per conversation', 'rapls-ai-chatbot'),
-            ]
-        );
-    }
-
-    /**
-     * Analytics preview — text-only upgrade notice
-     */
-    private function render_analytics_preview(): void {
-        $this->render_pro_upgrade_banner(
-            __('Analytics', 'rapls-ai-chatbot'),
-            __('Track chatbot performance with detailed analytics and reports.', 'rapls-ai-chatbot'),
-            [
-                __('Conversation and message statistics', 'rapls-ai-chatbot'),
-                __('User satisfaction scores', 'rapls-ai-chatbot'),
-                __('FAQ ranking and unresolved questions', 'rapls-ai-chatbot'),
-                __('API cost tracking per model', 'rapls-ai-chatbot'),
-                __('Daily/hourly activity charts', 'rapls-ai-chatbot'),
-                __('PDF report export', 'rapls-ai-chatbot'),
-                __('Monthly email reports', 'rapls-ai-chatbot'),
-                __('Knowledge gap detection', 'rapls-ai-chatbot'),
-            ]
-        );
-    }
-
-    /**
-     * Leads preview — text-only upgrade notice
-     */
-    private function render_leads_preview(): void {
-        $this->render_pro_upgrade_banner(
-            __('Leads', 'rapls-ai-chatbot'),
-            __('Capture and manage leads from chatbot conversations.', 'rapls-ai-chatbot'),
-            [
-                __('Customizable lead capture forms', 'rapls-ai-chatbot'),
-                __('Export leads (CSV/JSON)', 'rapls-ai-chatbot'),
-                __('Email notifications on new leads', 'rapls-ai-chatbot'),
-                __('Webhook integration (Slack, Zapier, CRM)', 'rapls-ai-chatbot'),
-                __('Custom fields support', 'rapls-ai-chatbot'),
-                __('Lead-to-conversation linking', 'rapls-ai-chatbot'),
-            ]
-        );
-    }
-
-    /**
-     * Audit Log preview — text-only upgrade notice
-     */
-    private function render_audit_log_preview(): void {
-        $this->render_pro_upgrade_banner(
-            __('Audit Log', 'rapls-ai-chatbot'),
-            __('Track administrative actions for compliance and security.', 'rapls-ai-chatbot'),
-            [
-                __('Detailed admin action history', 'rapls-ai-chatbot'),
-                __('Export audit log (CSV)', 'rapls-ai-chatbot'),
-                __('Configurable retention policy', 'rapls-ai-chatbot'),
-                __('User and action type filtering', 'rapls-ai-chatbot'),
-            ]
-        );
-    }
-
-    /**
-     * Pro Settings preview — text-only upgrade notice
-     */
-    private function render_pro_settings_preview(): void {
-        $this->render_pro_upgrade_banner(
-            __('Pro Settings', 'rapls-ai-chatbot'),
-            __('Unlock all Pro features including lead capture, business hours, webhooks, and more.', 'rapls-ai-chatbot'),
-            [
-                __('Lead capture & custom forms', 'rapls-ai-chatbot'),
-                __('Business hours & holiday schedules', 'rapls-ai-chatbot'),
-                __('Webhook & LINE integration', 'rapls-ai-chatbot'),
-                __('Human handoff & operator mode', 'rapls-ai-chatbot'),
-                __('AI prompts & templates', 'rapls-ai-chatbot'),
-                __('Conversation scenarios & actions', 'rapls-ai-chatbot'),
-                __('Multiple chatbots per page', 'rapls-ai-chatbot'),
-                __('Budget alerts & cost caps', 'rapls-ai-chatbot'),
-                __('Role-based access control', 'rapls-ai-chatbot'),
-                __('Voice input & text-to-speech', 'rapls-ai-chatbot'),
-                __('Response caching & performance tools', 'rapls-ai-chatbot'),
-                __('Settings backup, rollback & staging', 'rapls-ai-chatbot'),
-            ]
-        );
-    }
 
     /**
      * Reset all user sessions AJAX
