@@ -2154,6 +2154,9 @@
         }
     };
 
+    // Expose globally so Pro plugin can register hooks
+    window.RaplsaichChatbot = RaplsaichChatbot;
+
     // DOM準備完了後に初期化
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
