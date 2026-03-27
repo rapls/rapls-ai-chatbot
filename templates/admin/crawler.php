@@ -300,7 +300,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                             <p class="description"><?php esc_html_e('Uses DOMDocument to parse HTML and extract structured content from headings, tables, lists, code blocks, and meta tags.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description">
                                 <span class="dashicons dashicons-star-filled" style="color: #667eea; vertical-align: text-bottom;"></span>
-                                <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank"><?php esc_html_e('Upgrade to Pro to enable enhanced content extraction.', 'rapls-ai-chatbot'); ?></a>
+                                <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to enable enhanced content extraction.', 'rapls-ai-chatbot'); ?></a>
                             </p>
                             <?php endif; ?>
                         </td>
@@ -394,7 +394,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                                 </td>
                                 <td><?php echo esc_html($item['post_type']); ?></td>
                                 <td>
-                                    <a href="<?php echo esc_url($item['url']); ?>" target="_blank">
+                                    <a href="<?php echo esc_url($item['url']); ?>" target="_blank" rel="noopener noreferrer">
                                         <?php echo esc_html(mb_strlen($item['url']) > 50 ? mb_substr($item['url'], 0, 50) . '...' : $item['url']); ?>
                                     </a>
                                 </td>

@@ -436,6 +436,8 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 * Fixed: Plugin Check warnings for file system operations in CSV import
 * Removed: Artificial free-tier limits — all core features are fully available
 * Removed: Default "Powered by" footer from chatbot widget
+* Changed: Settings key renamed from `pro_features` to `extensions` with automatic migration. The legacy key is retained as a read-only fallback for backward compatibility with older Pro plugin versions.
+* Security: Added `rel="noopener noreferrer"` to all external links
 * Updated: Neutral error messages replacing promotional upsell text
 * Updated: Cleaned stale translation strings from language files
 

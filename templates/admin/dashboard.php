@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
             printf(
                 /* translators: %s: URL to Pro page */
                 esc_html__('Unlock analytics, lead capture, scenarios, and more with %s.', 'rapls-ai-chatbot'),
-                '<a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank">Pro</a>'
+                '<a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" rel="noopener noreferrer">Pro</a>'
             );
             ?>
         </p>

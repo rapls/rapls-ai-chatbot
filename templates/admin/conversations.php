@@ -107,7 +107,7 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                 <?php else: ?>
                 <span class="description">
                     <span class="dashicons dashicons-star-filled" style="color: #667eea; vertical-align: text-bottom;"></span>
-                    <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank"><?php esc_html_e('Export available with Pro', 'rapls-ai-chatbot'); ?></a>
+                    <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Export available with Pro', 'rapls-ai-chatbot'); ?></a>
                 </span>
                 <?php endif; ?>
             </div>
@@ -166,7 +166,7 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                         </td>
                         <td>
                             <?php if (!empty($conv['page_url'])): ?>
-                                <a href="<?php echo esc_url($conv['page_url']); ?>" target="_blank" title="<?php echo esc_attr($conv['page_url']); ?>">
+                                <a href="<?php echo esc_url($conv['page_url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo esc_attr($conv['page_url']); ?>">
                                     <?php echo esc_html(mb_strlen($conv['page_url']) > 50 ? mb_substr($conv['page_url'], 0, 50) . '...' : $conv['page_url']); ?>
                                 </a>
                             <?php else: ?>
