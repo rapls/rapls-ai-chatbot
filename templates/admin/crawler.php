@@ -269,8 +269,8 @@ $post_types = get_post_types(['public' => true], 'objects');
                         <td>
                             <?php if ($is_pro_active): ?>
                             <?php
-                            $pro_features = $settings['pro_features'] ?? [];
-                            $enhanced_enabled = !empty($pro_features['enhanced_content_extraction']);
+                            $ext_cfg = raplsaich_get_ext_settings($settings);
+                            $enhanced_enabled = !empty($ext_cfg['enhanced_content_extraction']);
                             ?>
                             <label>
                                 <input type="checkbox" id="raplsaich_enhanced_extraction"

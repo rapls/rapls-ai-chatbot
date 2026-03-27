@@ -990,7 +990,7 @@ if (!defined('ABSPATH')) {
                         </th>
                         <td>
                             <?php
-                            $badge_pro_settings = $settings['pro_features'] ?? [];
+                            $badge_pro_settings = raplsaich_get_ext_settings($settings);
                             $badge_icon_type = $badge_pro_settings['badge_icon_type'] ?? 'default';
                             $badge_icon_preset = $badge_pro_settings['badge_icon_preset'] ?? '';
                             $badge_icon_image = $badge_pro_settings['badge_icon_image'] ?? '';
@@ -1615,7 +1615,7 @@ if (!defined('ABSPATH')) {
                             <?php endif; ?>
                             <?php
                             // Warn if offline-message (Pro) is enabled but reCAPTCHA is not configured
-                            $pro_settings = $diag_settings['pro_features'] ?? [];
+                            $pro_settings = raplsaich_get_ext_settings($diag_settings);
                             $offline_enabled = !empty($pro_settings['offline_message_enabled']);
                             if ($offline_enabled && !$rc_enabled) :
                             ?>

@@ -9,10 +9,10 @@ if (!defined('ABSPATH')) {
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- template variables, not true globals
 
 $total_pages = ceil($total / 20);
-$pro_features = RAPLSAICH_Extensions::get_instance();
+$ext = RAPLSAICH_Extensions::get_instance();
 $faq_count = RAPLSAICH_Knowledge::get_count();
-$faq_limit = $pro_features->get_faq_limit();
-$faq_limit_reached = !$pro_features->can_add_faq();
+$faq_limit = $ext->get_faq_limit();
+$faq_limit_reached = !$ext->can_add_faq();
 $is_pro = raplsaich_is_pro_active();
 ?>
 <div class="wrap raplsaich-admin">
@@ -208,7 +208,7 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
 
             <?php
             $settings = get_option('raplsaich_settings', []);
-            $pro_settings = $settings['pro_features'] ?? [];
+            $pro_settings = raplsaich_get_ext_settings($settings);
             if ($is_pro && !empty($pro_settings['faq_auto_generation_enabled'])):
             ?>
             <button type="button" id="raplsaich-generate-faq" class="button button-secondary" style="margin-left: auto;">

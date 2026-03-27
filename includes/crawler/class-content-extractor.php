@@ -30,8 +30,8 @@ class RAPLSAICH_Content_Extractor {
 
         // Check if enhanced extraction is enabled (Pro feature)
         $settings = get_option('raplsaich_settings', []);
-        $pro_features = $settings['pro_features'] ?? [];
-        $enhanced = !empty($pro_features['enhanced_content_extraction']);
+        $ext_cfg = raplsaich_get_ext_settings($settings);
+        $enhanced = !empty($ext_cfg['enhanced_content_extraction']);
 
         if ($enhanced) {
             $content = $this->enhanced_strip_html($content);

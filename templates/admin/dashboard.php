@@ -64,7 +64,7 @@ if (!defined('ABSPATH')) {
             <?php
             // Cache stats (Pro feature)
             $dashboard_settings = get_option('raplsaich_settings', []);
-            $dashboard_pro_settings = $dashboard_settings['pro_features'] ?? [];
+            $dashboard_pro_settings = raplsaich_get_ext_settings($dashboard_settings);
             if (!empty($dashboard_pro_settings['response_cache_enabled']) && raplsaich_is_pro_active()):
                 $cache_stats = RAPLSAICH_Message::get_cache_stats(30);
                 if ($cache_stats['total_requests'] > 0):

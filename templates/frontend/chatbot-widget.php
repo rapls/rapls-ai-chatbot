@@ -124,10 +124,10 @@ if (!defined('ABSPATH')) {
 
         <?php
         // Pro white-label footer (opt-in via Pro settings)
-        $wl_footer = $settings['pro_features']['white_label_footer'] ?? '';
+        $wl_footer = raplsaich_get_ext_settings($settings)['white_label_footer'] ?? '';
         if ($wl_footer !== '') :
-            $wl_url = $settings['pro_features']['white_label_footer_url'] ?? '';
-            $wl_target = $settings['pro_features']['white_label_footer_target'] ?? '_blank';
+            $wl_url = raplsaich_get_ext_settings($settings)['white_label_footer_url'] ?? '';
+            $wl_target = raplsaich_get_ext_settings($settings)['white_label_footer_target'] ?? '_blank';
         ?>
         <div class="chatbot-footer-branding">
             <?php if ($wl_url !== '') : ?>

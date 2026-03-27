@@ -189,7 +189,7 @@ class RAPLSAICH_Admin {
      */
     public function handoff_pending_notice(): void {
         $settings = get_option('raplsaich_settings', []);
-        $pro_settings = $settings['pro_features'] ?? [];
+        $pro_settings = raplsaich_get_ext_settings($settings);
         if (empty($pro_settings['human_handoff_enabled'])) {
             return;
         }
@@ -2029,8 +2029,8 @@ class RAPLSAICH_Admin {
         }
 
         // Check FAQ limit (always passes in Free — no artificial limits)
-        $pro_features = RAPLSAICH_Extensions::get_instance();
-        if (!$pro_features->can_add_faq()) {
+        $ext = RAPLSAICH_Extensions::get_instance();
+        if (!$ext->can_add_faq()) {
             wp_send_json_error(__('Unable to add knowledge entry.', 'rapls-ai-chatbot'));
         }
 
@@ -2093,8 +2093,8 @@ class RAPLSAICH_Admin {
             }
 
             // Check FAQ limit (always passes in Free — no artificial limits)
-            $pro_features = RAPLSAICH_Extensions::get_instance();
-            if (!$pro_features->can_add_faq()) {
+            $ext = RAPLSAICH_Extensions::get_instance();
+            if (!$ext->can_add_faq()) {
                 wp_send_json_error(__('Unable to import knowledge file.', 'rapls-ai-chatbot'));
             }
 

@@ -71,7 +71,7 @@ class RAPLSAICH_Chatbot_Widget {
         $theme_class = trim($theme_class);
 
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
-        $ext_settings = $settings['pro_features'] ?? [];
+        $ext_settings = raplsaich_get_ext_settings($settings);
         $badge_icon_type = $ext_settings['badge_icon_type'] ?? 'default';
         $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
         $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
@@ -112,9 +112,9 @@ class RAPLSAICH_Chatbot_Widget {
                 }
                 // Bot-specific badge override
                 if (!empty($sc_bot_config['badge_icon_type']) && $sc_bot_config['badge_icon_type'] !== 'default') {
-                    $settings['pro_features']['badge_icon_type'] = $sc_bot_config['badge_icon_type'];
-                    $settings['pro_features']['badge_icon_image'] = $sc_bot_config['badge_icon_image'] ?? '';
-                    $settings['pro_features']['badge_icon_emoji'] = $sc_bot_config['badge_icon_emoji'] ?? '';
+                    raplsaich_get_ext_settings($settings)['badge_icon_type'] = $sc_bot_config['badge_icon_type'];
+                    raplsaich_get_ext_settings($settings)['badge_icon_image'] = $sc_bot_config['badge_icon_image'] ?? '';
+                    raplsaich_get_ext_settings($settings)['badge_icon_emoji'] = $sc_bot_config['badge_icon_emoji'] ?? '';
                 }
                 // Set bot_id in JS config via inline script
                 wp_add_inline_script('raplsaich-chatbot',
@@ -212,7 +212,7 @@ class RAPLSAICH_Chatbot_Widget {
         ";
 
         // Powered by footer is now conditionally rendered in the template (not hidden via CSS)
-        $pro_settings = $settings['pro_features'] ?? [];
+        $pro_settings = raplsaich_get_ext_settings($settings);
         $pro = RAPLSAICH_Extensions::get_instance();
 
         // White label: custom CSS (strip dangerous strings to prevent style breakout)
@@ -273,7 +273,7 @@ class RAPLSAICH_Chatbot_Widget {
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
 
         // Pro features settings (values read by filter, not by Free directly)
-        $ext_settings = $settings['pro_features'] ?? [];
+        $ext_settings = raplsaich_get_ext_settings($settings);
 
         $config = [
             'restUrl'             => rest_url('rapls-ai-chatbot/v1/'),
@@ -365,7 +365,7 @@ class RAPLSAICH_Chatbot_Widget {
          *
          * @param array $config Configuration array for raplsaichConfig JS object.
          * @param array $settings Plugin settings.
-         * @param array $pro_features Pro features settings.
+         * @param array $ext_settings Extension settings.
          */
         $config = apply_filters('raplsaich_frontend_config', $config, $settings, $ext_settings);
 
@@ -411,7 +411,7 @@ class RAPLSAICH_Chatbot_Widget {
 
         // Badge icon settings
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
-        $ext_settings = $settings['pro_features'] ?? [];
+        $ext_settings = raplsaich_get_ext_settings($settings);
         $badge_icon_type = $ext_settings['badge_icon_type'] ?? 'default';
         $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
         $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
@@ -453,9 +453,9 @@ class RAPLSAICH_Chatbot_Widget {
                     }
                     // Bot-specific badge override
                     if (!empty($page_bot_config['badge_icon_type']) && $page_bot_config['badge_icon_type'] !== 'default') {
-                        $settings['pro_features']['badge_icon_type'] = $page_bot_config['badge_icon_type'];
-                        $settings['pro_features']['badge_icon_image'] = $page_bot_config['badge_icon_image'] ?? '';
-                        $settings['pro_features']['badge_icon_emoji'] = $page_bot_config['badge_icon_emoji'] ?? '';
+                        raplsaich_get_ext_settings($settings)['badge_icon_type'] = $page_bot_config['badge_icon_type'];
+                        raplsaich_get_ext_settings($settings)['badge_icon_image'] = $page_bot_config['badge_icon_image'] ?? '';
+                        raplsaich_get_ext_settings($settings)['badge_icon_emoji'] = $page_bot_config['badge_icon_emoji'] ?? '';
                     }
                     // Override JS config for page-rule bot
                     wp_add_inline_script('raplsaich-chatbot',
@@ -521,7 +521,7 @@ class RAPLSAICH_Chatbot_Widget {
         $theme_class = trim($theme_class);
 
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
-        $ext_settings = $settings['pro_features'] ?? [];
+        $ext_settings = raplsaich_get_ext_settings($settings);
         $badge_icon_type = $ext_settings['badge_icon_type'] ?? 'default';
         $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
         $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';

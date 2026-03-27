@@ -304,7 +304,7 @@ class RAPLSAICH_Main {
         global $wpdb;
 
         $settings = get_option('raplsaich_settings', []);
-        $pro = $settings['pro_features'] ?? [];
+        $pro = raplsaich_get_ext_settings($settings);
 
         if (!empty($pro['data_retention_enabled'])) {
             $retention_days = max(1, (int) ($pro['data_retention_days'] ?? 365));

@@ -538,7 +538,7 @@ class RAPLSAICH_REST_Controller {
         // Reject image if multimodal is not enabled (Pro feature)
         // Allow if screenshot/screen sharing is enabled
         if (!empty($image)) {
-            $pro_settings_check = get_option('raplsaich_settings', [])['pro_features'] ?? [];
+            $pro_settings_check = raplsaich_get_ext_settings();
             $multimodal_allowed = !empty($pro_settings_check['multimodal_enabled']) || !empty($pro_settings_check['screen_sharing_enabled']);
             if (!$multimodal_allowed) {
                 return new WP_REST_Response([
@@ -736,7 +736,7 @@ class RAPLSAICH_REST_Controller {
             }
         }
 
-        $pro_features = RAPLSAICH_Extensions::get_instance();
+        $ext = RAPLSAICH_Extensions::get_instance();
 
         /**
          * Filter: Pre-chat validation hook.
@@ -853,7 +853,7 @@ class RAPLSAICH_REST_Controller {
 
             // Check message limit — if reached, try FAQ fallback instead of AI
             // get_monthly_ai_response_count() includes no-history counter automatically
-            if ($pro_features->is_limit_reached()) {
+            if ($ext->is_limit_reached()) {
                 $search_engine = new RAPLSAICH_Search_Engine();
                 // Apply bot-specific knowledge filter for FAQ fallback
                 $faq_use_knowledge = $bot_config['use_knowledge'] ?? true;
@@ -927,7 +927,7 @@ class RAPLSAICH_REST_Controller {
             do_action('raplsaich_knowledge_hits', $related_content);
 
             // Response cache check (Pro feature)
-            $ext_settings = $settings['pro_features'] ?? [];
+            $ext_settings = raplsaich_get_ext_settings($settings);
             $cache_enabled = !empty($ext_settings['response_cache_enabled']);
             $cache_hash = null;
 
@@ -990,7 +990,7 @@ class RAPLSAICH_REST_Controller {
                         }
                         $cache_sources = array_values(array_unique($cache_sources));
                     }
-                    $remaining_messages = $pro_features->get_remaining_messages();
+                    $remaining_messages = $ext->get_remaining_messages();
 
                     $cached_content = apply_filters('raplsaich_ai_response', $cached['content'], $message, $settings);
 
@@ -1275,7 +1275,7 @@ class RAPLSAICH_REST_Controller {
                 $response['input_tokens'] ?? 0,
                 $response['output_tokens'] ?? 0
             );
-            $pro_features->maybe_send_budget_alert($msg_cost);
+            $ext->maybe_send_budget_alert($msg_cost);
 
             // Get source URLs (filter by display mode)
             $sources_mode = $settings['sources_display_mode'] ?? 'matched';
@@ -1317,7 +1317,7 @@ class RAPLSAICH_REST_Controller {
             }
 
             // Get remaining messages for response
-            $remaining_messages = $pro_features->get_remaining_messages();
+            $remaining_messages = $ext->get_remaining_messages();
 
             /**
              * Filter the AI response content before returning to the user.
@@ -1351,7 +1351,7 @@ class RAPLSAICH_REST_Controller {
             }
 
             // Add sentiment to response if sentiment analysis is enabled
-            $sentiment_enabled = $pro_features->is_sentiment_analysis_enabled();
+            $sentiment_enabled = $ext->is_sentiment_analysis_enabled();
             if ($sentiment_enabled && !empty($sentiment) && $sentiment !== 'neutral') {
                 $response_data['sentiment'] = $sentiment;
             }
@@ -1752,7 +1752,7 @@ class RAPLSAICH_REST_Controller {
         }
 
         $settings = get_option('raplsaich_settings', []);
-        $ext_settings = $settings['pro_features'] ?? [];
+        $ext_settings = raplsaich_get_ext_settings($settings);
         if (empty($ext_settings['file_upload_enabled'])) {
             return new WP_Error('file_upload_disabled', __('File upload is not enabled.', 'rapls-ai-chatbot'));
         }
@@ -2231,9 +2231,9 @@ class RAPLSAICH_REST_Controller {
      */
     private function check_rate_limit() {
         // Check Pro enhanced rate limit first
-        $pro_features = RAPLSAICH_Extensions::get_instance();
+        $ext = RAPLSAICH_Extensions::get_instance();
         $pro_settings = get_option('raplsaich_settings', []);
-        $pro_feat_settings = $pro_settings['pro_features'] ?? [];
+        $pro_feat_settings = raplsaich_get_ext_settings($pro_settings);
 
         // Enhanced rate limit hook (Pro adds via filter)
         $enhanced_result = apply_filters('raplsaich_enhanced_rate_limit', null, $pro_feat_settings);
@@ -2885,7 +2885,7 @@ class RAPLSAICH_REST_Controller {
 
         try {
             $settings = get_option('raplsaich_settings', []);
-            $ext_settings = $settings['pro_features'] ?? [];
+            $ext_settings = raplsaich_get_ext_settings($settings);
 
             // Lead capture requires Pro to be active AND setting enabled.
             // Prevents stale DB values from enabling lead form when Pro is deactivated.
@@ -2969,8 +2969,8 @@ class RAPLSAICH_REST_Controller {
             return new WP_REST_Response(['success' => false, 'error' => $rate_check, 'error_code' => 'rate_limited'], 429);
         }
 
-        $pro_features = RAPLSAICH_Extensions::get_instance();
-        $remaining = $pro_features->get_remaining_messages();
+        $ext = RAPLSAICH_Extensions::get_instance();
+        $remaining = $ext->get_remaining_messages();
 
         // Return only UI-necessary fields.
         // Design note: Free/Pro plan type is already publicly inferable from widget
@@ -2980,7 +2980,7 @@ class RAPLSAICH_REST_Controller {
             'success' => true,
             'data'    => [
                 'remaining' => $remaining === PHP_INT_MAX ? null : $remaining,
-                'reached'   => $pro_features->is_limit_reached(),
+                'reached'   => $ext->is_limit_reached(),
             ],
         ], 200));
     }

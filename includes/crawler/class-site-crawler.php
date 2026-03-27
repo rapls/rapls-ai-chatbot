@@ -297,7 +297,7 @@ class RAPLSAICH_Site_Crawler {
 
         // Skip if no changes (differential crawl)
         $settings = get_option('raplsaich_settings', []);
-        $diff_crawl = $settings['pro_features']['diff_crawl_enabled'] ?? true;
+        $diff_crawl = raplsaich_get_ext_settings($settings)['diff_crawl_enabled'] ?? true;
         if ($diff_crawl && RAPLSAICH_Content_Index::hash_exists($post->ID, $content_hash)) {
             return 'skipped';
         }
