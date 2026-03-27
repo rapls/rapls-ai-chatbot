@@ -23,7 +23,11 @@ check "CDN references" $(grep -rn 'cdnjs.cloudflare.com\|cdn.jsdelivr.net' --inc
 # Monitoring: pro_features reference count (should not increase)
 PF_COUNT=$(grep -rn 'pro_features' --include='*.php' --include='*.js' . | grep -v 'docs/\|\.git/\|class-extensions\|phpcs:disable\|raplsaich_frontend_config\|raplsaich_sanitize_pro\|raplsaich_pro_default\|// ' | wc -l | tr -d ' ')
 PF_BASELINE=7
-# Allowlist: migration/fallback code in helpers.php and class-activator.php
+# Allowlist (baseline=7):
+#   render_pro_features_page (2) — admin menu page name
+#   class-activator.php (3) — migrate_extensions_key legacy migration
+#   helpers.php (2) — raplsaich_get_ext_settings fallback + docblock
+# New code MUST use 'extensions' key. 'pro_features' is read-only legacy.
 if [ "$PF_COUNT" -le "$PF_BASELINE" ]; then
     echo "✓ pro_features refs: $PF_COUNT (baseline: $PF_BASELINE)"
 else

@@ -300,7 +300,6 @@ $post_types = get_post_types(['public' => true], 'objects');
                             <p class="description"><?php esc_html_e('Uses DOMDocument to parse HTML and extract structured content from headings, tables, lists, code blocks, and meta tags.', 'rapls-ai-chatbot'); ?></p>
                             <p class="description">
                                 <span class="dashicons dashicons-star-filled" style="color: #667eea; vertical-align: text-bottom;"></span>
-                                <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to enable enhanced content extraction.', 'rapls-ai-chatbot'); ?></a>
                             </p>
                             <?php endif; ?>
                         </td>

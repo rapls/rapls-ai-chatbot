@@ -107,7 +107,6 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                 <?php else: ?>
                 <span class="description">
                     <span class="dashicons dashicons-star-filled" style="color: #667eea; vertical-align: text-bottom;"></span>
-                    <a href="https://raplsworks.com/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Export available with Pro', 'rapls-ai-chatbot'); ?></a>
                 </span>
                 <?php endif; ?>
             </div>

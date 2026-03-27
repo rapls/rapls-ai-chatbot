@@ -405,6 +405,10 @@ The plugin registers REST API endpoints under the `rapls-ai-chatbot/v1` namespac
 
 The Pro add-on registers additional endpoints for analytics, scenarios, LINE, and more. See the Pro documentation for details.
 
+= Settings Architecture =
+
+Extension settings are stored under the `extensions` key in `raplsaich_settings`. For backward compatibility with older Pro plugin versions, the plugin also reads from the legacy `pro_features` key as a fallback. All new settings are written exclusively to `extensions`. The legacy key is read-only and will be removed in a future major version.
+
 = Database Tables =
 
 The plugin creates the following database tables:
