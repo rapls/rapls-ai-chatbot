@@ -30,3 +30,7 @@ Thumbs.db export-ignore
 
 # Inject git commit hash into WPAIC_BUILD constant on git archive
 rapls-ai-chatbot.php export-subst
+scripts/ export-ignore
+scripts/** export-ignore
+docs/ export-ignore
+docs/** export-ignore
