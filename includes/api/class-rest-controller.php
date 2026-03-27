@@ -2233,7 +2233,7 @@ class RAPLSAICH_REST_Controller {
         // Check Pro enhanced rate limit first
         $pro_features = RAPLSAICH_Extensions::get_instance();
         $pro_settings = get_option('raplsaich_settings', []);
-        $pro_feat_settings = $ext_settings['pro_features'] ?? [];
+        $pro_feat_settings = $pro_settings['pro_features'] ?? [];
 
         // Enhanced rate limit hook (Pro adds via filter)
         $enhanced_result = apply_filters('raplsaich_enhanced_rate_limit', null, $pro_feat_settings);
