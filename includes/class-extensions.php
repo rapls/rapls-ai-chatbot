@@ -131,8 +131,8 @@ class RAPLSAICH_Extensions {
      */
     public static function get_email_subject_prefix(): string {
         $settings = get_option('raplsaich_settings', []);
-        $pro = $settings['pro_features'] ?? [];
-        $prefix = trim($pro['email_subject_prefix'] ?? '');
+        $ext = raplsaich_get_ext_settings($settings);
+        $prefix = trim($ext['email_subject_prefix'] ?? '');
         return $prefix !== '' ? $prefix : 'Rapls AI Chatbot';
     }
 

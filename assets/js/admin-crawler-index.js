@@ -203,7 +203,7 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Enhanced extraction toggle (saves to pro_features via AJAX)
+    // Enhanced extraction toggle (saves to extensions via AJAX)
     $('#raplsaich_enhanced_extraction').on('change', function() {
         var enabled = $(this).is(':checked') ? 1 : 0;
         $.post(ajaxurl, {
