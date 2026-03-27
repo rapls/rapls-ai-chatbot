@@ -2136,13 +2136,15 @@
 
         /**
          * Execute all registered Pro hooks for a given name.
+         * Returns false if no hooks registered (safe no-op for Free-only).
          */
         runProHook: function(name) {
             var hooks = this._proHooks[name];
-            if (!hooks || !hooks.length) return;
+            if (!hooks || !hooks.length) return false;
             var args = Array.prototype.slice.call(arguments, 1);
             var self = this;
             hooks.forEach(function(fn) { fn.apply(self, args); });
+            return true;
         },
 
         isValidEmail: function(email) {
