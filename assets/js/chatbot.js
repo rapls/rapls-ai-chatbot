@@ -1005,6 +1005,7 @@
          * Show/update/remove handoff status indicator bar
          */
         showHandoffIndicator: function(status) {
+            var self = this;
             var indicator = this.window ? this.window.querySelector('.chatbot-handoff-indicator') : null;
 
             if (!status || status === 'resolved') {
