@@ -2154,16 +2154,19 @@
         }
     };
 
-    // Expose globally so Pro plugin can register hooks
+    // Expose globally so Pro plugin can register hooks before init
     window.RaplsaichChatbot = RaplsaichChatbot;
 
-    // DOM準備完了後に初期化
+    // Initialize after all scripts have loaded (allows Pro to register hooks first).
+    // setTimeout(0) defers to next microtask, ensuring Pro's chatbot-pro.js
+    // has executed its registerProHook calls before init() runs.
+    function raplsaichBootInit() {
+        setTimeout(function() { RaplsaichChatbot.init(); }, 0);
+    }
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            RaplsaichChatbot.init();
-        });
+        document.addEventListener('DOMContentLoaded', raplsaichBootInit);
     } else {
-        RaplsaichChatbot.init();
+        raplsaichBootInit();
     }
 
 })();
