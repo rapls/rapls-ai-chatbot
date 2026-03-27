@@ -436,7 +436,7 @@
         close: function() {
             // Embed mode: notify parent frame only, don't alter window state
             if (this.config.embedMode) {
-                this.runProHook("stopHandoffPolling");
+                typeof this.stopHandoffPolling === "function" && this.stopHandoffPolling();
                 if (window.parent !== window) {
                     var targetOrigin = this.config.embed_origin || window.location.origin;
                     window.parent.postMessage({type: 'raplsaich:close'}, targetOrigin);
@@ -446,7 +446,7 @@
 
             this.isOpen = false;
             this.container.dataset.state = 'closed';
-            this.runProHook("stopHandoffPolling");
+            typeof this.stopHandoffPolling === "function" && this.stopHandoffPolling();
             // Blur any focused element inside before hiding to avoid aria-hidden warning
             if (document.activeElement && this.window.contains(document.activeElement)) {
                 document.activeElement.blur();
@@ -603,7 +603,7 @@
             // Skip in offline mode (form is already displayed)
             if (this.isOfflineMode) return;
             if (this.shouldShowLeadForm()) {
-                this.runProHook('showLeadForm');
+                typeof this.showLeadForm === 'function' && this.showLeadForm();
             } else {
                 // リードフォームを表示しない場合は入力フィールドにフォーカス
                 if (this.inputTextarea) {
@@ -922,7 +922,7 @@
                                 self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                             } else {
                                 self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario, response.data.related_knowledge);
-                                self.runProHook("fetchSuggestions");
+                                typeof self.fetchSuggestions === "function" && self.fetchSuggestions();
                                 self.saveContext();
                                 // conversion tracking handled by Pro
                             }
@@ -934,7 +934,7 @@
                                 // Start polling if operator is active (e.g. operator started from admin)
                                 if (!self.handoffPollTimer && (response.data.handoff_status === 'active' || response.data.handoff_status === 'pending')) {
                                     self.handoffStatus = response.data.handoff_status;
-                                    self.runProHook("startHandoffPolling");
+                                    typeof self.startHandoffPolling === "function" && self.startHandoffPolling();
                                 }
                             }
                         } else {
@@ -984,7 +984,7 @@
             this.handoffStatus = 'pending';
             this.addSystemMessage(data.handoff_message || s.handoff_pending || 'A support representative has been notified. Please wait...');
             this.showHandoffIndicator('pending');
-            this.runProHook("startHandoffPolling");
+            typeof this.startHandoffPolling === "function" && this.startHandoffPolling();
         },
 
         /**
@@ -1051,7 +1051,7 @@
                 cancelBtn.type = 'button';
                 cancelBtn.textContent = s.handoff_cancel || 'Back to AI';
                 cancelBtn.addEventListener('click', function() {
-                    self.runProHook("cancelHandoff");
+                    typeof self.cancelHandoff === "function" && self.cancelHandoff();
                 });
                 indicator.appendChild(cancelBtn);
             }
@@ -2104,7 +2104,7 @@
                     } catch (e) { /* private mode or storage unavailable */ }
                 }
                 // Re-evaluate conversion tracking
-                self.runProHook("initConversionTracking");
+                typeof self.initConversionTracking === "function" && self.initConversionTracking();
             });
         },
 
