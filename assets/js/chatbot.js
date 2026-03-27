@@ -2117,17 +2117,18 @@
          * Pro API request — delegates to apiRequest only when Pro is active.
          * Free version never calls Pro endpoints directly.
          */
-        // No-op stubs for Pro methods called from Free code paths.
-        // Pro overrides these via Object.assign in chatbot-pro.js.
-        showLeadForm: function() {},
-        fetchSuggestions: function() {},
-        stopHandoffPolling: function() {},
-        startHandoffPolling: function() {},
-        cancelHandoff: function() {},
-        trackConversion: function() {},
-        initConversionTracking: function() {},
-        handleImageSelect: function() {},
-        _captureViaDisplayMedia: function() {},
+        // Extension stubs: called from Free code paths but implemented by Pro.
+        // Free provides no-ops so calls don't throw. Pro replaces these
+        // via chatbot-pro.js Object.assign when loaded.
+        showLeadForm: function() {},             // Pro: lead capture form display
+        fetchSuggestions: function() {},          // Pro: related question suggestions
+        stopHandoffPolling: function() {},        // Pro: live agent handoff
+        startHandoffPolling: function() {},       // Pro: live agent handoff
+        cancelHandoff: function() {},             // Pro: live agent handoff
+        trackConversion: function() {},           // Pro: conversion goal tracking
+        initConversionTracking: function() {},    // Pro: conversion goal tracking
+        handleImageSelect: function() {},         // Pro: image/screenshot upload
+        _captureViaDisplayMedia: function() {},   // Pro: screen capture fallback
 
         proApiRequest: function(method, endpoint, data) {
             if (!this.config.is_pro) {
