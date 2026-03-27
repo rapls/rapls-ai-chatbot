@@ -112,9 +112,9 @@ class RAPLSAICH_Chatbot_Widget {
                 }
                 // Bot-specific badge override
                 if (!empty($sc_bot_config['badge_icon_type']) && $sc_bot_config['badge_icon_type'] !== 'default') {
-                    raplsaich_get_ext_settings($settings)['badge_icon_type'] = $sc_bot_config['badge_icon_type'];
-                    raplsaich_get_ext_settings($settings)['badge_icon_image'] = $sc_bot_config['badge_icon_image'] ?? '';
-                    raplsaich_get_ext_settings($settings)['badge_icon_emoji'] = $sc_bot_config['badge_icon_emoji'] ?? '';
+                    $badge_icon_type = $sc_bot_config['badge_icon_type'];
+                    $badge_icon_image = $sc_bot_config['badge_icon_image'] ?? '';
+                    $badge_icon_emoji = $sc_bot_config['badge_icon_emoji'] ?? '';
                 }
                 // Set bot_id in JS config via inline script
                 wp_add_inline_script('raplsaich-chatbot',
@@ -453,9 +453,9 @@ class RAPLSAICH_Chatbot_Widget {
                     }
                     // Bot-specific badge override
                     if (!empty($page_bot_config['badge_icon_type']) && $page_bot_config['badge_icon_type'] !== 'default') {
-                        raplsaich_get_ext_settings($settings)['badge_icon_type'] = $page_bot_config['badge_icon_type'];
-                        raplsaich_get_ext_settings($settings)['badge_icon_image'] = $page_bot_config['badge_icon_image'] ?? '';
-                        raplsaich_get_ext_settings($settings)['badge_icon_emoji'] = $page_bot_config['badge_icon_emoji'] ?? '';
+                        $badge_icon_type = $page_bot_config['badge_icon_type'];
+                        $badge_icon_image = $page_bot_config['badge_icon_image'] ?? '';
+                        $badge_icon_emoji = $page_bot_config['badge_icon_emoji'] ?? '';
                     }
                     // Override JS config for page-rule bot
                     wp_add_inline_script('raplsaich-chatbot',
