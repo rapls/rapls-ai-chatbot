@@ -20,7 +20,7 @@ class RAPLSAICH_REST_Controller {
      * Intentionally overwrites any existing Cache-Control — only used on
      * chat/dedup responses that must never be cached.
      */
-    private function no_cache(WP_REST_Response $response): WP_REST_Response {
+    public function no_cache(WP_REST_Response $response): WP_REST_Response {
         $response->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
         $response->header('Pragma', 'no-cache');
         $response->header('Expires', '0');
@@ -1606,7 +1606,7 @@ class RAPLSAICH_REST_Controller {
     /**
      * Get AI provider
      */
-    private function get_ai_provider(?array $bot_config = null): RAPLSAICH_AI_Provider_Interface {
+    public function get_ai_provider(?array $bot_config = null): RAPLSAICH_AI_Provider_Interface {
         $settings = get_option('raplsaich_settings', []);
         return raplsaich_create_ai_provider($settings, $bot_config);
     }
@@ -1615,7 +1615,7 @@ class RAPLSAICH_REST_Controller {
      * Get max context characters based on the configured model.
      * Conservative limits (~25% of model token window) to leave room for system prompt + response.
      */
-    private function get_max_context_chars(): int {
+    public function get_max_context_chars(): int {
         $settings = get_option('raplsaich_settings', []);
         $provider = $settings['ai_provider'] ?? 'openai';
 
@@ -1895,7 +1895,7 @@ class RAPLSAICH_REST_Controller {
         return $text;
     }
 
-    private function get_client_ip(): string {
+    public function get_client_ip(): string {
         $settings = get_option('raplsaich_settings', []);
 
         // Trust Cloudflare header only when explicitly enabled
@@ -2229,7 +2229,7 @@ class RAPLSAICH_REST_Controller {
      *
      * @return true|string True if allowed, or error message string if blocked
      */
-    private function check_rate_limit() {
+    public function check_rate_limit() {
         // Check Pro enhanced rate limit first
         $ext = RAPLSAICH_Extensions::get_instance();
         $pro_settings = get_option('raplsaich_settings', []);
@@ -2556,7 +2556,7 @@ class RAPLSAICH_REST_Controller {
      *
      * @return true|WP_REST_Response
      */
-    protected function check_same_origin() {
+    public function check_same_origin() {
         $allowed = $this->get_allowed_origin_hosts();
 
         if (empty($allowed)) {
@@ -2627,7 +2627,7 @@ class RAPLSAICH_REST_Controller {
      *                                          where reCAPTCHA + per-IP limits compensate.
      * @return true|WP_REST_Response True if all checks pass, or error response.
      */
-    private function guard_public_post(
+    public function guard_public_post(
         WP_REST_Request $request,
         string $rate_key = 'pub',
         int $rate_limit = 30,
@@ -2754,7 +2754,7 @@ class RAPLSAICH_REST_Controller {
      * @param string      $expected_action Expected reCAPTCHA action name (e.g. 'chat', 'lead', 'offline')
      * @return bool|WP_Error True if verified, WP_Error on failure
      */
-    private function verify_recaptcha( $token, string $expected_action = '' ) {
+    public function verify_recaptcha( $token, string $expected_action = '' ) {
         $settings = get_option('raplsaich_settings', []);
 
         // Skip if reCAPTCHA is disabled
