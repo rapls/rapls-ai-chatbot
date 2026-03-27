@@ -768,13 +768,15 @@ class RAPLSAICH_Activator {
     private static function migrate_extensions_key() {
         $settings = get_option('raplsaich_settings', []);
 
-        // Already migrated or nothing to migrate
-        if (isset($settings['extensions']) || !isset($settings['pro_features'])) {
+        // Nothing to migrate
+        if (!isset($settings['pro_features']) || !is_array($settings['pro_features']) || empty($settings['pro_features'])) {
             return;
         }
 
-        // Copy old key to new key, keep old key for compat
-        $settings['extensions'] = $settings['pro_features'];
+        // Merge old pro_features into extensions (preserving any existing extensions data)
+        $existing_ext = isset($settings['extensions']) && is_array($settings['extensions']) ? $settings['extensions'] : [];
+        // Old data takes precedence only for keys not yet in extensions
+        $settings['extensions'] = array_merge($settings['pro_features'], $existing_ext);
         update_option('raplsaich_settings', $settings);
     }
 
