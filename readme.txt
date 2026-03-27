@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.2
+Stable tag: 1.5.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -431,15 +431,25 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 == Changelog ==
 
+= 1.5.3 =
+* Improved: Complete Free/Pro code separation — all Pro UI code moved to separate Pro plugin
+* Improved: Consolidated 6 admin menu items into single "Pro Features" overview page with screenshots
+* Improved: Frontend chatbot.js reduced by 50% (4,300 → 2,175 lines) for faster page loads
+* Improved: Hook-based extension architecture — Pro features injected via `registerProHook` / `runProHook`
+* Fixed: Lead form display and submission when Pro is active
+* Fixed: Handoff "Back to AI" button not responding
+* Security: Added `rel="noopener noreferrer"` to all external links
+* Security: REST controller helper methods properly scoped for Pro access
+* Changed: Settings key renamed from `pro_features` to `extensions` with automatic migration
+* Changed: Unique prefix `raplsaich_` applied to all declarations, options, hooks, and REST namespace
+* Updated: Chart.js to v4.5.1, html2canvas bundled locally
+* Updated: All inline JS/CSS moved to properly enqueued files
+
 = 1.5.2 =
-* Fixed: WordPress Plugin Check compliance (removed deprecated load_plugin_textdomain, added WP_Filesystem annotations, prepared SQL annotations)
-* Fixed: Plugin Check warnings for file system operations in CSV import
+* Fixed: WordPress Plugin Check compliance (WP_Filesystem annotations, prepared SQL annotations)
 * Removed: Artificial free-tier limits — all core features are fully available
 * Removed: Default "Powered by" footer from chatbot widget
-* Changed: Settings key renamed from `pro_features` to `extensions` with automatic migration. The legacy key is retained as a read-only fallback for backward compatibility with older Pro plugin versions.
-* Security: Added `rel="noopener noreferrer"` to all external links
 * Updated: Neutral error messages replacing promotional upsell text
-* Updated: Cleaned stale translation strings from language files
 
 = 1.5.0 =
 * Added: Gutenberg block — Insert AI Chatbot block in the block editor with height, theme, and bot-id settings; SSR (server-side rendering) support; i18n (JA/EN translation JSON)
@@ -569,8 +579,11 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 == Upgrade Notice ==
 
+= 1.5.3 =
+Major code quality update: Complete Free/Pro separation, 50% smaller frontend JS, unique prefix, and security hardening. Recommended for all users.
+
 = 1.5.2 =
-WordPress.org compliance fixes: Plugin Check errors resolved, artificial limits removed, promotional text replaced with neutral messages. Recommended update for all users.
+Plugin Check compliance fixes and artificial limits removed. Recommended update.
 
 = 1.5.0 =
 Major update: Gutenberg block, Abilities API, language auto-detect, OpenRouter. Recommended update for all users.
