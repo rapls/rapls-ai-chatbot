@@ -681,14 +681,14 @@ class RAPLSAICH_Admin {
             : ($existing['mcp_api_key_hash'] ?? '');
 
         // Pro features settings
-        $sanitized['pro_features'] = $this->sanitize_pro_features_settings(
-            $input['pro_features'] ?? [],
-            $existing['pro_features'] ?? []
+        $sanitized['extensions'] = $this->sanitize_extension_settings(
+            $input['extensions'] ?? [],
+            $existing['extensions'] ?? []
         );
 
-        // Enhanced content extraction checkbox (on Crawler page, outside pro_features form)
+        // Enhanced content extraction checkbox (on Crawler page, outside extensions form)
         if ($crawler_form_submitted) {
-            $sanitized['pro_features']['enhanced_content_extraction'] = !empty($input['enhanced_content_extraction']);
+            $sanitized['extensions']['enhanced_content_extraction'] = !empty($input['enhanced_content_extraction']);
         }
 
         return $sanitized;
@@ -697,7 +697,7 @@ class RAPLSAICH_Admin {
      * Sanitize Pro features settings.
      * Free returns existing values unchanged; Pro handles sanitization via filter.
      */
-    private function sanitize_pro_features_settings(array $input, array $existing): array {
+    private function sanitize_extension_settings(array $input, array $existing): array {
         if (empty($input)) {
             return $existing;
         }
@@ -797,7 +797,7 @@ class RAPLSAICH_Admin {
         // Settings page JS (export/import/reset, avatar, multimodal checks)
         if (strpos($hook, 'raplsaich-settings') !== false) {
             $pro_settings = get_option('raplsaich_settings', []);
-            $pro_feat = $pro_settings['pro_features'] ?? [];
+            $pro_feat = $pro_settings['extensions'] ?? [];
             wp_enqueue_script('raplsaich-admin-settings', RAPLSAICH_PLUGIN_URL . 'assets/js/admin-settings.js', ['jquery', 'raplsaich-admin'], RAPLSAICH_VERSION, true);
             // Pass multimodal flag to JS
             wp_localize_script('raplsaich-admin-settings', 'raplsaichSettingsData', [
@@ -2314,12 +2314,12 @@ class RAPLSAICH_Admin {
                 $export_data['settings'][$key] = '';
             }
         }
-        // Also strip secrets from nested pro_features
+        // Also strip secrets from nested extensions
         $pro_sensitive = ['webhook_secret', 'line_channel_secret', 'line_channel_access_token', 'slack_webhook_url', 'google_sheets_url'];
-        if (isset($export_data['settings']['pro_features']) && is_array($export_data['settings']['pro_features'])) {
+        if (isset($export_data['settings']['extensions']) && is_array($export_data['settings']['extensions'])) {
             foreach ($pro_sensitive as $key) {
-                if (isset($export_data['settings']['pro_features'][$key])) {
-                    $export_data['settings']['pro_features'][$key] = '';
+                if (isset($export_data['settings']['extensions'][$key])) {
+                    $export_data['settings']['extensions'][$key] = '';
                 }
             }
         }
@@ -2377,11 +2377,11 @@ class RAPLSAICH_Admin {
             }
             // Keep current Pro secrets (never overwrite with empty)
             $pro_sensitive = ['webhook_secret', 'line_channel_secret', 'line_channel_access_token', 'slack_webhook_url', 'google_sheets_url'];
-            $current_pro = $current_settings['pro_features'] ?? [];
-            if (isset($filtered_settings['pro_features']) && is_array($filtered_settings['pro_features'])) {
+            $current_pro = $current_settings['extensions'] ?? [];
+            if (isset($filtered_settings['extensions']) && is_array($filtered_settings['extensions'])) {
                 foreach ($pro_sensitive as $key) {
-                    if (!empty($current_pro[$key]) && empty($filtered_settings['pro_features'][$key])) {
-                        $filtered_settings['pro_features'][$key] = $current_pro[$key];
+                    if (!empty($current_pro[$key]) && empty($filtered_settings['extensions'][$key])) {
+                        $filtered_settings['extensions'][$key] = $current_pro[$key];
                     }
                 }
             }
@@ -2525,9 +2525,8 @@ class RAPLSAICH_Admin {
             'embedding_enabled'     => false,
             'embedding_provider'    => 'auto',
 
-            // Pro features are managed by the Pro plugin via filters.
-            // This key preserves existing values during settings operations.
-            'pro_features'          => [],
+            // Extension settings managed by Pro plugin via filters.
+            'extensions'            => [],
         ];
     }
 

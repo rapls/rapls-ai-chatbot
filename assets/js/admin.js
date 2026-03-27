@@ -444,7 +444,7 @@
 
         $('#raplsaich-add-quick-reply').on('click', function() {
             var html = '<div class="raplsaich-quick-reply-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
-                '<input type="text" name="raplsaich_settings[pro_features][quick_replies][' + quickReplyIndex + '][text]" ' +
+                '<input type="text" name="raplsaich_settings[extensions][quick_replies][' + quickReplyIndex + '][text]" ' +
                 'class="regular-text" placeholder="' + (raplsaichAdmin.i18n.quickReplyPlaceholder || 'e.g., What are your business hours?') + '">' +
                 '<button type="button" class="button raplsaich-remove-quick-reply">×</button>' +
                 '</div>';
@@ -462,8 +462,8 @@
 
         $('#raplsaich-add-holiday').on('click', function() {
             var html = '<div class="raplsaich-holiday-item" style="margin-bottom: 8px; display: flex; gap: 8px;">' +
-                '<input type="date" name="raplsaich_settings[pro_features][holidays][' + holidayIndex + '][date]">' +
-                '<input type="text" name="raplsaich_settings[pro_features][holidays][' + holidayIndex + '][name]" ' +
+                '<input type="date" name="raplsaich_settings[extensions][holidays][' + holidayIndex + '][date]">' +
+                '<input type="text" name="raplsaich_settings[extensions][holidays][' + holidayIndex + '][name]" ' +
                 'class="regular-text" placeholder="' + (raplsaichAdmin.i18n.holidayNamePlaceholder || 'Holiday name (optional)') + '">' +
                 '<button type="button" class="button raplsaich-remove-holiday">×</button>' +
                 '</div>';
@@ -482,11 +482,11 @@
         $('#raplsaich-add-template').on('click', function() {
             var html = '<div class="raplsaich-prompt-template-item" style="margin-bottom: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 4px;">' +
                 '<div style="margin-bottom: 10px;">' +
-                '<input type="text" name="raplsaich_settings[pro_features][prompt_templates][' + templateIndex + '][name]" ' +
+                '<input type="text" name="raplsaich_settings[extensions][prompt_templates][' + templateIndex + '][name]" ' +
                 'placeholder="' + (raplsaichAdmin.i18n.templateNamePlaceholder || 'Template name') + '" class="regular-text">' +
                 '<button type="button" class="button raplsaich-remove-template">×</button>' +
                 '</div>' +
-                '<textarea name="raplsaich_settings[pro_features][prompt_templates][' + templateIndex + '][prompt]" ' +
+                '<textarea name="raplsaich_settings[extensions][prompt_templates][' + templateIndex + '][prompt]" ' +
                 'rows="3" class="large-text" placeholder="' + (raplsaichAdmin.i18n.templatePromptPlaceholder || 'System prompt for this template...') + '"></textarea>' +
                 '</div>';
             $templatesContainer.append(html);
@@ -644,11 +644,11 @@
                 var fieldName = match[1];
                 var defaultValue = defaults[fieldName];
 
-                // pro_features の場合
-                var proMatch = name.match(/raplsaich_settings\[pro_features\]\[([^\]]+)\]/);
-                if (proMatch && defaults.pro_features) {
+                // extensions の場合
+                var proMatch = name.match(/raplsaich_settings\[extensions\]\[([^\]]+)\]/);
+                if (proMatch && defaults.extensions) {
                     fieldName = proMatch[1];
-                    defaultValue = defaults.pro_features[fieldName];
+                    defaultValue = defaults.extensions[fieldName];
                 }
 
                 if (defaultValue === undefined) return;
@@ -692,10 +692,10 @@
 
             var defaultValue;
 
-            // pro_features かどうかをチェック
-            if (fieldName.indexOf('pro_features.') === 0) {
-                var proFieldName = fieldName.replace('pro_features.', '');
-                defaultValue = defaults.pro_features ? defaults.pro_features[proFieldName] : undefined;
+            // extensions かどうかをチェック
+            if (fieldName.indexOf('extensions.') === 0) {
+                var proFieldName = fieldName.replace('extensions.', '');
+                defaultValue = defaults.extensions ? defaults.extensions[proFieldName] : undefined;
             } else {
                 defaultValue = defaults[fieldName];
             }

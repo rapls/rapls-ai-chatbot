@@ -188,8 +188,8 @@ function raplsaich_is_pro_active(): bool {
 /**
  * Get extension settings from the plugin settings array.
  *
- * Centralizes the DB key access so the key name 'pro_features' only
- * appears in this one helper (DB-compatibility layer).
+ * Uses 'extensions' as the primary key. Falls back to legacy 'pro_features'
+ * for backward compatibility with older Pro plugin versions.
  *
  * @param array|null $settings Full plugin settings, or null to load from DB.
  * @return array Extension settings array (empty if not set).
@@ -198,5 +198,6 @@ function raplsaich_get_ext_settings(?array $settings = null): array {
     if ($settings === null) {
         $settings = get_option('raplsaich_settings', []);
     }
-    return $settings['pro_features'] ?? [];
+    // New key first, fall back to legacy key
+    return $settings['extensions'] ?? $settings['pro_features'] ?? [];
 }

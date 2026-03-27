@@ -65,6 +65,7 @@ class RAPLSAICH_Activator {
             self::set_default_options();
             self::schedule_cron();
             self::migrate_diag_options();
+            self::migrate_extensions_key();
 
             // Save version
             update_option('raplsaich_version', RAPLSAICH_VERSION);
@@ -709,6 +710,26 @@ class RAPLSAICH_Activator {
                 delete_option($old_key);
             }
         }
+    }
+
+    /**
+     * Migrate 'pro_features' settings key to 'extensions'.
+     *
+     * Idempotent: skips if already migrated or nothing to migrate.
+     * Preserves the old key for backward compatibility with older
+     * Pro plugin versions that may still read it.
+     */
+    private static function migrate_extensions_key() {
+        $settings = get_option('raplsaich_settings', []);
+
+        // Already migrated or nothing to migrate
+        if (isset($settings['extensions']) || !isset($settings['pro_features'])) {
+            return;
+        }
+
+        // Copy old key to new key, keep old key for compat
+        $settings['extensions'] = $settings['pro_features'];
+        update_option('raplsaich_settings', $settings);
     }
 
     /**
