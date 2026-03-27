@@ -603,7 +603,7 @@
             // Skip in offline mode (form is already displayed)
             if (this.isOfflineMode) return;
             if (this.shouldShowLeadForm()) {
-                typeof this.showLeadForm === 'function' && this.showLeadForm();
+                this.showLeadForm();
             } else {
                 // リードフォームを表示しない場合は入力フィールドにフォーカス
                 if (this.inputTextarea) {
@@ -1750,6 +1750,38 @@
                    this.leadConfig.enabled &&
                    !this.leadSubmitted &&
                    this.leadFormEl;
+        },
+
+        /**
+         * リードフォームを表示
+         */
+        showLeadForm: function() {
+            if (!this.leadConfig || !this.leadFormEl) return;
+            var config = this.leadConfig;
+            var titleEl = this.leadFormEl.querySelector('.lead-form-title');
+            var descEl = this.leadFormEl.querySelector('.lead-form-description');
+            if (titleEl) { titleEl.textContent = config.title || ''; titleEl.hidden = !config.title; }
+            if (descEl) descEl.textContent = config.description || '';
+            var fields = config.fields || {};
+            for (var fieldName in fields) {
+                var fc = fields[fieldName];
+                var fe = this.leadFormEl.querySelector('.lead-field-' + fieldName);
+                if (fe) {
+                    fe.hidden = false;
+                    var label = fe.querySelector('label');
+                    var input = fe.querySelector('input, select, textarea');
+                    if (label && fc.label) {
+                        label.textContent = fc.label;
+                        if (fc.required) { var r = document.createElement('span'); r.className = 'required'; r.textContent = '*'; label.appendChild(document.createTextNode(' ')); label.appendChild(r); }
+                    }
+                    if (input) input.required = !!fc.required;
+                }
+            }
+            var skipBtn = this.leadFormEl.querySelector('.lead-skip-btn');
+            if (skipBtn) skipBtn.hidden = !!config.required;
+            this.leadFormEl.hidden = false;
+            if (this.messagesEl) this.messagesEl.hidden = true;
+            if (this.inputForm) this.inputForm.hidden = true;
         },
 
         /**
