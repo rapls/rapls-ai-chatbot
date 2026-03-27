@@ -113,6 +113,7 @@
             this.bindEvents();
             this.loadSession();
             this.loadWindowSize();
+            this.bindLeadFormEvents();
             this.listenForConsentChange();
             this.isInitialized = true;
 
@@ -1791,6 +1792,96 @@
             if (this.leadFormEl) {
                 this.leadFormEl.hidden = true;
             }
+        },
+
+        /**
+         * リードフォームのイベントをバインド
+         */
+        bindLeadFormEvents: function() {
+            var self = this;
+            if (!this.leadForm) return;
+            this.leadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                self.submitLeadForm();
+            });
+            var skipBtn = this.leadForm.querySelector('.lead-skip-btn');
+            if (skipBtn) {
+                skipBtn.addEventListener('click', function() {
+                    self.hideLeadForm();
+                    self.showChat();
+                });
+            }
+        },
+
+        /**
+         * リードフォームを送信
+         */
+        submitLeadForm: function() {
+            var self = this;
+            if (!this.leadForm) return;
+            var submitBtn = this.leadForm.querySelector('.lead-submit-btn');
+            var errorEl = this.leadForm.querySelector('.lead-form-error');
+            if (errorEl) { errorEl.hidden = true; errorEl.textContent = ''; }
+
+            var formData = {
+                session_id: this.sessionId,
+                page_url: window.location.href,
+                name: '', email: '', phone: '', company: ''
+            };
+            var nameInput = this.leadForm.querySelector('#lead-name');
+            var emailInput = this.leadForm.querySelector('#lead-email');
+            var phoneInput = this.leadForm.querySelector('#lead-phone');
+            var companyInput = this.leadForm.querySelector('#lead-company');
+            if (nameInput) formData.name = nameInput.value.trim();
+            if (emailInput) formData.email = emailInput.value.trim();
+            if (phoneInput) formData.phone = phoneInput.value.trim();
+            if (companyInput) formData.company = companyInput.value.trim();
+
+            // Custom fields
+            var customFields = {};
+            var cfEls = this.leadForm.querySelectorAll('.lead-field-custom');
+            for (var ci = 0; ci < cfEls.length; ci++) {
+                var cfIn = cfEls[ci].querySelector('input, textarea, select');
+                if (cfIn && cfIn.name) customFields[cfIn.name] = (cfIn.value || '').trim();
+            }
+            if (Object.keys(customFields).length > 0) formData.custom_fields = customFields;
+
+            // Validation
+            var hasError = false;
+            this.leadForm.querySelectorAll('input[required], textarea[required], select[required]').forEach(function(input) {
+                if (!input.value.trim()) { input.classList.add('error'); hasError = true; }
+                else { input.classList.remove('error'); }
+            });
+            if (emailInput && emailInput.value && !self.isValidEmail(emailInput.value)) {
+                emailInput.classList.add('error'); hasError = true;
+            }
+            if (hasError) {
+                if (errorEl) { errorEl.textContent = (self.config.strings && self.config.strings.required_fields) || 'Please fill in all required fields.'; errorEl.hidden = false; }
+                return;
+            }
+
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = (self.config.strings && self.config.strings.sending) || 'Sending...'; }
+
+            this.getRecaptchaToken('lead').then(function(token) {
+                if (token) formData.recaptcha_token = token;
+                return self.apiRequest('POST', '/lead', formData);
+            })
+            .then(function(data) {
+                if (data.success) {
+                    self.leadSubmitted = true;
+                    self.hideLeadForm();
+                    self.showChat();
+                } else {
+                    throw new Error(data.error || 'Failed to send.');
+                }
+            })
+            .catch(function(error) {
+                if (error === 'recaptcha_not_ready') return;
+                if (errorEl) { errorEl.textContent = error.message || 'Failed to send.'; errorEl.hidden = false; }
+            })
+            .finally(function() {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = (self.config.strings && self.config.strings.start_chat) || 'Start chat'; }
+            });
         },
 
         /**
