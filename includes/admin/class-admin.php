@@ -2735,7 +2735,8 @@ class RAPLSAICH_Admin {
                         __('FAQ ranking and unresolved questions', 'rapls-ai-chatbot'),
                         __('API cost tracking per model', 'rapls-ai-chatbot'),
                         __('PDF report export', 'rapls-ai-chatbot'),
-                    ]
+                    ],
+                    'analytics.png'
                 ); ?>
 
                 <?php $this->render_feature_card(
@@ -2746,7 +2747,8 @@ class RAPLSAICH_Admin {
                         __('Export leads (CSV/JSON)', 'rapls-ai-chatbot'),
                         __('Email notifications on new leads', 'rapls-ai-chatbot'),
                         __('Webhook integration (Slack, Zapier, CRM)', 'rapls-ai-chatbot'),
-                    ]
+                    ],
+                    'leads.png'
                 ); ?>
 
                 <?php $this->render_feature_card(
@@ -2757,7 +2759,8 @@ class RAPLSAICH_Admin {
                         __('Vector embedding for semantic search', 'rapls-ai-chatbot'),
                         __('Enhanced HTML content extraction', 'rapls-ai-chatbot'),
                         __('WooCommerce product data auto-crawl', 'rapls-ai-chatbot'),
-                    ]
+                    ],
+                    'site-learning.png'
                 ); ?>
 
                 <?php $this->render_feature_card(
@@ -2768,7 +2771,8 @@ class RAPLSAICH_Admin {
                         __('Export conversations (CSV/JSON)', 'rapls-ai-chatbot'),
                         __('Operator mode for live chat takeover', 'rapls-ai-chatbot'),
                         __('Sentiment analysis per conversation', 'rapls-ai-chatbot'),
-                    ]
+                    ],
+                    'conversations.png'
                 ); ?>
 
                 <?php $this->render_feature_card(
@@ -2778,7 +2782,8 @@ class RAPLSAICH_Admin {
                         __('Detailed admin action history', 'rapls-ai-chatbot'),
                         __('Export audit log (CSV)', 'rapls-ai-chatbot'),
                         __('Configurable retention policy', 'rapls-ai-chatbot'),
-                    ]
+                    ],
+                    'audit-log.png'
                 ); ?>
 
                 <?php $this->render_feature_card(
@@ -2791,7 +2796,8 @@ class RAPLSAICH_Admin {
                         __('Voice input & text-to-speech', 'rapls-ai-chatbot'),
                         __('Response caching & performance tools', 'rapls-ai-chatbot'),
                         __('Settings backup, rollback & staging', 'rapls-ai-chatbot'),
-                    ]
+                    ],
+                    'pro-settings.png'
                 ); ?>
 
             </div>
@@ -2802,9 +2808,14 @@ class RAPLSAICH_Admin {
     /**
      * Render a single Pro feature card.
      */
-    private function render_feature_card(string $title, string $description, array $features): void {
+    private function render_feature_card(string $title, string $description, array $features, string $image = ''): void {
         ?>
         <div class="raplsaich-pro-features-list">
+            <?php if ($image) : ?>
+            <img src="<?php echo esc_url(RAPLSAICH_PLUGIN_URL . 'assets/images/pro-preview/' . $image); ?>"
+                 alt="<?php echo esc_attr($title); ?>"
+                 style="max-width:100%;border-radius:4px;margin-bottom:12px;border:1px solid #ddd;">
+            <?php endif; ?>
             <h3><?php echo esc_html($title); ?></h3>
             <p style="color:#666;margin-top:0;"><?php echo esc_html($description); ?></p>
             <ul>
