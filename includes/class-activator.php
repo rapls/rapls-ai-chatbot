@@ -192,6 +192,52 @@ class RAPLSAICH_Activator {
 
         dbDelta($sql_leads);
 
+        // User context (cross-session memory, used by Pro)
+        $table_user_context = $wpdb->prefix . 'raplsaich_user_context';
+        $sql_user_context = "CREATE TABLE {$table_user_context} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            context_key VARCHAR(64) NOT NULL,
+            context_data LONGTEXT DEFAULT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY context_key (context_key)
+        ) {$charset_collate};";
+
+        dbDelta($sql_user_context);
+
+        // Audit log (admin action tracking, used by Pro)
+        $table_audit_log = $wpdb->prefix . 'raplsaich_audit_log';
+        $sql_audit_log = "CREATE TABLE {$table_audit_log} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            event_type VARCHAR(50) NOT NULL,
+            user_id BIGINT(20) UNSIGNED DEFAULT NULL,
+            reference_id BIGINT(20) UNSIGNED DEFAULT NULL,
+            description TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY event_type (event_type),
+            KEY created_at (created_at)
+        ) {$charset_collate};";
+
+        dbDelta($sql_audit_log);
+
+        // Knowledge versions (versioning, used by Pro)
+        $table_knowledge_versions = $wpdb->prefix . 'raplsaich_knowledge_versions';
+        $sql_knowledge_versions = "CREATE TABLE {$table_knowledge_versions} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            knowledge_id BIGINT(20) UNSIGNED NOT NULL,
+            title VARCHAR(255) DEFAULT NULL,
+            content LONGTEXT DEFAULT NULL,
+            category VARCHAR(100) DEFAULT NULL,
+            user_id BIGINT(20) UNSIGNED DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY knowledge_id (knowledge_id),
+            KEY created_at (created_at)
+        ) {$charset_collate};";
+
+        dbDelta($sql_knowledge_versions);
+
         // Add is_active column if not exists
         self::maybe_add_is_active_column();
     }
