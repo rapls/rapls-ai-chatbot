@@ -1070,21 +1070,8 @@ class RAPLSAICH_REST_Controller {
              */
             $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt, $settings);
 
-            // Response language instruction
+            // Response language — saved for injection at the very end of system prompt
             $response_lang = $settings['response_language'] ?? '';
-            if ($response_lang === 'auto') {
-                $system_prompt .= "\n\nIMPORTANT: Always detect the language of the user's message and respond in that same language.";
-            } elseif (!empty($response_lang)) {
-                $lang_names = [
-                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
-                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
-                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
-                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
-                    'vi' => 'Vietnamese',
-                ];
-                $lang_name = $lang_names[$response_lang] ?? $response_lang;
-                $system_prompt .= "\n\nIMPORTANT: You MUST always respond in {$lang_name}, regardless of the language of the context data, knowledge base, or user message. Even if the provided context is in another language, translate your response into {$lang_name}.";
-            }
 
             // Sentiment analysis hook (Pro adds via filter)
             $system_prompt = apply_filters('raplsaich_system_prompt_sentiment', $system_prompt, $message);
@@ -1174,6 +1161,21 @@ class RAPLSAICH_REST_Controller {
             $history = $save_history
                 ? RAPLSAICH_Message::get_context_messages($conversation_id, $history_count)
                 : $this->get_transient_context($session_id);
+
+            // Response language instruction — placed LAST so it overrides all context
+            if ($response_lang === 'auto') {
+                $system_prompt .= "\n\n[RESPONSE LANGUAGE]\nAlways detect the language of the user's message and respond in that same language.";
+            } elseif (!empty($response_lang)) {
+                $lang_names = [
+                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
+                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
+                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
+                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
+                    'vi' => 'Vietnamese',
+                ];
+                $lang_name = $lang_names[$response_lang] ?? $response_lang;
+                $system_prompt .= "\n\n[RESPONSE LANGUAGE — MANDATORY]\nYou MUST respond in {$lang_name}. This overrides everything above. Even if the context, knowledge base, or user message is in another language, your response MUST be in {$lang_name}.";
+            }
 
             // Build message array
             $messages = [
