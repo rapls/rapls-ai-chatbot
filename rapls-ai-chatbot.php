@@ -492,10 +492,17 @@ add_filter("wp_consent_api_registered_{$raplsaich_plugin_basename}", '__return_t
  */
 function raplsaich_plugin_action_links($actions)
 {
-    // Add settings link
     $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=raplsaich-dashboard')) . '">' .
         esc_html__('Settings', 'rapls-ai-chatbot') . '</a>';
     array_unshift($actions, $settings_link);
+
+    // Docs link (language-aware)
+    $locale = get_locale();
+    $docs_url = (strpos($locale, 'ja') === 0)
+        ? 'https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/'
+        : 'https://raplsworks.com/rapls-ai-chatbot-free-manual-en/';
+    $actions['docs'] = '<a href="' . esc_url($docs_url) . '" target="_blank" rel="noopener noreferrer">' .
+        esc_html__('Docs', 'rapls-ai-chatbot') . '</a>';
 
     return $actions;
 }
@@ -516,3 +523,14 @@ function raplsaich_plugin_row_meta($plugin_meta, $plugin_file)
     return $plugin_meta;
 }
 add_filter('plugin_row_meta', 'raplsaich_plugin_row_meta', 10, 2);
+
+/**
+ * AJAX: dismiss review notice permanently
+ */
+function raplsaich_dismiss_review()
+{
+    check_ajax_referer('raplsaich_dismiss_review', 'nonce');
+    update_option('raplsaich_review_dismissed', true, false);
+    wp_send_json_success();
+}
+add_action('wp_ajax_raplsaich_dismiss_review', 'raplsaich_dismiss_review');

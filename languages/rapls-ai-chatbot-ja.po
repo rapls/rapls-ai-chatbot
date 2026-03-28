@@ -7594,3 +7594,11 @@ msgstr "分析ダッシュボード"
 
 msgid "Unlock all Pro features and customization options."
 msgstr "すべての Pro 機能とカスタマイズオプションを利用できます。"
+
+#:#: rapls-ai-chatbot.php
+msgid "Docs"
+msgstr "マニュアル"
+
+#:#: templates/admin/dashboard.php
+msgid "Enjoying Rapls AI Chatbot? We'd appreciate a %s review on WordPress.org!"
+msgstr "Rapls AI Chatbot をご利用いただきありがとうございます！%s WordPress.org でレビューをいただけると大変嬉しいです！"

@@ -29,6 +29,32 @@ if (!defined('ABSPATH')) {
     </div>
     <?php endif; ?>
 
+    <?php
+    // Review request — show only if not dismissed and plugin has been active for 7+ days
+    $activated_at = get_option('raplsaich_activated_at', 0);
+    if (!$activated_at) {
+        update_option('raplsaich_activated_at', time(), false);
+        $activated_at = time();
+    }
+    $dismissed = get_option('raplsaich_review_dismissed', false);
+    if (!$dismissed && (time() - $activated_at) > 7 * DAY_IN_SECONDS): ?>
+    <div class="notice notice-success is-dismissible raplsaich-review-notice" id="raplsaich-review-notice" style="padding: 12px 16px; border-left-color: #ffb900;">
+        <p>
+            <?php
+            echo wp_kses(
+                sprintf(
+                    /* translators: %s: link to WordPress.org review page */
+                    esc_html__('Enjoying Rapls AI Chatbot? We\'d appreciate a %s review on WordPress.org!', 'rapls-ai-chatbot'),
+                    '<a href="https://wordpress.org/support/plugin/rapls-ai-chatbot/reviews/#new-post" target="_blank" rel="noopener noreferrer">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
+                ),
+                ['a' => ['href' => true, 'target' => true, 'rel' => true]]
+            );
+            ?>
+        </p>
+    </div>
+    <script>jQuery(function($){$('#raplsaich-review-notice').on('click','.notice-dismiss',function(){$.post(ajaxurl,{action:'raplsaich_dismiss_review',nonce:'<?php echo esc_js(wp_create_nonce('raplsaich_dismiss_review')); ?>'});});});</script>
+    <?php endif; ?>
+
     <div class="raplsaich-dashboard-grid">
         <!-- Statistics Cards -->
         <div class="raplsaich-stats-cards">
