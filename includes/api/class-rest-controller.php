@@ -1238,6 +1238,19 @@ class RAPLSAICH_REST_Controller {
                 ], 503);
             }
 
+            // Inject language reminder as the last user-role message for stronger enforcement
+            if (!empty($response_lang) && $response_lang !== 'auto') {
+                $lang_names_final = [
+                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
+                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
+                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
+                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
+                    'vi' => 'Vietnamese',
+                ];
+                $final_lang = $lang_names_final[$response_lang] ?? $response_lang;
+                $messages[] = ['role' => 'user', 'content' => '[System: Respond in ' . $final_lang . ']'];
+            }
+
             do_action('raplsaich_ai_request_start', $request_id);
 
             try {
