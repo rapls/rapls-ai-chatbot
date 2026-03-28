@@ -9,15 +9,15 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-powered chatbot for WordPress. Supports OpenAI, Claude, Gemini, and OpenRouter with site learning, knowledge base, and web search.
+AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learning, knowledge base, web search, MCP server, and Gutenberg block included.
 
 
 
 == Description ==
 
-Rapls AI Chatbot is a powerful AI chatbot plugin that integrates seamlessly with your WordPress site. It supports multiple AI providers including OpenAI (GPT-5, GPT-4o), Anthropic Claude (Opus 4.6, Sonnet 4.5), Google Gemini (3 Pro, 2.5 Pro), and OpenRouter (100+ models), allowing you to choose the best AI for your needs.
+Rapls AI Chatbot brings AI-powered chat to your WordPress site. Choose from OpenAI (GPT-5, GPT-4o), Anthropic Claude (Opus 4.6, Sonnet 4.5), Google Gemini (3 Pro, 2.5 Pro), or OpenRouter (100+ models).
 
-The free version is fully functional — no Pro add-on required for core AI chat features, site learning, knowledge base, web search, MCP server, Gutenberg block, and 6 built-in themes.
+The free version is fully functional with no artificial limits — site learning, knowledge base, web search, MCP server, Gutenberg block, and 6 themes are all included.
 
 = Key Features =
 
@@ -193,11 +193,11 @@ You can configure multiple API keys, but only one provider is active at a time. 
 
 = How does Site Learning work? =
 
-The plugin crawls your published content and creates a searchable index. When users ask questions, relevant content is automatically included in the AI context for accurate responses. With vector embedding enabled, hybrid search combines keyword matching (40%) and vector similarity (60%) for better retrieval accuracy.
+The plugin crawls your published content and creates a searchable index. When users ask questions, relevant content is included in the AI context for accurate, site-specific responses. With vector embedding enabled, hybrid search combines keyword matching (40%) and vector similarity (60%) for better retrieval.
 
 = How does Web Search work? =
 
-When the knowledge base and site content don't have a sufficient answer, the AI can automatically search the web for up-to-date information. This uses each provider's built-in web search capability (OpenAI web_search_preview, Claude web_search, Gemini google_search). Web sources are displayed with a globe icon.
+When the knowledge base and site content don't have a sufficient answer, the AI automatically searches the web using each provider's built-in capability (OpenAI web_search_preview, Claude web_search, Gemini google_search). Web sources are shown with a globe icon.
 
 = What is the MCP Server? =
 
@@ -310,9 +310,9 @@ Used only if you enable the LINE integration via the Pro add-on. Connects to the
 * Terms of Use: [https://terms.line.me/](https://terms.line.me/)
 * Privacy Policy: [https://line.me/en/terms/policy/](https://line.me/en/terms/policy/)
 
-= Cross-Site Embed (embed-loader.js) =
+= Cross-Site Embed =
 
-The plugin includes an optional `embed-loader.js` script that allows the chatbot to be embedded on external websites via an iframe. This script does NOT load any external CDN resources or third-party scripts. It creates an iframe that points back to your own WordPress site where the chatbot is hosted. All data processing occurs on your server.
+The plugin includes an optional embed loader script (`embed-loader.js`) for embedding the chatbot on external websites via an iframe. This script does not load any external CDN resources or third-party scripts — it creates an iframe pointing back to your own WordPress site. All data processing occurs on your server.
 
 = Data Transmitted to External Services =
 
@@ -419,7 +419,7 @@ The Pro add-on registers additional endpoints for analytics, scenarios, LINE, an
 
 = Settings Architecture =
 
-Extension settings are stored under the `extensions` key in `raplsaich_settings`. For backward compatibility with older Pro plugin versions, the plugin also reads from the legacy `pro_features` key as a fallback. All new settings are written exclusively to `extensions`. The legacy key is read-only and will be removed in a future major version.
+Extension settings are stored under the `extensions` key in `raplsaich_settings`. For backward compatibility, the legacy `pro_features` key is read as a fallback but all new settings are written to `extensions`.
 
 = Database Tables =
 
@@ -439,39 +439,29 @@ When uninstalled with "Delete data on uninstall" enabled, the plugin removes all
 
 == Development ==
 
-Release ZIPs are CI-verified for packaging correctness. If you encounter unexpected files in a release, please report via the support forum.
+Release ZIPs are CI-verified for packaging correctness. Report any issues via the support forum.
 
 = Credits =
 
-* [Chart.js](https://www.chartjs.org/) (MIT License) — Used for usage statistics charts
+* [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
 
 = 1.5.5 =
-* Improved: Renamed internal CSS variable to clarify no arbitrary user input is accepted
-* Improved: Added validation comments for reviewer and static analysis clarity
-
-= 1.5.4 =
+* Improved: Complete Free/Pro code separation — all Pro UI code moved to separate Pro plugin
+* Improved: Frontend chatbot.js reduced by 50% (4,300 → 2,175 lines) for faster page loads
+* Improved: Consolidated admin menu into single "Pro Features" overview page
+* Improved: Hook-based extension architecture for Pro features
 * Security: Removed arbitrary custom CSS injection — use WordPress Customizer instead
 * Security: All CSS variable values escaped with esc_attr(), position margins with absint()
 * Security: Block render output sanitized with wp_kses() and widget-aware allow-list
-* Security: Dashboard printf HTML output wrapped with wp_kses()
-* Improved: External Services section reformatted with numbered headings and clickable links
-* Improved: Added embed-loader.js clarification (no external CDN loading)
-
-= 1.5.3 =
-* Improved: Complete Free/Pro code separation — all Pro UI code moved to separate Pro plugin
-* Improved: Consolidated 6 admin menu items into single "Pro Features" overview page with screenshots
-* Improved: Frontend chatbot.js reduced by 50% (4,300 → 2,175 lines) for faster page loads
-* Improved: Hook-based extension architecture — Pro features injected via `registerProHook` / `runProHook`
-* Fixed: Lead form display and submission when Pro is active
-* Fixed: Handoff "Back to AI" button not responding
 * Security: Added `rel="noopener noreferrer"` to all external links
-* Security: REST controller helper methods properly scoped for Pro access
+* Security: All inline JS/CSS moved to properly enqueued files
+* Fixed: Lead form display and submission when Pro is active
 * Changed: Settings key renamed from `pro_features` to `extensions` with automatic migration
-* Changed: Unique prefix `raplsaich_` applied to all declarations, options, hooks, and REST namespace
+* Changed: Unique prefix `raplsaich_` applied to all functions, options, hooks, and REST namespace
+* Updated: External Services section with per-service documentation and embed-loader.js clarification
 * Updated: Chart.js to v4.5.1, html2canvas bundled locally
-* Updated: All inline JS/CSS moved to properly enqueued files
 
 = 1.5.2 =
 * Fixed: WordPress Plugin Check compliance (WP_Filesystem annotations, prepared SQL annotations)
@@ -608,13 +598,7 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 == Upgrade Notice ==
 
 = 1.5.5 =
-Code clarity improvements for review compliance. Recommended for all users.
-
-= 1.5.4 =
-Security hardening: CSS escaping, output sanitization, custom CSS removal. Recommended for all users.
-
-= 1.5.3 =
-Major code quality update: Complete Free/Pro separation, 50% smaller frontend JS, unique prefix, and security hardening. Recommended for all users.
+Major update: Complete Free/Pro code separation, 50% smaller frontend JS, security hardening (CSS escaping, output sanitization), and unique prefix. Recommended for all users.
 
 = 1.5.2 =
 Plugin Check compliance fixes and artificial limits removed. Recommended update.
