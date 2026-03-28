@@ -210,14 +210,9 @@ class RAPLSAICH_Chatbot_Widget {
             . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20))
             . ';}.wp-ai-chatbot{' . $position_css . '}';
 
-        // Powered by footer is now conditionally rendered in the template (not hidden via CSS)
-        $pro_settings = raplsaich_get_ext_settings($settings);
-        $pro = RAPLSAICH_Extensions::get_instance();
-
         // Arbitrary custom CSS is not supported in Free. Users should use the WordPress
         // Customizer CSS editor (Appearance > Customize > Additional CSS).
         // Pro may inject additional styles via raplsaich_frontend_config filter.
-
         wp_add_inline_style('raplsaich-chatbot', $base_css);
     }
 
