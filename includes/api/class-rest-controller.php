@@ -1083,7 +1083,7 @@ class RAPLSAICH_REST_Controller {
                     'vi' => 'Vietnamese',
                 ];
                 $lang_name = $lang_names[$response_lang] ?? $response_lang;
-                $system_prompt .= "\n\nIMPORTANT: Always respond in {$lang_name}.";
+                $system_prompt .= "\n\nIMPORTANT: You MUST always respond in {$lang_name}, regardless of the language of the context data, knowledge base, or user message. Even if the provided context is in another language, translate your response into {$lang_name}.";
             }
 
             // Sentiment analysis hook (Pro adds via filter)
