@@ -787,6 +787,7 @@ function raplsaich_get_svg_allowed_tags(): array {
             'viewbox' => true,
             'fill' => true,
             'xmlns' => true,
+            'style' => true,
         ],
         'path' => [
             'd' => true,

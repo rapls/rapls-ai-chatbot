@@ -52,11 +52,12 @@ if (null === $raplsaich_allowed_tags) {
 			'textarea' => [
 				'id' => true, 'class' => true, 'placeholder' => true,
 				'rows' => true, 'maxlength' => true, 'aria-label' => true,
+				'autocomplete' => true, 'spellcheck' => true,
 			],
 			'label'  => ['for' => true, 'class' => true],
 			'span'   => ['class' => true, 'style' => true, 'hidden' => true, 'id' => true],
 			'img'    => ['src' => true, 'alt' => true, 'class' => true, 'style' => true],
-			'form'   => ['class' => true, 'id' => true],
+			'form'   => ['class' => true, 'id' => true, 'autocomplete' => true, 'novalidate' => true],
 			'select' => ['class' => true, 'id' => true, 'name' => true],
 			'option' => ['value' => true, 'selected' => true],
 		]
