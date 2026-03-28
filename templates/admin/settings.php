@@ -523,7 +523,7 @@ if (!defined('ABSPATH')) {
                                 'vi' => ['Tiếng Việt', 'Xin chào! Tôi có thể giúp gì cho bạn?'],
                             ];
                             ?>
-                            <div id="raplsaich-per-language-welcome" style="display: <?php echo ($settings['response_language'] ?? '') === 'auto' ? 'block' : 'none'; ?>; margin-top: 12px;">
+                            <div id="raplsaich-per-language-welcome" style="display: <?php echo esc_attr(($settings['response_language'] ?? '') === 'auto' ? 'block' : 'none'); ?>; margin-top: 12px;">
                                 <details>
                                     <summary style="cursor: pointer; font-weight: 600; margin-bottom: 8px;">
                                         <?php esc_html_e('Per-Language Welcome Messages', 'rapls-ai-chatbot'); ?>
