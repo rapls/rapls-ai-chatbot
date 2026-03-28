@@ -24,6 +24,8 @@ if (!empty($attributes['bot'])) {
     $raplsaich_shortcode_atts .= ' bot="' . esc_attr($attributes['bot']) . '"';
 }
 
+// Allow-list must match chatbot-widget.php template elements.
+// Update this list when adding new HTML elements/attributes to the widget template.
 $raplsaich_allowed_tags = array_merge(
 	wp_kses_allowed_html('post'),
 	raplsaich_get_svg_allowed_tags(),

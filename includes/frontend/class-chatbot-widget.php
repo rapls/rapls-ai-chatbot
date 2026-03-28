@@ -201,6 +201,10 @@ class RAPLSAICH_Chatbot_Widget {
                 break;
         }
 
+        // All values are strictly validated before CSS interpolation:
+        // - $primary_color: sanitize_hex_color() + esc_attr()
+        // - darken_color(): esc_attr() on computed hex
+        // - $margin_h/$margin_v: absint() (lines 185-186)
         $custom_css = ':root{--raplsaich-primary:' . esc_attr($primary_color)
             . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20))
             . ';}.wp-ai-chatbot{' . $position_css . '}';
