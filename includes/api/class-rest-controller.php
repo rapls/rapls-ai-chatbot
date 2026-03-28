@@ -1238,7 +1238,8 @@ class RAPLSAICH_REST_Controller {
                 ], 503);
             }
 
-            // Inject language reminder as the last user-role message for stronger enforcement
+            // Append language reminder to the last user message for strongest enforcement.
+            // System prompt instructions alone are insufficient when RAG context is in another language.
             if (!empty($response_lang) && $response_lang !== 'auto') {
                 $lang_names_final = [
                     'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
@@ -1248,7 +1249,13 @@ class RAPLSAICH_REST_Controller {
                     'vi' => 'Vietnamese',
                 ];
                 $final_lang = $lang_names_final[$response_lang] ?? $response_lang;
-                $messages[] = ['role' => 'user', 'content' => '[System: Respond in ' . $final_lang . ']'];
+                // Find the last user message and append language instruction
+                for ($i = count($messages) - 1; $i >= 0; $i--) {
+                    if ($messages[$i]['role'] === 'user') {
+                        $messages[$i]['content'] .= "\n\n[Respond in {$final_lang}]";
+                        break;
+                    }
+                }
             }
 
             do_action('raplsaich_ai_request_start', $request_id);
