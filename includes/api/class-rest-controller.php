@@ -1070,8 +1070,19 @@ class RAPLSAICH_REST_Controller {
              */
             $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt, $settings);
 
-            // Response language — saved for injection at the very end of system prompt
+            // Response language — prepend to system prompt AND append at the end for sandwich enforcement
             $response_lang = $settings['response_language'] ?? '';
+            if (!empty($response_lang) && $response_lang !== 'auto') {
+                $lang_names = [
+                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
+                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
+                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
+                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
+                    'vi' => 'Vietnamese',
+                ];
+                $lang_name = $lang_names[$response_lang] ?? $response_lang;
+                $system_prompt = "You MUST respond in {$lang_name} only. All your responses must be written entirely in {$lang_name}.\n\n" . $system_prompt;
+            }
 
             // Sentiment analysis hook (Pro adds via filter)
             $system_prompt = apply_filters('raplsaich_system_prompt_sentiment', $system_prompt, $message);
