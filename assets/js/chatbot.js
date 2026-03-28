@@ -127,7 +127,11 @@
          */
         applyBrowserLanguagePlaceholders: function() {
             if (!this.inputTextarea) return;
-            var lang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+            // Priority: 1) response_language setting (unless 'auto'), 2) site locale, 3) browser language
+            var configLang = (this.config.response_language || '').toLowerCase().split('-')[0];
+            var siteLang = (this.config.site_locale || '').toLowerCase().split('-')[0].split('_')[0];
+            var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
+            var lang = (configLang && configLang !== 'auto') ? configLang : (siteLang || browserLang);
             var placeholders = {
                 ja: 'メッセージを入力...',
                 en: 'Type a message...',

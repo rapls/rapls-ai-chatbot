@@ -274,6 +274,7 @@ class RAPLSAICH_Chatbot_Widget {
             'welcome_message'     => $settings['welcome_message'] ?? 'Hello! How can I help you today?',
             'welcome_messages'    => !empty($settings['welcome_messages']) ? $settings['welcome_messages'] : new \stdClass(),
             'response_language'   => $settings['response_language'] ?? '',
+            'site_locale'         => get_locale(),
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
             'is_pro'              => false, // Pro overrides to true via raplsaich_frontend_config filter
