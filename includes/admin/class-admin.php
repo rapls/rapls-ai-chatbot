@@ -795,7 +795,7 @@ class RAPLSAICH_Admin {
                 'importFailed' => __('Import failed.', 'rapls-ai-chatbot'),
                 'exporting' => __('Exporting...', 'rapls-ai-chatbot'),
                 'exportFailed' => __('Export failed.', 'rapls-ai-chatbot'),
-                'resetConfirm' => __('All settings will be reset. API keys will also be deleted.\n\nThis action cannot be undone.\n\nTo reset, type "reset":', 'rapls-ai-chatbot'),
+                'resetConfirm' => __("All settings will be reset. API keys will also be deleted.\n\nThis action cannot be undone.\n\nTo reset, type \"reset\":", 'rapls-ai-chatbot'),
                 'resetTypeError' => __('Please type "reset".', 'rapls-ai-chatbot'),
                 'resetting' => __('Resetting...', 'rapls-ai-chatbot'),
                 'resetFailed' => __('Reset failed.', 'rapls-ai-chatbot'),
