@@ -1070,16 +1070,20 @@ class RAPLSAICH_REST_Controller {
              */
             $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt, $settings);
 
-            // Response language — prepend to system prompt AND append at the end for sandwich enforcement
+            // Response language — resolve effective language (empty = site language)
             $response_lang = $settings['response_language'] ?? '';
-            if (!empty($response_lang) && $response_lang !== 'auto') {
-                $lang_names = [
-                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
-                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
-                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
-                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
-                    'vi' => 'Vietnamese',
-                ];
+            if (empty($response_lang)) {
+                // "Site language" option: derive from WordPress locale (e.g. en_US -> en)
+                $response_lang = substr(get_locale(), 0, 2);
+            }
+            $lang_names = [
+                'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
+                'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
+                'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
+                'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
+                'vi' => 'Vietnamese',
+            ];
+            if ($response_lang !== 'auto') {
                 $lang_name = $lang_names[$response_lang] ?? $response_lang;
                 $system_prompt = "You MUST respond in {$lang_name} only. All your responses must be written entirely in {$lang_name}.\n\n" . $system_prompt;
             }
@@ -1176,14 +1180,7 @@ class RAPLSAICH_REST_Controller {
             // Response language instruction — placed LAST so it overrides all context
             if ($response_lang === 'auto') {
                 $system_prompt .= "\n\n[RESPONSE LANGUAGE]\nAlways detect the language of the user's message and respond in that same language.";
-            } elseif (!empty($response_lang)) {
-                $lang_names = [
-                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
-                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
-                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
-                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
-                    'vi' => 'Vietnamese',
-                ];
+            } else {
                 $lang_name = $lang_names[$response_lang] ?? $response_lang;
                 $system_prompt .= "\n\n[RESPONSE LANGUAGE — MANDATORY]\nYou MUST respond in {$lang_name}. This overrides everything above. Even if the context, knowledge base, or user message is in another language, your response MUST be in {$lang_name}.";
             }
@@ -1251,16 +1248,8 @@ class RAPLSAICH_REST_Controller {
 
             // Append language reminder to the last user message for strongest enforcement.
             // System prompt instructions alone are insufficient when RAG context is in another language.
-            if (!empty($response_lang) && $response_lang !== 'auto') {
-                $lang_names_final = [
-                    'en' => 'English', 'ja' => 'Japanese', 'zh' => 'Chinese',
-                    'ko' => 'Korean', 'es' => 'Spanish', 'fr' => 'French',
-                    'de' => 'German', 'pt' => 'Portuguese', 'it' => 'Italian',
-                    'ru' => 'Russian', 'ar' => 'Arabic', 'th' => 'Thai',
-                    'vi' => 'Vietnamese',
-                ];
-                $final_lang = $lang_names_final[$response_lang] ?? $response_lang;
-                // Find the last user message and append language instruction
+            if ($response_lang !== 'auto') {
+                $final_lang = $lang_names[$response_lang] ?? $response_lang;
                 for ($i = count($messages) - 1; $i >= 0; $i--) {
                     if ($messages[$i]['role'] === 'user') {
                         $messages[$i]['content'] .= "\n\n[Respond in {$final_lang}]";
