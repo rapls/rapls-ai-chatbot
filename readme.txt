@@ -15,9 +15,7 @@ AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learn
 
 == Description ==
 
-Rapls AI Chatbot brings AI-powered chat to your WordPress site. Choose from OpenAI (GPT-5, GPT-4o), Anthropic Claude (Opus 4.6, Sonnet 4.5), Google Gemini (3 Pro, 2.5 Pro), or OpenRouter (100+ models).
-
-The free version is fully functional with no artificial limits — site learning, knowledge base, web search, MCP server, Gutenberg block, and 6 themes are all included.
+Rapls AI Chatbot adds an AI chatbot to your WordPress site. Supports OpenAI, Claude, Gemini, and OpenRouter (100+ models). Fully functional free version with site learning, knowledge base, web search, MCP server, and 6 themes.
 
 = Key Features =
 
