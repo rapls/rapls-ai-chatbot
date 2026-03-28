@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -447,6 +447,10 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 == Changelog ==
 
+= 1.5.5 =
+* Improved: Renamed internal CSS variable to clarify no arbitrary user input is accepted
+* Improved: Added validation comments for reviewer and static analysis clarity
+
 = 1.5.4 =
 * Security: Removed arbitrary custom CSS injection — use WordPress Customizer instead
 * Security: All CSS variable values escaped with esc_attr(), position margins with absint()
@@ -602,6 +606,9 @@ Release ZIPs are CI-verified for packaging correctness. If you encounter unexpec
 
 
 == Upgrade Notice ==
+
+= 1.5.5 =
+Code clarity improvements for review compliance. Recommended for all users.
 
 = 1.5.4 =
 Security hardening: CSS escaping, output sanitization, custom CSS removal. Recommended for all users.
