@@ -131,7 +131,7 @@ if (!defined('ABSPATH')) {
         ?>
         <div class="chatbot-footer-branding">
             <?php if ($wl_url !== '') : ?>
-                <a href="<?php echo esc_url($wl_url); ?>" target="<?php echo esc_attr($wl_target); ?>"<?php echo $wl_target === '_blank' ? ' rel="noopener noreferrer"' : ''; ?>><?php echo esc_html($wl_footer); ?></a>
+                <a href="<?php echo esc_url($wl_url); ?>" target="<?php echo esc_attr($wl_target); ?>"<?php if ($wl_target === '_blank') { echo ' rel="noopener noreferrer"'; } // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static string ?>><?php echo esc_html($wl_footer); ?></a>
             <?php else : ?>
                 <?php echo esc_html($wl_footer); ?>
             <?php endif; ?>

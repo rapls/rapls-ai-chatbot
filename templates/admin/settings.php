@@ -932,28 +932,28 @@ if (!defined('ABSPATH')) {
                             <?php $badge_position = $settings['badge_position'] ?? 'bottom-right'; ?>
                             <div class="raplsaich-badge-position-selector">
                                 <div class="raplsaich-badge-position-grid">
-                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'top-left' ? ' active' : ''; ?>">
+                                    <label class="raplsaich-badge-pos-option<?php echo esc_attr($badge_position === 'top-left' ? ' active' : ''); ?>">
                                         <input type="radio" name="raplsaich_settings[badge_position]" value="top-left" <?php checked($badge_position, 'top-left'); ?>>
                                         <span class="raplsaich-badge-pos-box">
                                             <span class="raplsaich-badge-pos-dot" style="top: 4px; left: 4px;"></span>
                                         </span>
                                         <span class="raplsaich-badge-pos-label"><?php esc_html_e('Top Left', 'rapls-ai-chatbot'); ?></span>
                                     </label>
-                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'top-right' ? ' active' : ''; ?>">
+                                    <label class="raplsaich-badge-pos-option<?php echo esc_attr($badge_position === 'top-right' ? ' active' : ''); ?>">
                                         <input type="radio" name="raplsaich_settings[badge_position]" value="top-right" <?php checked($badge_position, 'top-right'); ?>>
                                         <span class="raplsaich-badge-pos-box">
                                             <span class="raplsaich-badge-pos-dot" style="top: 4px; right: 4px;"></span>
                                         </span>
                                         <span class="raplsaich-badge-pos-label"><?php esc_html_e('Top Right', 'rapls-ai-chatbot'); ?></span>
                                     </label>
-                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'bottom-left' ? ' active' : ''; ?>">
+                                    <label class="raplsaich-badge-pos-option<?php echo esc_attr($badge_position === 'bottom-left' ? ' active' : ''); ?>">
                                         <input type="radio" name="raplsaich_settings[badge_position]" value="bottom-left" <?php checked($badge_position, 'bottom-left'); ?>>
                                         <span class="raplsaich-badge-pos-box">
                                             <span class="raplsaich-badge-pos-dot" style="bottom: 4px; left: 4px;"></span>
                                         </span>
                                         <span class="raplsaich-badge-pos-label"><?php esc_html_e('Bottom Left', 'rapls-ai-chatbot'); ?></span>
                                     </label>
-                                    <label class="raplsaich-badge-pos-option<?php echo $badge_position === 'bottom-right' ? ' active' : ''; ?>">
+                                    <label class="raplsaich-badge-pos-option<?php echo esc_attr($badge_position === 'bottom-right' ? ' active' : ''); ?>">
                                         <input type="radio" name="raplsaich_settings[badge_position]" value="bottom-right" <?php checked($badge_position, 'bottom-right'); ?>>
                                         <span class="raplsaich-badge-pos-box">
                                             <span class="raplsaich-badge-pos-dot" style="bottom: 4px; right: 4px;"></span>
