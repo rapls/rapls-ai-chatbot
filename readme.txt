@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.5
+Stable tag: 1.5.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -447,6 +447,14 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.6 =
+* Fixed: Response Language setting now works when set to "Site language" — was silently ignored
+* Fixed: AI responses in wrong language when RAG context is in a different language (triple enforcement)
+* Fixed: Chatbot placeholder language now respects site locale over browser language
+* Fixed: Response cache now includes language in hash key to prevent stale translations
+* Fixed: Reset confirm dialog newlines not rendering in prompt()
+* Improved: Response language instruction placed at beginning, end of system prompt, and in user message
+
 = 1.5.5 =
 * Improved: Complete Free/Pro code separation — all Pro UI code moved to separate Pro plugin
 * Improved: Frontend chatbot.js reduced by 50% (4,300 → 2,175 lines) for faster page loads
@@ -596,6 +604,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.6 =
+Response Language setting fix: AI now correctly responds in the configured language. Recommended for all users.
 
 = 1.5.5 =
 Major update: Complete Free/Pro code separation, 50% smaller frontend JS, security hardening (CSS escaping, output sanitization), and unique prefix. Recommended for all users.
