@@ -456,7 +456,7 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * Security: All CSS variable values escaped with esc_attr(), position margins with absint()
 * Security: Block render output sanitized with wp_kses() and widget-aware allow-list
 * Security: Added `rel="noopener noreferrer"` to all external links
-* Security: All inline JS/CSS moved to properly enqueued files
+* Security: Inline JS/CSS now uses wp_add_inline_script() and wp_add_inline_style() instead of raw output
 * Fixed: Lead form display and submission when Pro is active
 * Changed: Settings key renamed from `pro_features` to `extensions` with automatic migration
 * Changed: Unique prefix `raplsaich_` applied to all functions, options, hooks, and REST namespace
