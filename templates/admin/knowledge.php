@@ -171,7 +171,7 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
         ?>
         <ul class="subsubsub" style="margin-bottom: 10px;">
             <li>
-                <a href="<?php echo esc_url($base_tab_url); ?>" class="<?php echo empty($status_filter) ? 'current' : ''; ?>">
+                <a href="<?php echo esc_url($base_tab_url); ?>" class="<?php echo esc_attr(empty($status_filter) ? 'current' : ''); ?>">
                     <?php esc_html_e('All', 'rapls-ai-chatbot'); ?>
                 </a> |
             </li>
