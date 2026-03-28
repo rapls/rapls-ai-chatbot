@@ -13,17 +13,15 @@ if (!defined('ABSPATH')) {
         <?php esc_html_e('AI Chatbot - Dashboard', 'rapls-ai-chatbot'); ?>
         <?php
         $locale = get_locale();
-        if (raplsaich_is_pro_active()) {
-            $docs_url = (strpos($locale, 'ja') === 0)
-                ? 'https://raplsworks.com/rapls-ai-chatbot-manual-pro-ja/'
-                : 'https://raplsworks.com/rapls-ai-chatbot-manual-pro-en/';
-        } else {
-            $docs_url = (strpos($locale, 'ja') === 0)
-                ? 'https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/'
-                : 'https://raplsworks.com/rapls-ai-chatbot-free-manual-en/';
-        }
+        $free_docs = (strpos($locale, 'ja') === 0)
+            ? 'https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/'
+            : 'https://raplsworks.com/rapls-ai-chatbot-free-manual-en/';
+        $pro_docs = (strpos($locale, 'ja') === 0)
+            ? 'https://raplsworks.com/rapls-ai-chatbot-manual-pro-ja/'
+            : 'https://raplsworks.com/rapls-ai-chatbot-manual-pro-en/';
         ?>
-        <a href="<?php echo esc_url($docs_url); ?>" target="_blank" rel="noopener noreferrer" class="page-title-action"><?php esc_html_e('Docs', 'rapls-ai-chatbot'); ?></a>
+        <a href="<?php echo esc_url($free_docs); ?>" target="_blank" rel="noopener noreferrer" class="page-title-action"><?php esc_html_e('Free Docs', 'rapls-ai-chatbot'); ?></a>
+        <a href="<?php echo esc_url($pro_docs); ?>" target="_blank" rel="noopener noreferrer" class="page-title-action"><?php esc_html_e('Pro Docs', 'rapls-ai-chatbot'); ?></a>
     </h1>
 
     <?php if (!raplsaich_is_pro_active()): ?>
