@@ -1289,7 +1289,7 @@ class RAPLSAICH_Admin {
         // that some providers may use in key formats. Only remove control chars and trim.
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- API keys contain special chars that sanitize_text_field strips
         $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
-        $use_saved = !empty(wp_unslash($_POST['use_saved'] ?? ''));
+        $use_saved = !empty(sanitize_text_field(wp_unslash($_POST['use_saved'] ?? '')));
 
         // If no key entered but use_saved flag set, decrypt the saved key
         if (empty($api_key) && $use_saved) {
@@ -1348,8 +1348,8 @@ class RAPLSAICH_Admin {
         // that some providers may use in key formats. Only remove control chars and trim.
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- API keys contain special chars that sanitize_text_field strips
         $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
-        $use_saved = !empty(wp_unslash($_POST['use_saved'] ?? ''));
-        $force_refresh = !empty(wp_unslash($_POST['force_refresh'] ?? ''));
+        $use_saved = !empty(sanitize_text_field(wp_unslash($_POST['use_saved'] ?? '')));
+        $force_refresh = !empty(sanitize_text_field(wp_unslash($_POST['force_refresh'] ?? '')));
 
         // Use saved API key if requested
         if ($use_saved || empty($api_key)) {
