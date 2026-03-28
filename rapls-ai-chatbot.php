@@ -496,14 +496,6 @@ function raplsaich_plugin_action_links($actions)
         esc_html__('Settings', 'rapls-ai-chatbot') . '</a>';
     array_unshift($actions, $settings_link);
 
-    // Docs link (language-aware)
-    $locale = get_locale();
-    $docs_url = (strpos($locale, 'ja') === 0)
-        ? 'https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/'
-        : 'https://raplsworks.com/rapls-ai-chatbot-free-manual-en/';
-    $actions['docs'] = '<a href="' . esc_url($docs_url) . '" target="_blank" rel="noopener noreferrer">' .
-        esc_html__('Docs', 'rapls-ai-chatbot') . '</a>';
-
     return $actions;
 }
 add_filter('plugin_action_links_' . RAPLSAICH_PLUGIN_BASENAME, 'raplsaich_plugin_action_links', 20);

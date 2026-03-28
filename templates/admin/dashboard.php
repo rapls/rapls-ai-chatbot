@@ -9,7 +9,22 @@ if (!defined('ABSPATH')) {
 // phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- template variables, not true globals
 ?>
 <div class="wrap raplsaich-admin">
-    <h1><?php esc_html_e('AI Chatbot - Dashboard', 'rapls-ai-chatbot'); ?></h1>
+    <h1>
+        <?php esc_html_e('AI Chatbot - Dashboard', 'rapls-ai-chatbot'); ?>
+        <?php
+        $locale = get_locale();
+        if (raplsaich_is_pro_active()) {
+            $docs_url = (strpos($locale, 'ja') === 0)
+                ? 'https://raplsworks.com/rapls-ai-chatbot-manual-pro-ja/'
+                : 'https://raplsworks.com/rapls-ai-chatbot-manual-pro-en/';
+        } else {
+            $docs_url = (strpos($locale, 'ja') === 0)
+                ? 'https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/'
+                : 'https://raplsworks.com/rapls-ai-chatbot-free-manual-en/';
+        }
+        ?>
+        <a href="<?php echo esc_url($docs_url); ?>" target="_blank" rel="noopener noreferrer" class="page-title-action"><?php esc_html_e('Docs', 'rapls-ai-chatbot'); ?></a>
+    </h1>
 
     <?php if (!raplsaich_is_pro_active()): ?>
     <!-- Pro Version Notice (single, dismissible) -->
