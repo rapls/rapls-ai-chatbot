@@ -419,8 +419,11 @@ class RAPLSAICH_Message {
     public static function build_cache_hash(string $message, string $context = '', string $bot_id = 'default'): string {
         // Allow Pro to normalize the message further (e.g., similar cache)
         $message = apply_filters('raplsaich_cache_hash_message', $message);
-        // Normalize: lowercase, trim whitespace; include bot_id so each bot has its own cache
-        $normalized = raplsaich_mb_strtolower(trim($message)) . '||' . trim($context) . '||' . $bot_id;
+        // Include response_language so language changes invalidate cached responses
+        $settings = get_option('raplsaich_settings', []);
+        $lang = $settings['response_language'] ?? '';
+        // Normalize: lowercase, trim whitespace; include bot_id and language so each combination has its own cache
+        $normalized = raplsaich_mb_strtolower(trim($message)) . '||' . trim($context) . '||' . $bot_id . '||' . $lang;
         return hash('sha256', $normalized);
     }
 
