@@ -201,11 +201,12 @@ class RAPLSAICH_Chatbot_Widget {
                 break;
         }
 
-        // All values are strictly validated before CSS interpolation:
+        // Base CSS for theme colors and widget position.
+        // Contains NO user-supplied arbitrary CSS — all values are strictly validated:
         // - $primary_color: sanitize_hex_color() + esc_attr()
         // - darken_color(): esc_attr() on computed hex
         // - $margin_h/$margin_v: absint() (lines 185-186)
-        $custom_css = ':root{--raplsaich-primary:' . esc_attr($primary_color)
+        $base_css = ':root{--raplsaich-primary:' . esc_attr($primary_color)
             . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20))
             . ';}.wp-ai-chatbot{' . $position_css . '}';
 
@@ -213,11 +214,11 @@ class RAPLSAICH_Chatbot_Widget {
         $pro_settings = raplsaich_get_ext_settings($settings);
         $pro = RAPLSAICH_Extensions::get_instance();
 
-        // Custom CSS is not supported in Free. Users should use the WordPress
+        // Arbitrary custom CSS is not supported in Free. Users should use the WordPress
         // Customizer CSS editor (Appearance > Customize > Additional CSS).
         // Pro may inject additional styles via raplsaich_frontend_config filter.
 
-        wp_add_inline_style('raplsaich-chatbot', $custom_css);
+        wp_add_inline_style('raplsaich-chatbot', $base_css);
     }
 
     /**
