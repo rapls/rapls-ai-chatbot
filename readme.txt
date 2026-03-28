@@ -260,53 +260,65 @@ Guide: low-memory/slow-DB → batch size 20-50, standard → 100, fast/large-sca
 
 == External Services ==
 
-This plugin connects to external third-party services to provide AI chatbot functionality. By using this plugin, you agree to the terms and privacy policies of these services.
+This plugin connects to the following external third-party services. **No data is sent to any service until you configure an API key and enable the feature in the plugin settings.** Each service requires the site administrator to create an account and obtain API credentials. By using these services, you agree to their respective terms and privacy policies listed below.
 
-= AI Providers =
+= 1. OpenAI (GPT models) — AI Provider =
 
-The plugin sends user messages and optionally site content to AI providers for generating responses:
+Used when you select OpenAI as your AI provider. User messages and optionally site content are sent to generate AI responses.
 
-**OpenAI (GPT models)**
-* Service URL: https://api.openai.com/
-* Terms of Use: https://openai.com/terms/
-* Privacy Policy: https://openai.com/privacy/
+* Service URL: [https://api.openai.com/](https://api.openai.com/)
+* Terms of Use: [https://openai.com/terms/](https://openai.com/terms/)
+* Privacy Policy: [https://openai.com/privacy/](https://openai.com/privacy/)
 
-**Anthropic (Claude models)**
-* Service URL: https://api.anthropic.com/
-* Terms of Use: https://www.anthropic.com/terms
-* Privacy Policy: https://www.anthropic.com/privacy
+= 2. Anthropic (Claude models) — AI Provider =
 
-**Google (Gemini models)**
-* Service URL: https://generativelanguage.googleapis.com/
-* Terms of Use: https://policies.google.com/terms
-* Privacy Policy: https://policies.google.com/privacy
+Used when you select Anthropic Claude as your AI provider. User messages and optionally site content are sent to generate AI responses.
 
-**OpenRouter**
-* Service URL: https://openrouter.ai/api/
-* Terms of Use: https://openrouter.ai/terms
-* Privacy Policy: https://openrouter.ai/privacy
+* Service URL: [https://api.anthropic.com/](https://api.anthropic.com/)
+* Terms of Use: [https://www.anthropic.com/terms](https://www.anthropic.com/terms)
+* Privacy Policy: [https://www.anthropic.com/privacy](https://www.anthropic.com/privacy)
 
-= Google reCAPTCHA (Optional) =
+= 3. Google (Gemini models) — AI Provider =
 
-If enabled, the plugin uses Google reCAPTCHA v3 for spam protection:
+Used when you select Google Gemini as your AI provider. User messages and optionally site content are sent to generate AI responses.
 
-* Service URL: https://www.google.com/recaptcha/
-* Terms of Use: https://policies.google.com/terms
-* Privacy Policy: https://policies.google.com/privacy
+* Service URL: [https://generativelanguage.googleapis.com/](https://generativelanguage.googleapis.com/)
+* Terms of Use: [https://policies.google.com/terms](https://policies.google.com/terms)
+* Privacy Policy: [https://policies.google.com/privacy](https://policies.google.com/privacy)
 
-= LINE Messaging API (Pro, Optional) =
+= 4. OpenRouter — AI Provider =
 
-If enabled via the Pro add-on, the plugin connects to the LINE Messaging API:
+Used when you select OpenRouter as your AI provider. OpenRouter is a unified API gateway that routes requests to various AI models.
 
-* Service URL: https://api.line.me/
-* Terms of Use: https://terms.line.me/
-* Privacy Policy: https://line.me/en/terms/policy/
+* Service URL: [https://openrouter.ai/api/](https://openrouter.ai/api/)
+* Terms of Use: [https://openrouter.ai/terms](https://openrouter.ai/terms)
+* Privacy Policy: [https://openrouter.ai/privacy](https://openrouter.ai/privacy)
 
-= Data Transmitted =
+= 5. Google reCAPTCHA v3 (Optional) =
 
-* **User messages**: Chat messages entered by visitors
-* **Site content** (if Site Learning enabled): Excerpts from your published posts/pages
-* **Knowledge base** (if configured): Custom Q&A entries you create
+Used only if you enable reCAPTCHA in the plugin settings for spam protection. The visitor's IP address and interaction data are sent to Google for verification.
+
+* Service URL: [https://www.google.com/recaptcha/](https://www.google.com/recaptcha/)
+* Terms of Use: [https://policies.google.com/terms](https://policies.google.com/terms)
+* Privacy Policy: [https://policies.google.com/privacy](https://policies.google.com/privacy)
+
+= 6. LINE Messaging API (Pro Add-on, Optional) =
+
+Used only if you enable the LINE integration via the Pro add-on. Connects to the LINE Messaging API for chatbot-to-LINE messaging.
+
+* Service URL: [https://api.line.me/](https://api.line.me/)
+* Terms of Use: [https://terms.line.me/](https://terms.line.me/)
+* Privacy Policy: [https://line.me/en/terms/policy/](https://line.me/en/terms/policy/)
+
+= Cross-Site Embed (embed-loader.js) =
+
+The plugin includes an optional `embed-loader.js` script that allows the chatbot to be embedded on external websites via an iframe. This script does NOT load any external CDN resources or third-party scripts. It creates an iframe that points back to your own WordPress site where the chatbot is hosted. All data processing occurs on your server.
+
+= Data Transmitted to External Services =
+
+* **User messages**: Chat messages entered by visitors (sent to the configured AI provider only)
+* **Site content** (if Site Learning is enabled): Excerpts from your published posts/pages (sent to the configured AI provider)
+* **Knowledge base** (if configured): Custom Q&A entries you create (sent to the configured AI provider)
 * **IP address** (reCAPTCHA only): Sent to Google for spam verification
 
 = Data Storage =

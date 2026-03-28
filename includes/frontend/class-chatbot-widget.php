@@ -201,29 +201,17 @@ class RAPLSAICH_Chatbot_Widget {
                 break;
         }
 
-        $custom_css = "
-            :root {
-                --raplsaich-primary: {$primary_color};
-                --raplsaich-primary-dark: " . $this->darken_color($primary_color, 20) . ";
-            }
-            .wp-ai-chatbot {
-                {$position_css}
-            }
-        ";
+        $custom_css = ':root{--raplsaich-primary:' . esc_attr($primary_color)
+            . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20))
+            . ';}.wp-ai-chatbot{' . $position_css . '}';
 
         // Powered by footer is now conditionally rendered in the template (not hidden via CSS)
         $pro_settings = raplsaich_get_ext_settings($settings);
         $pro = RAPLSAICH_Extensions::get_instance();
 
-        // White label: custom CSS (strip dangerous strings to prevent style breakout)
-        if (!empty($pro_settings['custom_css'])) {
-            $safe_css = $pro_settings['custom_css'];
-            $safe_css = preg_replace('/<\/?style[^>]*>/i', '', $safe_css);
-            $safe_css = preg_replace('/<\/?script[^>]*>/i', '', $safe_css);
-            $safe_css = str_replace('expression(', '', $safe_css);
-            $safe_css = preg_replace('/url\s*\(\s*["\']?\s*javascript:/i', 'url(about:blank', $safe_css);
-            $custom_css .= "\n" . $safe_css;
-        }
+        // Custom CSS is not supported in Free. Users should use the WordPress
+        // Customizer CSS editor (Appearance > Customize > Additional CSS).
+        // Pro may inject additional styles via raplsaich_frontend_config filter.
 
         wp_add_inline_style('raplsaich-chatbot', $custom_css);
     }
