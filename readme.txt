@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.6
+Stable tag: 1.5.7
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,7 +15,7 @@ AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learn
 
 == Description ==
 
-Rapls AI Chatbot adds an AI chatbot to your WordPress site. Supports OpenAI, Claude, Gemini, and OpenRouter (100+ models). Fully functional free version with site learning, knowledge base, web search, MCP server, and 6 themes.
+Rapls AI Chatbot add an AI chatbot to your site with OpenAI, Claude, Gemini, or OpenRouter. Includes site learning, knowledge base, and web search.
 
 = Key Features =
 
@@ -445,6 +445,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.7 =
+* Updated: Japanese translations — full-width parentheses replaced with half-width per WordPress Style Guide
+* Updated: Dashboard Docs links and review request banner
+
 = 1.5.6 =
 * Fixed: Response Language setting now works when set to "Site language" — was silently ignored
 * Fixed: AI responses in wrong language when RAG context is in a different language (triple enforcement)
@@ -602,6 +606,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.7 =
+Translation and UI improvements. Recommended for all users.
 
 = 1.5.6 =
 Response Language setting fix: AI now correctly responds in the configured language. Recommended for all users.
