@@ -7,7 +7,7 @@
  * Version:           1.5.7
  * Requires at least: 6.3
  * Requires PHP:      7.4
- * Author:            Rapls Works
+ * Author:            Rapls
  * Author URI:        https://raplsworks.com/
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
