@@ -1,80 +1,97 @@
-<!-- Rapls Works について（日本語） -->
-<!-- このHTMLをWordPressの固定ページにコピー＆ペーストしてください -->
-<!-- URL: /about/ -->
-
-<!-- Font Awesome CDN -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-<!-- 不要な要素を非表示 -->
-<style>
-.breadcrumb.breadcrumb-page.pbp-main-top,
-.article-header.entry-header {
-    display: none !important;
-}
-</style>
-
-<!-- 言語切り替え -->
-<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;">
-    <a href="/about/" style="color: #667eea; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px;">JA</a>
-    <a href="/about-en/" style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">EN</a>
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;"><a style="color: #667eea; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px;" href="/about/">JA</a>
+<a style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;" href="/about-en/">EN</a></div>
+<div style="max-width: 700px; margin: 0 auto; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<h1 style="font-size: 2em; margin-bottom: 30px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 15px;">Rapls Works について</h1>
+<div style="line-height: 1.9; color: #444;">
+<div style="background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); padding: 30px; border-radius: 12px; margin-bottom: 35px;">
+<h2 style="font-size: 1.3em; margin-top: 0; margin-bottom: 20px; color: #333;">運営者について</h2>
+<p style="margin-bottom: 15px;">はじめまして、<strong>rapls</strong>と申します。Web開発歴6年以上のフリーランスエンジニアです。</p>
+<p style="margin-bottom: 15px;">WordPressのプラグイン開発を軸に、PHP・JavaScript・CSSを使ったサイト構築、Xserver環境でのサーバー最適化、そしてClaude CodeやCursorなどのAIツールを活用した開発効率化に取り組んでいます。</p>
+<p style="margin-bottom: 0;"><strong>技術スタック：</strong>PHP / JavaScript / WordPress / MySQL / HTML・CSS / Git / Xserver / Claude Code / Cursor</p>
 </div>
 
-<div style="max-width: 700px; margin: 0 auto; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">なぜこのブログを始めたか</h2>
+<p style="margin-bottom: 20px;">きっかけは、自作プラグインをWordPress.orgに公開したときの経験です。</p>
+<p style="margin-bottom: 20px;">プラグイン審査の手順を調べても、日本語の情報がほとんどなく、英語のドキュメントとフォーラムを行き来しながら手探りで進めました。SVNの使い方、readme.txtのStable tagの仕組み、assetsの配置場所——どれも一度ハマると数時間を失うような「知っていれば一瞬で解決する」問題ばかりでした。</p>
+<p style="margin-bottom: 20px;">同時期に、XserverのWAF誤検知でコード付き記事が投稿できない問題や、CocoonとComplianzプラグインの競合でスマホメニューが壊れる問題にも遭遇しました。どれもStack OverflowやWordPress公式フォーラムでは解決策が見つからず、自力で原因を特定して対処するしかなかった。</p>
+<p style="margin-bottom: 20px;"><strong>「自分がハマった問題を記録しておけば、同じことで困っている人の数時間を節約できる」</strong>——そう思って、解決ログをブログの形で公開し始めました。それがRapls Worksの始まりです。</p>
 
-    <h1 style="font-size: 2em; margin-bottom: 30px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 15px;">Rapls Works について</h1>
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">このサイトについて</h2>
+<p style="margin-bottom: 20px;">Rapls Worksは、<strong>「現場で本当に役立つ一次情報」</strong>をコンセプトに運営しているWordPress専門の技術ブログです。現在<strong>40本以上</strong>の記事を公開しています。</p>
+<p style="margin-bottom: 20px;">情報の網羅性よりも、開発の現場で実際に直面した課題と、その解決に至るまでの思考プロセスを大事にしています。「ググって出てくる情報だけでは解決しなかった問題」を、自分で検証して解決した過程をそのまま記事にしています。</p>
+<p style="margin-bottom: 20px;">特に力を入れているテーマは以下の通りです。</p>
+<ul style="margin-bottom: 25px; padding-left: 20px;">
+ 	<li style="margin-bottom: 12px;"><strong>プラグイン開発</strong> — 公式ディレクトリ登録プラグインの開発、審査対応、SVNデプロイ、PTE翻訳権限の取得まで、開発の全工程を日本語で発信しています。</li>
+ 	<li style="margin-bottom: 12px;"><strong>テーマカスタマイズ</strong> — Cocoonテーマを中心に、パフォーマンス最適化やデザイン調整のノウハウを紹介しています。</li>
+ 	<li style="margin-bottom: 12px;"><strong>サーバー・トラブルシューティング</strong> — XserverのWAF誤検知、WP-Cronの遅延、REST APIアクセス制限など、共用レンタルサーバー特有のハマりどころを実体験ベースで解説しています。</li>
+ 	<li style="margin-bottom: 12px;"><strong>AIツール活用</strong> — Claude Code、Cursor、Codex CLIなどのAIコーディングツールをWordPress開発に実戦投入し、「実際に使えるのか」を率直にレポートしています。</li>
+</ul>
 
-    <div style="line-height: 1.9; color: #444;">
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">公開プラグイン</h2>
+<p style="margin-bottom: 20px;">WordPress.org公式ディレクトリにて、以下のプラグインを公開・保守しています。どれも自分自身の開発現場で「これがあれば楽になる」と感じたニーズから生まれたプラグインです。</p>
 
-        <p style="margin-bottom: 25px;">
-            Rapls Works は、WordPress プラグインや Web ソリューションの開発を行っています。最新の AI 技術を活用し、使いやすく高品質な製品を提供することを目指しています。
-        </p>
+<div style="background: linear-gradient(135deg, #eef2ff 0%, #e8ecff 100%); padding: 25px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #667eea;">
+<h3 style="font-size: 1.1em; margin-top: 0; margin-bottom: 10px; color: #333;"><a style="color: #667eea; font-weight: 600;" href="/rapls-ai-chatbot-guide/">Rapls AI Chatbot</a> <span style="background: #667eea; color: white; font-size: 0.7em; padding: 2px 8px; border-radius: 4px; vertical-align: middle;">NEW</span></h3>
+<p style="margin-bottom: 12px;">OpenAI・Claude・Gemini・OpenRouterの4つのAIプロバイダーに対応した、WordPressサイト向けのAIチャットボットプラグインです。サイトの学習コンテンツや独自のナレッジベースをもとに、訪問者の質問に自動で回答します。</p>
+<p style="margin-bottom: 12px;">主な機能：</p>
+<ul style="margin-bottom: 12px; padding-left: 20px; font-size: 0.95em;">
+ 	<li style="margin-bottom: 6px;">サイト学習（RAG） — 投稿・固定ページ・カスタム投稿・WooCommerce商品を自動インデックス</li>
+ 	<li style="margin-bottom: 6px;">Web検索 — ナレッジベースに答えがない場合、AIが自動的にWeb検索</li>
+ 	<li style="margin-bottom: 6px;">ベクトル埋め込み — キーワード検索（40%）とベクトル類似度（60%）のハイブリッド検索</li>
+ 	<li style="margin-bottom: 6px;">MCPサーバー — Claude Desktop、Cursor、VS Codeなどの外部AIエージェントと連携</li>
+ 	<li style="margin-bottom: 6px;">Gutenbergブロック — ブロックエディタから直接チャットボットを配置</li>
+</ul>
+<p style="margin-bottom: 8px;">Free版は制限なしで全コア機能を利用可能。Pro版では分析ダッシュボード、リードキャプチャ、会話シナリオ、WooCommerce連携、LINE連携などのビジネス向け機能を追加できます。</p>
+<p style="margin-bottom: 0; font-size: 0.9em; color: #666;">
+<a style="color: #667eea; margin-right: 12px;" href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" rel="noopener">WordPress.org →</a>
+<a style="color: #667eea; margin-right: 12px;" href="/rapls-ai-chatbot-free-manual-ja/">Free マニュアル →</a>
+<a style="color: #667eea;" href="/rapls-ai-chatbot-manual-pro-ja/">Pro マニュアル →</a>
+</p>
+</div>
 
-        <h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">
-            <i class="fas fa-box-open" style="color: #667eea; margin-right: 8px;"></i>製品
-        </h2>
+<div style="background: #fafafa; padding: 25px; border-radius: 8px; margin-bottom: 15px;">
+<h3 style="font-size: 1.1em; margin-top: 0; margin-bottom: 10px; color: #333;"><a style="color: #667eea; font-weight: 500;" href="/rapls-pdf-image-creator-guide/">Rapls PDF Image Creator</a></h3>
+<p style="margin-bottom: 8px;">PDFをアップロードすると表紙を自動で画像化するWordPressプラグイン。ImageMagickによるCMYK→sRGB自動変換に対応しており、印刷用PDF（PDF/X形式）でも正しいサムネイルを生成します。クライアントワークでPDFを大量に扱う案件があり、「手動でサムネイルを作る手間を何とかしたい」と思ったのが開発のきっかけです。</p>
+<p style="margin-bottom: 0; font-size: 0.9em; color: #666;"><a style="color: #667eea;" href="https://wordpress.org/plugins/rapls-pdf-image-creator/" target="_blank" rel="noopener">WordPress.org プラグインページ →</a></p>
+</div>
 
-        <div style="background: #f8f9fa; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
-            <h3 style="font-size: 1.15em; margin-bottom: 10px; color: #333;">
-                <i class="fas fa-robot" style="color: #667eea; margin-right: 6px;"></i>
-                <a href="/rapls-ai-chatbot-ja/" style="color: #667eea; text-decoration: none;">Rapls AI Chatbot</a>
-            </h3>
-            <p style="margin-bottom: 10px; color: #555;">WordPress 用 AI チャットボットプラグイン。OpenAI（GPT-5 シリーズ）、Anthropic Claude（Opus 4.6/Sonnet 4.5）、Google Gemini（3/2.5 シリーズ）、OpenRouter（100以上のモデル）に対応。Web 検索、ベクトル RAG、Gutenberg ブロック、MCP サーバー、WordPress Abilities API ブリッジを搭載しています。</p>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <a href="/rapls-ai-chatbot-manual-free-ja/" style="color: #667eea; font-size: 0.9em;"><i class="fas fa-book" style="margin-right: 4px;"></i>Free マニュアル</a>
-                <a href="/rapls-ai-chatbot-manual-pro-ja/" style="color: #667eea; font-size: 0.9em;"><i class="fas fa-crown" style="margin-right: 4px;"></i>Pro マニュアル</a>
-                <a href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" style="color: #667eea; font-size: 0.9em;"><i class="fab fa-wordpress" style="margin-right: 4px;"></i>WordPress.org</a>
-            </div>
-        </div>
+<div style="background: #fafafa; padding: 25px; border-radius: 8px; margin-bottom: 15px;">
+<h3 style="font-size: 1.1em; margin-top: 0; margin-bottom: 10px; color: #333;"><a style="color: #667eea; font-weight: 500;" href="/thanks-mail-for-stripe/">Thanks Mail for Stripe</a></h3>
+<p style="margin-bottom: 8px;">Stripe決済完了後にサンキューメールを自動送信するWordPressプラグイン。Webhook連携でリアルタイム送信に対応しています。自分のプラグインをStripeで販売する際に「決済後のメールを手軽に自動化したい」というニーズから開発しました。</p>
+<p style="margin-bottom: 0; font-size: 0.9em; color: #666;"><a style="color: #667eea;" href="https://wordpress.org/plugins/thanks-mail-for-stripe/" target="_blank" rel="noopener">WordPress.org プラグインページ →</a></p>
+</div>
 
-        <div style="background: #f8f9fa; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
-            <h3 style="font-size: 1.15em; margin-bottom: 10px; color: #333;">
-                <i class="fas fa-file-image" style="color: #667eea; margin-right: 6px;"></i>
-                <a href="/pdf-image-creator-ja/" style="color: #667eea; text-decoration: none;">Rapls PDF Image Creator</a>
-            </h3>
-            <p style="color: #555;">WordPress 用 PDF 画像変換プラグイン。ブロックエディタ内で PDF ページを高品質な画像に変換できます。</p>
-        </div>
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">WordPress.org への貢献</h2>
+<div style="background: #fafafa; padding: 25px; border-radius: 8px; margin-bottom: 25px;">
+<ul style="margin-bottom: 0; padding-left: 20px;">
+ 	<li style="margin-bottom: 10px;">WordPress公式ディレクトリにてプラグイン3本（<a style="color: #667eea; font-weight: 500;" href="https://wordpress.org/plugins/rapls-ai-chatbot/" target="_blank" rel="noopener">Rapls AI Chatbot</a>、<a style="color: #667eea; font-weight: 500;" href="https://wordpress.org/plugins/rapls-pdf-image-creator/" target="_blank" rel="noopener">Rapls PDF Image Creator</a>、<a style="color: #667eea; font-weight: 500;" href="https://wordpress.org/plugins/thanks-mail-for-stripe/" target="_blank" rel="noopener">Thanks Mail for Stripe</a>）を公開・継続保守</li>
+ 	<li style="margin-bottom: 10px;"><strong>PTE（Project Translation Editor）</strong>として、WordPress.org日本語翻訳チームに参加。自作プラグインの日本語翻訳を自ら管理</li>
+ 	<li style="margin-bottom: 10px;">プラグイン審査プロセスの全手順（提出準備〜差し戻し対応〜SVNデプロイ）を日本語で体系的に発信。国内でWordPress.orgにプラグインを公開する開発者向けの情報不足を補う取り組み</li>
+</ul>
+</div>
 
-        <h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">
-            <i class="fas fa-envelope" style="color: #667eea; margin-right: 8px;"></i>お問い合わせ
-        </h2>
-        <p style="margin-bottom: 25px;">
-            製品に関するご質問は<a href="/contact-ja/" style="color: #667eea;">お問い合わせフォーム</a>よりご連絡ください。
-        </p>
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">運営ポリシー</h2>
+<p style="margin-bottom: 20px;">当サイトは技術情報の「質」を担保するため、以下の方針を遵守しています。</p>
+<ul style="margin-bottom: 25px; padding-left: 20px;">
+ 	<li style="margin-bottom: 10px;"><strong>実体験主義</strong> — 自身で再現・検証したコードと手順のみを掲載します。「試していないけど多分こう」という記事は書きません。</li>
+ 	<li style="margin-bottom: 10px;"><strong>透明性</strong> — AIツールは開発の効率化に活用していますが、記事の構成・判断・検証は人間のエンジニアが行っています。AI生成テキストをそのまま掲載することはしません。</li>
+ 	<li style="margin-bottom: 10px;"><strong>継続的更新</strong> — WordPressのバージョンアップやサーバー仕様の変更に合わせ、公開済み記事も定期的にリライトしています。</li>
+ 	<li style="margin-bottom: 10px;"><strong>広告の独立性</strong> — 広告掲載の有無にかかわらず、記事内容は開発者としての率直な評価に基づきます。</li>
+</ul>
 
-        <h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">
-            <i class="fas fa-gavel" style="color: #667eea; margin-right: 8px;"></i>法的情報
-        </h2>
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <a href="/terms-ja/" style="color: #667eea; font-size: 0.95em;"><i class="fas fa-file-contract" style="margin-right: 4px;"></i>利用規約</a>
-            <a href="/privacy-policy-ja/" style="color: #667eea; font-size: 0.95em;"><i class="fas fa-shield-halved" style="margin-right: 4px;"></i>プライバシーポリシー</a>
-            <a href="/disclaimer-ja/" style="color: #667eea; font-size: 0.95em;"><i class="fas fa-circle-info" style="margin-right: 4px;"></i>免責事項</a>
-            <a href="/tokushoho-ja/" style="color: #667eea; font-size: 0.95em;"><i class="fas fa-store" style="margin-right: 4px;"></i>特定商取引法に基づく表記</a>
-        </div>
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">カテゴリ紹介</h2>
+<p style="margin-bottom: 20px;">当ブログは<strong><a style="color: #667eea;" href="/category/wordpress/">WordPress</a></strong>に特化しています。プラグイン開発、Cocoonテーマのカスタマイズ、Xserverでのサーバー最適化、トラブルシューティング、AIツール活用など、WordPress開発に関わる幅広いトピックを扱っています。</p>
 
-    </div>
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">お問い合わせ</h2>
+<p style="margin-bottom: 15px;">ご質問や開発のご依頼、記事内容の誤りに関するご指摘は、<a style="color: #667eea; font-weight: 500;" href="/contact-ja/">お問い合わせフォーム</a>よりお気軽にご連絡ください。</p>
 
-    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e0e0e0; text-align: center;">
-        <a href="/" style="color: #667eea; text-decoration: none;">&larr; ホームに戻る</a>
-    </div>
-
+<h2 style="font-size: 1.4em; margin-top: 40px; margin-bottom: 20px; color: #333;">SNS・外部リンク</h2>
+<ul style="margin-bottom: 25px; padding-left: 20px;">
+ 	<li style="margin-bottom: 10px;"><a style="color: #667eea;" href="https://profiles.wordpress.org/rapls/" target="_blank" rel="noopener">WordPress.org プロフィール</a> — 公開プラグイン・翻訳活動の実績</li>
+ 	<li style="margin-bottom: 10px;"><a style="color: #667eea;" href="https://x.com/RaplsWorks" target="_blank" rel="noopener">X（Twitter）</a> — 技術ニュースや日々の開発メモ</li>
+ 	<li style="margin-bottom: 10px;"><a style="color: #667eea;" href="https://github.com/rapls" target="_blank" rel="noopener">GitHub</a> — OSS活動・サンプルコードの公開</li>
+ 	<li style="margin-bottom: 10px;"><a style="color: #667eea;" href="https://www.buymeacoffee.com/rapls" target="_blank" rel="noopener">Buy Me a Coffee</a> — 記事がお役に立てばサポートいただけると励みになります</li>
+</ul>
+</div>
+<div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e0e0e0; text-align: center;"><a style="color: #667eea; text-decoration: none;" href="/">← ホームに戻る</a></div>
 </div>

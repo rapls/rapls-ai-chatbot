@@ -17,6 +17,8 @@ AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learn
 
 Rapls AI Chatbot add an AI chatbot to your site with OpenAI, Claude, Gemini, or OpenRouter. Includes site learning, knowledge base, and web search.
 
+👉 **Documentation & Developer's Guide:** [Why I built this plugin and how RAG works](https://raplsworks.com/rapls-ai-chatbot-guide/)
+
 = Key Features =
 
 * **Multiple AI Providers** — OpenAI, Anthropic Claude, Google Gemini, and OpenRouter (100+ models via single API key)
@@ -124,7 +126,7 @@ The free version is fully functional with no artificial limits — you pay only 
 * 10 additional themes, dark mode, voice input/TTS, multimodal
 * Response caching, encryption, audit logs, and more
 
-Learn more at [raplsworks.com](https://raplsworks.com/rapls-ai-chatbot-pro)
+Learn more about Pro features at [raplsworks.com](https://raplsworks.com/rapls-ai-chatbot-pro), or read the [developer's overview](https://raplsworks.com/rapls-ai-chatbot-guide/) for the full context.
 
 
 
@@ -169,6 +171,14 @@ The plugin provides 7 MCP tools: get_site_info, search_content, get_knowledge, m
 
 
 == Frequently Asked Questions ==
+
+= Where can I find detailed documentation? =
+
+A comprehensive developer's guide explains why this plugin was built, how the RAG hybrid search works, setup walkthroughs, and common troubleshooting:
+
+* [Rapls AI Chatbot — Developer's Guide](https://raplsworks.com/rapls-ai-chatbot-guide/)
+* [Source code on GitHub](https://github.com/rapls/rapls-ai-chatbot)
+* [Developer's blog — Rapls Works](https://raplsworks.com/)
 
 = Which AI provider should I choose? =
 

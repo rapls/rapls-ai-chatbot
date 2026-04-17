@@ -7,21 +7,17 @@
 2. Create a new form with the following content:
 
 Form:
-<label>Plugin (required)
-    [select* plugin "Rapls AI Chatbot" "Rapls PDF Image Creator" "Other"]</label>
-
+<label>Regarding (required)
+      [select* plugin "Rapls AI Chatbot" "Rapls PDF Image Creator" "Thanks Mail for Stripe" "Other"]</label>
 <label>Your Name (required)
-    [text* your-name]</label>
-
+      [text* your-name]</label>
 <label>Your Email (required)
-    [email* your-email]</label>
-
+      [email* your-email]</label>
 <label>Subject
-    [text your-subject]</label>
-
+      [text your-subject]</label>
 <label>Your Message (required)
-    [textarea* your-message]</label>
-
+      [textarea* your-message]</label>
+[acceptance privacy-policy] I agree to the <a href="/privacy-policy-en/" target="_blank">Privacy Policy</a> (required) [/acceptance]
 [submit "Send"]
 
 Mail:
@@ -36,86 +32,26 @@ From: [your-name] <[your-email]>
 3. Replace "FORM_ID" below with your form's shortcode ID
 -->
 
-<!-- Hide unnecessary elements -->
-<style>
-.breadcrumb.breadcrumb-page.pbp-main-top,
-.article-header.entry-header {
-    display: none !important;
-}
-</style>
-
 <!-- Language Switcher -->
-<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;">
-    <a href="/contact-ja/" style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">JA</a>
-    <a href="/contact-en/" style="color: #667eea; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px;">EN</a>
-</div>
-
+<div style="display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 10px;"><a style="color: #999; font-size: 0.8em; text-decoration: none; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;" href="/contact-ja/">JA</a>
+<a style="color: #667eea; font-size: 0.8em; text-decoration: none; font-weight: 600; padding: 4px 8px; border: 1px solid #667eea; border-radius: 4px;" href="/contact-en/">EN</a></div>
 <div style="max-width: 700px; margin: 0 auto; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<h1 style="font-size: 2em; margin-bottom: 20px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 15px;">Contact</h1>
+<p style="color: #666; margin-bottom: 30px; line-height: 1.8;">Feel free to reach out with plugin questions, article corrections, or work inquiries.<br>We typically respond within 2-3 business days.</p>
 
-    <h1 style="font-size: 2em; margin-bottom: 20px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 15px;">Contact Us</h1>
-
-    <p style="color: #666; margin-bottom: 30px; line-height: 1.8;">
-        For questions, feature requests, or technical support regarding our plugins, please use the form below.
-        We typically respond within 2-3 business days.
-    </p>
-
-    <!-- Supported Plugins -->
-    <div style="display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 200px; background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center;">
-            <div style="font-size: 2em; margin-bottom: 10px;">🤖</div>
-            <p style="font-weight: 600; color: #333;">Rapls AI Chatbot</p>
-            <p style="font-size: 0.85em; color: #666;">AI Chatbot Plugin</p>
-        </div>
-        <div style="flex: 1; min-width: 200px; background: #f8f9fa; padding: 20px; border-radius: 10px; text-align: center;">
-            <div style="font-size: 2em; margin-bottom: 10px;">📄</div>
-            <p style="font-weight: 600; color: #333;">Rapls PDF Image Creator</p>
-            <p style="font-size: 0.85em; color: #666;">PDF to Image Converter</p>
-        </div>
-    </div>
-
-    <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #ffc107;">
-        <p style="margin-bottom: 10px; font-weight: 600; color: #333;">Before Contacting Us</p>
-        <ul style="color: #666; line-height: 2; margin-left: 20px; margin-bottom: 0;">
-            <li>Please select the plugin you are inquiring about</li>
-            <li>For license inquiries, please include your username and email address</li>
-            <li>For technical issues, please describe error messages and steps to reproduce</li>
-        </ul>
-    </div>
-
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #6c757d;">
-        <p style="margin-bottom: 10px; font-weight: 600; color: #333;">Please Note</p>
-        <ul style="color: #666; line-height: 2; margin-left: 20px; margin-bottom: 0;">
-            <li>Depending on the nature of your inquiry and circumstances, we may not be able to respond immediately</li>
-            <li>We may not be able to assist with requests that fall outside the scope of support (such as site-specific customizations or compatibility issues with third-party plugins)</li>
-        </ul>
-    </div>
-
-    <div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <!-- Insert Contact Form 7 shortcode here -->
-        [contact-form-7 id="FORM_ID" title="Contact - English"]
-        <!-- Replace FORM_ID with your actual form ID -->
-
-        <!--
-        ★ Include the following in your Contact Form 7 form settings:
-
-        [acceptance privacy-policy] I agree to the <a href="/privacy-policy/" target="_blank">Privacy Policy</a> (Required) [/acceptance]
-
-        [submit "Send"]
-        -->
-    </div>
-
-    <div style="background: #e8f4fd; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #667eea;">
-        <p style="margin: 0; color: #333; line-height: 1.8;">
-            Please review our <a href="/privacy-policy/" target="_blank" style="color: #667eea; text-decoration: underline;">Privacy Policy</a> before contacting us.
-        </p>
-    </div>
-
-    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e0e0e0; text-align: center;">
-        <p style="margin-bottom: 15px;">
-            <a href="/rapls-ai-chatbot-en/" style="color: #667eea; text-decoration: none; margin: 0 10px;">Rapls AI Chatbot</a>
-            |
-            <a href="/pdf-image-creator-en/" style="color: #667eea; text-decoration: none; margin: 0 10px;">Rapls PDF Image Creator</a>
-        </p>
-    </div>
-
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px; border-left: 4px solid #6c757d;">
+<p style="margin-bottom: 10px; font-weight: 600; color: #333;">Plugin Support Forums</p>
+<p style="color: #666; margin-bottom: 10px; font-size: 0.95em;">For technical questions, you can also use the WordPress.org support forum for each plugin.</p>
+<ul style="color: #666; line-height: 2; margin-left: 20px; margin-bottom: 0;">
+ 	<li><a style="color: #667eea;" href="https://wordpress.org/support/plugin/rapls-ai-chatbot/" target="_blank" rel="noopener">Rapls AI Chatbot Support</a></li>
+ 	<li><a style="color: #667eea;" href="https://wordpress.org/support/plugin/rapls-pdf-image-creator/" target="_blank" rel="noopener">Rapls PDF Image Creator Support</a></li>
+ 	<li><a style="color: #667eea;" href="https://wordpress.org/support/plugin/thanks-mail-for-stripe/" target="_blank" rel="noopener">Thanks Mail for Stripe Support</a></li>
+</ul>
+</div>
+<div style="background: white; padding: 30px; border: 1px solid #e0e0e0; border-radius: 10px;"><!-- Insert Contact Form 7 shortcode here -->
+[contact-form-7 id="81e3f40" title="Contact"]</div>
+<div style="background: #e8f4fd; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #667eea;">
+<p style="margin: 0; color: #333; line-height: 1.8;">Please review our <a style="color: #667eea; text-decoration: underline;" href="/privacy-policy/" target="_blank">Privacy Policy</a> before contacting us.</p>
+</div>
+<div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #e0e0e0; text-align: center;"><a style="color: #667eea; text-decoration: none;" href="/">← Back to Home</a></div>
 </div>
