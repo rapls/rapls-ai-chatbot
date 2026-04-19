@@ -166,8 +166,8 @@ msgstr "すべてのインデックスデータを削除しました。"
 msgid "Please enter an API key."
 msgstr "API キーを入力してください。"
 #:#: includes/admin/class-admin.php:1167
-msgid "Connection successful! API key is valid."
-msgstr "接続成功！API キーは有効です。"
+msgid "Connection successful! API key saved."
+msgstr "接続成功！API キーを保存しました。"
 #:#: includes/admin/class-admin.php:1169
 msgid "Invalid API key."
 msgstr "API キーが無効です。"

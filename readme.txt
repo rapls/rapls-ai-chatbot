@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.7
+Stable tag: 1.5.8
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,13 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.8 =
+* Fixed: Gemini API key validation now uses the models list endpoint (no more false "Invalid API key" errors for valid keys)
+* Fixed: API key is saved automatically on successful connection test (previously required a separate save step)
+* Fixed: Gemini embedding model updated from deprecated `text-embedding-004` to `gemini-embedding-001` (with 768-dim output for backward compatibility)
+* Removed: Discontinued Gemini 1.5 series models (Pro / Flash / Flash 8B) from the model dropdown — Google retired these models
+* Added: `gemini-2.0-flash-lite` to the model dropdown
+
 = 1.5.7 =
 * Updated: Japanese translations — full-width parentheses replaced with half-width per WordPress Style Guide
 * Updated: Dashboard Docs links and review request banner
@@ -616,6 +623,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.8 =
+Fixes Gemini API key validation, auto-saves keys on test, updates deprecated Gemini models. Strongly recommended for Gemini users.
 
 = 1.5.7 =
 Translation and UI improvements. Recommended for all users.

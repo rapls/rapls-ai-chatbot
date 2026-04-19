@@ -147,7 +147,12 @@
                 success: function(response) {
                     if (response.success) {
                         alert('✓ ' + response.data);
-                        // Fetch models after successful connection test
+                        var $wrapper = $button.closest('.raplsaich-api-key-wrapper');
+                        $input.val('').attr('placeholder', raplsaichAdmin.i18n.keyMask || '••••••••(configured)');
+                        $wrapper.find('.raplsaich-key-status')
+                            .removeClass('raplsaich-key-empty')
+                            .addClass('raplsaich-key-set')
+                            .text(raplsaichAdmin.i18n.keyConfigured || 'Configured');
                         fetchModels(provider, apiKey, false, false);
                     } else {
                         alert('✗ ' + response.data);

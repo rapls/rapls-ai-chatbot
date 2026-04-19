@@ -811,6 +811,8 @@ class RAPLSAICH_Admin {
                 'topLabel' => __('Top:', 'rapls-ai-chatbot'),
                 'confirmDeleteApiKey' => __('Delete this API key?\nPlease save settings after deletion.', 'rapls-ai-chatbot'),
                 'keyUnset' => __('Not set (will be deleted on save)', 'rapls-ai-chatbot'),
+                'keyConfigured' => __('Configured', 'rapls-ai-chatbot'),
+                'keyMask' => __('••••••••(configured)', 'rapls-ai-chatbot'),
                 'enterApiKey' => __('Please enter an API key.', 'rapls-ai-chatbot'),
                 'testing' => __('Testing...', 'rapls-ai-chatbot'),
                 'connectionTest' => __('Connection test', 'rapls-ai-chatbot'),
@@ -1319,7 +1321,12 @@ class RAPLSAICH_Admin {
             $ai->set_api_key($api_key);
 
             if ($ai->validate_api_key()) {
-                wp_send_json_success(__('Connection successful! API key is valid.', 'rapls-ai-chatbot'));
+                if (!$use_saved) {
+                    $settings = get_option('raplsaich_settings', []);
+                    $settings[$provider . '_api_key'] = $this->maybe_encrypt_api_key($api_key);
+                    update_option('raplsaich_settings', $settings);
+                }
+                wp_send_json_success(__('Connection successful! API key saved.', 'rapls-ai-chatbot'));
             } else {
                 wp_send_json_error(__('Invalid API key.', 'rapls-ai-chatbot'));
             }
@@ -1419,10 +1426,9 @@ class RAPLSAICH_Admin {
         } elseif ($provider === 'claude') {
             $vision_models = $ai->get_vision_models();
         } elseif ($provider === 'gemini') {
-            // All Gemini 1.5+/2.0 models support vision
             foreach (array_keys($models) as $model_id) {
-                if (strpos($model_id, 'gemini-1.5') !== false ||
-                    strpos($model_id, 'gemini-2') !== false) {
+                if (strpos($model_id, 'gemini-2') !== false ||
+                    strpos($model_id, 'gemini-3') !== false) {
                     $vision_models[] = $model_id;
                 }
             }

@@ -310,11 +310,8 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             'gemini-2.5-flash'        => 'Gemini 2.5 Flash (' . __('★ Recommended — fast and smart', 'rapls-ai-chatbot') . ')',
             'gemini-2.5-flash-lite'   => 'Gemini 2.5 Flash Lite (' . __('Fastest, cheapest', 'rapls-ai-chatbot') . ')',
             // Gemini 2.0 series
-            'gemini-2.0-flash'        => 'Gemini 2.0 Flash (' . __('★ Recommended — stable', 'rapls-ai-chatbot') . ')',
-            // Gemini 1.5 series
-            'gemini-1.5-pro'          => 'Gemini 1.5 Pro (' . __('Legacy, long context', 'rapls-ai-chatbot') . ')',
-            'gemini-1.5-flash'        => 'Gemini 1.5 Flash (' . __('Legacy, fast', 'rapls-ai-chatbot') . ')',
-            'gemini-1.5-flash-8b'     => 'Gemini 1.5 Flash 8B (' . __('Legacy, cheapest', 'rapls-ai-chatbot') . ')',
+            'gemini-2.0-flash'        => 'Gemini 2.0 Flash (' . __('Stable', 'rapls-ai-chatbot') . ')',
+            'gemini-2.0-flash-lite'   => 'Gemini 2.0 Flash Lite (' . __('Stable, cheapest', 'rapls-ai-chatbot') . ')',
         ];
     }
 
@@ -329,9 +326,7 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             'gemini-2.5-flash',
             'gemini-2.5-flash-lite',
             'gemini-2.0-flash',
-            'gemini-1.5-pro',
-            'gemini-1.5-flash',
-            'gemini-1.5-flash-8b',
+            'gemini-2.0-flash-lite',
         ];
     }
 
@@ -339,9 +334,7 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
      * Check if current model supports vision
      */
     public function supports_vision(): bool {
-        // All Gemini 1.5+ models support vision
-        return strpos($this->model, 'gemini-1.5') !== false ||
-               strpos($this->model, 'gemini-2') !== false ||
+        return strpos($this->model, 'gemini-2') !== false ||
                strpos($this->model, 'gemini-3') !== false;
     }
 
@@ -382,9 +375,9 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             $api_ids[str_replace('models/', '', $name)] = true;
         }
 
-        // Exclude patterns
+        // Exclude patterns (gemini-1.5 series was discontinued by Google)
         $exclude_substrings = [
-            '-exp', '-image', '-embedding', '-aqa', '-bisheng',
+            '-exp', '-image', '-embedding', '-aqa', '-bisheng', 'gemini-1.5',
         ];
 
         $models = [];
@@ -483,33 +476,16 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             return false;
         }
 
-        $validate_model = $this->model ?: 'gemini-2.0-flash';
-        $url = $this->api_url . rawurlencode($validate_model) . ':generateContent?key=' . $this->api_key;
-
-        $response = wp_remote_post($url, [
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
-            'body' => wp_json_encode([
-                'contents' => [
-                    [
-                        'role'  => 'user',
-                        'parts' => [['text' => 'Hi']]
-                    ]
-                ],
-                'generationConfig' => [
-                    'maxOutputTokens' => 10,
-                ],
-            ]),
-            'timeout' => 30,
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . $this->api_key;
+        $response = wp_remote_get($url, [
+            'timeout' => 10,
         ]);
 
         if (is_wp_error($response)) {
             return false;
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
-        return $response_code === 200;
+        return wp_remote_retrieve_response_code($response) === 200;
     }
 
     /**

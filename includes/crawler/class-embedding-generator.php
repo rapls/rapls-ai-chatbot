@@ -61,7 +61,7 @@ class RAPLSAICH_Embedding_Generator {
             if ($key) {
                 $this->provider = 'gemini';
                 $this->api_key = $key;
-                $this->model = 'text-embedding-004';
+                $this->model = 'gemini-embedding-001';
                 $this->dimensions = 768;
             }
         }
@@ -87,7 +87,7 @@ class RAPLSAICH_Embedding_Generator {
                     $this->model = 'text-embedding-3-small';
                     $this->dimensions = 1536;
                 } else {
-                    $this->model = 'text-embedding-004';
+                    $this->model = 'gemini-embedding-001';
                     $this->dimensions = 768;
                 }
                 return;
@@ -185,7 +185,7 @@ class RAPLSAICH_Embedding_Generator {
         return [
             'auto'   => __('Auto (use chat provider API key)', 'rapls-ai-chatbot'),
             'openai' => 'OpenAI (text-embedding-3-small)',
-            'gemini' => 'Gemini (text-embedding-004)',
+            'gemini' => 'Gemini (gemini-embedding-001)',
         ];
     }
 
@@ -268,10 +268,11 @@ class RAPLSAICH_Embedding_Generator {
             $requests = [];
             foreach ($chunk as $text) {
                 $requests[] = [
-                    'model'   => 'models/' . $this->model,
-                    'content' => [
+                    'model'               => 'models/' . $this->model,
+                    'content'             => [
                         'parts' => [['text' => $text]],
                     ],
+                    'outputDimensionality' => $this->dimensions,
                 ];
             }
 
