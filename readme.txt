@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.8
+Stable tag: 1.5.9
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.9 =
+* Removed: Discontinued OpenAI models from the dropdown — `gpt-4`, `gpt-4-turbo`, `gpt-3.5-turbo`, `o1`, `o1-pro` (all retired by OpenAI)
+* Removed: Discontinued Claude model `claude-3-7-sonnet-20250219` from the dropdown (retired by Anthropic)
+
 = 1.5.8 =
 * Fixed: Gemini API key validation now uses the models list endpoint (no more false "Invalid API key" errors for valid keys)
 * Fixed: API key is saved automatically on successful connection test (previously required a separate save step)
@@ -623,6 +627,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.9 =
+Removes discontinued OpenAI and Claude models from the model dropdown. Recommended for all users.
 
 = 1.5.8 =
 Fixes Gemini API key validation, auto-saves keys on test, updates deprecated Gemini models. Strongly recommended for Gemini users.

@@ -826,13 +826,7 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
             // Non-versioned GPT (gpt-4o — "4o" not purely numeric)
             'gpt-4o'        => 'GPT-4o (' . __('★ Recommended — multimodal', 'rapls-ai-chatbot') . ')',
             'gpt-4o-mini'   => 'GPT-4o mini (' . __('★ Recommended — affordable', 'rapls-ai-chatbot') . ')',
-            // Legacy models
-            'gpt-4'         => 'GPT-4 (' . __('Legacy', 'rapls-ai-chatbot') . ')',
-            'gpt-4-turbo'   => 'GPT-4 Turbo (' . __('Legacy, vision', 'rapls-ai-chatbot') . ')',
-            'gpt-3.5-turbo' => 'GPT-3.5 Turbo (' . __('Legacy, cheapest', 'rapls-ai-chatbot') . ')',
             // Reasoning models (non-GPT prefix)
-            'o1'            => 'o1 (' . __('Reasoning model', 'rapls-ai-chatbot') . ')',
-            'o1-pro'        => 'o1 Pro (' . __('Reasoning, highest accuracy', 'rapls-ai-chatbot') . ')',
             'o3'            => 'o3 (' . __('Advanced reasoning', 'rapls-ai-chatbot') . ')',
             'o3-mini'       => 'o3 mini (' . __('Reasoning, affordable', 'rapls-ai-chatbot') . ')',
             'o4-mini'       => 'o4 mini (' . __('Latest reasoning, fast', 'rapls-ai-chatbot') . ')',
@@ -856,7 +850,6 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
             'gpt-4.1-nano',
             'gpt-4o',
             'gpt-4o-mini',
-            'gpt-4-turbo',
         ];
     }
 

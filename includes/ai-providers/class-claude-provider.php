@@ -298,12 +298,11 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
             'claude-opus-4-5-20251101'    => 'Claude Opus 4.5 (' . __('Previous flagship', 'rapls-ai-chatbot') . ')',
             'claude-opus-4-1-20250805'    => 'Claude Opus 4.1 (' . __('Coding focused', 'rapls-ai-chatbot') . ')',
             'claude-sonnet-4-20250514'    => 'Claude Sonnet 4 (' . __('Reliable all-purpose', 'rapls-ai-chatbot') . ')',
-            'claude-3-7-sonnet-20250219'  => 'Claude 3.7 Sonnet (' . __('Reasoning capable', 'rapls-ai-chatbot') . ')',
         ];
     }
 
     /**
-     * Get vision-capable models (all Claude 3+ models support vision)
+     * Get vision-capable models
      */
     public function get_vision_models(): array {
         return [
@@ -313,7 +312,6 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
             'claude-opus-4-5-20251101',
             'claude-opus-4-1-20250805',
             'claude-sonnet-4-20250514',
-            'claude-3-7-sonnet-20250219',
         ];
     }
 
@@ -321,9 +319,7 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
      * Check if current model supports vision
      */
     public function supports_vision(): bool {
-        // All Claude 3+ models support vision
-        return strpos($this->model, 'claude-3') !== false ||
-               strpos($this->model, 'claude-opus-4') !== false ||
+        return strpos($this->model, 'claude-opus-4') !== false ||
                strpos($this->model, 'claude-sonnet-4') !== false ||
                strpos($this->model, 'claude-haiku-4') !== false;
     }
