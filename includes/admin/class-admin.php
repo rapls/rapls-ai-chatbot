@@ -867,20 +867,23 @@ class RAPLSAICH_Admin {
             });
         }
 
-        $this->render_admin_template('dashboard.php');
+        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/dashboard.php';
+        if (file_exists($path)) {
+            include $path;
+        } else {
+            $this->render_missing_template_notice('dashboard.php');
+        }
     }
 
     /**
-     * Include an admin template, or show a clear error if the file is missing.
+     * Show a clear error notice when an admin template file is missing.
      * Guards against the silent white-screen that occurs when a plugin deploy
      * (e.g. WordPress.org SVN or auto-update) ships without the templates directory.
+     *
+     * Templates are included inline (not via a helper) so render-method locals
+     * stay in scope — this helper only renders the fallback notice.
      */
-    private function render_admin_template(string $filename): void {
-        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/' . $filename;
-        if (file_exists($path)) {
-            include $path;
-            return;
-        }
+    private function render_missing_template_notice(string $filename): void {
         echo '<div class="wrap"><div class="notice notice-error"><p>';
         echo esc_html__('Rapls AI Chatbot: template file is missing. Please reinstall the plugin from WordPress.org.', 'rapls-ai-chatbot');
         echo '<br><code>' . esc_html($filename) . '</code>';
@@ -903,7 +906,12 @@ class RAPLSAICH_Admin {
         $claude_provider = new RAPLSAICH_Claude_Provider();
         $gemini_provider = new RAPLSAICH_Gemini_Provider();
         $openrouter_provider = new RAPLSAICH_OpenRouter_Provider();
-        $this->render_admin_template('settings.php');
+        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/settings.php';
+        if (file_exists($path)) {
+            include $path;
+        } else {
+            $this->render_missing_template_notice('settings.php');
+        }
     }
 
     /**
@@ -1032,7 +1040,12 @@ class RAPLSAICH_Admin {
         // Post type statistics
         $post_type_counts = RAPLSAICH_Content_Index::get_post_type_counts();
 
-        $this->render_admin_template('crawler.php');
+        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/crawler.php';
+        if (file_exists($path)) {
+            include $path;
+        } else {
+            $this->render_missing_template_notice('crawler.php');
+        }
     }
 
     /**
@@ -1096,7 +1109,12 @@ class RAPLSAICH_Admin {
             'handoff'  => RAPLSAICH_Conversation::get_handoff_count(),
         ];
 
-        $this->render_admin_template('conversations.php');
+        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/conversations.php';
+        if (file_exists($path)) {
+            include $path;
+        } else {
+            $this->render_missing_template_notice('conversations.php');
+        }
     }
 
     /**
@@ -1136,7 +1154,12 @@ class RAPLSAICH_Admin {
             'categories' => count($categories),
         ];
 
-        $this->render_admin_template('knowledge.php');
+        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/knowledge.php';
+        if (file_exists($path)) {
+            include $path;
+        } else {
+            $this->render_missing_template_notice('knowledge.php');
+        }
     }
 
     /**

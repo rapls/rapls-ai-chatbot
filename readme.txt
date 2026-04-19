@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.10
+Stable tag: 1.5.11
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.11 =
+* Fixed: Fatal error on Settings page in 1.5.10 — template include helper broke local variable scope causing `$openai_provider` to be null. Templates are now included inline with a file_exists() guard so render-method locals stay accessible
+
 = 1.5.10 =
 * Fixed: Re-deploy all template files (`templates/admin/*.php`) — the 1.5.9 release was missing these due to an SVN upload issue, causing admin screens to render blank
 * Added: Admin templates now render a visible error notice instead of a blank page if any template file is missing, so future deploy issues are immediately diagnosable
@@ -631,6 +634,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.11 =
+Fixes a fatal error introduced in 1.5.10 on the Settings page. Critical update.
 
 = 1.5.10 =
 Re-ships template files missing from 1.5.9 (SVN upload issue). Users of 1.5.9 who saw blank admin screens should update immediately.
