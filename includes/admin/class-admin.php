@@ -867,7 +867,24 @@ class RAPLSAICH_Admin {
             });
         }
 
-        include RAPLSAICH_PLUGIN_DIR . 'templates/admin/dashboard.php';
+        $this->render_admin_template('dashboard.php');
+    }
+
+    /**
+     * Include an admin template, or show a clear error if the file is missing.
+     * Guards against the silent white-screen that occurs when a plugin deploy
+     * (e.g. WordPress.org SVN or auto-update) ships without the templates directory.
+     */
+    private function render_admin_template(string $filename): void {
+        $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/' . $filename;
+        if (file_exists($path)) {
+            include $path;
+            return;
+        }
+        echo '<div class="wrap"><div class="notice notice-error"><p>';
+        echo esc_html__('Rapls AI Chatbot: template file is missing. Please reinstall the plugin from WordPress.org.', 'rapls-ai-chatbot');
+        echo '<br><code>' . esc_html($filename) . '</code>';
+        echo '</p></div></div>';
     }
 
     /**
@@ -886,7 +903,7 @@ class RAPLSAICH_Admin {
         $claude_provider = new RAPLSAICH_Claude_Provider();
         $gemini_provider = new RAPLSAICH_Gemini_Provider();
         $openrouter_provider = new RAPLSAICH_OpenRouter_Provider();
-        include RAPLSAICH_PLUGIN_DIR . 'templates/admin/settings.php';
+        $this->render_admin_template('settings.php');
     }
 
     /**
@@ -1015,7 +1032,7 @@ class RAPLSAICH_Admin {
         // Post type statistics
         $post_type_counts = RAPLSAICH_Content_Index::get_post_type_counts();
 
-        include RAPLSAICH_PLUGIN_DIR . 'templates/admin/crawler.php';
+        $this->render_admin_template('crawler.php');
     }
 
     /**
@@ -1079,7 +1096,7 @@ class RAPLSAICH_Admin {
             'handoff'  => RAPLSAICH_Conversation::get_handoff_count(),
         ];
 
-        include RAPLSAICH_PLUGIN_DIR . 'templates/admin/conversations.php';
+        $this->render_admin_template('conversations.php');
     }
 
     /**
@@ -1119,7 +1136,7 @@ class RAPLSAICH_Admin {
             'categories' => count($categories),
         ];
 
-        include RAPLSAICH_PLUGIN_DIR . 'templates/admin/knowledge.php';
+        $this->render_admin_template('knowledge.php');
     }
 
     /**

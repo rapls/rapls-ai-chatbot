@@ -4,18 +4,23 @@
 # Development files
 .distignore
 .gitignore
+.gitattributes
 .git
 .github
+.ci
 .claude
 .serena
 CLAUDE.md
 **/CLAUDE.md
+README.md
+wp-cli.phar
 
 # Documentation and server-side files (contains credentials)
 docs/
 
 # Build tools
 build/
+scripts/
 
 # IDE and OS files
 .DS_Store
