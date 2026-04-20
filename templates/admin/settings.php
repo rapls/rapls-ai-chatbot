@@ -962,7 +962,7 @@ if (!defined('ABSPATH')) {
                                     </label>
                                 </div>
                                 <div class="raplsaich-badge-margin-group" style="margin-top: 12px;">
-                                    <span class="raplsaich-badge-margin-label"><?php esc_html_e('Margin', 'rapls-ai-chatbot'); ?>:</span>
+                                    <span class="raplsaich-badge-margin-label"><strong><?php esc_html_e('Desktop', 'rapls-ai-chatbot'); ?></strong> <?php esc_html_e('Margin', 'rapls-ai-chatbot'); ?>:</span>
                                     <label id="raplsaich_margin_h_wrap">
                                         <span id="raplsaich_margin_h_label"><?php echo esc_html(in_array($badge_position, ['bottom-left', 'top-left']) ? __('Left:', 'rapls-ai-chatbot') : __('Right:', 'rapls-ai-chatbot')); ?></span>
                                         <input type="number" name="raplsaich_settings[badge_margin_right]" id="raplsaich_badge_margin_right"
@@ -975,7 +975,34 @@ if (!defined('ABSPATH')) {
                                                value="<?php echo esc_attr($settings['badge_margin_bottom'] ?? 20); ?>"
                                                min="0" max="200" style="width: 70px;"> px
                                     </label>
-                                    <button type="button" class="button button-small" onclick="jQuery('#raplsaich_badge_margin_right').val(20); jQuery('#raplsaich_badge_margin_bottom').val(20); return false;">
+                                    <label>
+                                        <span><?php esc_html_e('Size:', 'rapls-ai-chatbot'); ?></span>
+                                        <input type="number" name="raplsaich_settings[badge_size]" id="raplsaich_badge_size"
+                                               value="<?php echo esc_attr($settings['badge_size'] ?? 60); ?>"
+                                               min="30" max="120" style="width: 70px;"> px
+                                    </label>
+                                </div>
+                                <div class="raplsaich-badge-margin-group" style="margin-top: 8px;">
+                                    <span class="raplsaich-badge-margin-label"><strong><?php esc_html_e('Mobile', 'rapls-ai-chatbot'); ?></strong> <?php esc_html_e('Margin', 'rapls-ai-chatbot'); ?>:</span>
+                                    <label>
+                                        <span><?php echo esc_html(in_array($badge_position, ['bottom-left', 'top-left']) ? __('Left:', 'rapls-ai-chatbot') : __('Right:', 'rapls-ai-chatbot')); ?></span>
+                                        <input type="number" name="raplsaich_settings[badge_margin_right_mobile]" id="raplsaich_badge_margin_right_mobile"
+                                               value="<?php echo esc_attr($settings['badge_margin_right_mobile'] ?? 20); ?>"
+                                               min="0" max="200" style="width: 70px;"> px
+                                    </label>
+                                    <label>
+                                        <span><?php echo esc_html(in_array($badge_position, ['top-right', 'top-left']) ? __('Top:', 'rapls-ai-chatbot') : __('Bottom:', 'rapls-ai-chatbot')); ?></span>
+                                        <input type="number" name="raplsaich_settings[badge_margin_bottom_mobile]" id="raplsaich_badge_margin_bottom_mobile"
+                                               value="<?php echo esc_attr($settings['badge_margin_bottom_mobile'] ?? 20); ?>"
+                                               min="0" max="200" style="width: 70px;"> px
+                                    </label>
+                                    <label>
+                                        <span><?php esc_html_e('Size:', 'rapls-ai-chatbot'); ?></span>
+                                        <input type="number" name="raplsaich_settings[badge_size_mobile]" id="raplsaich_badge_size_mobile"
+                                               value="<?php echo esc_attr($settings['badge_size_mobile'] ?? ($settings['badge_size'] ?? 60)); ?>"
+                                               min="30" max="120" style="width: 70px;"> px
+                                    </label>
+                                    <button type="button" class="button button-small" onclick="jQuery('#raplsaich_badge_margin_right,#raplsaich_badge_margin_bottom,#raplsaich_badge_margin_right_mobile,#raplsaich_badge_margin_bottom_mobile').val(20); jQuery('#raplsaich_badge_size,#raplsaich_badge_size_mobile').val(60); return false;">
                                         <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                                     </button>
                                 </div>

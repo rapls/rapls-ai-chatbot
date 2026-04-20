@@ -1190,21 +1190,15 @@
 }
 
 @media (max-width: 480px) {
-    .wp-ai-chatbot {
-        bottom: 0;
-        right: 0;
-    }
-
-    .wp-ai-chatbot[data-state="closed"] {
-        bottom: 20px;
-        right: 20px;
-    }
+    /* Closed state uses the inline-style badge position (from settings) — no override here */
 
     .wp-ai-chatbot[data-state="open"] {
         left: 0 !important;
         top: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
+        /* dvh handles iPhone Safari's dynamic URL bar + on-screen keyboard; falls back to 100% */
+        height: 100dvh;
     }
 
     .wp-ai-chatbot[data-state="open"] .chatbot-window {
@@ -1460,7 +1454,7 @@
 }
 
 .raplsaich-chatbot.theme-simple .chatbot-badge {
-    background: #6c757d;
+    background: var(--raplsaich-primary, #6c757d);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -1499,7 +1493,7 @@
 }
 
 .raplsaich-chatbot.theme-classic .chatbot-badge {
-    background: #2c3e50;
+    background: var(--raplsaich-primary, #2c3e50);
     border-radius: 4px;
 }
 
@@ -1552,7 +1546,7 @@
 }
 
 .raplsaich-chatbot.theme-light .chatbot-badge {
-    background: #5c9eff;
+    background: var(--raplsaich-primary, #5c9eff);
 }
 
 /* ----------------------------------------
@@ -1592,7 +1586,7 @@
 }
 
 .raplsaich-chatbot.theme-minimal .chatbot-badge {
-    background: #333;
+    background: var(--raplsaich-primary, #333);
     border-radius: 4px;
 }
 
@@ -1629,7 +1623,7 @@
 }
 
 .raplsaich-chatbot.theme-flat .chatbot-badge {
-    background: #3498db;
+    background: var(--raplsaich-primary, #3498db);
     border-radius: 0;
 }
 

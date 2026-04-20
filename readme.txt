@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.11
+Stable tag: 1.5.12
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,14 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.12 =
+* Fixed: Vector embedding search checkbox could not be turned off after being enabled — unchecked state was ignored because HTML forms omit unchecked checkboxes from POST
+* Fixed: Badge position margin setting was not applied on mobile screens (<=480px) due to a hardcoded media-query override
+* Fixed: Primary color was not applied to the badge icon on the Simple / Classic / Light / Minimal / Flat themes (background color was hardcoded)
+* Fixed: On iPhone Safari, focusing the chat input pushed the close button off-screen — switched to `100dvh` dynamic viewport height
+* Added: Separate margin settings for desktop and mobile screens
+* Added: Badge icon size setting (30–120px), separate values for desktop and mobile
+
 = 1.5.11 =
 * Fixed: Fatal error on Settings page in 1.5.10 — template include helper broke local variable scope causing `$openai_provider` to be null. Templates are now included inline with a file_exists() guard so render-method locals stay accessible
 
@@ -634,6 +642,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.12 =
+Fixes multiple Display Settings bugs (vector-search toggle, mobile margin, theme primary color, iPhone Safari overflow) and adds mobile-specific margin and badge size settings.
 
 = 1.5.11 =
 Fixes a fatal error introduced in 1.5.10 on the Settings page. Critical update.

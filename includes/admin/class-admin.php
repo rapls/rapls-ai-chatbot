@@ -422,6 +422,16 @@ class RAPLSAICH_Admin {
         $sanitized['badge_margin_bottom'] = array_key_exists('badge_margin_bottom', $input)
             ? absint($input['badge_margin_bottom'])
             : ($existing['badge_margin_bottom'] ?? 20);
+        $sanitized['badge_margin_right_mobile'] = array_key_exists('badge_margin_right_mobile', $input)
+            ? absint($input['badge_margin_right_mobile'])
+            : ($existing['badge_margin_right_mobile'] ?? 20);
+        $sanitized['badge_margin_bottom_mobile'] = array_key_exists('badge_margin_bottom_mobile', $input)
+            ? absint($input['badge_margin_bottom_mobile'])
+            : ($existing['badge_margin_bottom_mobile'] ?? 20);
+        $raw_badge_size = array_key_exists('badge_size', $input) ? absint($input['badge_size']) : ($existing['badge_size'] ?? 60);
+        $sanitized['badge_size'] = max(30, min(120, $raw_badge_size));
+        $raw_badge_size_m = array_key_exists('badge_size_mobile', $input) ? absint($input['badge_size_mobile']) : ($existing['badge_size_mobile'] ?? $sanitized['badge_size']);
+        $sanitized['badge_size_mobile'] = max(30, min(120, $raw_badge_size_m));
         $sanitized['primary_color'] = sanitize_hex_color($input['primary_color'] ?? ($existing['primary_color'] ?? '#007bff')) ?: '#007bff';
 
         // Widget theme
@@ -570,8 +580,12 @@ class RAPLSAICH_Admin {
             array_filter($input['crawler_exclude_ids'] ?? ($existing['crawler_exclude_ids'] ?? []))
         )));
 
-        // Embedding settings (on Crawler form or Settings form)
-        if ($crawler_form_submitted || array_key_exists('embedding_enabled', $input)) {
+        // Embedding settings (on AI Settings form, Crawler form, or Display form)
+        // The AI Settings tab renders embedding_enabled as a checkbox — unchecked
+        // boxes are omitted from POST, so detect form submission via a non-checkbox
+        // field (ai_provider) to distinguish "unchecked" from "not on this form".
+        $ai_form_submitted = array_key_exists('ai_provider', $input);
+        if ($ai_form_submitted || $crawler_form_submitted || array_key_exists('embedding_enabled', $input)) {
             $sanitized['embedding_enabled'] = !empty($input['embedding_enabled']);
         } else {
             $sanitized['embedding_enabled'] = $existing['embedding_enabled'] ?? false;
@@ -2437,6 +2451,10 @@ class RAPLSAICH_Admin {
             'badge_position'        => 'bottom-right',
             'badge_margin_right'    => 20,
             'badge_margin_bottom'   => 20,
+            'badge_margin_right_mobile'  => 20,
+            'badge_margin_bottom_mobile' => 20,
+            'badge_size'            => 60,
+            'badge_size_mobile'     => 60,
             'primary_color'         => '#007bff',
             'show_on_mobile'        => true,
             'widget_theme'          => 'default',

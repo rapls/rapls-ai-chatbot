@@ -184,31 +184,40 @@ class RAPLSAICH_Chatbot_Widget {
         $badge_position = $settings['badge_position'] ?? 'bottom-right';
         $margin_h = absint($settings['badge_margin_right'] ?? 20);
         $margin_v = absint($settings['badge_margin_bottom'] ?? 20);
+        $margin_h_m = absint($settings['badge_margin_right_mobile'] ?? $margin_h);
+        $margin_v_m = absint($settings['badge_margin_bottom_mobile'] ?? $margin_v);
+        $badge_size = max(30, min(120, absint($settings['badge_size'] ?? 60)));
+        $badge_size_m = max(30, min(120, absint($settings['badge_size_mobile'] ?? $badge_size)));
 
-        // Build position CSS based on badge_position setting
-        switch ($badge_position) {
-            case 'bottom-left':
-                $position_css = "left: {$margin_h}px; bottom: {$margin_v}px; right: auto;";
-                break;
-            case 'top-right':
-                $position_css = "right: {$margin_h}px; top: {$margin_v}px; bottom: auto;";
-                break;
-            case 'top-left':
-                $position_css = "left: {$margin_h}px; top: {$margin_v}px; right: auto; bottom: auto;";
-                break;
-            default: // bottom-right
-                $position_css = "right: {$margin_h}px; bottom: {$margin_v}px;";
-                break;
-        }
+        // Build position CSS based on badge_position setting (desktop and mobile variants)
+        $pos = function ($h, $v) use ($badge_position) {
+            switch ($badge_position) {
+                case 'bottom-left':
+                    return "left: {$h}px; bottom: {$v}px; right: auto;";
+                case 'top-right':
+                    return "right: {$h}px; top: {$v}px; bottom: auto;";
+                case 'top-left':
+                    return "left: {$h}px; top: {$v}px; right: auto; bottom: auto;";
+                default: // bottom-right
+                    return "right: {$h}px; bottom: {$v}px;";
+            }
+        };
+        $position_css        = $pos($margin_h, $margin_v);
+        $position_css_mobile = $pos($margin_h_m, $margin_v_m);
 
-        // Base CSS for theme colors and widget position.
+        // Base CSS for theme colors, widget position, and badge size.
         // Contains NO user-supplied arbitrary CSS — all values are strictly validated:
         // - $primary_color: sanitize_hex_color() + esc_attr()
         // - darken_color(): esc_attr() on computed hex
-        // - $margin_h/$margin_v: absint() (lines 185-186)
+        // - margins/sizes: absint() + clamped
         $base_css = ':root{--raplsaich-primary:' . esc_attr($primary_color)
             . ';--raplsaich-primary-dark:' . esc_attr($this->darken_color($primary_color, 20))
-            . ';}.wp-ai-chatbot{' . $position_css . '}';
+            . ';--raplsaich-badge-size:' . $badge_size . 'px;'
+            . '}.wp-ai-chatbot{' . $position_css . '}'
+            . '@media (max-width:480px){'
+            . ':root{--raplsaich-badge-size:' . $badge_size_m . 'px;}'
+            . '.wp-ai-chatbot[data-state="closed"]{' . $position_css_mobile . '}'
+            . '}';
 
         // Arbitrary custom CSS is not supported in Free. Users should use the WordPress
         // Customizer CSS editor (Appearance > Customize > Additional CSS).
