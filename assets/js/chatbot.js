@@ -817,7 +817,22 @@
                         // 履歴からメッセージを復元
                         response.messages.forEach(function(msg) {
                             var role = msg.role === 'assistant' ? 'bot' : msg.role;
-                            self.addMessage(role, msg.content, null, msg.id);
+                            // Metadata (sources, cards, etc.) is stored server-side in
+                            // the message row and returned by /history — pass through
+                            // so link cards and reference URLs survive page reload.
+                            self.addMessage(
+                                role,
+                                msg.content,
+                                msg.sources || null,
+                                msg.id,
+                                null,                        // sentiment (not persisted)
+                                msg.product_cards || null,
+                                msg.web_sources || null,
+                                msg.action || null,
+                                msg.content_cards || null,
+                                msg.scenario || null,
+                                msg.related_knowledge || null
+                            );
                         });
 
                         self.historyLoaded = true;

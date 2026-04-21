@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.13
+Stable tag: 1.5.14
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -454,6 +454,13 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.14 =
+* Fixed: Root cause of the iPhone Safari "close button off-screen" issue — chat input textarea now uses font-size: 16px so iOS Safari no longer auto-zooms the viewport on focus. The iOS keyboard fix from 1.5.13 is kept as a secondary safeguard
+* Fixed: Reference link cards now survive a page reload — message display metadata (sources, cards, web sources) is persisted on the message row and returned by the history endpoint
+* Fixed: Link card titles and excerpts no longer show literal HTML entities like `&amp;`
+* Fixed: Link card excerpts strip common Markdown syntax (`**`, backticks, `#`, `[text](url)`, etc.) so previews read as plain prose
+* Fixed: Link card rows on mobile no longer overflow past the chat bubble — added `min-width: 0` to the message content flex child so the inner horizontal scroll container takes effect
 
 = 1.5.13 =
 * Added: Optional iOS Safari keyboard fix (opt-in) — when enabled, uses the VisualViewport API to keep the chatbot header (including the close button) on-screen while the on-screen keyboard is visible. Disable this setting if it conflicts with your theme's scroll behavior. Default: off

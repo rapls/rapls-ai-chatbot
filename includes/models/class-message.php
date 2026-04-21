@@ -36,9 +36,21 @@ class RAPLSAICH_Message {
             'ai_provider'     => $data['ai_provider'] ?? null,
             'ai_model'        => $data['ai_model'] ?? null,
         ];
+        $insert_formats = ['%d', '%s', '%s', '%d', '%d', '%d', '%s', '%s'];
+
+        // Optional JSON metadata (sources, web_sources, content_cards, product_cards).
+        // Only persist on existing installs that ran the migration — silently skip
+        // if the column is missing.
+        if (!empty($data['metadata']) && is_array($data['metadata'])) {
+            $json = wp_json_encode($data['metadata']);
+            if ($json !== false) {
+                $insert_data['metadata'] = $json;
+                $insert_formats[] = '%s';
+            }
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-        $result = $wpdb->insert($table, $insert_data, ['%d', '%s', '%s', '%d', '%d', '%d', '%s', '%s']);
+        $result = $wpdb->insert($table, $insert_data, $insert_formats);
         raplsaich_log_db_error('Message::create');
 
         if ($result) {
@@ -384,6 +396,39 @@ class RAPLSAICH_Message {
         ), ARRAY_A);
 
         return $result ?: null;
+    }
+
+    /**
+     * Persist display metadata (sources, cards, etc.) as JSON on the message
+     * row. Silently no-ops if the metadata column is missing (pre-migration).
+     *
+     * @param int   $message_id Message ID
+     * @param array $metadata   Associative array of display-only data
+     * @return bool
+     */
+    public static function update_metadata(int $message_id, array $metadata): bool {
+        global $wpdb;
+        $table = self::get_table_name();
+        if (empty($metadata)) {
+            return true;
+        }
+        $json = wp_json_encode($metadata);
+        if ($json === false) {
+            return false;
+        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $result = $wpdb->update(
+            $table,
+            ['metadata' => $json],
+            ['id' => $message_id],
+            ['%s'],
+            ['%d']
+        );
+        // $wpdb->update returns false on error and 0 when no rows changed.
+        // A missing column or any DB error triggers a warning via raplsaich_log_db_error;
+        // we swallow those here so older installs without the migration keep working.
+        raplsaich_log_db_error('Message::update_metadata');
+        return $result !== false;
     }
 
     /**

@@ -121,6 +121,7 @@ class RAPLSAICH_Activator {
             output_tokens INT UNSIGNED DEFAULT 0,
             ai_provider VARCHAR(32) DEFAULT NULL,
             ai_model VARCHAR(64) DEFAULT NULL,
+            metadata LONGTEXT DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY conversation_id (conversation_id),
@@ -367,7 +368,24 @@ class RAPLSAICH_Activator {
         self::maybe_add_bot_id_column();
         self::maybe_add_user_agent_column();
         self::maybe_add_country_code_column();
+        self::maybe_add_message_metadata_column();
         RAPLSAICH_Lead::maybe_create_table();
+    }
+
+    /**
+     * Add metadata column to messages table (JSON blob for sources, web_sources,
+     * content_cards, product_cards, etc.). Used to restore reference links on
+     * page reload.
+     */
+    private static function maybe_add_message_metadata_column(): void {
+        if (!self::table_exists('raplsaich_messages')) {
+            return;
+        }
+        if (!self::has_column('raplsaich_messages', 'metadata')) {
+            self::safe_alter('raplsaich_messages',
+                'ADD COLUMN metadata LONGTEXT DEFAULT NULL AFTER cache_hit',
+                'add column metadata');
+        }
     }
 
     /**

@@ -15,6 +15,33 @@ class RAPLSAICH_REST_Controller {
     private string $namespace = 'rapls-ai-chatbot/v1';
 
     /**
+     * Clean text for display in link/content cards.
+     *
+     * Steps applied in order:
+     *  1. Strip HTML tags (wp_strip_all_tags).
+     *  2. Decode HTML entities so &amp; does not appear literally when the
+     *     client sets it via textContent.
+     *  3. Strip common Markdown syntax so source excerpts read as plain prose
+     *     rather than showing **, `, #, [text](url), etc.
+     */
+    private function clean_card_text(string $text): string {
+        $text = wp_strip_all_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = preg_replace('/!\[([^\]]*)\]\([^\)]*\)/', '$1', $text); // ![alt](url)
+        $text = preg_replace('/\[([^\]]+)\]\([^\)]*\)/', '$1', $text);  // [text](url)
+        $text = preg_replace('/```[\s\S]*?```/', '', $text);            // ```fenced code```
+        $text = preg_replace('/`([^`]+)`/', '$1', $text);                // `inline code`
+        $text = preg_replace('/^\s{0,3}#{1,6}\s+/m', '', $text);         // # headers
+        $text = preg_replace('/(\*\*|__)(.+?)\1/s', '$2', $text);        // **bold** / __bold__
+        $text = preg_replace('/(?<!\*)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\*)/', '$1', $text); // *italic*
+        $text = preg_replace('/(?<!_)_(?!\s)([^_\n]+?)(?<!\s)_(?!_)/', '$1', $text);     // _italic_
+        $text = preg_replace('/^\s{0,3}[\*\-\+]\s+/m', '', $text);        // - * + bullets
+        $text = preg_replace('/^\s{0,3}>\s?/m', '', $text);               // > quotes
+        $text = preg_replace('/\s+/', ' ', $text);                         // collapse whitespace
+        return trim($text);
+    }
+
+    /**
      * Add no-cache headers to a REST response.
      * Prevents page caching plugins from caching dynamic per-user responses.
      * Intentionally overwrites any existing Cache-Control — only used on
@@ -1027,9 +1054,9 @@ class RAPLSAICH_REST_Controller {
                                 continue;
                             }
                             $cache_cards[] = [
-                                'title'   => $item['title'] ?? '',
+                                'title'   => html_entity_decode((string)($item['title'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                                 'url'     => esc_url_raw($url, ['http', 'https']),
-                                'excerpt' => wp_trim_words(wp_strip_all_tags($item['content'] ?? ''), 20, '…'),
+                                'excerpt' => wp_trim_words($this->clean_card_text((string)($item['content'] ?? '')), 20, '…'),
                                 'type'    => $pt ?: 'page',
                             ];
                             if (count($cache_cards) >= 3) {
@@ -1401,9 +1428,9 @@ class RAPLSAICH_REST_Controller {
                         continue;
                     }
                     $content_cards[] = [
-                        'title'   => $item['title'] ?? '',
+                        'title'   => html_entity_decode((string)($item['title'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                         'url'     => esc_url_raw($url, ['http', 'https']),
-                        'excerpt' => wp_trim_words(wp_strip_all_tags($item['content'] ?? ''), 20, '…'),
+                        'excerpt' => wp_trim_words($this->clean_card_text((string)($item['content'] ?? '')), 20, '…'),
                         'type'    => $pt ?: 'page',
                     ];
                     if (count($content_cards) >= 3) {
@@ -1424,6 +1451,21 @@ class RAPLSAICH_REST_Controller {
              * @param string $message          The user's original message.
              */
             $response_data = apply_filters('raplsaich_chat_response_data', $response_data, $related_content, $message);
+
+            // Persist display metadata (sources, cards, etc.) on the message row
+            // so link cards survive a page reload via get_history().
+            if ($save_history && $resp_msg_id) {
+                $metadata_keys = ['sources', 'web_sources', 'content_cards', 'product_cards', 'related_knowledge', 'action', 'scenario'];
+                $metadata = [];
+                foreach ($metadata_keys as $mk) {
+                    if (!empty($response_data[$mk])) {
+                        $metadata[$mk] = $response_data[$mk];
+                    }
+                }
+                if (!empty($metadata)) {
+                    RAPLSAICH_Message::update_metadata((int) $resp_msg_id, $metadata);
+                }
+            }
 
             $result_body = [
                 'success'     => true,
@@ -1611,12 +1653,25 @@ class RAPLSAICH_REST_Controller {
 
         // Return only necessary information
         $formatted = array_map(function($msg) {
-            return [
+            $out = [
                 'id'         => $msg['id'],
                 'role'       => $msg['role'],
                 'content'    => $msg['content'],
                 'created_at' => $msg['created_at'],
             ];
+            // Merge stored display metadata (sources, cards) so link cards render
+            // on page reload. Only assistant messages have metadata.
+            if (!empty($msg['metadata'])) {
+                $meta = json_decode($msg['metadata'], true);
+                if (is_array($meta)) {
+                    foreach (['sources', 'web_sources', 'content_cards', 'product_cards', 'related_knowledge', 'action', 'scenario'] as $k) {
+                        if (!empty($meta[$k])) {
+                            $out[$k] = $meta[$k];
+                        }
+                    }
+                }
+            }
+            return $out;
         }, $messages);
 
         return new WP_REST_Response([

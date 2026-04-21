@@ -396,6 +396,11 @@
     word-wrap: break-word;
     white-space: pre-wrap;
     box-shadow: var(--raplsaich-shadow-message);
+    /* As a flex child of .chatbot-message, min-width:auto would let this box
+       grow to the intrinsic min-content of its children (e.g. wide link-card
+       rows), which overflows the parent's 85% max-width cap. min-width:0
+       forces the cap to be respected so the inner scroll container kicks in. */
+    min-width: 0;
 }
 
 .chatbot-message--bot .chatbot-message__content {
@@ -934,7 +939,8 @@
     border: 1px solid var(--raplsaich-border);
     border-radius: 24px;
     padding: 12px 18px;
-    font-size: 14px;
+    /* Must be >= 16px to prevent iOS Safari from auto-zooming the viewport on focus. */
+    font-size: 16px;
     font-family: inherit;
     resize: none;
     max-height: 100px;
