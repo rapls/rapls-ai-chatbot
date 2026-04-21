@@ -1201,6 +1201,9 @@
         height: 100dvh;
     }
 
+    /* iOS Safari keyboard fix (opt-in): JS sets inline height/top/bottom via
+       setProperty(..., 'important') to override the parent rule's !important. */
+
     .wp-ai-chatbot[data-state="open"] .chatbot-window {
         width: 100% !important;
         height: 100% !important;

@@ -292,6 +292,7 @@ class RAPLSAICH_Chatbot_Widget {
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
             'show_regenerate'      => !empty($ext_settings['show_regenerate_button']),
             'badge_position'       => $badge_position,
+            'ios_keyboard_fix'     => !empty($settings['ios_keyboard_fix']),
             'save_history'         => !empty($settings['save_history']),
             'quick_replies'        => RAPLSAICH_Extensions::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),

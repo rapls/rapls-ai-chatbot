@@ -454,6 +454,12 @@ class RAPLSAICH_Admin {
             $sanitized['show_on_mobile'] = $existing['show_on_mobile'] ?? true;
         }
 
+        if ($display_form_submitted) {
+            $sanitized['ios_keyboard_fix'] = !empty($input['ios_keyboard_fix']);
+        } else {
+            $sanitized['ios_keyboard_fix'] = $existing['ios_keyboard_fix'] ?? false;
+        }
+
         // Page visibility settings (checkboxes: unchecked = not present when Display form submitted)
         if ($display_form_submitted) {
             $sanitized['badge_show_on_home'] = !empty($input['badge_show_on_home']);
@@ -2457,6 +2463,7 @@ class RAPLSAICH_Admin {
             'badge_size_mobile'     => 60,
             'primary_color'         => '#007bff',
             'show_on_mobile'        => true,
+            'ios_keyboard_fix'      => false,
             'widget_theme'          => 'default',
             'dark_mode'             => false,
             'markdown_enabled'      => true,

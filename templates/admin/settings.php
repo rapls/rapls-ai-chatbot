@@ -1097,6 +1097,15 @@ if (!defined('ABSPATH')) {
                                     <?php checked($settings['show_on_mobile'] ?? true); ?>>
                                 <?php esc_html_e('Show on mobile devices', 'rapls-ai-chatbot'); ?>
                             </label>
+                            <br>
+                            <label style="margin-top: 8px; display: inline-block;">
+                                <input type="checkbox" name="raplsaich_settings[ios_keyboard_fix]" value="1"
+                                    <?php checked($settings['ios_keyboard_fix'] ?? false); ?>>
+                                <?php esc_html_e('iOS Safari keyboard fix', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Keeps the close button visible when the on-screen keyboard is open on iPhone Safari. Uses the VisualViewport API. Disable if it conflicts with your theme.', 'rapls-ai-chatbot'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>

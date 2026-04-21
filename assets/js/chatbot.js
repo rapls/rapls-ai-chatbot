@@ -115,6 +115,7 @@
             this.loadWindowSize();
             this.bindLeadFormEvents();
             this.listenForConsentChange();
+            this.setupIosKeyboardFix();
             this.isInitialized = true;
 
             // Pro features initialize here (registered by chatbot-pro.js)
@@ -181,6 +182,163 @@
                 if (closeBtn) {
                     closeBtn.style.display = 'none';
                 }
+            }
+        },
+
+        /**
+         * iOS Safari のキーボード表示時に閉じるボタンが画面外に出る問題の対策 (opt-in)
+         *
+         * iOS Safari は position:fixed 要素でも input focus 時にレイアウトビューポートを
+         * スクロールしてしまう既知のバグがある。これに対抗するため:
+         *  1. html/body を position:fixed で完全ロック
+         *  2. visualViewport の resize/scroll + window の scroll イベントを全て監視
+         *  3. requestAnimationFrame で継続的にコンテナ位置を再適用 (iOS が瞬間的に
+         *     挿入する scroll を検知漏れしないよう)
+         *  4. CSS !important を setProperty('important') で上書き
+         */
+        setupIosKeyboardFix: function() {
+            if (!this.config.ios_keyboard_fix) return;
+            if (!window.visualViewport) return;
+            if (this.config.inlineMode || this.config.embedMode) return;
+
+            var self = this;
+            var vv = window.visualViewport;
+
+            this._iosKbdApply = function() {
+                if (!self.isOpen || !self.container) return;
+                if (window.innerWidth > 480) {
+                    self.container.style.removeProperty('height');
+                    self.container.style.removeProperty('top');
+                    self.container.style.removeProperty('bottom');
+                    return;
+                }
+                // iOS が window を強制スクロールした場合の打ち消し
+                if ((window.scrollY || window.pageYOffset) !== 0) {
+                    window.scrollTo(0, 0);
+                }
+                // parent CSS の top:0 !important / bottom:0 !important に勝つため
+                // setProperty(..., 'important') を使う。
+                self.container.style.setProperty('top', vv.offsetTop + 'px', 'important');
+                self.container.style.setProperty('bottom', 'auto', 'important');
+                self.container.style.setProperty('height', vv.height + 'px', 'important');
+            };
+
+            // visualViewport events
+            vv.addEventListener('resize', this._iosKbdApply);
+            vv.addEventListener('scroll', this._iosKbdApply);
+
+            // Window scroll を強制的に 0 に戻す
+            this._iosKbdWinScroll = function() {
+                if (!self.isOpen) return;
+                if ((window.scrollY || window.pageYOffset) !== 0) {
+                    window.scrollTo(0, 0);
+                    self._iosKbdApply();
+                }
+            };
+            window.addEventListener('scroll', this._iosKbdWinScroll, { passive: true });
+
+            // input focus 時は複数段階で再適用
+            if (this.inputTextarea) {
+                this._iosKbdFocus = function() {
+                    if (!self.isOpen) return;
+                    self._iosKbdApply();
+                    setTimeout(self._iosKbdApply, 50);
+                    setTimeout(self._iosKbdApply, 150);
+                    setTimeout(self._iosKbdApply, 350);
+                    setTimeout(self._iosKbdApply, 600);
+                };
+                this.inputTextarea.addEventListener('focus', this._iosKbdFocus);
+            }
+        },
+
+        /**
+         * open() 時に呼び出し: html/body ロック + RAF ループ開始
+         */
+        applyIosKeyboardFix: function() {
+            if (!this.config.ios_keyboard_fix) return;
+            if (!window.visualViewport || !this._iosKbdApply) return;
+            if (window.innerWidth > 480) return;
+
+            var self = this;
+            this.container.classList.add('raplsaich-kbd-active');
+            this._prevBodyOverflow = document.body.style.overflow;
+            this._prevBodyPosition = document.body.style.position;
+            this._prevBodyWidth = document.body.style.width;
+            this._prevBodyTop = document.body.style.top;
+            this._prevHtmlOverflow = document.documentElement.style.overflow;
+            this._prevHtmlPosition = document.documentElement.style.position;
+            this._prevHtmlHeight = document.documentElement.style.height;
+            this._prevScrollY = window.scrollY || window.pageYOffset || 0;
+            // html と body の両方をロック (iOS は html を scroll することがある)
+            document.documentElement.style.overflow = 'hidden';
+            document.documentElement.style.position = 'fixed';
+            document.documentElement.style.height = '100%';
+            document.documentElement.style.width = '100%';
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.top = '-' + this._prevScrollY + 'px';
+
+            this._iosKbdApply();
+
+            // RAF ループ: チャットが開いている間、継続的にコンテナ位置を補正する。
+            // iOS Safari は position:fixed を一瞬ずらすことがあり、イベントだけでは
+            // 捉えきれないためフレーム単位でチェックし続ける。
+            this._iosKbdRafActive = true;
+            var raf = function() {
+                if (!self._iosKbdRafActive) return;
+                self._iosKbdApply();
+                self._iosKbdRaf = window.requestAnimationFrame(raf);
+            };
+            this._iosKbdRaf = window.requestAnimationFrame(raf);
+
+            // 安全のため一定時間後に RAF ループ停止 (バッテリ節約)
+            // 以降はイベント駆動に任せる
+            this._iosKbdRafStop = setTimeout(function() {
+                self._iosKbdRafActive = false;
+                if (self._iosKbdRaf) {
+                    window.cancelAnimationFrame(self._iosKbdRaf);
+                    self._iosKbdRaf = null;
+                }
+            }, 2000);
+        },
+
+        /**
+         * close() 時に呼び出し: すべてのロック解除 + RAF 停止
+         */
+        releaseIosKeyboardFix: function() {
+            if (!this.config.ios_keyboard_fix) return;
+            if (!this.container) return;
+
+            // RAF ループ停止
+            this._iosKbdRafActive = false;
+            if (this._iosKbdRaf) {
+                window.cancelAnimationFrame(this._iosKbdRaf);
+                this._iosKbdRaf = null;
+            }
+            if (this._iosKbdRafStop) {
+                clearTimeout(this._iosKbdRafStop);
+                this._iosKbdRafStop = null;
+            }
+
+            this.container.classList.remove('raplsaich-kbd-active');
+            this.container.style.removeProperty('height');
+            this.container.style.removeProperty('top');
+            this.container.style.removeProperty('bottom');
+
+            if (this._prevBodyOverflow !== undefined) {
+                document.body.style.overflow = this._prevBodyOverflow || '';
+                document.body.style.position = this._prevBodyPosition || '';
+                document.body.style.width = this._prevBodyWidth || '';
+                document.body.style.top = this._prevBodyTop || '';
+                document.documentElement.style.overflow = this._prevHtmlOverflow || '';
+                document.documentElement.style.position = this._prevHtmlPosition || '';
+                document.documentElement.style.height = this._prevHtmlHeight || '';
+                document.documentElement.style.width = '';
+                if (typeof this._prevScrollY === 'number') {
+                    window.scrollTo(0, this._prevScrollY);
+                }
+                this._prevBodyOverflow = undefined;
             }
         },
 
@@ -425,6 +583,7 @@
             this.container.dataset.state = 'open';
             this.window.setAttribute('aria-hidden', 'false');
             this.window.inert = false;
+            this.applyIosKeyboardFix();
 
             // セッション読み込み中は待機（loadSession完了後にcheckAndShowLeadFormが呼ばれる）
             if (this.sessionLoading) {
@@ -451,6 +610,7 @@
 
             this.isOpen = false;
             this.container.dataset.state = 'closed';
+            this.releaseIosKeyboardFix();
             typeof this.stopHandoffPolling === "function" && this.stopHandoffPolling();
             // Blur any focused element inside before hiding to avoid aria-hidden warning
             if (document.activeElement && this.window.contains(document.activeElement)) {
@@ -611,7 +771,9 @@
                 this.showLeadForm();
             } else {
                 // リードフォームを表示しない場合は入力フィールドにフォーカス
-                if (this.inputTextarea) {
+                // モバイル + iOS キーボード対策が有効な場合は、オートフォーカスを抑制する
+                // (iOS Safari の「input を画面内にスクロール」動作を回避するため)
+                if (this.inputTextarea && !(this.config.ios_keyboard_fix && window.innerWidth <= 480)) {
                     this.inputTextarea.focus();
                 }
                 // 履歴がなく、メッセージもない場合のみウェルカムメッセージを表示

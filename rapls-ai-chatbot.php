@@ -4,7 +4,7 @@
  * Plugin Name:       Rapls AI Chatbot
  * Plugin URI:        https://raplsworks.com/rapls-ai-chatbot-guide/
  * Description:       AI Chatbot plugin with OpenAI/Claude/Google support and automatic site content learning.
- * Version:           1.5.12
+ * Version:           1.5.13
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Rapls
@@ -486,6 +486,22 @@ raplsaich_run();
  */
 $raplsaich_plugin_basename = plugin_basename(__FILE__);
 add_filter("wp_consent_api_registered_{$raplsaich_plugin_basename}", '__return_true');
+
+/**
+ * Overlay bundled translations on top of WordPress's just-in-time loader.
+ *
+ * When WP auto-loads a stale `WP_LANG_DIR/plugins/rapls-ai-chatbot-{locale}.mo`
+ * (e.g., auto-downloaded from translate.wordpress.org before new strings were
+ * translated), it skips the plugin's bundled .mo entirely. This hook merges
+ * the bundled file after auto-load so newly added strings resolve in-locale.
+ */
+add_action('init', function () {
+    $locale = determine_locale();
+    $bundled = RAPLSAICH_PLUGIN_DIR . 'languages/rapls-ai-chatbot-' . $locale . '.mo';
+    if (is_readable($bundled)) {
+        load_textdomain('rapls-ai-chatbot', $bundled);
+    }
+}, 20);
 
 /**
  * Modify plugin action links

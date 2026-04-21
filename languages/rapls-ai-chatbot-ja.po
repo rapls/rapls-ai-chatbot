@@ -3362,6 +3362,17 @@ msgstr "モバイル表示"
 #:#: templates/admin/settings.php:682
 msgid "Show on mobile devices"
 msgstr "モバイルデバイスで表示"
+#:#: templates/admin/settings.php:687
+msgid "iOS Safari keyboard fix"
+msgstr "iOS Safari キーボード対策"
+#:#: templates/admin/settings.php:690
+msgid ""
+"Keeps the close button visible when the on-screen keyboard is open on iPhone "
+"Safari. Uses the VisualViewport API. Disable if it conflicts with your theme."
+msgstr ""
+"iPhone Safari でオンスクリーンキーボードが表示されたときに、閉じるボタンを画面"
+"内に保ちます。VisualViewport API を使用します。テーマと競合する場合は無効にし"
+"てください。"
 #:#: templates/admin/settings.php:692
 msgid "Show feedback buttons (👍👎) on bot messages"
 msgstr "ボットのメッセージにフィードバックボタン (👍👎) を表示"

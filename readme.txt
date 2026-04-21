@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.12
+Stable tag: 1.5.13
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -454,6 +454,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.13 =
+* Added: Optional iOS Safari keyboard fix (opt-in) — when enabled, uses the VisualViewport API to keep the chatbot header (including the close button) on-screen while the on-screen keyboard is visible. Disable this setting if it conflicts with your theme's scroll behavior. Default: off
 
 = 1.5.12 =
 * Fixed: Vector embedding search checkbox could not be turned off after being enabled — unchecked state was ignored because HTML forms omit unchecked checkboxes from POST
