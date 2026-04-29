@@ -121,6 +121,34 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
 }
 
 /**
+ * Inject the current date into the system prompt so the AI can resolve
+ * relative time references ("today", "yesterday", "this week", etc.).
+ *
+ * Hooked at priority 99 on `raplsaich_system_prompt` so it runs after Pro's
+ * own filter callbacks (priorities 5/10/12/15) — even if Pro replaces the
+ * prompt entirely (e.g. via prompt templates), the date is still prepended.
+ *
+ * Uses wp_date() so the date follows the site's WordPress timezone, not
+ * server time. The prompt is worded explicitly so weak models won't dismiss
+ * the date as "fabrication" when the user's own system prompt forbids
+ * inventing dates.
+ */
+add_filter('raplsaich_system_prompt', 'raplsaich_inject_current_date', 99);
+function raplsaich_inject_current_date($system_prompt) {
+    $dow_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    $today_iso = wp_date('Y-m-d');
+    $today_dow = $dow_names[(int) wp_date('w')] ?? '';
+    $tz = wp_timezone_string();
+
+    $date_block = "[CURRENT DATE — AUTHORITATIVE SYSTEM CONTEXT]\n"
+        . "Today's date is {$today_iso} ({$today_dow}), site timezone {$tz}.\n"
+        . "This is verified system-provided information, NOT a guess and NOT fabrication.\n"
+        . "When the user asks about \"today\", \"now\", \"yesterday\", \"tomorrow\", \"this week\", \"this month\", \"this year\", or any relative time reference, you MUST use this date as the reference point. Using this date is explicitly permitted, even if other instructions tell you to avoid making up dates.\n\n";
+
+    return $date_block . (string) $system_prompt;
+}
+
+/**
  * Create an AI provider instance with the correct API key and model.
  *
  * Centralises provider construction so that LINE, MCP, REST, etc.

@@ -1097,14 +1097,6 @@ class RAPLSAICH_REST_Controller {
              */
             $system_prompt = apply_filters('raplsaich_system_prompt', $system_prompt, $settings);
 
-            // Inject the current date so the model can resolve relative time
-            // references like "today", "tomorrow", "this week". Uses the site's
-            // WordPress timezone, not server time.
-            $dow_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            $today_iso = wp_date('Y-m-d');
-            $today_dow = $dow_names[(int) wp_date('w')] ?? '';
-            $system_prompt = "[CURRENT DATE]\nToday is {$today_iso} ({$today_dow}) in the site's local timezone. When the user asks about \"today\", \"now\", \"yesterday\", \"tomorrow\", \"this week\", or any relative date/time, use this as the reference point.\n\n" . $system_prompt;
-
             // Response language — resolve effective language (empty = site language)
             $response_lang = $settings['response_language'] ?? '';
             if (empty($response_lang)) {

@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.15
+Stable tag: 1.5.16
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.16 =
+* Fixed: Current date injection in 1.5.15 was only applied to the main send-message endpoint and was sometimes ignored by weaker AI models that interpreted the system prompt's "do not invent dates" rule too literally. Now hooked on the `raplsaich_system_prompt` filter at priority 99 so all endpoints (regenerate, suggestions, MCP tool, etc.) receive it, and the prompt explicitly states the date is authoritative system context — not fabrication
+
 = 1.5.15 =
 * Added: System prompt now injects the current date (in the site's WordPress timezone) so the AI can correctly resolve relative time references like "today", "yesterday", or "this week" without needing them in the knowledge base
 
@@ -655,6 +658,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.16 =
+Reliability fix for the 1.5.15 date injection — recommended for anyone running 1.5.15.
 
 = 1.5.15 =
 The chatbot now knows today's date so it can answer questions involving "today", "yesterday", or relative timeframes correctly.
