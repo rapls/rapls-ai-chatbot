@@ -1690,57 +1690,11 @@ class RAPLSAICH_REST_Controller {
 
     /**
      * Get max context characters based on the configured model.
-     * Conservative limits (~25% of model token window) to leave room for system prompt + response.
+     * Thin wrapper over the helper so callers like Pro's LINE channel
+     * can hit the same logic without depending on this controller.
      */
     public function get_max_context_chars(): int {
-        $settings = get_option('raplsaich_settings', []);
-        $provider = $settings['ai_provider'] ?? 'openai';
-
-        switch ($provider) {
-            case 'openai':
-                $model = $settings['openai_model'] ?? 'gpt-4o-mini';
-                // GPT-4.1 and o-series have 128K+ context
-                if (strpos($model, 'gpt-4.1') === 0 || preg_match('/^o[1-9]/', $model)) {
-                    return 40000;
-                }
-                // GPT-4o: 128K context
-                if (strpos($model, 'gpt-4o') === 0) {
-                    return 30000;
-                }
-                // GPT-4-turbo: 128K context
-                if (strpos($model, 'gpt-4-turbo') === 0) {
-                    return 30000;
-                }
-                // GPT-4: 8K context
-                if (strpos($model, 'gpt-4') === 0) {
-                    return 8000;
-                }
-                // GPT-3.5-turbo: 16K
-                if (strpos($model, 'gpt-3.5') === 0) {
-                    return 12000;
-                }
-                return 20000;
-
-            case 'claude':
-                // Claude models generally have 200K context
-                return 40000;
-
-            case 'gemini':
-                $model = $settings['gemini_model'] ?? 'gemini-2.0-flash';
-                // Gemini 2.0 Flash Lite: smaller context
-                if (strpos($model, 'flash-lite') !== false) {
-                    return 15000;
-                }
-                // Gemini Pro/Flash: 1M+ context
-                return 40000;
-
-            case 'openrouter':
-                // Conservative default; actual context varies by model
-                return 30000;
-
-            default:
-                return 20000;
-        }
+        return raplsaich_get_max_context_chars();
     }
 
     /**

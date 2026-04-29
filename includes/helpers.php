@@ -121,6 +121,57 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
 }
 
 /**
+ * Return the safe upper bound of characters to include as RAG context
+ * for the currently configured AI model. Conservative — roughly 25% of the
+ * model's token window, so there's room for the system prompt and the
+ * response on top.
+ *
+ * Shared between the Web /chat handler and the LINE channel so both
+ * surfaces feed the same volume of knowledge to the model.
+ */
+function raplsaich_get_max_context_chars(): int {
+    $settings = get_option('raplsaich_settings', []);
+    $provider = $settings['ai_provider'] ?? 'openai';
+
+    switch ($provider) {
+        case 'openai':
+            $model = $settings['openai_model'] ?? 'gpt-4o-mini';
+            if (strpos($model, 'gpt-4.1') === 0 || preg_match('/^o[1-9]/', $model)) {
+                return 40000;
+            }
+            if (strpos($model, 'gpt-4o') === 0) {
+                return 30000;
+            }
+            if (strpos($model, 'gpt-4-turbo') === 0) {
+                return 30000;
+            }
+            if (strpos($model, 'gpt-4') === 0) {
+                return 8000;
+            }
+            if (strpos($model, 'gpt-3.5') === 0) {
+                return 12000;
+            }
+            return 20000;
+
+        case 'claude':
+            return 40000;
+
+        case 'gemini':
+            $model = $settings['gemini_model'] ?? 'gemini-2.0-flash';
+            if (strpos($model, 'flash-lite') !== false) {
+                return 15000;
+            }
+            return 40000;
+
+        case 'openrouter':
+            return 30000;
+
+        default:
+            return 20000;
+    }
+}
+
+/**
  * Inject the current date into the system prompt so the AI can resolve
  * relative time references ("today", "yesterday", "this week", etc.).
  *

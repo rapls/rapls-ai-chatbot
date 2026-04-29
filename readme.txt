@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.20
+Stable tag: 1.5.21
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -454,6 +454,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.21 =
+* Changed: The "max RAG context characters" calculation that scales with the configured AI model is now exposed as a public helper (`raplsaich_get_max_context_chars()`) so non-REST surfaces — Pro's LINE channel in particular — can feed the same volume of knowledge to the model. The REST controller's `get_max_context_chars()` method is preserved as a thin wrapper for back-compat
 
 = 1.5.20 =
 * Fixed: Conversations admin — Msgs and Lead cells visually overlapped on narrow viewports because the new layout left those columns at default width with no overflow handling. Lead now has an explicit 200px width, Msgs is widened to 70px, and cell content is constrained with overflow/word-break rules. Channel badge in the Session cell also gets its own styles so Web vs LINE is distinct
