@@ -1,3 +1,41 @@
+/* Channel badge (Web / LINE / etc.) shown in the Session cell */
+.raplsaich-channel-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.raplsaich-channel-web {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+.raplsaich-channel-line {
+    background: #c8e6c9;
+    color: #1b5e20;
+}
+
+/* Conversations admin: prevent cell content from overflowing into siblings.
+   Without this, the screenshot badge in Msgs and the long email/name in
+   Lead can visually collide on narrow viewports. */
+.raplsaich-admin .wp-list-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+}
+.raplsaich-admin .raplsaich-lead-info {
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+.raplsaich-admin .raplsaich-lead-info a {
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
 /* Handoff badges */
 .raplsaich-handoff-badge {
     display: inline-flex;

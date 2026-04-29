@@ -115,14 +115,14 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
-                    <th style="width: 40px;"><input type="checkbox" id="raplsaich-select-all" aria-label="<?php esc_attr_e('Select all conversations', 'rapls-ai-chatbot'); ?>"></th>
-                    <th style="width: 150px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 60px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
-                    <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 36px;"><input type="checkbox" id="raplsaich-select-all" aria-label="<?php esc_attr_e('Select all conversations', 'rapls-ai-chatbot'); ?>"></th>
+                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 70px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
+                    <th style="width: 200px;"><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
                     <th><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('page_url', __('Start Page', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('updated_at', __('Last Active', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
-                    <th style="width: 160px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 120px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 120px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('updated_at', __('Last Active', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
+                    <th style="width: 150px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
                 </tr>
             </thead>
             <tbody>

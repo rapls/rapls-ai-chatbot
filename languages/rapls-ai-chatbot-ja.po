@@ -36,7 +36,7 @@ msgid "Site Learning"
 msgstr "サイト学習"
 #:#: includes/admin/class-admin.php:132 includes/admin/class-admin.php:133#:#: includes/admin/class-admin.php:141 includes/admin/class-admin.php:142#:#: includes/admin/class-admin.php:2670 includes/admin/class-admin.php:2867#:#: includes/admin/class-admin.php:3091
 msgid "Conversations"
-msgstr "会話履歴"
+msgstr "会話"
 
 # Analytics page#:#: includes/admin/class-admin.php:152 includes/admin/class-admin.php:153#:#: includes/admin/class-admin.php:2846
 msgid "Analytics"

@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.19
+Stable tag: 1.5.20
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -454,6 +454,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.20 =
+* Fixed: Conversations admin — Msgs and Lead cells visually overlapped on narrow viewports because the new layout left those columns at default width with no overflow handling. Lead now has an explicit 200px width, Msgs is widened to 70px, and cell content is constrained with overflow/word-break rules. Channel badge in the Session cell also gets its own styles so Web vs LINE is distinct
+* Changed: Japanese label for "Conversations" simplified from "会話履歴" to "会話" so the admin menu reads naturally as just "会話"
 
 = 1.5.19 =
 * Changed: Conversations admin page now shows 8 columns instead of 12. The ID column is gone (still in the row's data-id and shown in the Session tooltip), Channel is folded into the Session column as a small badge, the separate Handoff column is folded into Status as a sub-badge, and Started has been merged into Last Active (start time is now in the cell tooltip). All sort options remain available
