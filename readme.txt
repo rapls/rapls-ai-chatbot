@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.14
+Stable tag: 1.5.15
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.15 =
+* Added: System prompt now injects the current date (in the site's WordPress timezone) so the AI can correctly resolve relative time references like "today", "yesterday", or "this week" without needing them in the knowledge base
+
 = 1.5.14 =
 * Fixed: Root cause of the iPhone Safari "close button off-screen" issue — chat input textarea now uses font-size: 16px so iOS Safari no longer auto-zooms the viewport on focus. The iOS keyboard fix from 1.5.13 is kept as a secondary safeguard
 * Fixed: Reference link cards now survive a page reload — message display metadata (sources, cards, web sources) is persisted on the message row and returned by the history endpoint
@@ -652,6 +655,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.15 =
+The chatbot now knows today's date so it can answer questions involving "today", "yesterday", or relative timeframes correctly.
 
 = 1.5.12 =
 Fixes multiple Display Settings bugs (vector-search toggle, mobile margin, theme primary color, iPhone Safari overflow) and adds mobile-specific margin and badge size settings.
