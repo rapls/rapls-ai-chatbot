@@ -97,6 +97,7 @@ class RAPLSAICH_Activator {
             user_agent TEXT DEFAULT NULL,
             country_code VARCHAR(2) DEFAULT NULL,
             page_url TEXT DEFAULT NULL,
+            channel VARCHAR(20) DEFAULT 'web',
             status VARCHAR(20) DEFAULT 'active',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -369,7 +370,23 @@ class RAPLSAICH_Activator {
         self::maybe_add_user_agent_column();
         self::maybe_add_country_code_column();
         self::maybe_add_message_metadata_column();
+        self::maybe_add_conversation_channel_column();
         RAPLSAICH_Lead::maybe_create_table();
+    }
+
+    /**
+     * Add channel column to conversations (web / line / etc.) so the admin
+     * can see which platform a given conversation arrived from.
+     */
+    private static function maybe_add_conversation_channel_column(): void {
+        if (!self::table_exists('raplsaich_conversations')) {
+            return;
+        }
+        if (!self::has_column('raplsaich_conversations', 'channel')) {
+            self::safe_alter('raplsaich_conversations',
+                "ADD COLUMN channel VARCHAR(20) DEFAULT 'web' AFTER page_url",
+                'add column channel');
+        }
     }
 
     /**

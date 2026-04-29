@@ -121,6 +121,7 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                     <th style="width: 60px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
                     <th><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('page_url', __('Start Page', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 80px;"><?php esc_html_e('Channel', 'rapls-ai-chatbot'); ?></th>
                     <th style="width: 100px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 100px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('handoff_status', __('Handoff', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('created_at', __('Started', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
@@ -171,6 +172,17 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                             <?php else: ?>
                                 <em>-</em>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php
+                            $channel = !empty($conv['channel']) ? (string) $conv['channel'] : 'web';
+                            $channel_labels = [
+                                'web'  => __('Web', 'rapls-ai-chatbot'),
+                                'line' => 'LINE',
+                            ];
+                            $channel_label = $channel_labels[$channel] ?? ucfirst($channel);
+                            ?>
+                            <span class="raplsaich-channel-badge raplsaich-channel-<?php echo esc_attr($channel); ?>"><?php echo esc_html($channel_label); ?></span>
                         </td>
                         <td>
                             <span class="status-badge status-<?php echo esc_attr($conv['status']); ?>">

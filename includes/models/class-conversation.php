@@ -102,6 +102,18 @@ class RAPLSAICH_Conversation {
             $formats[] = '%s';
         }
 
+        // Channel (web / line / etc.) — defensive column check so an old DB
+        // that hasn't run the migration yet still inserts cleanly.
+        static $has_channel_col = null;
+        if ($has_channel_col === null) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $has_channel_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'channel'"));
+        }
+        if ($has_channel_col && !empty($data['channel'])) {
+            $insert_data['channel'] = sanitize_key((string) $data['channel']);
+            $formats[] = '%s';
+        }
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
         $wpdb->insert($table, $insert_data, $formats);
         raplsaich_log_db_error('Conversation::create');

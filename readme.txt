@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.17
+Stable tag: 1.5.18
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -454,6 +454,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.18 =
+* Added: New `channel` column on the conversations table (web / line / etc.) plus a "Channel" column in the Conversations admin list, so multi-channel installations can tell at a glance which platform a conversation came from. Existing rows default to "web". Migration runs automatically on plugin update
 
 = 1.5.17 =
 * Fixed: Smaller AI models (e.g. Gemini 2.5 Flash Lite) still refused to answer "today's date" questions in 1.5.16 because the user's own system prompt typically forbids "inventing dates" and the model treated the injected date as a forbidden invention. The injected date block now (a) opens with a clear "OVERRIDE — TAKES ABSOLUTE PRECEDENCE" marker, (b) explicitly states that no-fabrication rules do NOT apply to the system-provided date, and (c) includes a few-shot example showing the expected answer format in both Japanese and English
