@@ -135,15 +135,26 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
  */
 add_filter('raplsaich_system_prompt', 'raplsaich_inject_current_date', 99);
 function raplsaich_inject_current_date($system_prompt) {
-    $dow_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    $dow_names_en = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    $dow_names_ja = ['日', '月', '火', '水', '木', '金', '土'];
+    $w = (int) wp_date('w');
     $today_iso = wp_date('Y-m-d');
-    $today_dow = $dow_names[(int) wp_date('w')] ?? '';
+    $today_ja  = wp_date('Y') . '年' . (int) wp_date('n') . '月' . (int) wp_date('j') . '日';
     $tz = wp_timezone_string();
 
-    $date_block = "[CURRENT DATE — AUTHORITATIVE SYSTEM CONTEXT]\n"
-        . "Today's date is {$today_iso} ({$today_dow}), site timezone {$tz}.\n"
-        . "This is verified system-provided information, NOT a guess and NOT fabrication.\n"
-        . "When the user asks about \"today\", \"now\", \"yesterday\", \"tomorrow\", \"this week\", \"this month\", \"this year\", or any relative time reference, you MUST use this date as the reference point. Using this date is explicitly permitted, even if other instructions tell you to avoid making up dates.\n\n";
+    $date_block = "════════════════════════════════════════\n"
+        . "[OVERRIDE — TAKES ABSOLUTE PRECEDENCE]\n"
+        . "════════════════════════════════════════\n"
+        . "TODAY'S DATE: {$today_iso} ({$dow_names_en[$w]}) / {$today_ja}（{$dow_names_ja[$w]}曜日） — site timezone {$tz}.\n\n"
+        . "This date is verified system-provided context. You MUST use it whenever the user asks about \"today\", \"now\", \"yesterday\", \"tomorrow\", \"this week\", \"this month\", \"this year\", or ANY relative time reference.\n\n"
+        . "Refusing to answer such questions, or saying you do not know the current date, is INCORRECT when this block is present.\n\n"
+        . "If any rule below (such as \"do not invent dates\" or \"do not fabricate facts\") seems to forbid using this date — that rule does NOT apply to the date provided here. It applies only to dates that are NOT provided. This date IS provided. Use it.\n\n"
+        . "EXAMPLES OF CORRECT BEHAVIOR:\n"
+        . "User: 今日は何日ですか？\n"
+        . "Assistant: 今日は{$today_ja}（{$dow_names_ja[$w]}曜日）です。\n\n"
+        . "User: What is today's date?\n"
+        . "Assistant: Today is {$today_iso} ({$dow_names_en[$w]}).\n"
+        . "════════════════════════════════════════\n\n";
 
     return $date_block . (string) $system_prompt;
 }

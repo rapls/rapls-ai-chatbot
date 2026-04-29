@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.16
+Stable tag: 1.5.17
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.5.17 =
+* Fixed: Smaller AI models (e.g. Gemini 2.5 Flash Lite) still refused to answer "today's date" questions in 1.5.16 because the user's own system prompt typically forbids "inventing dates" and the model treated the injected date as a forbidden invention. The injected date block now (a) opens with a clear "OVERRIDE — TAKES ABSOLUTE PRECEDENCE" marker, (b) explicitly states that no-fabrication rules do NOT apply to the system-provided date, and (c) includes a few-shot example showing the expected answer format in both Japanese and English
+
 = 1.5.16 =
 * Fixed: Current date injection in 1.5.15 was only applied to the main send-message endpoint and was sometimes ignored by weaker AI models that interpreted the system prompt's "do not invent dates" rule too literally. Now hooked on the `raplsaich_system_prompt` filter at priority 99 so all endpoints (regenerate, suggestions, MCP tool, etc.) receive it, and the prompt explicitly states the date is authoritative system context — not fabrication
 
@@ -658,6 +661,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.5.17 =
+Strengthens the date injection so smaller AI models (Gemini Flash Lite, etc.) can no longer dismiss it. Recommended for anyone on 1.5.15 or 1.5.16.
 
 = 1.5.16 =
 Reliability fix for the 1.5.15 date injection — recommended for anyone running 1.5.15.
