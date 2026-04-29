@@ -116,16 +116,12 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
             <thead>
                 <tr>
                     <th style="width: 40px;"><input type="checkbox" id="raplsaich-select-all" aria-label="<?php esc_attr_e('Select all conversations', 'rapls-ai-chatbot'); ?>"></th>
-                    <th style="width: 60px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('id', 'ID', $orderby, $order, 'DESC')); ?></th>
-                    <th><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 150px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 60px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
                     <th><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('page_url', __('Start Page', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 80px;"><?php esc_html_e('Channel', 'rapls-ai-chatbot'); ?></th>
-                    <th style="width: 100px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 100px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('handoff_status', __('Handoff', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
-                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('created_at', __('Started', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
-                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('updated_at', __('Last Updated', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
+                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('updated_at', __('Last Active', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 160px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
                 </tr>
             </thead>
@@ -137,9 +133,23 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                     ?>
                     <tr data-id="<?php echo esc_attr($conv['id']); ?>">
                         <td><input type="checkbox" class="raplsaich-conv-checkbox" value="<?php echo esc_attr($conv['id']); ?>" aria-label="<?php /* translators: %d: conversation ID */ echo esc_attr(sprintf(__('Select conversation %d', 'rapls-ai-chatbot'), (int) $conv['id'])); ?>"></td>
-                        <td><?php echo esc_html($conv['id']); ?></td>
                         <td>
-                            <code class="raplsaich-copy-session" title="<?php echo esc_attr($conv['session_id']); ?>" style="cursor: pointer;"><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?>...</code>
+                            <?php
+                            $channel = !empty($conv['channel']) ? (string) $conv['channel'] : 'web';
+                            $channel_labels = [
+                                'web'  => __('Web', 'rapls-ai-chatbot'),
+                                'line' => 'LINE',
+                            ];
+                            $channel_label = $channel_labels[$channel] ?? ucfirst($channel);
+                            $session_title = sprintf(
+                                /* translators: 1: full session id, 2: conversation id */
+                                __('Session: %1$s · ID: %2$d', 'rapls-ai-chatbot'),
+                                $conv['session_id'],
+                                (int) $conv['id']
+                            );
+                            ?>
+                            <span class="raplsaich-channel-badge raplsaich-channel-<?php echo esc_attr($channel); ?>" style="margin-right: 6px;"><?php echo esc_html($channel_label); ?></span>
+                            <code class="raplsaich-copy-session" title="<?php echo esc_attr($session_title); ?>" style="cursor: pointer;"><?php echo esc_html(substr($conv['session_id'], 0, 8)); ?></code>
                         </td>
                         <td style="text-align: center;">
                             <?php echo esc_html(isset($conv['message_count']) ? number_format((int) $conv['message_count']) : '-'); ?>
@@ -175,53 +185,36 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                         </td>
                         <td>
                             <?php
-                            $channel = !empty($conv['channel']) ? (string) $conv['channel'] : 'web';
-                            $channel_labels = [
-                                'web'  => __('Web', 'rapls-ai-chatbot'),
-                                'line' => 'LINE',
+                            $status_labels = [
+                                'active'   => __('Active', 'rapls-ai-chatbot'),
+                                'closed'   => __('Closed', 'rapls-ai-chatbot'),
+                                'archived' => __('Archived', 'rapls-ai-chatbot'),
                             ];
-                            $channel_label = $channel_labels[$channel] ?? ucfirst($channel);
-                            ?>
-                            <span class="raplsaich-channel-badge raplsaich-channel-<?php echo esc_attr($channel); ?>"><?php echo esc_html($channel_label); ?></span>
-                        </td>
-                        <td>
-                            <span class="status-badge status-<?php echo esc_attr($conv['status']); ?>">
-                                <?php
-                                $status_labels = [
-                                    'active'   => __('Active', 'rapls-ai-chatbot'),
-                                    'closed'   => __('Closed', 'rapls-ai-chatbot'),
-                                    'archived' => __('Archived', 'rapls-ai-chatbot'),
-                                ];
-                                echo esc_html($status_labels[$conv['status']] ?? $conv['status']);
-                                ?>
-                            </span>
-                        </td>
-                        <td>
-                            <?php
                             $handoff = $conv['handoff_status'] ?? null;
-                            if ($handoff === 'pending'):
                             ?>
-                                <span class="raplsaich-handoff-badge raplsaich-handoff-badge--pending">
-                                    <span class="raplsaich-handoff-dot"></span>
-                                    <?php esc_html_e('Pending', 'rapls-ai-chatbot'); ?>
-                                </span>
-                                <button type="button" class="button button-small raplsaich-reset-handoff" data-id="<?php echo esc_attr($conv['id']); ?>" title="<?php esc_attr_e('Reset handoff status', 'rapls-ai-chatbot'); ?>" style="margin-top: 4px; font-size: 11px;">
-                                    <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
-                                </button>
-                            <?php elseif ($handoff === 'active'): ?>
-                                <span class="raplsaich-handoff-badge raplsaich-handoff-badge--active">
-                                    <span class="raplsaich-handoff-dot raplsaich-handoff-dot--active"></span>
-                                    <?php esc_html_e('Active', 'rapls-ai-chatbot'); ?>
-                                </span>
-                                <button type="button" class="button button-small raplsaich-reset-handoff" data-id="<?php echo esc_attr($conv['id']); ?>" title="<?php esc_attr_e('Reset handoff status', 'rapls-ai-chatbot'); ?>" style="margin-top: 4px; font-size: 11px;">
-                                    <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
-                                </button>
-                            <?php else: ?>
-                                <em style="color: #999;">—</em>
+                            <span class="status-badge status-<?php echo esc_attr($conv['status']); ?>">
+                                <?php echo esc_html($status_labels[$conv['status']] ?? $conv['status']); ?>
+                            </span>
+                            <?php if ($handoff === 'pending' || $handoff === 'active'): ?>
+                                <div style="margin-top: 4px;">
+                                    <span class="raplsaich-handoff-badge raplsaich-handoff-badge--<?php echo esc_attr($handoff); ?>">
+                                        <span class="raplsaich-handoff-dot<?php echo $handoff === 'active' ? ' raplsaich-handoff-dot--active' : ''; ?>"></span>
+                                        <?php
+                                        echo esc_html($handoff === 'active'
+                                            ? __('Handoff: Active', 'rapls-ai-chatbot')
+                                            : __('Handoff: Pending', 'rapls-ai-chatbot'));
+                                        ?>
+                                    </span>
+                                    <button type="button" class="button button-small raplsaich-reset-handoff" data-id="<?php echo esc_attr($conv['id']); ?>" title="<?php esc_attr_e('Reset handoff status', 'rapls-ai-chatbot'); ?>" style="margin-top: 2px; font-size: 11px;">
+                                        <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
+                                    </button>
+                                </div>
                             <?php endif; ?>
                         </td>
-                        <td><?php echo esc_html(mysql2date('Y/m/d H:i', $conv['created_at'])); ?></td>
-                        <td><?php echo esc_html(mysql2date('Y/m/d H:i', $conv['updated_at'])); ?></td>
+                        <td title="<?php
+                            /* translators: %s: conversation start datetime */
+                            echo esc_attr(sprintf(__('Started: %s', 'rapls-ai-chatbot'), mysql2date('Y/m/d H:i', $conv['created_at'])));
+                        ?>"><?php echo esc_html(mysql2date('Y/m/d H:i', $conv['updated_at'])); ?></td>
                         <td>
                             <button type="button" class="button button-small raplsaich-view-conversation"
                                     data-id="<?php echo esc_attr($conv['id']); ?>">

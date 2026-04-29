@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.18
+Stable tag: 1.5.19
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -454,6 +454,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.19 =
+* Changed: Conversations admin page now shows 8 columns instead of 12. The ID column is gone (still in the row's data-id and shown in the Session tooltip), Channel is folded into the Session column as a small badge, the separate Handoff column is folded into Status as a sub-badge, and Started has been merged into Last Active (start time is now in the cell tooltip). All sort options remain available
 
 = 1.5.18 =
 * Added: New `channel` column on the conversations table (web / line / etc.) plus a "Channel" column in the Conversations admin list, so multi-channel installations can tell at a glance which platform a conversation came from. Existing rows default to "web". Migration runs automatically on plugin update
