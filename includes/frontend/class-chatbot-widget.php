@@ -290,6 +290,12 @@ class RAPLSAICH_Chatbot_Widget {
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
+            // Preset question chips shown under the welcome message.
+            // Pro can override via the raplsaich_frontend_config filter — for
+            // multi-bot installs each bot may have its own set.
+            'preset_questions'     => (!empty($settings['preset_questions_enabled']) && !empty($settings['preset_questions']) && is_array($settings['preset_questions']))
+                ? array_values($settings['preset_questions'])
+                : [],
             'show_regenerate'      => !empty($ext_settings['show_regenerate_button']),
             'badge_position'       => $badge_position,
             'ios_keyboard_fix'     => !empty($settings['ios_keyboard_fix']),

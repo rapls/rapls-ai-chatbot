@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,11 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.6.2 =
+* Added: Preset question buttons — chips shown under the welcome message (configurable on/off in Chat Settings, up to 10 entries). Tapping a chip submits the configured question text. Chips disappear once the user sends their first message. Useful for nudging visitors toward common topics ("Pricing", "Hours", "Staff perks", etc.) without making them type.
+* Added: `preset_index` request param on `/chat` and `metadata.preset_index` on the user message row, so Pro analytics (1.5.0+) can attribute clicks back to a specific preset.
+* Added: Public helper `RAPLSAICH_Admin::sanitize_preset_questions()` so Pro per-bot sanitizers can reuse the validation rules (max 10 rows, label ≤ 40 chars, question ≤ 200 chars, both required).
 
 = 1.6.1 =
 * Changed: Description and feature copy in readme + LP files now lead with the 13-language auto-reply use case (tourism, hospitality, retail sites that get multilingual inquiries without multilingual staff). The feature itself is unchanged

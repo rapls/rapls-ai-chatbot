@@ -880,7 +880,50 @@
             }
 
             this.addMessage('bot', welcomeMsg);
+            this.showPresetQuestions();
             this.showQuickReplies();
+        },
+
+        /**
+         * Show preset question chips under the welcome message.
+         * Disappear once the user sends their first message.
+         * Each click submits the configured `question` text and emits the
+         * preset_index to the chat endpoint so Pro analytics can attribute
+         * which preset was used.
+         */
+        showPresetQuestions: function() {
+            var presets = this.config.preset_questions;
+            if (!presets || !presets.length || !this.messagesEl) return;
+
+            var self = this;
+            var container = document.createElement('div');
+            container.className = 'chatbot-preset-questions';
+
+            for (var i = 0; i < presets.length; i++) {
+                (function(item, idx) {
+                    var label = (item && item.label) ? String(item.label) : '';
+                    var question = (item && item.question) ? String(item.question) : '';
+                    if (!label || !question) return;
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chatbot-preset-btn';
+                    btn.textContent = label;
+                    btn.onclick = function() {
+                        // Remove the chips before submitting so they don't
+                        // come back on the next render.
+                        if (container.parentNode) container.parentNode.removeChild(container);
+                        // Tag the request so Pro analytics can attribute the click.
+                        self._lastPresetIndex = idx;
+                        if (self.inputTextarea) self.inputTextarea.value = question;
+                        self.handleSubmit();
+                    };
+                    container.appendChild(btn);
+                })(presets[i], i);
+            }
+
+            if (container.children.length === 0) return;
+            this.messagesEl.appendChild(container);
+            this.scrollToBottom();
         },
 
         /**
@@ -1074,6 +1117,12 @@
                             requestData.file = imageData;
                             requestData.file_name = self._selectedFileName || '';
                         }
+                    }
+
+                    // Preset chip click attribution (consumed once, then cleared).
+                    if (typeof self._lastPresetIndex === 'number') {
+                        requestData.preset_index = self._lastPresetIndex;
+                        self._lastPresetIndex = null;
                     }
 
                     return self.apiRequest('POST', '/chat', requestData);

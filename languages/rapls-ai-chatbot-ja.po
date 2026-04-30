@@ -7613,3 +7613,39 @@ msgstr "マニュアル"
 #:#: templates/admin/dashboard.php
 msgid "Enjoying Rapls AI Chatbot? We'd appreciate a %s review on WordPress.org!"
 msgstr "Rapls AI Chatbot をご利用いただきありがとうございます！%s WordPress.org でレビューをいただけると大変嬉しいです！"
+
+#:#: templates/admin/settings.php
+msgid "Preset Question Buttons"
+msgstr "質問ボタン"
+
+#:#: templates/admin/settings.php
+msgid "Show preset question buttons under the welcome message"
+msgstr "ウェルカムメッセージの下に質問ボタンを表示する"
+
+#:#: templates/admin/settings.php
+msgid "Suggest common questions as one-tap buttons so visitors can start a conversation without typing. Buttons disappear once the user sends their first message. Up to 10 entries."
+msgstr "よくある質問をワンタップ式のボタンで提示し、訪問者がタイピングせずに会話を開始できるようにします。ユーザーが最初のメッセージを送ると非表示になります。最大10件まで設定できます。"
+
+#:#: templates/admin/settings.php
+msgid "Preset button label"
+msgstr "ボタンのラベル"
+
+#:#: templates/admin/settings.php
+msgid "Question sent to the bot"
+msgstr "Bot に送信される質問文"
+
+#:#: templates/admin/settings.php
+msgid "e.g. Pricing"
+msgstr "例：料金プラン"
+
+#:#: templates/admin/settings.php
+msgid "e.g. Could you tell me about the pricing plans?"
+msgstr "例：料金プランの詳細を教えてください"
+
+#:#: templates/admin/settings.php
+msgid "Remove this row"
+msgstr "この行を削除"
+
+#:#: templates/admin/settings.php
+msgid "Add a preset"
+msgstr "ボタンを追加"

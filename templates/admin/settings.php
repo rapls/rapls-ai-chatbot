@@ -626,6 +626,91 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Preset Question Buttons', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[preset_questions_enabled]" value="1"
+                                    <?php checked($settings['preset_questions_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Show preset question buttons under the welcome message', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Suggest common questions as one-tap buttons so visitors can start a conversation without typing. Buttons disappear once the user sends their first message. Up to 10 entries.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <?php
+                            $preset_rows = $settings['preset_questions'] ?? [];
+                            if (empty($preset_rows)) {
+                                $preset_rows = [['label' => '', 'question' => '']];
+                            }
+                            ?>
+                            <table class="raplsaich-presets-table" style="margin-top: 10px; border-collapse: collapse;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600;"><?php esc_html_e('Preset button label', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600;"><?php esc_html_e('Question sent to the bot', 'rapls-ai-chatbot'); ?></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="raplsaich-presets-body">
+                                    <?php foreach ($preset_rows as $row): ?>
+                                        <tr class="raplsaich-presets-row">
+                                            <td style="padding: 2px 8px;">
+                                                <input type="text" name="raplsaich_settings[preset_questions][label][]"
+                                                    value="<?php echo esc_attr($row['label'] ?? ''); ?>"
+                                                    maxlength="40"
+                                                    placeholder="<?php esc_attr_e('e.g. Pricing', 'rapls-ai-chatbot'); ?>"
+                                                    class="regular-text">
+                                            </td>
+                                            <td style="padding: 2px 8px;">
+                                                <input type="text" name="raplsaich_settings[preset_questions][question][]"
+                                                    value="<?php echo esc_attr($row['question'] ?? ''); ?>"
+                                                    maxlength="200"
+                                                    placeholder="<?php esc_attr_e('e.g. Could you tell me about the pricing plans?', 'rapls-ai-chatbot'); ?>"
+                                                    class="large-text">
+                                            </td>
+                                            <td style="padding: 2px 8px;">
+                                                <button type="button" class="button button-small raplsaich-presets-remove" aria-label="<?php esc_attr_e('Remove this row', 'rapls-ai-chatbot'); ?>">&times;</button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <p style="margin-top: 8px;">
+                                <button type="button" class="button" id="raplsaich-presets-add">
+                                    + <?php esc_html_e('Add a preset', 'rapls-ai-chatbot'); ?>
+                                </button>
+                            </p>
+                            <script>
+                            (function() {
+                                var maxRows = 10;
+                                document.getElementById('raplsaich-presets-add').addEventListener('click', function() {
+                                    var body = document.getElementById('raplsaich-presets-body');
+                                    if (body.querySelectorAll('.raplsaich-presets-row').length >= maxRows) {
+                                        return;
+                                    }
+                                    var tr = document.createElement('tr');
+                                    tr.className = 'raplsaich-presets-row';
+                                    tr.innerHTML =
+                                        '<td style="padding: 2px 8px;"><input type="text" name="raplsaich_settings[preset_questions][label][]" maxlength="40" class="regular-text"></td>' +
+                                        '<td style="padding: 2px 8px;"><input type="text" name="raplsaich_settings[preset_questions][question][]" maxlength="200" class="large-text"></td>' +
+                                        '<td style="padding: 2px 8px;"><button type="button" class="button button-small raplsaich-presets-remove">&times;</button></td>';
+                                    body.appendChild(tr);
+                                });
+                                document.getElementById('raplsaich-presets-body').addEventListener('click', function(e) {
+                                    if (!e.target.classList.contains('raplsaich-presets-remove')) return;
+                                    var rows = this.querySelectorAll('.raplsaich-presets-row');
+                                    if (rows.length <= 1) {
+                                        // Keep one empty row visible.
+                                        var inputs = e.target.closest('tr').querySelectorAll('input');
+                                        inputs.forEach(function(i) { i.value = ''; });
+                                        return;
+                                    }
+                                    e.target.closest('tr').remove();
+                                });
+                            })();
+                            </script>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('API Quota Error Message', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <input type="text" name="raplsaich_settings[quota_error_message]"

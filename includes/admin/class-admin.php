@@ -615,6 +615,17 @@ class RAPLSAICH_Admin {
             $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? true;
         }
 
+        // Preset question buttons (Chat Settings tab) — chips shown under the welcome message.
+        if ($settings_page_submitted) {
+            $sanitized['preset_questions_enabled'] = !empty($input['preset_questions_enabled']);
+            $sanitized['preset_questions'] = self::sanitize_preset_questions(
+                $input['preset_questions'] ?? []
+            );
+        } else {
+            $sanitized['preset_questions_enabled'] = $existing['preset_questions_enabled'] ?? false;
+            $sanitized['preset_questions']         = $existing['preset_questions'] ?? [];
+        }
+
         // MCP settings (AI Settings form — use _settings_page sentinel, not ai_provider which is also in crawler)
         if ($settings_page_submitted) {
             $sanitized['mcp_enabled'] = !empty($input['mcp_enabled']);
@@ -640,6 +651,66 @@ class RAPLSAICH_Admin {
 
         return $sanitized;
     }
+    /**
+     * Sanitize preset question button rows.
+     *
+     * Accepts either the raw ['label' => [...], 'question' => [...]] arrays
+     * the repeater UI submits, or an already-shaped list of pairs.
+     * Returns up to 10 entries with non-empty label and question, both
+     * trimmed and length-capped (label ≤ 40 chars, question ≤ 200 chars).
+     * Public so Pro per-bot sanitizers can reuse it.
+     *
+     * @param mixed $input
+     * @return array<int,array{label:string,question:string}>
+     */
+    public static function sanitize_preset_questions($input): array {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        // Repeater form posts as ['label' => [...], 'question' => [...]].
+        // Re-shape into row-oriented pairs.
+        if (isset($input['label']) && is_array($input['label'])) {
+            $labels    = array_values($input['label']);
+            $questions = isset($input['question']) && is_array($input['question'])
+                ? array_values($input['question'])
+                : [];
+            $rows = [];
+            $count = max(count($labels), count($questions));
+            for ($i = 0; $i < $count; $i++) {
+                $rows[] = [
+                    'label'    => $labels[$i]    ?? '',
+                    'question' => $questions[$i] ?? '',
+                ];
+            }
+            $input = $rows;
+        }
+
+        $out = [];
+        foreach ($input as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $label = function_exists('mb_substr')
+                ? mb_substr(trim((string) ($row['label'] ?? '')), 0, 40)
+                : substr(trim((string) ($row['label'] ?? '')), 0, 40);
+            $question = function_exists('mb_substr')
+                ? mb_substr(trim((string) ($row['question'] ?? '')), 0, 200)
+                : substr(trim((string) ($row['question'] ?? '')), 0, 200);
+            if ($label === '' || $question === '') {
+                continue;
+            }
+            $out[] = [
+                'label'    => sanitize_text_field($label),
+                'question' => sanitize_text_field($question),
+            ];
+            if (count($out) >= 10) {
+                break;
+            }
+        }
+        return $out;
+    }
+
     /**
      * Sanitize Pro features settings.
      * Free returns existing values unchanged; Pro handles sanitization via filter.
@@ -2469,6 +2540,10 @@ class RAPLSAICH_Admin {
             'markdown_enabled'      => true,
             'show_feedback_buttons' => true,
             'sources_display_mode'  => 'matched',
+
+            // Preset Question Buttons (chips shown under the welcome message)
+            'preset_questions_enabled' => false,
+            'preset_questions'         => [],
 
             // Page Visibility
             'badge_show_on_home'    => true,

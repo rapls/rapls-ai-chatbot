@@ -321,6 +321,14 @@ class RAPLSAICH_REST_Controller {
                     'type'              => 'string',
                     'sanitize_callback' => 'sanitize_text_field',
                 ],
+                // Preset chip index, when this user message was triggered by
+                // a preset question button. Stored on the user message so Pro
+                // analytics can attribute clicks back to a specific preset.
+                'preset_index' => [
+                    'required'          => false,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ],
             ],
         ]);
 
@@ -845,11 +853,18 @@ class RAPLSAICH_REST_Controller {
                 if ($saved_image_url) {
                     $save_content .= "\n[image:" . $saved_image_url . ']';
                 }
-                RAPLSAICH_Message::create([
+                $user_msg_data = [
                     'conversation_id' => $conversation_id,
                     'role'            => 'user',
                     'content'         => $save_content,
-                ]);
+                ];
+                // Attach preset chip attribution when this turn was kicked off
+                // by a preset button click. Pro analytics groups by this index.
+                $preset_index = $request->get_param('preset_index');
+                if ($preset_index !== null && $preset_index !== '') {
+                    $user_msg_data['metadata'] = ['preset_index' => (int) $preset_index];
+                }
+                RAPLSAICH_Message::create($user_msg_data);
             } else {
                 // save_history OFF — store context in transient only
                 $this->append_transient_context($session_id, 'user', $message);
