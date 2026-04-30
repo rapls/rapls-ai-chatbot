@@ -7649,3 +7649,11 @@ msgstr "この行を削除"
 #:#: templates/admin/settings.php
 msgid "Add a preset"
 msgstr "ボタンを追加"
+
+#:#: templates/admin/settings.php
+msgid "Also show preset buttons under every bot reply (not just the welcome message)"
+msgstr "全ての回答の下にも質問ボタンを表示する（ウェルカムメッセージのみではなく）"
+
+#:#: templates/admin/settings.php
+msgid "When on, the same preset chips reappear after each AI response — handy for navigation-style bots where visitors often jump between common topics. When off, the chips show only once after the welcome message."
+msgstr "オンにすると、AI が回答するたびに同じ質問ボタンが再表示されます。よくある話題を行き来するナビゲーション型のボットに便利です。オフの場合は、ウェルカムメッセージの直後に1回だけ表示されます。"

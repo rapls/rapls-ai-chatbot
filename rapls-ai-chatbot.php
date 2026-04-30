@@ -4,7 +4,7 @@
  * Plugin Name:       Rapls AI Chatbot
  * Plugin URI:        https://raplsworks.com/plugins/rapls-ai-chatbot/
  * Description:       AI Chatbot plugin with OpenAI/Claude/Google support and automatic site content learning.
- * Version:           1.6.3
+ * Version:           1.6.4
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Rapls

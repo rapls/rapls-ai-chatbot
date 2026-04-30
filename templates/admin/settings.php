@@ -681,6 +681,16 @@ if (!defined('ABSPATH')) {
                                     + <?php esc_html_e('Add a preset', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>
+                            <p style="margin-top: 12px;">
+                                <label>
+                                    <input type="checkbox" name="raplsaich_settings[preset_questions_persistent]" value="1"
+                                        <?php checked($settings['preset_questions_persistent'] ?? false); ?>>
+                                    <?php esc_html_e('Also show preset buttons under every bot reply (not just the welcome message)', 'rapls-ai-chatbot'); ?>
+                                </label>
+                                <span class="description" style="display:block;margin-left:24px;color:#646970;">
+                                    <?php esc_html_e('When on, the same preset chips reappear after each AI response — handy for navigation-style bots where visitors often jump between common topics. When off, the chips show only once after the welcome message.', 'rapls-ai-chatbot'); ?>
+                                </span>
+                            </p>
                             <script>
                             (function() {
                                 var maxRows = 10;

@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.6.4 =
+* Added: New "Also show preset buttons under every bot reply" toggle in Chat Settings. When on, the same preset chips re-appear after every AI response — handy for navigation-style bots where visitors hop between common topics. When off (default), behavior is unchanged: chips appear once after the welcome message and disappear after the first user message
+* Added: Stale preset chip cleanup when the visitor sends a message — prevents chips from stacking up across turns in persistent mode
 
 = 1.6.3 =
 * Changed: The "Question sent to the bot" field on each preset question row is now a 2-row textarea (vertically resizable) instead of a single-line input. Long questions like "次回のイベント開催日を教えてください" no longer overflow the visible area in the editor

@@ -617,13 +617,15 @@ class RAPLSAICH_Admin {
 
         // Preset question buttons (Chat Settings tab) — chips shown under the welcome message.
         if ($settings_page_submitted) {
-            $sanitized['preset_questions_enabled'] = !empty($input['preset_questions_enabled']);
+            $sanitized['preset_questions_enabled']    = !empty($input['preset_questions_enabled']);
+            $sanitized['preset_questions_persistent'] = !empty($input['preset_questions_persistent']);
             $sanitized['preset_questions'] = self::sanitize_preset_questions(
                 $input['preset_questions'] ?? []
             );
         } else {
-            $sanitized['preset_questions_enabled'] = $existing['preset_questions_enabled'] ?? false;
-            $sanitized['preset_questions']         = $existing['preset_questions'] ?? [];
+            $sanitized['preset_questions_enabled']    = $existing['preset_questions_enabled'] ?? false;
+            $sanitized['preset_questions_persistent'] = $existing['preset_questions_persistent'] ?? false;
+            $sanitized['preset_questions']            = $existing['preset_questions'] ?? [];
         }
 
         // MCP settings (AI Settings form — use _settings_page sentinel, not ai_provider which is also in crawler)
@@ -2542,8 +2544,9 @@ class RAPLSAICH_Admin {
             'sources_display_mode'  => 'matched',
 
             // Preset Question Buttons (chips shown under the welcome message)
-            'preset_questions_enabled' => false,
-            'preset_questions'         => [],
+            'preset_questions_enabled'    => false,
+            'preset_questions_persistent' => false, // when true, also show after every bot reply
+            'preset_questions'            => [],
 
             // Page Visibility
             'badge_show_on_home'    => true,

@@ -296,6 +296,9 @@ class RAPLSAICH_Chatbot_Widget {
             'preset_questions'     => (!empty($settings['preset_questions_enabled']) && !empty($settings['preset_questions']) && is_array($settings['preset_questions']))
                 ? array_values($settings['preset_questions'])
                 : [],
+            // When true, the same chips also reappear under every bot reply,
+            // not only the welcome message.
+            'preset_questions_persistent' => !empty($settings['preset_questions_persistent']),
             'show_regenerate'      => !empty($ext_settings['show_regenerate_button']),
             'badge_position'       => $badge_position,
             'ios_keyboard_fix'     => !empty($settings['ios_keyboard_fix']),

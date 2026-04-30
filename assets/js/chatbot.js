@@ -1376,6 +1376,21 @@
          */
         addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards, scenarioData, relatedKnowledge) {
             var self = this;
+            // Track that the visitor has interacted; used to gate the
+            // "persistent presets after every bot reply" feature so the
+            // initial welcome render doesn't render chips twice.
+            if (role === 'user') {
+                this._hasSentFirstMessage = true;
+                // Remove any stale preset chips (welcome chips that the user
+                // ignored, or chips from a previous bot reply) so chips don't
+                // stack between turns when persistent mode is on.
+                if (this.messagesEl) {
+                    var stale = this.messagesEl.querySelectorAll('.chatbot-preset-questions');
+                    for (var s = 0; s < stale.length; s++) {
+                        if (stale[s].parentNode) stale[s].parentNode.removeChild(stale[s]);
+                    }
+                }
+            }
             var messageEl = document.createElement('div');
             messageEl.className = 'chatbot-message chatbot-message--' + role;
             if (messageId) {
@@ -1700,6 +1715,16 @@
                 messageId: messageId, content: content, sources: sources,
                 sentiment: sentiment, scenarioData: scenarioData
             });
+
+            // Persistent preset chips: append the same chip set under every
+            // bot reply when the admin has enabled "show after every reply".
+            // The welcome-message render in showWelcomeMessage() handles the
+            // first appearance; this branch handles every subsequent one.
+            if (role === 'bot' && this.config.preset_questions_persistent
+                && this._hasSentFirstMessage
+                && this.config.preset_questions && this.config.preset_questions.length) {
+                this.showPresetQuestions();
+            }
 
             // スクロール
             this.scrollToBottom();
