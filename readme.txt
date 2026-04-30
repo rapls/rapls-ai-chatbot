@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.22
+Stable tag: 1.6.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -455,6 +455,16 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.6.0 =
+* Milestone release consolidating eight patch updates (1.5.15–1.5.22):
+  * Current-date injection so the AI can answer "today / yesterday / this week" questions without manually adding the date to the knowledge base
+  * Robust against weak models (e.g. Gemini Flash Lite) that previously dismissed injected dates as fabrication
+  * `channel` column on conversations + Channel column in the admin Conversations list (Web / LINE)
+  * Conversations admin decluttered from 12 columns to 8, with overlap fixes and CSS for the channel badge
+  * Japanese label for "Conversations" simplified to 会話
+  * `raplsaich_get_max_context_chars()` exposed as a helper so external surfaces (Pro's LINE channel) feed the same volume of knowledge to the model
+  * Plugin home and Pro upgrade links migrated to the new /plugins/ URL structure on raplsworks.com
+
 = 1.5.22 =
 * Changed: Plugin home and Pro upgrade links updated to the new `/plugins/...` URL structure on raplsworks.com (the standalone `rapls-ai-chatbot-guide/` and `rapls-ai-chatbot-pro` pages have moved). Affects the plugin header URI, the dashboard upsell, the Settings banner, and the readme
 
@@ -677,6 +687,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.6.0 =
+Milestone release: current-date awareness, channel tracking, decluttered Conversations admin, and infrastructure to keep LINE answers in parity with Web. Recommended for everyone.
 
 = 1.5.17 =
 Strengthens the date injection so smaller AI models (Gemini Flash Lite, etc.) can no longer dismiss it. Recommended for anyone on 1.5.15 or 1.5.16.
