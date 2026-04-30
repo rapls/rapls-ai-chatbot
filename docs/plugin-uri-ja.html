@@ -525,6 +525,34 @@ add_filter( 'raplsaich_uninstall_snapshot_threshold', function() { return 1000; 
 
 <h2 class="wp-block-heading">CHANGE LOG : バージョン履歴</h2>
 
+<style>
+.changelog { padding-left: 0; list-style: none; }
+.changelog li { margin: 0 0 10px; padding: 6px 0; line-height: 1.7; border-bottom: 1px solid #f0f0f0; }
+.changelog li:last-child { border-bottom: none; }
+.changelog strong {
+    display: inline-block;
+    min-width: 56px;
+    padding: 2px 8px;
+    margin-right: 10px;
+    background: #f0f0f1;
+    border-radius: 3px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #2271b1;
+    text-align: center;
+    vertical-align: 1px;
+}
+.changelog em {
+    font-style: normal;
+    color: #888;
+    font-size: 0.85em;
+    margin-right: 12px;
+    white-space: nowrap;
+    vertical-align: 1px;
+}
+</style>
+
 <ul class="changelog">
 <li><strong>1.6.5</strong><em>2026/04/30</em>WordPress.org Plugin Check の「Description: 150文字制限」エラーに対応するため、readme の短い説明文を152→130文字に短縮。</li>
 <li><strong>1.6.4</strong><em>2026/04/30</em>チャット設定に「全ての回答の下にも質問ボタンを表示する」トグルを追加。ON で AI 応答ごとにプリセット質問ボタンが再表示されるナビゲーション型に。送信時に古いボタンを掃除する処理も追加。</li>
