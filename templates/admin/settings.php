@@ -642,32 +642,34 @@ if (!defined('ABSPATH')) {
                                 $preset_rows = [['label' => '', 'question' => '']];
                             }
                             ?>
-                            <table class="raplsaich-presets-table" style="margin-top: 10px; border-collapse: collapse;">
+                            <table class="raplsaich-presets-table" style="margin-top: 10px; border-collapse: collapse; width: 100%; max-width: 900px;">
                                 <thead>
                                     <tr>
-                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600;"><?php esc_html_e('Preset button label', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600; width: 200px;"><?php esc_html_e('Preset button label', 'rapls-ai-chatbot'); ?></th>
                                         <th style="text-align: left; padding: 4px 8px; font-weight: 600;"><?php esc_html_e('Question sent to the bot', 'rapls-ai-chatbot'); ?></th>
-                                        <th></th>
+                                        <th style="width: 32px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="raplsaich-presets-body">
                                     <?php foreach ($preset_rows as $row): ?>
                                         <tr class="raplsaich-presets-row">
-                                            <td style="padding: 2px 8px;">
+                                            <td style="padding: 2px 8px; vertical-align: top;">
                                                 <input type="text" name="raplsaich_settings[preset_questions][label][]"
                                                     value="<?php echo esc_attr($row['label'] ?? ''); ?>"
                                                     maxlength="40"
                                                     placeholder="<?php esc_attr_e('e.g. Pricing', 'rapls-ai-chatbot'); ?>"
-                                                    class="regular-text">
+                                                    class="regular-text"
+                                                    style="width: 100%;">
                                             </td>
-                                            <td style="padding: 2px 8px;">
-                                                <input type="text" name="raplsaich_settings[preset_questions][question][]"
-                                                    value="<?php echo esc_attr($row['question'] ?? ''); ?>"
+                                            <td style="padding: 2px 8px; vertical-align: top;">
+                                                <textarea name="raplsaich_settings[preset_questions][question][]"
+                                                    rows="2"
                                                     maxlength="200"
                                                     placeholder="<?php esc_attr_e('e.g. Could you tell me about the pricing plans?', 'rapls-ai-chatbot'); ?>"
-                                                    class="large-text">
+                                                    class="large-text"
+                                                    style="width: 100%; resize: vertical; min-height: 52px;"><?php echo esc_textarea($row['question'] ?? ''); ?></textarea>
                                             </td>
-                                            <td style="padding: 2px 8px;">
+                                            <td style="padding: 2px 8px; vertical-align: top;">
                                                 <button type="button" class="button button-small raplsaich-presets-remove" aria-label="<?php esc_attr_e('Remove this row', 'rapls-ai-chatbot'); ?>">&times;</button>
                                             </td>
                                         </tr>
@@ -690,9 +692,9 @@ if (!defined('ABSPATH')) {
                                     var tr = document.createElement('tr');
                                     tr.className = 'raplsaich-presets-row';
                                     tr.innerHTML =
-                                        '<td style="padding: 2px 8px;"><input type="text" name="raplsaich_settings[preset_questions][label][]" maxlength="40" class="regular-text"></td>' +
-                                        '<td style="padding: 2px 8px;"><input type="text" name="raplsaich_settings[preset_questions][question][]" maxlength="200" class="large-text"></td>' +
-                                        '<td style="padding: 2px 8px;"><button type="button" class="button button-small raplsaich-presets-remove">&times;</button></td>';
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><input type="text" name="raplsaich_settings[preset_questions][label][]" maxlength="40" class="regular-text" style="width: 100%;"></td>' +
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><textarea name="raplsaich_settings[preset_questions][question][]" rows="2" maxlength="200" class="large-text" style="width: 100%; resize: vertical; min-height: 52px;"></textarea></td>' +
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><button type="button" class="button button-small raplsaich-presets-remove">&times;</button></td>';
                                     body.appendChild(tr);
                                 });
                                 document.getElementById('raplsaich-presets-body').addEventListener('click', function(e) {
@@ -700,8 +702,8 @@ if (!defined('ABSPATH')) {
                                     var rows = this.querySelectorAll('.raplsaich-presets-row');
                                     if (rows.length <= 1) {
                                         // Keep one empty row visible.
-                                        var inputs = e.target.closest('tr').querySelectorAll('input');
-                                        inputs.forEach(function(i) { i.value = ''; });
+                                        var fields = e.target.closest('tr').querySelectorAll('input, textarea');
+                                        fields.forEach(function(f) { f.value = ''; });
                                         return;
                                     }
                                     e.target.closest('tr').remove();

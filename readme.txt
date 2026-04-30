@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.6.3 =
+* Changed: The "Question sent to the bot" field on each preset question row is now a 2-row textarea (vertically resizable) instead of a single-line input. Long questions like "次回のイベント開催日を教えてください" no longer overflow the visible area in the editor
 
 = 1.6.2 =
 * Added: Preset question buttons — chips shown under the welcome message (configurable on/off in Chat Settings, up to 10 entries). Tapping a chip submits the configured question text. Chips disappear once the user sends their first message. Useful for nudging visitors toward common topics ("Pricing", "Hours", "Staff perks", etc.) without making them type.
