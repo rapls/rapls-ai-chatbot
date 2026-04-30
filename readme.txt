@@ -4,18 +4,20 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learning, knowledge base, web search, and MCP server.
+AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learning, knowledge base, web search, MCP server, and 13-language auto-reply.
 
 
 
 == Description ==
 
-Rapls AI Chatbot add an AI chatbot to your site with OpenAI, Claude, Gemini, or OpenRouter. Includes site learning, knowledge base, and web search.
+Rapls AI Chatbot adds an AI chatbot to your site with OpenAI, Claude, Gemini, or OpenRouter. Includes site learning, knowledge base, web search, and **automatic multilingual replies in 13 languages** — visitors get answered in their browser language without you maintaining a separate translation.
+
+This is especially useful for tourism, hospitality, and retail sites that get inquiries in languages they don't have native staff for: a Japanese inn answering visitors in English / Chinese / Korean / Spanish / etc., a tour operator handling questions in the visitor's own language, or a multilingual storefront whose actual support team is one person.
 
 👉 **Documentation & Developer's Guide:** [Why I built this plugin and how RAG works](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 
@@ -37,7 +39,7 @@ Rapls AI Chatbot add an AI chatbot to your site with OpenAI, Claude, Gemini, or 
 * **6 Built-in Themes** — Default, Simple, Classic, Light, Minimal, Flat
 * **Security** — reCAPTCHA v3, rate limiting, consent mode, Cloudflare support, security diagnostics
 * **Settings Import/Export** — Backup and restore all settings as JSON
-* **Multilingual** — Japanese translation included; welcome messages configurable in 13 languages
+* **Automatic Multilingual Replies (13 languages)** — Auto-detects the visitor's browser language and replies in it. English, Japanese, Chinese, Korean, Spanish, French, German, Portuguese, Italian, Russian, Arabic, Thai, Vietnamese. Welcome messages are also configurable per language. Practical use case: a tourism / hospitality / retail site that doesn't have multilingual staff can still answer foreign visitors in their own language
 
 = Supported AI Models =
 
@@ -454,6 +456,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.6.1 =
+* Changed: Description and feature copy in readme + LP files now lead with the 13-language auto-reply use case (tourism, hospitality, retail sites that get multilingual inquiries without multilingual staff). The feature itself is unchanged
 
 = 1.6.0 =
 * Milestone release consolidating eight patch updates (1.5.15–1.5.22):
