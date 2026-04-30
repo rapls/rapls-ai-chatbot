@@ -1,0 +1,661 @@
+<!-- Rapls AI Chatbot - プラグイン URI ページ（日本語版） -->
+<!-- raplsworks.com/plugins/rapls-ai-chatbot/ にコピーする WordPress ブロックエディタ用ソース -->
+
+<h2 class="wp-block-heading">PLUGIN : Rapls AI Chatbot</h2>
+
+<p><a href="https://wordpress.org/plugins/rapls-ai-chatbot/"><strong>Rapls AI Chatbot</strong> wordpress.org から最新版をダウンロード</a></p>
+
+<p>WordPress.org 公式リポジトリで公開している AI チャットボットプラグインの技術リファレンスページです。OpenAI / Anthropic Claude / Google Gemini / OpenRouter（100+ モデル）に対応し、サイト学習・ナレッジベース・Web 検索・MCP Server・Gutenberg ブロックといった機能を備えています。<strong>13言語の自動応答</strong>に対応しているため、観光・宿泊・小売など多言語スタッフが揃わない現場でも、外国人訪問者の母語で一次対応できます。</p>
+
+<p>ソースコード：<a href="https://github.com/rapls/rapls-ai-chatbot">GitHub - rapls/rapls-ai-chatbot</a></p>
+
+<p>開発の経緯や実装の詳細については、<a href="https://raplsworks.com/plugins/rapls-ai-chatbot/">開発者ガイド</a>をご参照ください。</p>
+
+
+<h2 class="wp-block-heading">DEMO : チャットボットの動作</h2>
+
+<figure class="wp-block-image size-full is-resized"><img src="https://raplsworks.com/wp-content/uploads/2026/03/ss-00-demo.gif" alt="Rapls AI Chatbot が RAG でサイトのコンテンツを参照して回答するデモ" style="width: 357px; height: auto;"></figure>
+
+<p>サイトの右下にチャット起動ボタンが表示され、クリックすると AI との対話が開始します。サイトのコンテンツを学習しているため、サイト内のページから情報を引いて回答します。</p>
+
+<figure class="wp-block-image size-large is-resized"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-conversation-example-1-759x1024.png" alt="対話例のスクリーンショット" style="aspect-ratio: 0.7412168901695667; width: 361px; height: auto;"></figure>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-dashboard-1024x998.png" alt="ダッシュボード画面"></figure>
+
+
+<h2 class="wp-block-heading">INSTALLATION : 設置方法</h2>
+
+<h3 class="wp-block-heading">動作要件</h3>
+
+<ul class="wp-block-list">
+    <li>WordPress 6.3 以上</li>
+    <li>PHP 7.4 以上</li>
+    <li>各 AI プロバイダーの API キー（OpenAI / Claude / Gemini / OpenRouter のいずれか1つ以上）</li>
+</ul>
+
+<h3 class="wp-block-heading">API キーの取得先</h3>
+
+<ul class="wp-block-list">
+    <li>OpenAI : <a href="https://platform.openai.com/">platform.openai.com</a></li>
+    <li>Anthropic Claude : <a href="https://console.anthropic.com/">console.anthropic.com</a></li>
+    <li>Google Gemini : <a href="https://aistudio.google.com/">aistudio.google.com</a></li>
+    <li>OpenRouter : <a href="https://openrouter.ai/">openrouter.ai</a></li>
+</ul>
+
+<p>API キーは暗号化して <code>wp_options</code> テーブルに保存されます。</p>
+
+<h3 class="wp-block-heading">セットアップ手順</h3>
+
+<ol class="wp-block-list">
+    <li>プラグインをインストール・有効化</li>
+    <li>「AI Chatbot &gt; 設定」を開く</li>
+    <li>AI 設定タブで利用したいプロバイダーの API キーを入力</li>
+    <li>テストメッセージで動作確認</li>
+    <li>自動的にサイト右下にチャットボタンが表示される</li>
+</ol>
+
+<p>詳しい設定手順・運用ガイドは Free 版マニュアルをご参照ください：</p>
+
+<ul class="wp-block-list">
+    <li><a href="https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/">Rapls AI Chatbot Free 日本語マニュアル</a></li>
+    <li><a href="https://raplsworks.com/rapls-ai-chatbot-free-manual-en/">Rapls AI Chatbot Free English Manual</a></li>
+</ul>
+
+
+<h2 class="wp-block-heading">FEATURES : 機能一覧</h2>
+
+<h3 class="wp-block-heading">1. 複数の AI プロバイダーに対応</h3>
+
+<p>OpenAI、Anthropic Claude、Google Gemini、OpenRouter の4プロバイダーに対応しています。</p>
+
+<p><strong>対応モデル：</strong></p>
+
+<ul class="wp-block-list">
+    <li><strong>OpenAI</strong>：GPT-5.2 / GPT-5.1 / GPT-5、GPT-4.1（1M トークン長文対応）、GPT-4o / GPT-4o-mini、o1 / o3 / o4-mini（推論モデル）</li>
+    <li><strong>Claude</strong>：Opus 4.6、Sonnet 4.5、Haiku 4.5、Opus 4.5、Sonnet 4、3.7 Sonnet</li>
+    <li><strong>Gemini</strong>：Gemini 3 Pro / Flash（プレビュー）、2.5 Pro / Flash、2.0 Flash、1.5 Pro / Flash</li>
+    <li><strong>OpenRouter</strong>：100+ のモデルへ単一 API キーでアクセス</li>
+</ul>
+
+<p>プロバイダーの切り替えは管理画面のラジオボタンで行います。</p>
+
+<h3 class="wp-block-heading">2. Web 検索機能</h3>
+
+<p>ナレッジベースに十分な情報がない場合、AI が自動的に Web 検索を行います。各プロバイダーの built-in 機能を使用：</p>
+
+<ul class="wp-block-list">
+    <li>OpenAI：<code>web_search_preview</code> ツール</li>
+    <li>Claude：<code>web_search</code> ツール</li>
+    <li>Gemini：<code>google_search</code> ツール</li>
+</ul>
+
+<p>外部検索 API の契約は不要です。</p>
+
+<h3 class="wp-block-heading">3. サイト学習（クローラー機能）</h3>
+
+<p>サイト内のコンテンツ（投稿・固定ページ・カスタム投稿タイプ・WooCommerce 商品など）をクロールして、ベクトル化したインデックスを作成します。</p>
+
+<p>クロール対象の投稿タイプは管理画面で選択可能。タグやカテゴリでの除外も可能です。</p>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-site-learning-1024x723.png" alt="サイト学習画面"></figure>
+
+<h3 class="wp-block-heading">4. ハイブリッド RAG</h3>
+
+<p>サイト学習で取得したコンテンツを、ハイブリッド検索で取得します。</p>
+
+<ul class="wp-block-list">
+    <li>キーワードマッチング（40%）</li>
+    <li>ベクトル類似度（60%）</li>
+</ul>
+
+<h3 class="wp-block-heading">5. カスタムナレッジベース</h3>
+
+<p>サイトクロールでは拾えない情報を独自に登録できます：</p>
+
+<ul class="wp-block-list">
+    <li>テキスト直接入力（タイトル・本文・カテゴリ・優先度）</li>
+    <li>ファイルインポート：.txt, .csv, .md, .pdf, .docx</li>
+    <li>優先度設定（高優先度の情報を上位表示）</li>
+    <li>下書き / 公開のワークフロー</li>
+    <li>件数制限なし</li>
+</ul>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-knowledge-base-1024x720.png" alt="ナレッジベース画面"></figure>
+
+<h3 class="wp-block-heading">6. MCP Server（JSON-RPC 2.0）</h3>
+
+<p>7つの built-in ツールを MCP Server として提供します：</p>
+
+<ul class="wp-block-list">
+    <li><code>get_site_info</code> - サイト基本情報</li>
+    <li><code>search_content</code> - サイトコンテンツ検索</li>
+    <li><code>get_knowledge</code> - ナレッジベース取得</li>
+    <li><code>manage_knowledge</code> - ナレッジベース管理</li>
+    <li><code>get_conversations</code> - 会話履歴取得</li>
+    <li><code>get_settings</code> - 設定取得</li>
+    <li><code>search_products</code> - 商品検索（Pro 版）</li>
+</ul>
+
+<p>WordPress 7.0 で導入される Abilities API にも対応。MCP Adapter 等から自動的にツールが発見・利用できます。</p>
+
+<h3 class="wp-block-heading">7. Gutenberg ブロック対応</h3>
+
+<p>ブロックエディタで「AI Chatbot」を検索すると、チャットボットブロックを挿入できます。高さ・テーマ・bot-id を設定可能。サーバーサイドレンダリング（SSR）対応。</p>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-gutenberg-block-1024x524.png" alt="Gutenberg ブロック挿入"></figure>
+
+<h3 class="wp-block-heading">8. クロスサイト埋め込み</h3>
+
+<p>外部サイトにチャットボットを埋め込むことができます：</p>
+
+<ul class="wp-block-list">
+    <li>iframe 方式（<code>?raplsaich_embed=1</code> エンドポイント）</li>
+    <li>script loader 方式（<code>assets/js/embed-loader.js</code>）</li>
+</ul>
+
+<h3 class="wp-block-heading">9. 13言語の自動応答（多言語対応）</h3>
+
+<p><strong>ブラウザ言語を自動検出して、訪問者の母語で回答します。</strong></p>
+
+<p>対応言語：英語、日本語、中国語、韓国語、スペイン語、フランス語、ドイツ語、ポルトガル語、イタリア語、ロシア語、アラビア語、タイ語、ベトナム語の <strong>13言語</strong>。ウェルカムメッセージも各言語で個別に設定できます。応答言語の挙動は「自動検出 / サイト言語に従う / 13言語のいずれかに固定」から選択可能です。</p>
+
+<h4 class="wp-block-heading">特に効くシーン</h4>
+
+<ul class="wp-block-list">
+    <li><strong>観光・宿泊業</strong> — 多言語スタッフを揃えられない宿が、英語・中国語・韓国語・スペイン語の問い合わせに自動で対応</li>
+    <li><strong>小売・EC</strong> — 商品ページに来た外国人訪問者が、母語で在庫・配送・サイズについて質問できる</li>
+    <li><strong>教育・自治体</strong> — 公式サイトで多言語問い合わせ窓口を実装する代わりに、AI が一次受けする</li>
+    <li><strong>イベント・ツアー</strong> — 当日参加者からの「次の集合は？」「どこ？」といった質問に各国語で回答</li>
+</ul>
+
+<p>翻訳プラグインや多言語サイトの仕組みを別途用意する必要はありません。サイトのコンテンツ（学習データ）が日本語のみであっても、AI が翻訳して応答します。</p>
+
+<h3 class="wp-block-heading">10. 6個の組込テーマ</h3>
+
+<p>Default、Simple、Classic、Light、Minimal、Flat の6種類。プライマリ / セカンダリカラーや配置位置（4つの角）もカスタマイズ可能。</p>
+
+<h3 class="wp-block-heading">11. 会話履歴・使用統計・コスト追跡</h3>
+
+<ul class="wp-block-list">
+    <li>会話履歴：すべての会話を保存・閲覧、保持期間設定可能</li>
+    <li>使用統計：トークン使用量、推定 API コスト、視覚的なグラフ、プロバイダー別内訳</li>
+    <li>ダッシュボード：30日間の日次使用量グラフ</li>
+</ul>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-conversation-history-1024x682.png" alt="会話履歴画面"></figure>
+
+<h3 class="wp-block-heading">12. フィードバック・再生成</h3>
+
+<p>ユーザーが回答を👍/👎で評価でき、再生成リクエストも可能です。</p>
+
+<h3 class="wp-block-heading">13. セキュリティ機能</h3>
+
+<ul class="wp-block-list">
+    <li>reCAPTCHA v3（スコア閾値設定可能）</li>
+    <li>レート制限</li>
+    <li>同意モード（厳格モードあり）</li>
+    <li>Cloudflare 統合</li>
+    <li>リバースプロキシ信頼設定</li>
+    <li>セキュリティ診断（読み取り専用）</li>
+</ul>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-settings-security-1024x712.png" alt="セキュリティ設定画面"></figure>
+
+<h3 class="wp-block-heading">14. 設定のインポート / エクスポート</h3>
+
+<p>すべての設定を JSON 形式でバックアップ / リストア可能。ナレッジベースを含めるかどうか選択可能。</p>
+
+<h3 class="wp-block-heading">15. Free vs Pro</h3>
+
+<ul class="wp-block-list">
+    <li><strong>Free</strong> : 全 AI 機能、無制限、ナレッジベース無制限、6テーマ、MCP、Gutenberg ブロック、13言語自動応答</li>
+    <li><strong>Pro</strong> : 分析、リードキャプチャ、シナリオ、オペレーターモード、WooCommerce、LINE、10追加テーマ、ダークモード、音声入力 / TTS、マルチモーダル、応答キャッシュ、暗号化、監査ログ</li>
+</ul>
+
+<p><strong>Free 版</strong></p>
+
+<ul class="wp-block-list">
+    <li><a href="https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/">Free 版マニュアル（日本語）</a></li>
+    <li><a href="https://raplsworks.com/rapls-ai-chatbot-free-manual-en/">Free Manual (English)</a></li>
+</ul>
+
+<p><strong>Pro 版</strong></p>
+
+<ul class="wp-block-list">
+    <li>販売ページ：<a href="https://raplsworks.com/rapls-ai-chatbot-ja/">日本語</a> / <a href="https://raplsworks.com/rapls-ai-chatbot-en/">English</a></li>
+    <li>マニュアル：<a href="https://raplsworks.com/rapls-ai-chatbot-manual-pro-ja/">日本語</a> / <a href="https://raplsworks.com/rapls-ai-chatbot-manual-pro-en/">English</a></li>
+</ul>
+
+
+<h2 class="wp-block-heading">SETTINGS : プラグイン設定画面</h2>
+
+<p>WordPress の管理画面「AI Chatbot &gt; 設定」から設定します。設定は5タブに整理されています。</p>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-settings-ai-1024x707.png" alt="AI 設定タブ"></figure>
+
+<h3 class="wp-block-heading">AI 設定タブ</h3>
+
+<ul class="wp-block-list">
+    <li>AI プロバイダー選択</li>
+    <li>モデル選択</li>
+    <li>API キー入力</li>
+    <li>ベクトル検索（RAG）の有効化</li>
+    <li>埋め込みプロバイダー選択</li>
+    <li>MCP Server 設定（API キー生成、Claude Desktop 設定例の表示）</li>
+</ul>
+
+<h3 class="wp-block-heading">チャット設定タブ</h3>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-settings-chat-1024x674.png" alt="チャット設定タブ"></figure>
+
+<ul class="wp-block-list">
+    <li>ボット名・アバター（絵文字または画像）</li>
+    <li>ウェルカムメッセージ（13言語）</li>
+    <li>システムプロンプト</li>
+    <li>応答言語</li>
+    <li>メッセージ履歴件数</li>
+    <li>フィードバックボタン</li>
+    <li>API クォータエラーメッセージ</li>
+    <li>高度な設定：コンテキストプロンプト、機能プロンプト</li>
+</ul>
+
+<h3 class="wp-block-heading">表示設定タブ</h3>
+
+<figure class="wp-block-image size-large"><img src="https://raplsworks.com/wp-content/uploads/2026/04/racb-settings-display-1024x963.png" alt="表示設定タブ"></figure>
+
+<ul class="wp-block-list">
+    <li>6つのテーマから選択</li>
+    <li>バッジ位置（4つの角）</li>
+    <li>マージン</li>
+    <li>プライマリ / セカンダリカラー</li>
+    <li>モバイル表示</li>
+    <li>Markdown レンダリング</li>
+    <li>タイピングインジケーター</li>
+    <li>最大入力長</li>
+    <li>ページ除外</li>
+    <li>フッターテキスト</li>
+    <li>クロスサイト埋め込みオプション</li>
+</ul>
+
+<h3 class="wp-block-heading">セキュリティ設定タブ</h3>
+
+<ul class="wp-block-list">
+    <li>reCAPTCHA v3（site key、secret key、スコア閾値）</li>
+    <li>アクセス制御：同意モード厳格設定、レート制限、Cloudflare 統合、リバースプロキシ信頼、reCAPTCHA 失敗モード</li>
+    <li>セキュリティ診断（読み取り専用）</li>
+</ul>
+
+<h3 class="wp-block-heading">データ管理タブ</h3>
+
+<ul class="wp-block-list">
+    <li>会話履歴の有効 / 無効、保持期間</li>
+    <li>設定のインポート / エクスポート</li>
+    <li>すべての設定をデフォルトにリセット</li>
+</ul>
+
+
+<h2 class="wp-block-heading">TEMPLATE : テンプレートでの呼び出し</h2>
+
+<h3 class="wp-block-heading">Gutenberg ブロックを使う</h3>
+
+<p>ブロックエディタで「AI Chatbot」を検索して挿入。</p>
+
+<h3 class="wp-block-heading">ショートコード</h3>
+
+<pre class="lang:default decode:true">[rapls_ai_chatbot]</pre>
+
+<h3 class="wp-block-heading">PHP テンプレートで直接埋め込み</h3>
+
+<pre class="lang:php decode:true">&lt;?php
+if ( function_exists( 'raplsaich_render' ) ) {
+    raplsaich_render( array(
+        'theme'  =&gt; 'minimal',
+        'height' =&gt; 600,
+    ) );
+}
+?&gt;</pre>
+
+<h3 class="wp-block-heading">特定の投稿タイプでのみ自動表示</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_should_display', function( $should_display ) {
+    if ( is_singular( 'product' ) ) {
+        return true;
+    }
+    return $should_display;
+} );</pre>
+
+
+<h2 class="wp-block-heading">FAQ : よくある質問</h2>
+
+<h3 class="wp-block-heading">どのプロバイダーを選べばよいですか？</h3>
+
+<p>各プロバイダーの特徴：</p>
+
+<ul class="wp-block-list">
+    <li><strong>OpenAI GPT-4o-mini</strong> - コストとパフォーマンスのバランスが良い</li>
+    <li><strong>Claude Sonnet 4.5</strong> - 文章生成系に強い</li>
+    <li><strong>Gemini 2.5 Flash</strong> - 高頻度サイトに向く</li>
+    <li><strong>OpenRouter</strong> - 100+ モデルへ単一 API キーでアクセス</li>
+</ul>
+
+<h3 class="wp-block-heading">API コストの目安は？</h3>
+
+<ul class="wp-block-list">
+    <li>GPT-4o-mini : 入力 $0.15 / 1M トークン、出力 $0.60 / 1M トークン</li>
+    <li>Claude Haiku 4.5 : 入力 $0.80 / 1M トークン、出力 $4.00 / 1M トークン</li>
+    <li>Gemini 2.5 Flash : 入力 $0.15 / 1M トークン、出力 $0.60 / 1M トークン</li>
+</ul>
+
+<h3 class="wp-block-heading">複数プロバイダーは同時に使えますか？</h3>
+
+<p>複数の API キーを設定できますが、アクティブにできるのは1プロバイダーのみです。設定画面で切り替えます。</p>
+
+<h3 class="wp-block-heading">サイト学習はどのように動作しますか？</h3>
+
+<p>公開コンテンツをクロールして検索可能なインデックスを作成します。ユーザーが質問すると関連コンテンツが AI に渡され、サイト固有の回答が生成されます。ベクトル埋め込みを有効にすると、ハイブリッド検索（キーワード40%＋ベクトル60%）が利用できます。</p>
+
+<h3 class="wp-block-heading">Web 検索はどのように動作しますか？</h3>
+
+<p>ナレッジベースとサイトコンテンツに十分な情報がないとき、AI が自動で Web 検索します。各プロバイダーの built-in 機能を使用。Web 情報を含む回答には地球アイコンが表示されます。</p>
+
+<h3 class="wp-block-heading">外国人訪問者にも対応できますか？</h3>
+
+<p>はい。<strong>13言語の自動応答</strong>に対応しています。ブラウザ言語を自動検出して、英語・中国語・韓国語・スペイン語・フランス語など訪問者の母語で回答します。サイトのコンテンツが日本語のみでも、AI が翻訳して応答するため、翻訳プラグインや多言語サイトの仕組みは不要です。観光・宿泊・小売など多言語スタッフを揃えられない現場で特に有効です。</p>
+
+<h3 class="wp-block-heading">MCP Server は何に使えますか？</h3>
+
+<p>MCP（Model Context Protocol）対応の AI エージェント（Claude Desktop、Cursor、VS Code 等）から、サイトのデータと連携できます。</p>
+
+<h3 class="wp-block-heading">外部サイトに埋め込めますか？</h3>
+
+<p>はい。クロスサイト埋め込みエンドポイント（<code>?raplsaich_embed=1</code>）または loader スクリプトで iframe または script 統合できます。</p>
+
+<h3 class="wp-block-heading">Gutenberg ブロックは使えますか？</h3>
+
+<p>はい。ブロックエディタで「AI Chatbot」を検索して挿入できます。高さ・テーマ・bot-id 設定可能。SSR 対応。</p>
+
+<h3 class="wp-block-heading">カスタマイズできる項目は？</h3>
+
+<ul class="wp-block-list">
+    <li>ボット名・アバター</li>
+    <li>プライマリ / セカンダリカラー</li>
+    <li>6テーマ</li>
+    <li>ウェルカムメッセージ（13言語）</li>
+    <li>バッジ位置・マージン・アイコン</li>
+    <li>モバイル表示制御</li>
+    <li>除外ページ</li>
+    <li>タイピングインジケーター</li>
+    <li>Markdown レンダリング</li>
+</ul>
+
+<h3 class="wp-block-heading">会話履歴は保存されますか？</h3>
+
+<p>デフォルトでは保存されます（90日間）。「設定 &gt; データ管理」で無効化可能。保持期間も変更できます。</p>
+
+<h3 class="wp-block-heading">ページビルダーで動きますか？</h3>
+
+<p>はい。Elementor、Divi、Beaver Builder、Gutenberg など任意のテーマ・ページビルダーで動作します。</p>
+
+<h3 class="wp-block-heading">カスタムシステムプロンプトは設定できますか？</h3>
+
+<p>はい。AI の人格・振る舞い・回答スタイルを定義できます。<code>raplsaich_system_prompt</code> フィルターでプログラム的にもカスタマイズ可能です。</p>
+
+<h3 class="wp-block-heading">API クォータを超えた場合は？</h3>
+
+<p>カスタマイズ可能なエラーメッセージが表示されます。プラグイン側で応答数を制限することはありません。</p>
+
+<h3 class="wp-block-heading">Pro 版との違いは？</h3>
+
+<p>Pro 版は別プラグインで、ビジネス向け機能を追加します：分析ダッシュボード、リードキャプチャ、シナリオ、オペレーターモード、WooCommerce、LINE 等。Free 版だけでも完全に機能します。</p>
+
+<ul class="wp-block-list">
+    <li>Pro 版の販売ページ：<a href="https://raplsworks.com/rapls-ai-chatbot-ja/">日本語</a> / <a href="https://raplsworks.com/rapls-ai-chatbot-en/">English</a></li>
+    <li>Pro 版マニュアル：<a href="https://raplsworks.com/rapls-ai-chatbot-manual-pro-ja/">日本語</a> / <a href="https://raplsworks.com/rapls-ai-chatbot-manual-pro-en/">English</a></li>
+</ul>
+
+<h3 class="wp-block-heading">アンインストール時のデータは？</h3>
+
+<p>デフォルトでは設定と会話データを保持（再インストールで復元可能）。「データ管理 &gt; アンインストール時に削除」で消去設定可能。マルチサイトは各サイトごとに設定。</p>
+
+<h3 class="wp-block-heading">マルチサイトのアンインストールパフォーマンス調整は？</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_uninstall_batch_size', function() { return 50; } );
+add_filter( 'raplsaich_uninstall_snapshot_threshold', function() { return 1000; } );</pre>
+
+<p>低メモリ / 低速 DB → 20-50、標準 → 100、高速 / 大規模 → 200-500。</p>
+
+
+<h2 class="wp-block-heading">ADVANCED FILTERS : フィルターフック</h2>
+
+<p>functions.php にフィルターを設定して挙動をカスタマイズできます。</p>
+
+<h3 class="wp-block-heading">システムプロンプトをカスタマイズ</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_system_prompt', function( $prompt, $context ) {
+    $prompt .= "\n\nあなたは丁寧な日本語で回答してください。";
+    return $prompt;
+}, 10, 2 );</pre>
+
+<h3 class="wp-block-heading">サイトクロール対象を制限</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_crawl_post_types', function( $post_types ) {
+    return array( 'post', 'page' );
+} );</pre>
+
+<h3 class="wp-block-heading">検索結果の重み付けを変更</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_search_weights', function( $weights ) {
+    return array(
+        'keyword' =&gt; 0.3,
+        'vector'  =&gt; 0.7,
+    );
+} );</pre>
+
+<h3 class="wp-block-heading">表示前に応答を加工</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_response_text', function( $response, $query ) {
+    $response .= "\n\n（この AI は参考情報です）";
+    return $response;
+}, 10, 2 );</pre>
+
+<h3 class="wp-block-heading">Web 検索のオン / オフ条件</h3>
+
+<pre class="lang:php decode:true">add_filter( 'raplsaich_enable_web_search', function( $enabled, $query ) {
+    if ( strpos( $query, '価格' ) !== false ) {
+        return false;
+    }
+    return $enabled;
+}, 10, 2 );</pre>
+
+
+<h2 class="wp-block-heading">ACTION HOOKS : アクションフック</h2>
+
+<h3 class="wp-block-heading">チャット送信時のロギング</h3>
+
+<pre class="lang:php decode:true">add_action( 'raplsaich_after_chat', function( $query, $response, $session_id ) {
+    error_log( "[Chatbot] {$session_id}: {$query} -&gt; {$response}" );
+}, 10, 3 );</pre>
+
+<h3 class="wp-block-heading">サイト学習完了時の通知</h3>
+
+<pre class="lang:php decode:true">add_action( 'raplsaich_crawl_complete', function( $stats ) {
+    wp_mail(
+        get_option( 'admin_email' ),
+        'サイト学習が完了しました',
+        sprintf( '%d ページのクロールが完了しました。', $stats['total_pages'] )
+    );
+} );</pre>
+
+<h3 class="wp-block-heading">MCP Server リクエスト時の認証強化</h3>
+
+<pre class="lang:php decode:true">add_action( 'raplsaich_mcp_request', function( $request, $tool_name ) {
+    $allowed_ips = array( '192.168.1.1', '10.0.0.1' );
+    if ( ! in_array( $_SERVER['REMOTE_ADDR'], $allowed_ips, true ) ) {
+        wp_die( 'Forbidden', 403 );
+    }
+}, 10, 2 );</pre>
+
+<h3 class="wp-block-heading">フィードバック時の処理</h3>
+
+<pre class="lang:php decode:true">add_action( 'raplsaich_feedback_received', function( $message_id, $rating, $session_id ) {
+    if ( $rating === 'bad' ) {
+        error_log( "[Chatbot] Bad feedback: {$message_id}" );
+    }
+}, 10, 3 );</pre>
+
+
+<h2 class="wp-block-heading">CHANGE LOG : バージョン履歴</h2>
+
+<h3 class="wp-block-heading">1.6.1（最新）</h3>
+
+<ul class="wp-block-list">
+    <li>変更：13言語の自動応答機能を Description / Features セクションで前面に押し出し（観光・宿泊・小売など多言語スタッフが揃わない現場でのユースケースを強調）。機能自体は既存のまま</li>
+</ul>
+
+<h3 class="wp-block-heading">1.6.0</h3>
+
+<ul class="wp-block-list">
+    <li>マイルストーンリリース：1.5.15〜1.5.22の8つのパッチを統合
+        <ul>
+            <li>システムプロンプトへの現在日付注入（「今日 / 昨日 / 今週」のような相対時間参照に正しく回答）</li>
+            <li>弱い AI モデル（Gemini Flash Lite 等）が日付を捏造扱いする問題への耐性強化</li>
+            <li>会話テーブルに <code>channel</code> カラム追加 + 管理画面の Conversations リストに Channel 列追加（Web / LINE）</li>
+            <li>会話管理画面を12列→8列に整理、列の重なりや CSS 不具合を修正</li>
+            <li>「Conversations」の日本語ラベルを「会話」に簡略化</li>
+            <li><code>raplsaich_get_max_context_chars()</code> をヘルパー関数として公開（Pro の LINE チャネルが Web と同じ量のナレッジを使えるように）</li>
+            <li>raplsworks.com の <code>/plugins/</code> URL 構造への移行</li>
+        </ul>
+    </li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.20</h3>
+
+<ul class="wp-block-list">
+    <li>修正：会話管理画面で、狭いビューポート時に Msgs 列と Lead 列が視覚的に重なる問題を解消（Lead 列に200px 幅、Msgs 列を70px に拡張、セル内コンテンツに overflow / word-break ルールを追加）</li>
+    <li>修正：Session セルの Channel バッジに専用スタイルを追加（Web vs LINE を明確に区別）</li>
+    <li>変更：「会話履歴」の日本語ラベルを「会話」に簡略化（管理メニュー表示の自然化）</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.19</h3>
+
+<ul class="wp-block-list">
+    <li>変更：会話管理画面のカラム数を12列から8列に削減</li>
+    <li>ID 列を削除（data-id 属性と Session ツールチップに保持）</li>
+    <li>Channel を Session カラムにバッジとして統合</li>
+    <li>Handoff 列を Status カラムのサブバッジに統合</li>
+    <li>Started を Last Active にマージ（開始時刻はセルツールチップに保持）</li>
+    <li>すべてのソートオプションは引き続き利用可能</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.18</h3>
+
+<ul class="wp-block-list">
+    <li>追加：会話テーブルに <code>channel</code> カラムを新設（web / line など）。マルチチャネル運用で会話の発生プラットフォームを一目で識別可能</li>
+    <li>既存レコードはデフォルトで「web」、プラグイン更新時に自動マイグレーション実行</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.17</h3>
+
+<ul class="wp-block-list">
+    <li>修正：1.5.16の日付注入が、小型 AI モデル（Gemini 2.5 Flash Lite 等）で「日付の捏造」と誤解釈される問題を解消</li>
+    <li>注入された日付ブロックに「OVERRIDE — TAKES ABSOLUTE PRECEDENCE」マーカーを追加</li>
+    <li>「捏造禁止ルールはシステム提供の日付には適用されない」を明示</li>
+    <li>日本語・英語の Few-shot 例を追加</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.16</h3>
+
+<ul class="wp-block-list">
+    <li>修正：1.5.15の現在日付注入が、weaker な AI モデルにより無視される問題を解消</li>
+    <li><code>raplsaich_system_prompt</code> フィルター（priority 99）を使ってフックすることで、すべてのエンドポイント（regenerate、suggestions、MCP tool 等）で日付注入を確実化</li>
+    <li>システムプロンプトで「日付は権威あるシステムコンテキストである（捏造ではない）」を明示</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.15</h3>
+
+<ul class="wp-block-list">
+    <li>追加：システムプロンプトに現在日付（サイトの WordPress タイムゾーン）を注入し、AI が「今日」「昨日」「今週」などの相対時間参照を正しく解決可能に</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.14</h3>
+
+<ul class="wp-block-list">
+    <li>修正：iPhone Safari での「閉じるボタンが画面外に出る」問題のルート原因を解消（チャット入力 textarea の font-size を16px に、iOS Safari のビューポート自動ズームを抑制）</li>
+    <li>修正：参照リンクカードがページリロード後も保持されるように（メッセージ表示メタデータをメッセージ行に永続化）</li>
+    <li>修正：リンクカードのタイトル・抜粋で <code>&amp;amp;</code> などの HTML エンティティが文字通り表示される問題を解消</li>
+    <li>修正：リンクカード抜粋の Markdown 構文（<code>**</code>、バッククォート、<code>#</code>、<code>[text](url)</code> 等）を除去してプレーンテキスト化</li>
+    <li>修正：モバイルでリンクカード行がチャットバブルから溢れる問題を解消（メッセージコンテンツの flex 子要素に <code>min-width: 0</code> を追加）</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.13</h3>
+
+<ul class="wp-block-list">
+    <li>追加：オプトイン式の iOS Safari キーボード修正（VisualViewport API 使用、オンスクリーンキーボード表示時にチャットボットヘッダーを画面内維持）。テーマの scroll と衝突する場合は無効化可能。デフォルト：オフ</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.12</h3>
+
+<ul class="wp-block-list">
+    <li>修正：ベクトル埋め込み検索チェックボックスを有効化後にオフにできない問題（HTML フォームの未チェック状態が POST から除外される仕様への対応）</li>
+    <li>修正：モバイル画面（≤480px）でバッジ位置のマージン設定が適用されない問題（hardcoded メディアクエリの修正）</li>
+    <li>修正：Simple / Classic / Light / Minimal / Flat テーマでバッジアイコンのプライマリカラーが適用されない問題</li>
+    <li>修正：iPhone Safari でチャット入力フォーカス時に閉じるボタンが画面外に押し出される問題（<code>100dvh</code> 動的ビューポート高さに切替）</li>
+    <li>追加：デスクトップとモバイルで別々のマージン設定</li>
+    <li>追加：バッジアイコンサイズ設定（30〜120px、デスクトップ / モバイル別）</li>
+</ul>
+
+<h3 class="wp-block-heading">1.5.0</h3>
+
+<ul class="wp-block-list">
+    <li>追加：Gutenberg ブロック（ブロックエディタで AI Chatbot ブロック挿入、高さ・テーマ・bot-id 設定可能、SSR 対応、i18n: JA / EN 対応）</li>
+    <li>追加：WordPress Abilities API Bridge（7つの MCP ツールを WordPress Abilities として登録、MCP Adapter（Claude Desktop、Cursor、VS Code）からの自動発見対応）</li>
+    <li>追加：応答言語の自動検出（ウェルカムメッセージと AI 応答でブラウザ言語を自動検出）</li>
+    <li>追加：OpenRouter プロバイダー対応（100+ モデルへ単一 API キーでアクセス）</li>
+    <li>追加：Pro add-on 互換レイヤー</li>
+</ul>
+
+<h3 class="wp-block-heading">1.4.0</h3>
+
+<ul class="wp-block-list">
+    <li>追加：Web 検索統合（OpenAI <code>web_search_preview</code>、Claude <code>web_search</code>、Gemini <code>google_search</code> grounding）</li>
+    <li>追加：クロスサイト埋め込みページ（<code>?raplsaich_embed=1</code> エンドポイント）</li>
+    <li>追加：埋め込みローダースクリプト（<code>assets/js/embed-loader.js</code>）</li>
+    <li>追加：ナレッジベースの PDF・DOCX アップロード対応（サーバーサイドパース）</li>
+    <li>追加：ハイブリッド RAG（キーワード40% + ベクトル60%）</li>
+</ul>
+
+<h3 class="wp-block-heading">1.0.0</h3>
+
+<ul class="wp-block-list">
+    <li>初回リリース</li>
+    <li>複数 AI プロバイダー対応（OpenAI、Claude、Gemini）</li>
+    <li>自動コンテンツクロールによるサイト学習</li>
+    <li>Q&amp;A 形式対応のカスタムナレッジベース</li>
+    <li>会話履歴の検索機能</li>
+    <li>コスト見積もりを含む使用統計</li>
+    <li>カスタマイズ可能なチャットボット外観</li>
+</ul>
+
+
+<h2 class="wp-block-heading">RELATED PAGES : 関連ページ</h2>
+
+<h3 class="wp-block-heading">Free 版</h3>
+
+<ul class="wp-block-list">
+    <li><a href="https://raplsworks.com/rapls-ai-chatbot-free-manual-ja/">Free 版マニュアル（日本語）</a></li>
+    <li><a href="https://raplsworks.com/rapls-ai-chatbot-free-manual-en/">Free Manual (English)</a></li>
+</ul>
+
+<h3 class="wp-block-heading">Pro 版</h3>
+
+<ul class="wp-block-list">
+    <li>販売ページ：<a href="https://raplsworks.com/rapls-ai-chatbot-ja/">日本語</a> / <a href="https://raplsworks.com/rapls-ai-chatbot-en/">English</a></li>
+    <li>マニュアル：<a href="https://raplsworks.com/rapls-ai-chatbot-manual-pro-ja/">日本語</a> / <a href="https://raplsworks.com/rapls-ai-chatbot-manual-pro-en/">English</a></li>
+</ul>
+
+<h3 class="wp-block-heading">その他</h3>
+
+<ul class="wp-block-list">
+    <li><a href="https://raplsworks.com/plugins/">プラグイン一覧</a></li>
+    <li><a href="https://raplsworks.com/plugins/rapls-ai-chatbot/">Rapls AI Chatbot 開発者ガイド</a> - 開発の経緯・実装の試行錯誤・トラブルシューティング</li>
+</ul>
