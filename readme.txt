@@ -4,12 +4,12 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.4
+Stable tag: 1.6.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learning, knowledge base, web search, MCP server, and 13-language auto-reply.
+AI chatbot with OpenAI, Claude, Gemini, OpenRouter. Site learning, knowledge base, web search, MCP server, 13-language auto-reply.
 
 
 
@@ -456,6 +456,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.6.5 =
+* Fixed: WordPress.org Plugin Check rejected 1.6.4 with "Description: A maximum of 150 characters is supported." — the short description had grown to 152 characters when the 13-language auto-reply pitch was added in 1.6.1. Trimmed to 130 characters by dropping filler words ("for WordPress", "and") without losing keyword coverage
 
 = 1.6.4 =
 * Added: New "Also show preset buttons under every bot reply" toggle in Chat Settings. When on, the same preset chips re-appear after every AI response — handy for navigation-style bots where visitors hop between common topics. When off (default), behavior is unchanged: chips appear once after the welcome message and disappear after the first user message
