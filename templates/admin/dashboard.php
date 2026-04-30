@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
                 sprintf(
                     /* translators: %s: link to Pro page */
                     esc_html__('Unlock analytics, lead capture, scenarios, and more with %s.', 'rapls-ai-chatbot'),
-                    '<a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" rel="noopener noreferrer">Pro</a>'
+                    '<a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer">Pro</a>'
                 ),
                 ['a' => ['href' => true, 'target' => true, 'rel' => true]]
             );

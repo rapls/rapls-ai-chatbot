@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.5.21
+Stable tag: 1.5.22
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,7 +17,7 @@ AI chatbot for WordPress with OpenAI, Claude, Gemini, and OpenRouter. Site learn
 
 Rapls AI Chatbot add an AI chatbot to your site with OpenAI, Claude, Gemini, or OpenRouter. Includes site learning, knowledge base, and web search.
 
-👉 **Documentation & Developer's Guide:** [Why I built this plugin and how RAG works](https://raplsworks.com/rapls-ai-chatbot-guide/)
+👉 **Documentation & Developer's Guide:** [Why I built this plugin and how RAG works](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 
 = Key Features =
 
@@ -126,7 +126,7 @@ The free version is fully functional with no artificial limits — you pay only 
 * 10 additional themes, dark mode, voice input/TTS, multimodal
 * Response caching, encryption, audit logs, and more
 
-Learn more about Pro features at [raplsworks.com](https://raplsworks.com/rapls-ai-chatbot-pro), or read the [developer's overview](https://raplsworks.com/rapls-ai-chatbot-guide/) for the full context.
+Learn more about Pro features at [raplsworks.com](https://raplsworks.com/plugins/rapls-ai-chatbot-pro/), or read the [developer's overview](https://raplsworks.com/plugins/rapls-ai-chatbot/) for the full context.
 
 
 
@@ -176,7 +176,7 @@ The plugin provides 7 MCP tools: get_site_info, search_content, get_knowledge, m
 
 A comprehensive developer's guide explains why this plugin was built, how the RAG hybrid search works, setup walkthroughs, and common troubleshooting:
 
-* [Rapls AI Chatbot — Developer's Guide](https://raplsworks.com/rapls-ai-chatbot-guide/)
+* [Rapls AI Chatbot — Developer's Guide](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 * [Source code on GitHub](https://github.com/rapls/rapls-ai-chatbot)
 * [Developer's blog — Rapls Works](https://raplsworks.com/)
 
@@ -454,6 +454,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.5.22 =
+* Changed: Plugin home and Pro upgrade links updated to the new `/plugins/...` URL structure on raplsworks.com (the standalone `rapls-ai-chatbot-guide/` and `rapls-ai-chatbot-pro` pages have moved). Affects the plugin header URI, the dashboard upsell, the Settings banner, and the readme
 
 = 1.5.21 =
 * Changed: The "max RAG context characters" calculation that scales with the configured AI model is now exposed as a public helper (`raplsaich_get_max_context_chars()`) so non-REST surfaces — Pro's LINE channel in particular — can feed the same volume of knowledge to the model. The REST controller's `get_max_context_chars()` method is preserved as a thin wrapper for back-compat

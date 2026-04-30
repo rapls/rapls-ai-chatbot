@@ -2789,7 +2789,7 @@ class RAPLSAICH_Admin {
                         <strong><?php esc_html_e('Upgrade to Pro', 'rapls-ai-chatbot'); ?></strong>
                         <p><?php esc_html_e('Extend your AI chatbot with analytics, lead capture, automation, and more.', 'rapls-ai-chatbot'); ?></p>
                     </div>
-                    <a href="https://raplsworks.com/rapls-ai-chatbot-pro" target="_blank" rel="noopener noreferrer" class="button button-primary">
+                    <a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer" class="button button-primary">
                         <?php esc_html_e('Get Pro Version', 'rapls-ai-chatbot'); ?>
                     </a>
                 </div>
