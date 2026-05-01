@@ -184,6 +184,54 @@ function raplsaich_get_max_context_chars(): int {
  * the date as "fabrication" when the user's own system prompt forbids
  * inventing dates.
  */
+/**
+ * Inject the glossary (proper-noun protection list) into the system prompt
+ * so the AI keeps brand names, product names, and other terms verbatim
+ * across all languages.
+ *
+ * Hooked at priority 98 — runs just before raplsaich_inject_current_date
+ * (priority 99), so the date block stays at the very top of the merged
+ * prompt and the glossary sits one block below it. Both blocks are no-ops
+ * when their respective settings are off.
+ */
+add_filter('raplsaich_system_prompt', 'raplsaich_inject_glossary', 98);
+function raplsaich_inject_glossary($system_prompt) {
+    $settings = get_option('raplsaich_settings', []);
+    if (empty($settings['glossary_enabled'])) {
+        return $system_prompt;
+    }
+    $entries = is_array($settings['glossary'] ?? null) ? $settings['glossary'] : [];
+    if (empty($entries)) {
+        return $system_prompt;
+    }
+
+    $lines = [];
+    foreach ($entries as $row) {
+        if (!is_array($row) || empty($row['term'])) {
+            continue;
+        }
+        $term  = (string) $row['term'];
+        $notes = isset($row['notes']) ? trim((string) $row['notes']) : '';
+        if ($notes !== '') {
+            $lines[] = '- "' . $term . '" — ' . $notes;
+        } else {
+            $lines[] = '- "' . $term . '" — keep verbatim, do NOT translate or rephrase';
+        }
+    }
+    if (empty($lines)) {
+        return $system_prompt;
+    }
+
+    $block = "[GLOSSARY — PROTECTED TERMS]\n"
+        . "The following are proper nouns / brand-defined terms. Treat them as verified system context.\n"
+        . "When you mention any of these in your reply, you MUST follow the rule next to it.\n"
+        . "Do NOT translate, abbreviate, or invent variants for terms marked \"keep verbatim\" — even when responding in another language.\n\n"
+        . implode("\n", $lines)
+        . "\n\n";
+
+    return $block . (string) $system_prompt;
+}
+
 add_filter('raplsaich_system_prompt', 'raplsaich_inject_current_date', 99);
 function raplsaich_inject_current_date($system_prompt) {
     $dow_names_en = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];

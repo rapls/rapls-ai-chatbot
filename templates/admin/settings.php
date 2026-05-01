@@ -738,6 +738,98 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Glossary (Proper Nouns)', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[glossary_enabled]" value="1"
+                                    <?php checked($settings['glossary_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Protect listed terms from translation or rewording', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Useful for product names, service names, brand names, and words that take on a different meaning when translated. The AI is instructed to keep these terms verbatim. Optionally provide per-language replacements in the Notes field.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <?php
+                            $glossary_rows = $settings['glossary'] ?? [];
+                            if (empty($glossary_rows)) {
+                                $glossary_rows = [['term' => '', 'notes' => '']];
+                            }
+                            ?>
+                            <table class="raplsaich-glossary-table" style="margin-top: 10px; border-collapse: collapse; width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600; width: 220px;"><?php esc_html_e('Term (kept verbatim)', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600;">
+                                            <?php esc_html_e('Notes (optional)', 'rapls-ai-chatbot'); ?>
+                                            <span class="description" style="display:block;font-weight:400;font-size:11px;color:#646970;">
+                                                <?php esc_html_e('e.g. "Always render as Staff Perks in English, 员工福利 in Chinese"', 'rapls-ai-chatbot'); ?>
+                                            </span>
+                                        </th>
+                                        <th style="width: 32px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="raplsaich-glossary-body">
+                                    <?php foreach ($glossary_rows as $row): ?>
+                                        <tr class="raplsaich-glossary-row">
+                                            <td style="padding: 2px 8px; vertical-align: top;">
+                                                <input type="text" name="raplsaich_settings[glossary][term][]"
+                                                    value="<?php echo esc_attr($row['term'] ?? ''); ?>"
+                                                    maxlength="100"
+                                                    placeholder="<?php esc_attr_e('e.g. Rapls Works', 'rapls-ai-chatbot'); ?>"
+                                                    class="regular-text"
+                                                    style="width: 100%;">
+                                            </td>
+                                            <td style="padding: 2px 8px; vertical-align: top;">
+                                                <input type="text" name="raplsaich_settings[glossary][notes][]"
+                                                    value="<?php echo esc_attr($row['notes'] ?? ''); ?>"
+                                                    maxlength="300"
+                                                    placeholder="<?php esc_attr_e('Leave empty to keep verbatim in every language', 'rapls-ai-chatbot'); ?>"
+                                                    class="large-text"
+                                                    style="width: 100%;">
+                                            </td>
+                                            <td style="padding: 2px 8px; vertical-align: top;">
+                                                <button type="button" class="button button-small raplsaich-glossary-remove" aria-label="<?php esc_attr_e('Remove this row', 'rapls-ai-chatbot'); ?>">&times;</button>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <p style="margin-top: 8px;">
+                                <button type="button" class="button" id="raplsaich-glossary-add">
+                                    + <?php esc_html_e('Add a term', 'rapls-ai-chatbot'); ?>
+                                </button>
+                                <span class="description" style="margin-left:8px;"><?php esc_html_e('Up to 50 terms.', 'rapls-ai-chatbot'); ?></span>
+                            </p>
+                            <script>
+                            (function() {
+                                var maxRows = 50;
+                                document.getElementById('raplsaich-glossary-add').addEventListener('click', function() {
+                                    var body = document.getElementById('raplsaich-glossary-body');
+                                    if (body.querySelectorAll('.raplsaich-glossary-row').length >= maxRows) {
+                                        return;
+                                    }
+                                    var tr = document.createElement('tr');
+                                    tr.className = 'raplsaich-glossary-row';
+                                    tr.innerHTML =
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><input type="text" name="raplsaich_settings[glossary][term][]" maxlength="100" class="regular-text" style="width: 100%;"></td>' +
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><input type="text" name="raplsaich_settings[glossary][notes][]" maxlength="300" class="large-text" style="width: 100%;"></td>' +
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><button type="button" class="button button-small raplsaich-glossary-remove">&times;</button></td>';
+                                    body.appendChild(tr);
+                                });
+                                document.getElementById('raplsaich-glossary-body').addEventListener('click', function(e) {
+                                    if (!e.target.classList.contains('raplsaich-glossary-remove')) return;
+                                    var rows = this.querySelectorAll('.raplsaich-glossary-row');
+                                    if (rows.length <= 1) {
+                                        var fields = e.target.closest('tr').querySelectorAll('input');
+                                        fields.forEach(function(f) { f.value = ''; });
+                                        return;
+                                    }
+                                    e.target.closest('tr').remove();
+                                });
+                            })();
+                            </script>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('API Quota Error Message', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <input type="text" name="raplsaich_settings[quota_error_message]"

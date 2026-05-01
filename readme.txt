@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.6
+Stable tag: 1.7.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -457,6 +457,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 == Changelog ==
 
+= 1.7.0 =
+* Added: Glossary (proper-noun protection list) — register up to 50 terms (product names, service names, brand names, words that take on a different meaning when translated) so the AI keeps them verbatim across all reply languages. Optional per-row Notes field for free-form per-language instructions (e.g. "Always render as Staff Perks in English, 员工福利 in Chinese"). Toggleable on/off in Chat Settings
+* Added: New `raplsaich_inject_glossary` filter callback (priority 98) on the existing `raplsaich_system_prompt` chain — applies to all surfaces that use the filter (REST `/chat`, Pro regenerate / suggestions / LINE / MCP tools), so the glossary is enforced consistently regardless of how the conversation is triggered
+
 = 1.6.6 =
 * Added: Optional "Fixed reply" field on each preset question row. When set, tapping the chip renders the configured reply instantly with no AI call (zero token cost, no AI provider latency, fully controllable wording). Empty field keeps the existing behavior (forwards the question to the AI). Mix per row — common FAQs can be canned, edge cases can stay AI-driven
 * Added: New REST endpoint `POST /preset-canned` that persists the canned exchange to the conversation history (when save_history is on) and tags the user message with `metadata.preset_index` + `metadata.preset_canned = true`, so Pro analytics still counts the click and the conversation shows up in the admin Conversations list
@@ -711,6 +715,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 
 
 == Upgrade Notice ==
+
+= 1.7.0 =
+New Glossary feature protects product / brand / service names from mistranslation across all 13 supported reply languages. Especially recommended for multilingual sites.
 
 = 1.6.0 =
 Milestone release: current-date awareness, channel tracking, decluttered Conversations admin, and infrastructure to keep LINE answers in parity with Web. Recommended for everyone.

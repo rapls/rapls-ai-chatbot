@@ -628,6 +628,15 @@ class RAPLSAICH_Admin {
             $sanitized['preset_questions']            = $existing['preset_questions'] ?? [];
         }
 
+        // Glossary (Chat Settings tab) — proper nouns protected from mistranslation.
+        if ($settings_page_submitted) {
+            $sanitized['glossary_enabled'] = !empty($input['glossary_enabled']);
+            $sanitized['glossary']         = self::sanitize_glossary($input['glossary'] ?? []);
+        } else {
+            $sanitized['glossary_enabled'] = $existing['glossary_enabled'] ?? false;
+            $sanitized['glossary']         = $existing['glossary'] ?? [];
+        }
+
         // MCP settings (AI Settings form — use _settings_page sentinel, not ai_provider which is also in crawler)
         if ($settings_page_submitted) {
             $sanitized['mcp_enabled'] = !empty($input['mcp_enabled']);
@@ -722,6 +731,64 @@ class RAPLSAICH_Admin {
             }
             $out[] = $entry;
             if (count($out) >= 10) {
+                break;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Sanitize glossary entries (proper-noun protection list).
+     *
+     * Each entry has a required `term` (the verbatim word/phrase the AI must
+     * not translate or alter) and an optional `notes` field (free-form
+     * instruction shown to the model, e.g. "EN: Staff Perks, ZH: 员工福利").
+     * Up to 50 entries; term ≤ 100 chars; notes ≤ 300 chars.
+     *
+     * @param mixed $input
+     * @return array<int,array{term:string,notes?:string}>
+     */
+    public static function sanitize_glossary($input): array {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        if (isset($input['term']) && is_array($input['term'])) {
+            $terms = array_values($input['term']);
+            $notes = isset($input['notes']) && is_array($input['notes'])
+                ? array_values($input['notes'])
+                : [];
+            $rows = [];
+            $count = max(count($terms), count($notes));
+            for ($i = 0; $i < $count; $i++) {
+                $rows[] = [
+                    'term'  => $terms[$i] ?? '',
+                    'notes' => $notes[$i] ?? '',
+                ];
+            }
+            $input = $rows;
+        }
+
+        $out = [];
+        foreach ($input as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $term = function_exists('mb_substr')
+                ? mb_substr(trim((string) ($row['term'] ?? '')), 0, 100)
+                : substr(trim((string) ($row['term'] ?? '')), 0, 100);
+            $notes = function_exists('mb_substr')
+                ? mb_substr(trim((string) ($row['notes'] ?? '')), 0, 300)
+                : substr(trim((string) ($row['notes'] ?? '')), 0, 300);
+            if ($term === '') {
+                continue;
+            }
+            $entry = ['term' => sanitize_text_field($term)];
+            if ($notes !== '') {
+                $entry['notes'] = sanitize_text_field($notes);
+            }
+            $out[] = $entry;
+            if (count($out) >= 50) {
                 break;
             }
         }
@@ -2562,6 +2629,10 @@ class RAPLSAICH_Admin {
             'preset_questions_enabled'    => false,
             'preset_questions_persistent' => false, // when true, also show after every bot reply
             'preset_questions'            => [],
+
+            // Glossary (proper nouns / brand terms protected from mistranslation)
+            'glossary_enabled' => false,
+            'glossary'         => [],
 
             // Page Visibility
             'badge_show_on_home'    => true,

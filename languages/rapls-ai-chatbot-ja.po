@@ -7669,3 +7669,43 @@ msgstr "入力すると、AI を呼ばずにこのテキストを即座にボッ
 #:#: templates/admin/settings.php
 msgid "Leave empty to use AI. Fill in to bypass AI with this text."
 msgstr "空欄なら AI が応答。入力すると AI をスキップしてこのテキストを返します。"
+
+#:#: templates/admin/settings.php
+msgid "Glossary (Proper Nouns)"
+msgstr "用語集 (固有名詞)"
+
+#:#: templates/admin/settings.php
+msgid "Protect listed terms from translation or rewording"
+msgstr "登録した用語を翻訳・言い換えから保護する"
+
+#:#: templates/admin/settings.php
+msgid "Useful for product names, service names, brand names, and words that take on a different meaning when translated. The AI is instructed to keep these terms verbatim. Optionally provide per-language replacements in the Notes field."
+msgstr "商品名、サービス名、ブランド名、翻訳すると別の意味になってしまう語に有効です。AI に対して、これらの用語をそのまま保持するよう指示します。備考欄に言語別の指定訳を任意で入力できます。"
+
+#:#: templates/admin/settings.php
+msgid "Term (kept verbatim)"
+msgstr "用語 (そのまま保持)"
+
+#:#: templates/admin/settings.php
+msgid "Notes (optional)"
+msgstr "備考 (任意)"
+
+#:#: templates/admin/settings.php
+msgid "e.g. \"Always render as Staff Perks in English, 员工福利 in Chinese\""
+msgstr "例:「英語では Staff Perks、中国語では 员工福利 と表記すること」"
+
+#:#: templates/admin/settings.php
+msgid "e.g. Rapls Works"
+msgstr "例: Rapls Works"
+
+#:#: templates/admin/settings.php
+msgid "Leave empty to keep verbatim in every language"
+msgstr "空欄ならどの言語でもそのまま保持されます"
+
+#:#: templates/admin/settings.php
+msgid "Add a term"
+msgstr "用語を追加"
+
+#:#: templates/admin/settings.php
+msgid "Up to 50 terms."
+msgstr "最大 50 件まで登録できます。"
