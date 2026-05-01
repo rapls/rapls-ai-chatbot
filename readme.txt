@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,11 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.7.1 =
+* Added: chatbot.js support for hierarchical preset chips — when a preset item carries a `children` array, the chip renders as a group with a "▸" suffix; tapping it reveals the child chips with a "← back" chip to return. Free's flat presets are unchanged
+* Added: REST `/preset-canned` validation now also accepts canned-reply clicks coming from Pro 1.6.0+ hierarchical preset groups
+* Changed: CSS for preset chips gains group/back variants (filled chip for groups, dashed-border chip for back)
 
 = 1.7.0 =
 * Added: Glossary (proper-noun protection list) — register up to 50 terms (product names, service names, brand names, words that take on a different meaning when translated) so the AI keeps them verbatim across all reply languages. Optional per-row Notes field for free-form per-language instructions (e.g. "Always render as Staff Perks in English, 员工福利 in Chinese"). Toggleable on/off in Chat Settings

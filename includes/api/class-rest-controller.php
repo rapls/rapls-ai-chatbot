@@ -1712,9 +1712,33 @@ class RAPLSAICH_REST_Controller {
         }
 
         // Verify the click matches a real preset row to avoid logging
-        // arbitrary fabricated entries via the API.
+        // arbitrary fabricated entries via the API. Two modes:
+        //   1. Flat presets — index points into preset_questions[] and the
+        //      row must have a fixed_response.
+        //   2. Hierarchical presets (Pro) — index points to a child within
+        //      one of the configured groups; we accept the click if any
+        //      group has a child at that index with a fixed_response.
         $presets = is_array($settings['preset_questions'] ?? null) ? $settings['preset_questions'] : [];
-        if (!isset($presets[$preset_index]) || empty($presets[$preset_index]['fixed_response'])) {
+        $valid = isset($presets[$preset_index]) && !empty($presets[$preset_index]['fixed_response']);
+
+        if (!$valid) {
+            $ext = function_exists('raplsaich_get_ext_settings') ? raplsaich_get_ext_settings($settings) : [];
+            if (!empty($ext['hierarchical_presets_enabled']) && !empty($ext['hierarchical_presets']) && is_array($ext['hierarchical_presets'])) {
+                foreach ($ext['hierarchical_presets'] as $group) {
+                    if (!is_array($group) || empty($group['children']) || !is_array($group['children'])) {
+                        continue;
+                    }
+                    if (isset($group['children'][$preset_index])
+                        && is_array($group['children'][$preset_index])
+                        && !empty($group['children'][$preset_index]['fixed_response'])) {
+                        $valid = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$valid) {
             return new WP_REST_Response(['success' => false, 'error_code' => 'preset_not_found'], 400);
         }
 

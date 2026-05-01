@@ -902,9 +902,27 @@
             for (var i = 0; i < presets.length; i++) {
                 (function(item, idx) {
                     var label = (item && item.label) ? String(item.label) : '';
+                    if (!label) return;
+                    // Hierarchical mode (Pro 1.6.0+): item has a children array.
+                    // Tap reveals the children with a back button to return.
+                    var children = (item && Array.isArray(item.children)) ? item.children : null;
+                    if (children && children.length) {
+                        var groupBtn = document.createElement('button');
+                        groupBtn.type = 'button';
+                        groupBtn.className = 'chatbot-preset-btn chatbot-preset-btn--group';
+                        groupBtn.textContent = label + ' ▸';
+                        groupBtn.onclick = function() {
+                            if (container.parentNode) container.parentNode.removeChild(container);
+                            self.showPresetChildren(label, children, presets);
+                        };
+                        container.appendChild(groupBtn);
+                        return;
+                    }
+
+                    // Leaf chip (flat preset, or a child of a group).
                     var question = (item && item.question) ? String(item.question) : '';
                     var fixed = (item && item.fixed_response) ? String(item.fixed_response) : '';
-                    if (!label || !question) return;
+                    if (!question) return;
                     var btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'chatbot-preset-btn';
@@ -931,6 +949,67 @@
             }
 
             if (container.children.length === 0) return;
+            this.messagesEl.appendChild(container);
+            this.scrollToBottom();
+        },
+
+        /**
+         * Render the children of a hierarchical preset group, plus a "back"
+         * chip that returns to the top-level groups. Children behave like
+         * normal flat presets — they can submit a question to the AI or
+         * carry a fixed_response for instant canned replies.
+         */
+        showPresetChildren: function(parentLabel, children, parentList) {
+            var self = this;
+            if (!this.messagesEl) return;
+            var container = document.createElement('div');
+            container.className = 'chatbot-preset-questions chatbot-preset-questions--children';
+
+            // Back chip: re-render the original groups.
+            var backBtn = document.createElement('button');
+            backBtn.type = 'button';
+            backBtn.className = 'chatbot-preset-btn chatbot-preset-btn--back';
+            backBtn.textContent = '← ' + parentLabel;
+            backBtn.onclick = function() {
+                if (container.parentNode) container.parentNode.removeChild(container);
+                // Restore the parent menu by temporarily swapping the config
+                // value back to the full list and calling showPresetQuestions.
+                var saved = self.config.preset_questions;
+                self.config.preset_questions = parentList;
+                self.showPresetQuestions();
+                self.config.preset_questions = saved;
+            };
+            container.appendChild(backBtn);
+
+            for (var i = 0; i < children.length; i++) {
+                (function(child, idx) {
+                    var label = (child && child.label) ? String(child.label) : '';
+                    var question = (child && child.question) ? String(child.question) : '';
+                    var fixed = (child && child.fixed_response) ? String(child.fixed_response) : '';
+                    if (!label || !question) return;
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'chatbot-preset-btn';
+                    btn.textContent = label;
+                    btn.onclick = function() {
+                        if (container.parentNode) container.parentNode.removeChild(container);
+                        // Hierarchical analytics: v1 reports just the child
+                        // index. Pro analytics shows it under the parent label
+                        // when present in the conversation context. A richer
+                        // group/child path attribution can land in Pro later
+                        // without changing this client behaviour.
+                        if (fixed) {
+                            self.showPresetCannedReply(idx, question, fixed);
+                        } else {
+                            self._lastPresetIndex = idx;
+                            if (self.inputTextarea) self.inputTextarea.value = question;
+                            self.handleSubmit();
+                        }
+                    };
+                    container.appendChild(btn);
+                })(children[i], i);
+            }
+
             this.messagesEl.appendChild(container);
             this.scrollToBottom();
         },
