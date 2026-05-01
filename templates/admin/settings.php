@@ -642,11 +642,17 @@ if (!defined('ABSPATH')) {
                                 $preset_rows = [['label' => '', 'question' => '']];
                             }
                             ?>
-                            <table class="raplsaich-presets-table" style="margin-top: 10px; border-collapse: collapse; width: 100%; max-width: 900px;">
+                            <table class="raplsaich-presets-table" style="margin-top: 10px; border-collapse: collapse; width: 100%;">
                                 <thead>
                                     <tr>
-                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600; width: 200px;"><?php esc_html_e('Preset button label', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600; width: 180px;"><?php esc_html_e('Preset button label', 'rapls-ai-chatbot'); ?></th>
                                         <th style="text-align: left; padding: 4px 8px; font-weight: 600;"><?php esc_html_e('Question sent to the bot', 'rapls-ai-chatbot'); ?></th>
+                                        <th style="text-align: left; padding: 4px 8px; font-weight: 600;">
+                                            <?php esc_html_e('Fixed reply (optional)', 'rapls-ai-chatbot'); ?>
+                                            <span class="description" style="display:block;font-weight:400;font-size:11px;color:#646970;">
+                                                <?php esc_html_e('When set, the bot replies with this text instantly — no AI call, no token cost.', 'rapls-ai-chatbot'); ?>
+                                            </span>
+                                        </th>
                                         <th style="width: 32px;"></th>
                                     </tr>
                                 </thead>
@@ -668,6 +674,14 @@ if (!defined('ABSPATH')) {
                                                     placeholder="<?php esc_attr_e('e.g. Could you tell me about the pricing plans?', 'rapls-ai-chatbot'); ?>"
                                                     class="large-text"
                                                     style="width: 100%; resize: vertical; min-height: 52px;"><?php echo esc_textarea($row['question'] ?? ''); ?></textarea>
+                                            </td>
+                                            <td style="padding: 2px 8px; vertical-align: top;">
+                                                <textarea name="raplsaich_settings[preset_questions][fixed_response][]"
+                                                    rows="2"
+                                                    maxlength="1000"
+                                                    placeholder="<?php esc_attr_e('Leave empty to use AI. Fill in to bypass AI with this text.', 'rapls-ai-chatbot'); ?>"
+                                                    class="large-text"
+                                                    style="width: 100%; resize: vertical; min-height: 52px;"><?php echo esc_textarea($row['fixed_response'] ?? ''); ?></textarea>
                                             </td>
                                             <td style="padding: 2px 8px; vertical-align: top;">
                                                 <button type="button" class="button button-small raplsaich-presets-remove" aria-label="<?php esc_attr_e('Remove this row', 'rapls-ai-chatbot'); ?>">&times;</button>
@@ -704,6 +718,7 @@ if (!defined('ABSPATH')) {
                                     tr.innerHTML =
                                         '<td style="padding: 2px 8px; vertical-align: top;"><input type="text" name="raplsaich_settings[preset_questions][label][]" maxlength="40" class="regular-text" style="width: 100%;"></td>' +
                                         '<td style="padding: 2px 8px; vertical-align: top;"><textarea name="raplsaich_settings[preset_questions][question][]" rows="2" maxlength="200" class="large-text" style="width: 100%; resize: vertical; min-height: 52px;"></textarea></td>' +
+                                        '<td style="padding: 2px 8px; vertical-align: top;"><textarea name="raplsaich_settings[preset_questions][fixed_response][]" rows="2" maxlength="1000" class="large-text" style="width: 100%; resize: vertical; min-height: 52px;"></textarea></td>' +
                                         '<td style="padding: 2px 8px; vertical-align: top;"><button type="button" class="button button-small raplsaich-presets-remove">&times;</button></td>';
                                     body.appendChild(tr);
                                 });

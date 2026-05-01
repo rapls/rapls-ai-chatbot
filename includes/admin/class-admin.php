@@ -670,19 +670,23 @@ class RAPLSAICH_Admin {
             return [];
         }
 
-        // Repeater form posts as ['label' => [...], 'question' => [...]].
+        // Repeater form posts as ['label' => [...], 'question' => [...], 'fixed_response' => [...]].
         // Re-shape into row-oriented pairs.
         if (isset($input['label']) && is_array($input['label'])) {
             $labels    = array_values($input['label']);
             $questions = isset($input['question']) && is_array($input['question'])
                 ? array_values($input['question'])
                 : [];
+            $fixed_responses = isset($input['fixed_response']) && is_array($input['fixed_response'])
+                ? array_values($input['fixed_response'])
+                : [];
             $rows = [];
-            $count = max(count($labels), count($questions));
+            $count = max(count($labels), count($questions), count($fixed_responses));
             for ($i = 0; $i < $count; $i++) {
                 $rows[] = [
-                    'label'    => $labels[$i]    ?? '',
-                    'question' => $questions[$i] ?? '',
+                    'label'          => $labels[$i]          ?? '',
+                    'question'       => $questions[$i]       ?? '',
+                    'fixed_response' => $fixed_responses[$i] ?? '',
                 ];
             }
             $input = $rows;
@@ -699,13 +703,24 @@ class RAPLSAICH_Admin {
             $question = function_exists('mb_substr')
                 ? mb_substr(trim((string) ($row['question'] ?? '')), 0, 200)
                 : substr(trim((string) ($row['question'] ?? '')), 0, 200);
+            // Optional: when set, the bot replies with this exact text instead
+            // of going to the AI provider. Lets admins build canned answers
+            // for common questions (no token cost, instant reply).
+            $fixed_response = function_exists('mb_substr')
+                ? mb_substr(trim((string) ($row['fixed_response'] ?? '')), 0, 1000)
+                : substr(trim((string) ($row['fixed_response'] ?? '')), 0, 1000);
             if ($label === '' || $question === '') {
                 continue;
             }
-            $out[] = [
+            $entry = [
                 'label'    => sanitize_text_field($label),
                 'question' => sanitize_text_field($question),
             ];
+            if ($fixed_response !== '') {
+                // sanitize_textarea_field preserves line breaks but strips tags.
+                $entry['fixed_response'] = sanitize_textarea_field($fixed_response);
+            }
+            $out[] = $entry;
             if (count($out) >= 10) {
                 break;
             }

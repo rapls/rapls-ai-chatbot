@@ -903,6 +903,7 @@
                 (function(item, idx) {
                     var label = (item && item.label) ? String(item.label) : '';
                     var question = (item && item.question) ? String(item.question) : '';
+                    var fixed = (item && item.fixed_response) ? String(item.fixed_response) : '';
                     if (!label || !question) return;
                     var btn = document.createElement('button');
                     btn.type = 'button';
@@ -912,10 +913,18 @@
                         // Remove the chips before submitting so they don't
                         // come back on the next render.
                         if (container.parentNode) container.parentNode.removeChild(container);
-                        // Tag the request so Pro analytics can attribute the click.
-                        self._lastPresetIndex = idx;
-                        if (self.inputTextarea) self.inputTextarea.value = question;
-                        self.handleSubmit();
+                        if (fixed) {
+                            // Canned-reply mode: render the user's question and
+                            // the admin-defined reply directly, no AI call,
+                            // no token cost. Still report the preset click to
+                            // the server so Pro analytics counts it.
+                            self.showPresetCannedReply(idx, question, fixed);
+                        } else {
+                            // Standard mode: forward to AI as a normal message.
+                            self._lastPresetIndex = idx;
+                            if (self.inputTextarea) self.inputTextarea.value = question;
+                            self.handleSubmit();
+                        }
                     };
                     container.appendChild(btn);
                 })(presets[i], i);
@@ -924,6 +933,37 @@
             if (container.children.length === 0) return;
             this.messagesEl.appendChild(container);
             this.scrollToBottom();
+        },
+
+        /**
+         * Render a preset canned-reply turn without involving the AI.
+         * Shows the user's question, then the admin-defined fixed reply.
+         * Logs the click to the server so Pro analytics still counts it
+         * (and so the conversation is persisted in history when save_history
+         * is on).
+         */
+        showPresetCannedReply: function(index, question, fixedReply) {
+            var self = this;
+            this.addMessage('user', question);
+            this.addMessage('bot', fixedReply);
+            // Best-effort log: the dedicated /preset-canned endpoint stores
+            // the user message + canned reply in the conversation. We don't
+            // block UI on the response.
+            if (this.sessionId) {
+                this.apiRequest('POST', '/preset-canned', {
+                    session_id: this.sessionId,
+                    preset_index: index,
+                    question: question,
+                    reply: fixedReply,
+                    page_url: window.location.href,
+                    bot_id: this.config.bot_id || 'default'
+                }).catch(function() {
+                    // Logging failure shouldn't disrupt the visitor's view.
+                    if (self.config.debug) {
+                        console.warn('[RAPLSAICH] Preset canned-reply log failed');
+                    }
+                });
+            }
         },
 
         /**

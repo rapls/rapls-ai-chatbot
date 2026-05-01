@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.6.5
+Stable tag: 1.6.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.6.6 =
+* Added: Optional "Fixed reply" field on each preset question row. When set, tapping the chip renders the configured reply instantly with no AI call (zero token cost, no AI provider latency, fully controllable wording). Empty field keeps the existing behavior (forwards the question to the AI). Mix per row — common FAQs can be canned, edge cases can stay AI-driven
+* Added: New REST endpoint `POST /preset-canned` that persists the canned exchange to the conversation history (when save_history is on) and tags the user message with `metadata.preset_index` + `metadata.preset_canned = true`, so Pro analytics still counts the click and the conversation shows up in the admin Conversations list
 
 = 1.6.5 =
 * Fixed: WordPress.org Plugin Check rejected 1.6.4 with "Description: A maximum of 150 characters is supported." — the short description had grown to 152 characters when the 13-language auto-reply pitch was added in 1.6.1. Trimmed to 130 characters by dropping filler words ("for WordPress", "and") without losing keyword coverage

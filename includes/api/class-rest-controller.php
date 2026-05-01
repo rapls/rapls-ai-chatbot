@@ -332,6 +332,49 @@ class RAPLSAICH_REST_Controller {
             ],
         ]);
 
+        // Preset canned-reply log: when the user taps a preset whose
+        // fixed_response is set, the frontend renders the reply locally
+        // (no AI call) and posts here so the conversation still gets stored
+        // and Pro analytics still counts the click.
+        register_rest_route($this->namespace, '/preset-canned', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'log_preset_canned_reply'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'preset_index' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                ],
+                'question' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'reply' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_textarea_field',
+                ],
+                'page_url' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'esc_url_raw',
+                ],
+                'bot_id' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'default'           => 'default',
+                    'sanitize_callback' => 'sanitize_key',
+                ],
+            ],
+        ]);
+
         // Get conversation history
         register_rest_route($this->namespace, '/history/(?P<session_id>[a-zA-Z0-9-]+)', [
             'methods'             => 'GET',
@@ -1636,6 +1679,72 @@ class RAPLSAICH_REST_Controller {
             }
             return new WP_REST_Response($body, 500);
         }
+    }
+
+    /**
+     * Log a preset canned-reply turn.
+     *
+     * Called when the visitor taps a preset button whose fixed_response is set:
+     * the frontend rendered the reply locally (zero AI cost), but we still
+     * want the conversation in history and the click in Pro analytics. This
+     * persists user message + assistant reply to the DB exactly as if the
+     * AI had generated the reply, then tags the user message with the
+     * preset_index in metadata so analytics can attribute it.
+     */
+    public function log_preset_canned_reply(WP_REST_Request $request): WP_REST_Response {
+        $session_id   = $this->get_session_id($request);
+        $preset_index = (int) $request->get_param('preset_index');
+        $question     = (string) $request->get_param('question');
+        $reply        = (string) $request->get_param('reply');
+        $page_url     = (string) ($request->get_param('page_url') ?? '');
+        $bot_id       = sanitize_key((string) ($request->get_param('bot_id') ?? 'default'));
+
+        if ($session_id === '' || $question === '' || $reply === '') {
+            return new WP_REST_Response(['success' => false, 'error_code' => 'invalid_payload'], 400);
+        }
+
+        // Honour the global save_history setting — if conversations are off,
+        // there's nothing to persist (and Pro analytics has nothing to read
+        // either; that's the existing trade-off documented in 1.5.x).
+        $settings = get_option('raplsaich_settings', []);
+        if (empty($settings['save_history'])) {
+            return new WP_REST_Response(['success' => true, 'persisted' => false], 200);
+        }
+
+        // Verify the click matches a real preset row to avoid logging
+        // arbitrary fabricated entries via the API.
+        $presets = is_array($settings['preset_questions'] ?? null) ? $settings['preset_questions'] : [];
+        if (!isset($presets[$preset_index]) || empty($presets[$preset_index]['fixed_response'])) {
+            return new WP_REST_Response(['success' => false, 'error_code' => 'preset_not_found'], 400);
+        }
+
+        $conversation = RAPLSAICH_Conversation::get_or_create($session_id, [
+            'page_url' => $page_url,
+            'bot_id'   => $bot_id,
+        ]);
+        if (empty($conversation['id'])) {
+            return new WP_REST_Response(['success' => false, 'error_code' => 'conversation_failed'], 500);
+        }
+        $conversation_id = (int) $conversation['id'];
+
+        RAPLSAICH_Message::create([
+            'conversation_id' => $conversation_id,
+            'role'            => 'user',
+            'content'         => $question,
+            'metadata'        => ['preset_index' => $preset_index, 'preset_canned' => true],
+        ]);
+        RAPLSAICH_Message::create([
+            'conversation_id' => $conversation_id,
+            'role'            => 'assistant',
+            'content'         => $reply,
+            'tokens_used'     => 0,
+            'input_tokens'    => 0,
+            'output_tokens'   => 0,
+            'ai_provider'     => 'preset',
+            'ai_model'        => 'canned',
+        ]);
+
+        return new WP_REST_Response(['success' => true, 'persisted' => true], 200);
     }
 
     /**
