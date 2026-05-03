@@ -899,14 +899,24 @@
             var container = document.createElement('div');
             container.className = 'chatbot-preset-questions';
 
+            // The welcome-message chip set should stay visible after a click
+            // (the visitor may want to tap a different preset later). The
+            // "after-every-bot-reply" persistent rendering still removes the
+            // chips on click — those re-appear automatically on the next
+            // bot reply, so leaving them around just stacks duplicates.
+            var keepOnClick = !this._hasSentFirstMessage;
+
             for (var i = 0; i < presets.length; i++) {
                 (function(item, idx) {
                     var label = (item && item.label) ? String(item.label) : '';
                     if (!label) return;
                     // Hierarchical mode (Pro 1.6.0+): item has a children array.
-                    // Tap reveals the children with a back button to return.
+                    // Tap reveals the children with a back button to return —
+                    // unless there's exactly one child, in which case we
+                    // render the chip as a flat leaf so the visitor doesn't
+                    // need two taps to send a single question.
                     var children = (item && Array.isArray(item.children)) ? item.children : null;
-                    if (children && children.length) {
+                    if (children && children.length > 1) {
                         var groupBtn = document.createElement('button');
                         groupBtn.type = 'button';
                         groupBtn.className = 'chatbot-preset-btn chatbot-preset-btn--group';
@@ -919,18 +929,27 @@
                         return;
                     }
 
-                    // Leaf chip (flat preset, or a child of a group).
-                    var question = (item && item.question) ? String(item.question) : '';
-                    var fixed = (item && item.fixed_response) ? String(item.fixed_response) : '';
+                    // Leaf chip (flat preset, or a one-child group collapsed
+                    // to flat). When the source is a single-child group we
+                    // pull question/fixed from that single child.
+                    var leaf = (children && children.length === 1) ? children[0] : item;
+                    var question = (leaf && leaf.question) ? String(leaf.question) : '';
+                    var fixed = (leaf && leaf.fixed_response) ? String(leaf.fixed_response) : '';
                     if (!question) return;
                     var btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'chatbot-preset-btn';
                     btn.textContent = label;
                     btn.onclick = function() {
-                        // Remove the chips before submitting so they don't
-                        // come back on the next render.
-                        if (container.parentNode) container.parentNode.removeChild(container);
+                        // Mark this chip as visited (greyed out) when we keep
+                        // the container, otherwise tear the whole chip set
+                        // down so it doesn't pile up across turns.
+                        if (keepOnClick) {
+                            btn.classList.add('is-visited');
+                            btn.disabled = false; // still re-tappable
+                        } else if (container.parentNode) {
+                            container.parentNode.removeChild(container);
+                        }
                         if (fixed) {
                             // Canned-reply mode: render the user's question and
                             // the admin-defined reply directly, no AI call,
@@ -1499,14 +1518,29 @@
             // "persistent presets after every bot reply" feature so the
             // initial welcome render doesn't render chips twice.
             if (role === 'user') {
+                var wasFirst = !this._hasSentFirstMessage;
                 this._hasSentFirstMessage = true;
-                // Remove any stale preset chips (welcome chips that the user
-                // ignored, or chips from a previous bot reply) so chips don't
-                // stack between turns when persistent mode is on.
+                // Remove any stale persistent-mode preset chips (chips that
+                // were re-rendered under a previous bot reply). The welcome
+                // chip set, by contrast, is intentionally left in place so
+                // visitors can scroll up and tap a different preset later.
+                // Welcome chips carry no extra modifier class; persistent /
+                // children chips are tagged so we can keep welcome alone.
                 if (this.messagesEl) {
-                    var stale = this.messagesEl.querySelectorAll('.chatbot-preset-questions');
+                    var stale = this.messagesEl.querySelectorAll(
+                        '.chatbot-preset-questions--persistent, .chatbot-preset-questions--children'
+                    );
                     for (var s = 0; s < stale.length; s++) {
                         if (stale[s].parentNode) stale[s].parentNode.removeChild(stale[s]);
+                    }
+                }
+                // Mark welcome chips as "past" once the visitor sends — they
+                // remain visible but get a subtle grey treatment so it's
+                // clear they're an earlier suggestion, not a current prompt.
+                if (wasFirst && this.messagesEl) {
+                    var welcomeChips = this.messagesEl.querySelectorAll('.chatbot-preset-questions');
+                    for (var w = 0; w < welcomeChips.length; w++) {
+                        welcomeChips[w].classList.add('is-past');
                     }
                 }
             }
@@ -1839,10 +1873,18 @@
             // bot reply when the admin has enabled "show after every reply".
             // The welcome-message render in showWelcomeMessage() handles the
             // first appearance; this branch handles every subsequent one.
+            // Tag the container with --persistent so the next user-send sweep
+            // can clean it up without touching the welcome chips.
             if (role === 'bot' && this.config.preset_questions_persistent
                 && this._hasSentFirstMessage
                 && this.config.preset_questions && this.config.preset_questions.length) {
                 this.showPresetQuestions();
+                if (this.messagesEl) {
+                    var fresh = this.messagesEl.querySelectorAll('.chatbot-preset-questions');
+                    if (fresh.length) {
+                        fresh[fresh.length - 1].classList.add('chatbot-preset-questions--persistent');
+                    }
+                }
             }
 
             // スクロール

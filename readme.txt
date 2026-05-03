@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,11 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.7.2 =
+* Changed: Preset chips now use a neutral grey colour scheme distinct from user-message bubbles, so visitors no longer mistake a preset chip for one of their own past messages
+* Changed: Welcome-message preset chips stay visible after a click instead of being removed — visitors can scroll back and tap a different preset later. Tapped chips are visually marked as "visited" (semi-transparent). The persistent "show under every reply" mode is unchanged: those re-render naturally on each bot reply
+* Changed: Hierarchical preset groups containing only one child are now rendered as flat chips so visitors don't need two taps to send a single question
 
 = 1.7.1 =
 * Added: chatbot.js support for hierarchical preset chips — when a preset item carries a `children` array, the chip renders as a group with a "▸" suffix; tapping it reveals the child chips with a "← back" chip to return. Free's flat presets are unchanged
