@@ -1467,11 +1467,13 @@
     color: #333;
 }
 
-.raplsaich-chatbot.theme-simple .chatbot-close {
+.raplsaich-chatbot.theme-simple .chatbot-close,
+.raplsaich-chatbot.theme-simple .chatbot-new-conversation {
     color: #666;
 }
 
-.raplsaich-chatbot.theme-simple .chatbot-close:hover {
+.raplsaich-chatbot.theme-simple .chatbot-close:hover,
+.raplsaich-chatbot.theme-simple .chatbot-new-conversation:hover {
     color: #333;
     background: rgba(0, 0, 0, 0.05);
 }
@@ -1555,7 +1557,8 @@
     color: #333;
 }
 
-.raplsaich-chatbot.theme-light .chatbot-close {
+.raplsaich-chatbot.theme-light .chatbot-close,
+.raplsaich-chatbot.theme-light .chatbot-new-conversation {
     color: #999;
 }
 
