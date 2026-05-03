@@ -2272,7 +2272,17 @@ class RAPLSAICH_REST_Controller {
         if (!(bool) apply_filters('raplsaich_chatbot_enabled', true)) {
             return false;
         }
-        return $this->has_origin_headers();
+        // Header presence alone is trivially spoofable. Require the
+        // Origin/Referer host to also resolve to one of the allowed site
+        // hosts before letting the callback run. The same-origin and
+        // rate-limit checks inside guard_public_post() still apply
+        // afterwards as defense-in-depth, but moving the host check up here
+        // keeps non-browser clients from reaching the callback at all.
+        if (!$this->has_origin_headers()) {
+            return false;
+        }
+        $origin_check = $this->check_same_origin();
+        return $origin_check === true;
     }
 
     /**
@@ -2388,19 +2398,70 @@ class RAPLSAICH_REST_Controller {
      * @return string HMAC token (hex)
      */
     private function generate_session_token(string $session_id): string {
-        return hash_hmac('sha256', $session_id, wp_salt('auth'));
+        // v2 token: "{session_version}.{iat}.{exp}.{hmac}"
+        // - session_version is the global revocation knob (admin "Reset all
+        //   user sessions"). Bumping it invalidates every outstanding token.
+        // - iat = issued-at unix timestamp.
+        // - exp = expiry unix timestamp (default: iat + ttl).
+        // - hmac is computed over "{version}.{iat}.{exp}.{session_id}" so
+        //   the client cannot tamper with any field without invalidating
+        //   the signature.
+        // Default TTL is 7 days; override via the
+        // raplsaich_session_token_ttl filter (returns seconds, capped to
+        // 30 days hard maximum).
+        $version = (int) get_option('raplsaich_session_version', 1);
+        $ttl     = (int) apply_filters('raplsaich_session_token_ttl', 7 * DAY_IN_SECONDS);
+        if ($ttl < MINUTE_IN_SECONDS) { $ttl = MINUTE_IN_SECONDS; }
+        if ($ttl > 30 * DAY_IN_SECONDS) { $ttl = 30 * DAY_IN_SECONDS; }
+        $iat = time();
+        $exp = $iat + $ttl;
+        $payload = $version . '.' . $iat . '.' . $exp;
+        $hmac = hash_hmac('sha256', $payload . '.' . $session_id, wp_salt('auth'));
+        return $payload . '.' . $hmac;
     }
 
     /**
      * Verify an HMAC-signed session token.
      *
+     * Accepts the v2 expiring format ("{version}.{iat}.{exp}.{hmac}") and
+     * rejects legacy v1 deterministic tokens — those don't carry an
+     * expiry or version stamp, so there's no safe way to honour them
+     * once we ship v2. Clients holding a v1 token will fail this check
+     * and the existing fallback paths (cookie session match, IP+UA
+     * bootstrap) take over; on the next /session call the client gets a
+     * fresh v2 token, transparent to the visitor.
+     *
      * @param string $session_id   Session ID
      * @param string $client_token Token from the client
-     * @return bool True if the token is valid
+     * @return bool True if the token is valid AND not expired AND from
+     *              the current session_version.
      */
     private function verify_session_token(string $session_id, string $client_token): bool {
-        $expected = $this->generate_session_token($session_id);
-        return hash_equals($expected, $client_token);
+        $parts = explode('.', $client_token);
+        if (count($parts) !== 4) {
+            return false; // legacy v1 (single hex string) or malformed — reject
+        }
+        list($version, $iat, $exp, $client_hmac) = $parts;
+        if (!ctype_digit($version) || !ctype_digit($iat) || !ctype_digit($exp)) {
+            return false;
+        }
+        // Expiry / clock-skew tolerance: 60 seconds future, 0 grace past.
+        $now = time();
+        if ((int) $exp < $now) {
+            return false;
+        }
+        if ((int) $iat > $now + 60) {
+            return false;
+        }
+        // Reject tokens issued under an older session_version (admin
+        // "Reset all user sessions" bumps this counter).
+        $current_version = (int) get_option('raplsaich_session_version', 1);
+        if ((int) $version !== $current_version) {
+            return false;
+        }
+        $expected_payload = $version . '.' . $iat . '.' . $exp;
+        $expected_hmac    = hash_hmac('sha256', $expected_payload . '.' . $session_id, wp_salt('auth'));
+        return hash_equals($expected_hmac, $client_hmac);
     }
 
     /**

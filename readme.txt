@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.7.4
+Stable tag: 1.7.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,10 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.7.5 =
+* Security: Session tokens issued to the chat widget now carry an expiry and a session-version stamp. Previous v1 tokens were a deterministic HMAC of the session id alone, with no TTL or revocation channel — once leaked, they remained valid until the underlying session row was deleted. The new v2 format is `version.iat.exp.hmac`, signed over `version.iat.exp.session_id`. Default TTL is 7 days (filterable via `raplsaich_session_token_ttl`, capped at 30 days). Bumping `raplsaich_session_version` (the existing "Reset all user sessions" admin button) now also revokes every outstanding token. Old v1 tokens are rejected at verification time; clients automatically receive a v2 token on the next `/session` call, so the visitor experience is unchanged
+* Security: Offline-message endpoint's permission callback now verifies the request comes from one of the allowed site hosts (Origin/Referer match), not just that any Origin/Referer header is present. The internal `guard_public_post()` same-origin check is kept as defense-in-depth, but non-browser clients with spoofed headers can no longer reach the callback at all
 
 = 1.7.4 =
 * Fixed: New "Start a new conversation" header button (1.7.3) was hard-to-read white-on-white in the Simple and Light themes. The Simple/Light theme overrides now apply to both header buttons (close + new-conversation) instead of only close.
