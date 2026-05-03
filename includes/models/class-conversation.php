@@ -167,14 +167,15 @@ class RAPLSAICH_Conversation {
         $table = self::get_table_name();
 
         $defaults = [
-            'per_page'  => 20,
-            'page'      => 1,
-            'status'    => '',
-            'date_from' => '',
-            'date_to'   => '',
-            'orderby'   => 'created_at',
-            'order'     => 'DESC',
-            'search'    => '',
+            'per_page'        => 20,
+            'page'            => 1,
+            'status'          => '',
+            'date_from'       => '',
+            'date_to'         => '',
+            'orderby'         => 'created_at',
+            'order'           => 'DESC',
+            'search'          => '',
+            'conversation_id' => 0,
         ];
 
         $args = wp_parse_args($args, $defaults);
@@ -183,7 +184,14 @@ class RAPLSAICH_Conversation {
         $where = '1=1';
         $params = [];
 
-        if (!empty($args['status']) && $args['status'] !== 'all') {
+        // Direct ID filter — used by analytics "View Conversation" deep links.
+        // Bypasses status/date defaults (an archived row should still be
+        // reachable when explicitly linked) by going first.
+        $cid = (int) $args['conversation_id'];
+        if ($cid > 0) {
+            $where .= ' AND c.id = %d';
+            $params[] = $cid;
+        } elseif (!empty($args['status']) && $args['status'] !== 'all') {
             $where .= ' AND c.status = %s';
             $params[] = $args['status'];
         } elseif (empty($args['status'])) {
@@ -191,21 +199,41 @@ class RAPLSAICH_Conversation {
             $where .= " AND c.status != 'archived'";
         }
 
-        if (!empty($args['date_from'])) {
-            $where .= ' AND c.created_at >= %s';
-            $params[] = $args['date_from'] . ' 00:00:00';
-        }
-
-        if (!empty($args['date_to'])) {
-            $where .= ' AND c.created_at <= %s';
-            $params[] = $args['date_to'] . ' 23:59:59';
+        if ($cid === 0) {
+            // Date range only applies when not deep-linking to a single id.
+            if (!empty($args['date_from'])) {
+                $where .= ' AND c.created_at >= %s';
+                $params[] = $args['date_from'] . ' 00:00:00';
+            }
+            if (!empty($args['date_to'])) {
+                $where .= ' AND c.created_at <= %s';
+                $params[] = $args['date_to'] . ' 23:59:59';
+            }
         }
 
         $msg_table = raplsaich_validated_table('raplsaich_messages');
 
-        if (!empty($args['search'])) {
-            $where .= " AND c.id IN (SELECT conversation_id FROM {$msg_table} WHERE content LIKE %s)";
-            $params[] = '%' . $wpdb->esc_like($args['search']) . '%';
+        if ($cid === 0 && !empty($args['search'])) {
+            // Resolve which conversation ids match the search string. With
+            // encryption OFF, a plain SQL LIKE on the messages table is fine.
+            // With encryption ON, the `content` column holds ciphertext like
+            // "encg:..." and a LIKE on the plaintext keyword can never match
+            // — we have to fall back to scanning recent rows in PHP after
+            // decryption. The recent-rows cap keeps that bounded; sites with
+            // encryption ON and tens of thousands of messages will only
+            // search the last RAPLSAICH_SEARCH_DECRYPT_LIMIT messages.
+            $matched_ids = self::find_conversation_ids_by_search($args['search']);
+            if (empty($matched_ids)) {
+                // No hits — short-circuit with an impossible id so the rest
+                // of the query stays valid but returns zero rows.
+                $where .= ' AND c.id = 0';
+            } else {
+                $placeholders = implode(',', array_fill(0, count($matched_ids), '%d'));
+                $where .= " AND c.id IN ({$placeholders})";
+                foreach ($matched_ids as $mid) {
+                    $params[] = (int) $mid;
+                }
+            }
         }
 
         $orderby_col = $args['orderby'];
@@ -259,27 +287,44 @@ class RAPLSAICH_Conversation {
         $where = '1=1';
         $params = [];
 
-        if (!empty($args['status']) && $args['status'] !== 'all') {
+        // Mirror get_list()'s filter precedence: a direct conversation_id
+        // bypasses status/date defaults so the link still resolves even
+        // when the conversation is archived or out of the displayed range.
+        $cid = isset($args['conversation_id']) ? (int) $args['conversation_id'] : 0;
+        if ($cid > 0) {
+            $where .= ' AND c.id = %d';
+            $params[] = $cid;
+        } elseif (!empty($args['status']) && $args['status'] !== 'all') {
             $where .= ' AND c.status = %s';
             $params[] = $args['status'];
         } elseif (empty($args['status'])) {
             $where .= " AND c.status != 'archived'";
         }
 
-        if (!empty($args['date_from'])) {
-            $where .= ' AND c.created_at >= %s';
-            $params[] = $args['date_from'] . ' 00:00:00';
+        if ($cid === 0) {
+            if (!empty($args['date_from'])) {
+                $where .= ' AND c.created_at >= %s';
+                $params[] = $args['date_from'] . ' 00:00:00';
+            }
+            if (!empty($args['date_to'])) {
+                $where .= ' AND c.created_at <= %s';
+                $params[] = $args['date_to'] . ' 23:59:59';
+            }
         }
 
-        if (!empty($args['date_to'])) {
-            $where .= ' AND c.created_at <= %s';
-            $params[] = $args['date_to'] . ' 23:59:59';
-        }
-
-        if (!empty($args['search'])) {
-            $msg_table = raplsaich_validated_table('raplsaich_messages');
-            $where .= " AND c.id IN (SELECT conversation_id FROM {$msg_table} WHERE content LIKE %s)";
-            $params[] = '%' . $wpdb->esc_like($args['search']) . '%';
+        if ($cid === 0 && !empty($args['search'])) {
+            // Same encryption-aware path as get_list(). Reuses the helper so
+            // the count and the listed rows always agree about what matched.
+            $matched_ids = self::find_conversation_ids_by_search($args['search']);
+            if (empty($matched_ids)) {
+                $where .= ' AND c.id = 0';
+            } else {
+                $placeholders = implode(',', array_fill(0, count($matched_ids), '%d'));
+                $where .= " AND c.id IN ({$placeholders})";
+                foreach ($matched_ids as $mid) {
+                    $params[] = (int) $mid;
+                }
+            }
         }
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE are safe internal values
@@ -428,6 +473,91 @@ class RAPLSAICH_Conversation {
      *
      * @return string Two-letter ISO 3166-1 alpha-2 code, or '' if unknown.
      */
+    /**
+     * Resolve a search keyword to a list of conversation ids whose messages
+     * contain it.
+     *
+     * Two-phase strategy:
+     *   1. SQL LIKE on the raw `content` column (covers the unencrypted case
+     *      and is also a cheap pre-filter when only some rows are encrypted).
+     *   2. PHP-side decrypt-and-match on the most recent N messages (covers
+     *      the case where everything is ciphertext like "encg:..." and a
+     *      raw LIKE can never hit).
+     *
+     * The decrypt scan is capped to RAPLSAICH_SEARCH_DECRYPT_LIMIT (2000 by
+     * default, filterable) so a site with millions of messages doesn't fan
+     * out. Sites that need a deeper search should run a one-off re-index
+     * (out of scope for this helper).
+     *
+     * Returns deduplicated, ordered conversation ids (most recent first).
+     *
+     * @param string $keyword
+     * @return array<int> conversation ids
+     */
+    private static function find_conversation_ids_by_search(string $keyword): array {
+        global $wpdb;
+        $msg_table = raplsaich_validated_table('raplsaich_messages');
+        if (empty($msg_table)) {
+            return [];
+        }
+
+        $found = [];
+
+        // Phase 1: cheap SQL LIKE on raw content. Matches plaintext rows
+        // and any cipher rows that happen to contain the literal keyword
+        // bytes (rare but harmless).
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $rows = $wpdb->get_col($wpdb->prepare(
+            "SELECT DISTINCT conversation_id FROM `{$msg_table}` WHERE content LIKE %s LIMIT 500",
+            '%' . $wpdb->esc_like($keyword) . '%'
+        ));
+        foreach ((array) $rows as $cid) {
+            $cid = (int) $cid;
+            if ($cid > 0) { $found[$cid] = true; }
+        }
+
+        // Phase 2: scan recent rows in PHP after decryption. Only worth doing
+        // if encryption is in play (otherwise phase 1 already saw everything).
+        $any_encrypted = (bool) $wpdb->get_var(
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            "SELECT 1 FROM `{$msg_table}` WHERE content LIKE 'encg:%' LIMIT 1"
+        );
+
+        if ($any_encrypted) {
+            $limit = (int) apply_filters('raplsaich_search_decrypt_limit', 2000);
+            if ($limit < 100)   { $limit = 100; }
+            if ($limit > 20000) { $limit = 20000; }
+
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $recent = $wpdb->get_results($wpdb->prepare(
+                "SELECT conversation_id, content FROM `{$msg_table}` WHERE content LIKE 'encg:%' ORDER BY id DESC LIMIT %d",
+                $limit
+            ), ARRAY_A);
+
+            $needle = function_exists('mb_strtolower')
+                ? mb_strtolower($keyword)
+                : strtolower($keyword);
+
+            foreach ((array) $recent as $r) {
+                $cid = (int) $r['conversation_id'];
+                if ($cid <= 0 || isset($found[$cid])) { continue; }
+                // Pro hooks into raplsaich_message_content_load to decrypt
+                // ciphertext payloads. With encryption disabled the filter
+                // is a no-op and we never reach here (any_encrypted == false).
+                $plain = (string) apply_filters('raplsaich_message_content_load', (string) $r['content'], []);
+                if ($plain === '' || $plain === (string) $r['content']) { continue; }
+                $hay = function_exists('mb_strtolower')
+                    ? mb_strtolower($plain)
+                    : strtolower($plain);
+                if (strpos($hay, $needle) !== false) {
+                    $found[$cid] = true;
+                }
+            }
+        }
+
+        return array_keys($found);
+    }
+
     private static function detect_country_code(): string {
         // 1. CloudFlare
         if (!empty($_SERVER['HTTP_CF_IPCOUNTRY'])) {

@@ -2310,19 +2310,12 @@ textarea.raplsaich-offline-input {
     opacity: 0.7;
 }
 
-/* Group chip (Pro 1.6.0+ hierarchical presets) — outline filled with the
-   site primary so it reads "tap to reveal more", clearly distinct from the
-   neutral leaf chips above. */
+/* Group chip (Pro 1.6.0+ hierarchical presets) — same neutral palette as
+   the leaf chips so they don't get confused with the visitor's own messages
+   (which use the site primary). The "▸" marker baked into the label by
+   chatbot.js is what signals "tap to reveal more". */
 .chatbot-preset-btn--group {
-    background: var(--raplsaich-primary, #007bff);
-    border-color: var(--raplsaich-primary, #007bff);
-    color: #fff;
-}
-.chatbot-preset-btn--group:hover {
-    background: var(--raplsaich-primary, #007bff);
-    border-color: var(--raplsaich-primary, #007bff);
-    color: #fff;
-    opacity: 0.85;
+    /* Inherits .chatbot-preset-btn neutral grey palette. No overrides. */
 }
 
 /* Back chip in child view — lighter, reads as navigation, not as an answer. */

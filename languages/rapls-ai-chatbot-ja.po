@@ -7737,3 +7737,11 @@ msgstr "新しい会話を始めますか ? このデバイス上の現在のチ
 #:#: templates/admin/settings.php
 msgid "Drag to reorder"
 msgstr "ドラッグして並び替え"
+
+#:#: templates/admin/conversations.php
+msgid "Showing conversation #%d only (deep-linked from analytics). Other filters are temporarily ignored."
+msgstr "会話 #%d のみを表示しています (分析からのディープリンク)。ほかのフィルターは一時的に無視されます。"
+
+#:#: templates/admin/conversations.php
+msgid "Show all conversations"
+msgstr "すべての会話を表示"

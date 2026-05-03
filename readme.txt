@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.7.5
+Stable tag: 1.7.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,11 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.7.6 =
+* Fixed: Conversation list message search returned no hits when AES-256-GCM encryption was on. The search ran a SQL `LIKE` against `messages.content`, but with encryption enabled the column holds `encg:...` ciphertext that can never match a plaintext keyword. The list now also scans the most recent N encrypted messages in PHP after decryption (default 2000, filterable via `raplsaich_search_decrypt_limit`). Plaintext sites keep using the cheaper SQL path.
+* Added: `?conversation_id=N` direct filter on the conversations admin page. Used by Pro analytics' "View Conversation" button so the link always resolves to the target row, regardless of encryption state. An info notice appears at the top showing which conversation is filtered, with a "Show all" link to return to the unfiltered list.
+* Changed: Hierarchical preset group chips (Pro 1.6.0+) now use the same neutral grey palette as their child chips, instead of the site primary colour. Avoids visual confusion with the visitor's own messages (which use the primary). The "▸" marker baked into the label still signals "tap to reveal more".
 
 = 1.7.5 =
 * Security: Session tokens issued to the chat widget now carry an expiry and a session-version stamp. Previous v1 tokens were a deterministic HMAC of the session id alone, with no TTL or revocation channel — once leaked, they remained valid until the underlying session row was deleted. The new v2 format is `version.iat.exp.hmac`, signed over `version.iat.exp.session_id`. Default TTL is 7 days (filterable via `raplsaich_session_token_ttl`, capped at 30 days). Bumping `raplsaich_session_version` (the existing "Reset all user sessions" admin button) now also revokes every outstanding token. Old v1 tokens are rejected at verification time; clients automatically receive a v2 token on the next `/session` call, so the visitor experience is unchanged

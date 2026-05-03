@@ -47,6 +47,21 @@ $is_pro_active = raplsaich_is_pro_active();
         <?php endif; ?>
     </div>
 
+    <?php if (!empty($conversation_id)): ?>
+        <div class="notice notice-info inline" style="margin: 12px 0; padding: 8px 12px;">
+            <p style="margin:0;">
+                <?php
+                printf(
+                    /* translators: %d: conversation id */
+                    esc_html__('Showing conversation #%d only (deep-linked from analytics). Other filters are temporarily ignored.', 'rapls-ai-chatbot'),
+                    (int) $conversation_id
+                );
+                ?>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=' . sanitize_text_field(wp_unslash($_GET['page'] ?? 'raplsaich-conversations')))); ?>" style="margin-left:8px;"><?php esc_html_e('Show all conversations', 'rapls-ai-chatbot'); ?></a>
+            </p>
+        </div>
+    <?php endif; ?>
+
     <!-- Search & Filter -->
     <form method="get" class="raplsaich-conversation-filters" style="display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap;">
         <input type="hidden" name="page" value="<?php echo esc_attr(sanitize_text_field(wp_unslash(// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- admin page display

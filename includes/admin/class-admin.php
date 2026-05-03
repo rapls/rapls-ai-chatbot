@@ -1260,20 +1260,25 @@ class RAPLSAICH_Admin {
         $status_filter = isset($_GET['status']) ? sanitize_text_field(wp_unslash($_GET['status'])) : '';
         $date_from = isset($_GET['date_from']) ? sanitize_text_field(wp_unslash($_GET['date_from'])) : '';
         $date_to = isset($_GET['date_to']) ? sanitize_text_field(wp_unslash($_GET['date_to'])) : '';
+        // Direct conversation id filter — used by analytics "View Conversation"
+        // deep links so the target row always resolves even when encryption
+        // makes ?s= search unreliable.
+        $conversation_id = isset($_GET['conversation_id']) ? absint(wp_unslash($_GET['conversation_id'])) : 0;
 
         $list_args = [
-            'page'      => $page,
-            'per_page'  => 20,
-            'orderby'   => $orderby,
-            'order'     => $order,
-            'search'    => $search,
-            'status'    => $status_filter,
-            'date_from' => $date_from,
-            'date_to'   => $date_to,
+            'page'            => $page,
+            'per_page'        => 20,
+            'orderby'         => $orderby,
+            'order'           => $order,
+            'search'          => $search,
+            'status'          => $status_filter,
+            'date_from'       => $date_from,
+            'date_to'         => $date_to,
+            'conversation_id' => $conversation_id,
         ];
 
         $conversations = RAPLSAICH_Conversation::get_list($list_args);
-        $has_filters = $search !== '' || $status_filter !== '' || $date_from !== '' || $date_to !== '';
+        $has_filters = $search !== '' || $status_filter !== '' || $date_from !== '' || $date_to !== '' || $conversation_id > 0;
         $total = $has_filters ? RAPLSAICH_Conversation::get_filtered_count($list_args) : RAPLSAICH_Conversation::get_count();
 
         // Statistics
