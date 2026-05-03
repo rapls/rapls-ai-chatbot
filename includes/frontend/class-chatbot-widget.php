@@ -290,6 +290,10 @@ class RAPLSAICH_Chatbot_Widget {
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
+            // Whitelisted to '_blank' / '_self' in admin sanitiser.
+            'link_target'         => in_array(($settings['link_target'] ?? '_blank'), ['_blank', '_self'], true)
+                ? $settings['link_target']
+                : '_blank',
             // Preset question chips shown under the welcome message.
             // Pro can override via the raplsaich_frontend_config filter — for
             // multi-bot installs each bot may have its own set.
@@ -339,6 +343,7 @@ class RAPLSAICH_Chatbot_Widget {
                     // are added by Pro via raplsaich_frontend_config filter.
                 ],
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
+                'confirm_new_conversation' => __('Start a new conversation? Current chat history will be cleared on this device.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
                 'suggestions_title'      => __('You might also ask:', 'rapls-ai-chatbot'),
                 'good_response'          => __('Good response', 'rapls-ai-chatbot'),

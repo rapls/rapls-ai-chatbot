@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,11 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.7.3 =
+* Added: New "Link Open Behavior" setting under Display Settings — choose between opening reply links in a new window/tab (existing behavior) or in the same window. Applies to all link types in chat replies (knowledge base sources, web sources, content cards, action buttons, product cards, markdown links, raw URLs).
+* Added: "Start a new conversation" button in the chat header (circular-arrow icon, next to Close). Tapping it confirms once, then drops the visitor's local session and re-renders the welcome message. Useful for visitors who want to test a fresh question without prior context, and for admins testing the bot. Server-side conversation history is kept intact for admin review.
+* Added: Drag-and-drop reordering on the preset question button rows in Chat Settings. A grip handle appears on the left of each row; drag a row up or down to reorder. Save the form to persist the new order.
 
 = 1.7.2 =
 * Changed: Preset chips now use a neutral grey colour scheme distinct from user-message bubbles, so visitors no longer mistake a preset chip for one of their own past messages

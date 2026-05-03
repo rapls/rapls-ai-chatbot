@@ -581,6 +581,8 @@ class RAPLSAICH_Admin {
         $sanitized['crawler_max_results'] = max(1, min(20, absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3))));
         $sources_mode = $input['sources_display_mode'] ?? ($existing['sources_display_mode'] ?? 'matched');
         $sanitized['sources_display_mode'] = in_array($sources_mode, ['none', 'matched', 'all'], true) ? $sources_mode : 'matched';
+        $link_target = $input['link_target'] ?? ($existing['link_target'] ?? '_blank');
+        $sanitized['link_target'] = in_array($link_target, ['_blank', '_self'], true) ? $link_target : '_blank';
         $sanitized['crawler_exclude_ids'] = array_values(array_unique(array_map(
             'absint',
             array_filter($input['crawler_exclude_ids'] ?? ($existing['crawler_exclude_ids'] ?? []))
@@ -2624,6 +2626,8 @@ class RAPLSAICH_Admin {
             'markdown_enabled'      => true,
             'show_feedback_buttons' => true,
             'sources_display_mode'  => 'matched',
+            // Where chat reply links open: '_blank' (new window/tab) or '_self' (same window).
+            'link_target'           => '_blank',
 
             // Preset Question Buttons (chips shown under the welcome message)
             'preset_questions_enabled'    => false,

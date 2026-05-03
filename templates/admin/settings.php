@@ -645,6 +645,7 @@ if (!defined('ABSPATH')) {
                             <table class="raplsaich-presets-table" style="margin-top: 10px; border-collapse: collapse; width: 100%;">
                                 <thead>
                                     <tr>
+                                        <th style="width: 28px;" aria-label="<?php esc_attr_e('Drag to reorder', 'rapls-ai-chatbot'); ?>"></th>
                                         <th style="text-align: left; padding: 4px 8px; font-weight: 600; width: 180px;"><?php esc_html_e('Preset button label', 'rapls-ai-chatbot'); ?></th>
                                         <th style="text-align: left; padding: 4px 8px; font-weight: 600;"><?php esc_html_e('Question sent to the bot', 'rapls-ai-chatbot'); ?></th>
                                         <th style="text-align: left; padding: 4px 8px; font-weight: 600;">
@@ -658,7 +659,10 @@ if (!defined('ABSPATH')) {
                                 </thead>
                                 <tbody id="raplsaich-presets-body">
                                     <?php foreach ($preset_rows as $row): ?>
-                                        <tr class="raplsaich-presets-row">
+                                        <tr class="raplsaich-presets-row" draggable="false">
+                                            <td class="raplsaich-presets-drag-cell" style="padding: 2px 4px; vertical-align: middle; text-align: center; width: 28px;">
+                                                <span class="raplsaich-presets-drag-handle" draggable="true" title="<?php esc_attr_e('Drag to reorder', 'rapls-ai-chatbot'); ?>" aria-label="<?php esc_attr_e('Drag to reorder', 'rapls-ai-chatbot'); ?>" style="cursor: grab; user-select: none; color: #999; font-size: 18px; line-height: 1; display: inline-block; padding: 6px 4px;">⋮⋮</span>
+                                            </td>
                                             <td style="padding: 2px 8px; vertical-align: top;">
                                                 <input type="text" name="raplsaich_settings[preset_questions][label][]"
                                                     value="<?php echo esc_attr($row['label'] ?? ''); ?>"
@@ -708,21 +712,25 @@ if (!defined('ABSPATH')) {
                             <script>
                             (function() {
                                 var maxRows = 10;
+                                var body = document.getElementById('raplsaich-presets-body');
+                                var dragHandleHtml = '<span class="raplsaich-presets-drag-handle" draggable="true" title="<?php echo esc_js(__('Drag to reorder', 'rapls-ai-chatbot')); ?>" aria-label="<?php echo esc_js(__('Drag to reorder', 'rapls-ai-chatbot')); ?>" style="cursor: grab; user-select: none; color: #999; font-size: 18px; line-height: 1; display: inline-block; padding: 6px 4px;">⋮⋮</span>';
+
                                 document.getElementById('raplsaich-presets-add').addEventListener('click', function() {
-                                    var body = document.getElementById('raplsaich-presets-body');
                                     if (body.querySelectorAll('.raplsaich-presets-row').length >= maxRows) {
                                         return;
                                     }
                                     var tr = document.createElement('tr');
                                     tr.className = 'raplsaich-presets-row';
+                                    tr.setAttribute('draggable', 'false');
                                     tr.innerHTML =
+                                        '<td class="raplsaich-presets-drag-cell" style="padding: 2px 4px; vertical-align: middle; text-align: center; width: 28px;">' + dragHandleHtml + '</td>' +
                                         '<td style="padding: 2px 8px; vertical-align: top;"><input type="text" name="raplsaich_settings[preset_questions][label][]" maxlength="40" class="regular-text" style="width: 100%;"></td>' +
                                         '<td style="padding: 2px 8px; vertical-align: top;"><textarea name="raplsaich_settings[preset_questions][question][]" rows="2" maxlength="200" class="large-text" style="width: 100%; resize: vertical; min-height: 52px;"></textarea></td>' +
                                         '<td style="padding: 2px 8px; vertical-align: top;"><textarea name="raplsaich_settings[preset_questions][fixed_response][]" rows="2" maxlength="1000" class="large-text" style="width: 100%; resize: vertical; min-height: 52px;"></textarea></td>' +
                                         '<td style="padding: 2px 8px; vertical-align: top;"><button type="button" class="button button-small raplsaich-presets-remove">&times;</button></td>';
                                     body.appendChild(tr);
                                 });
-                                document.getElementById('raplsaich-presets-body').addEventListener('click', function(e) {
+                                body.addEventListener('click', function(e) {
                                     if (!e.target.classList.contains('raplsaich-presets-remove')) return;
                                     var rows = this.querySelectorAll('.raplsaich-presets-row');
                                     if (rows.length <= 1) {
@@ -733,8 +741,72 @@ if (!defined('ABSPATH')) {
                                     }
                                     e.target.closest('tr').remove();
                                 });
+
+                                // Drag-to-reorder. Only the handle is draggable
+                                // (so dragging text inside an input stays as
+                                // text selection, not a row drag). On drag
+                                // start we mark the parent tr as the drag
+                                // source; on dragover we figure out whether
+                                // to drop above or below the hovered row,
+                                // then move the source on drop.
+                                var dragSrcRow = null;
+                                body.addEventListener('dragstart', function(e) {
+                                    var handle = e.target.closest && e.target.closest('.raplsaich-presets-drag-handle');
+                                    if (!handle) { e.preventDefault(); return; }
+                                    dragSrcRow = handle.closest('tr.raplsaich-presets-row');
+                                    if (!dragSrcRow) return;
+                                    dragSrcRow.classList.add('is-dragging');
+                                    if (e.dataTransfer) {
+                                        e.dataTransfer.effectAllowed = 'move';
+                                        // Some browsers won't start the drag without a payload.
+                                        try { e.dataTransfer.setData('text/plain', 'preset-row'); } catch (_) {}
+                                    }
+                                });
+                                body.addEventListener('dragend', function() {
+                                    if (dragSrcRow) dragSrcRow.classList.remove('is-dragging');
+                                    body.querySelectorAll('.is-drop-above, .is-drop-below').forEach(function(r) {
+                                        r.classList.remove('is-drop-above');
+                                        r.classList.remove('is-drop-below');
+                                    });
+                                    dragSrcRow = null;
+                                });
+                                body.addEventListener('dragover', function(e) {
+                                    if (!dragSrcRow) return;
+                                    var target = e.target.closest && e.target.closest('tr.raplsaich-presets-row');
+                                    if (!target || target === dragSrcRow) return;
+                                    e.preventDefault();
+                                    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+                                    var rect = target.getBoundingClientRect();
+                                    var above = (e.clientY - rect.top) < (rect.height / 2);
+                                    body.querySelectorAll('.is-drop-above, .is-drop-below').forEach(function(r) {
+                                        r.classList.remove('is-drop-above');
+                                        r.classList.remove('is-drop-below');
+                                    });
+                                    target.classList.add(above ? 'is-drop-above' : 'is-drop-below');
+                                });
+                                body.addEventListener('drop', function(e) {
+                                    if (!dragSrcRow) return;
+                                    var target = e.target.closest && e.target.closest('tr.raplsaich-presets-row');
+                                    if (!target || target === dragSrcRow) return;
+                                    e.preventDefault();
+                                    var rect = target.getBoundingClientRect();
+                                    var above = (e.clientY - rect.top) < (rect.height / 2);
+                                    if (above) {
+                                        target.parentNode.insertBefore(dragSrcRow, target);
+                                    } else if (target.nextSibling) {
+                                        target.parentNode.insertBefore(dragSrcRow, target.nextSibling);
+                                    } else {
+                                        target.parentNode.appendChild(dragSrcRow);
+                                    }
+                                });
                             })();
                             </script>
+                            <style>
+                                .raplsaich-presets-row.is-dragging { opacity: 0.4; }
+                                .raplsaich-presets-row.is-drop-above td { box-shadow: inset 0 2px 0 #2271b1; }
+                                .raplsaich-presets-row.is-drop-below td { box-shadow: inset 0 -2px 0 #2271b1; }
+                                .raplsaich-presets-drag-handle:active { cursor: grabbing; }
+                            </style>
                         </td>
                     </tr>
                     <tr>
@@ -1324,6 +1396,23 @@ if (!defined('ABSPATH')) {
                                 ?>
                             </label>
                             <p class="description"><?php esc_html_e('Render bold, italic, code blocks, lists, and headings in AI responses.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Link Open Behavior', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <?php $link_target = $settings['link_target'] ?? '_blank'; ?>
+                            <label style="margin-right:16px;">
+                                <input type="radio" name="raplsaich_settings[link_target]" value="_blank"
+                                    <?php checked($link_target, '_blank'); ?>>
+                                <?php esc_html_e('Open in new window/tab', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <label>
+                                <input type="radio" name="raplsaich_settings[link_target]" value="_self"
+                                    <?php checked($link_target, '_self'); ?>>
+                                <?php esc_html_e('Open in the same window', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Controls how links inside chat responses (knowledge base sources, web sources, content cards, action buttons, product cards, etc.) are opened.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

@@ -463,6 +463,21 @@
                 });
             }
 
+            // 新しい会話を始める ボタン — drops the local session, clears
+            // the message stream, and re-renders the welcome message. The
+            // server-side conversation row stays in place (admin can still
+            // inspect it later); only the visitor's client-side context is
+            // reset, which is what they need to test a fresh question.
+            var newConvBtn = this.container.querySelector('.chatbot-new-conversation');
+            if (newConvBtn) {
+                newConvBtn.addEventListener('click', function() {
+                    var msg = (self.config.strings && self.config.strings.confirm_new_conversation)
+                        || 'Start a new conversation? Current chat history will be cleared on this device.';
+                    if (!window.confirm(msg)) return;
+                    self.startNewConversation();
+                });
+            }
+
             // フォーム送信
             if (!this.inputForm || !this.inputTextarea) return;
             this.inputForm.addEventListener('submit', function(e) {
@@ -848,6 +863,34 @@
         /**
          * Show welcome message
          */
+        /**
+         * Drop the visitor's local session and re-render the welcome message.
+         * Useful when the visitor wants to start over without the AI carrying
+         * context from the previous turns. The server-side conversation row
+         * is preserved (admins can still inspect history); we just discard
+         * the client's session id and message stream.
+         */
+        startNewConversation: function() {
+            // Forget the session both in sessionStorage and localStorage so
+            // the next message triggers a fresh /session call.
+            try {
+                raplsaichSsRemove('raplsaich_session');
+                raplsaichSsRemove('raplsaich_session_token');
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    window.localStorage.removeItem('raplsaich_session');
+                    window.localStorage.removeItem('raplsaich_session_token');
+                }
+            } catch (_) { /* storage unavailable — non-fatal */ }
+            this.sessionId = null;
+            this._lastPresetIndex = null;
+            this._hasSentFirstMessage = false;
+            // Clear the message DOM and re-render the welcome message.
+            if (this.messagesEl) {
+                this.messagesEl.innerHTML = '';
+            }
+            this.showWelcomeMessage();
+        },
+
         showWelcomeMessage: function() {
             var welcomeMsg = this.config.welcome_message || 'Hello! How can I help you today?';
 
@@ -1610,7 +1653,7 @@
                     } catch (e) { return; }
                     var linkEl = document.createElement('a');
                     linkEl.href = url;
-                    linkEl.target = '_blank';
+                    linkEl.target = self.config.link_target || '_blank';
                     linkEl.rel = 'noopener noreferrer';
                     linkEl.textContent = url;
                     sourcesEl.appendChild(linkEl);
@@ -1638,7 +1681,7 @@
                     } catch (e) { return; }
                     var linkEl = document.createElement('a');
                     linkEl.href = url;
-                    linkEl.target = '_blank';
+                    linkEl.target = self.config.link_target || '_blank';
                     linkEl.rel = 'noopener noreferrer';
                     linkEl.textContent = title || url;
                     webSourcesEl.appendChild(linkEl);
@@ -1662,7 +1705,7 @@
                     var ccLink = document.createElement('a');
                     ccLink.className = 'chatbot-content-card';
                     ccLink.href = ccUrl;
-                    ccLink.target = '_blank';
+                    ccLink.target = self.config.link_target || '_blank';
                     ccLink.rel = 'noopener noreferrer';
 
                     var ccType = document.createElement('div');
@@ -1703,7 +1746,7 @@
                     var cardLink = document.createElement('a');
                     cardLink.className = 'chatbot-product-card';
                     cardLink.href = card.url;
-                    cardLink.target = '_blank';
+                    cardLink.target = self.config.link_target || '_blank';
                     cardLink.rel = 'noopener noreferrer';
 
                     if (card.image) {
@@ -1789,7 +1832,7 @@
                 if (actionData && actionData.type === 'redirect' && actionData.url) {
                     var actionBtn = document.createElement('a');
                     actionBtn.href = actionData.url;
-                    actionBtn.target = '_blank';
+                    actionBtn.target = self.config.link_target || '_blank';
                     actionBtn.rel = 'noopener noreferrer';
                     actionBtn.className = 'chatbot-action-btn';
                     actionBtn.textContent = actionData.label || ((self.config.strings && self.config.strings.open) || 'Open');
@@ -1803,7 +1846,7 @@
                         } catch (e) { return; }
                         var linkBtn = document.createElement('a');
                         linkBtn.href = link.url;
-                        linkBtn.target = '_blank';
+                        linkBtn.target = self.config.link_target || '_blank';
                         linkBtn.rel = 'noopener noreferrer';
                         linkBtn.className = 'chatbot-action-btn';
                         linkBtn.textContent = link.label;
@@ -2363,6 +2406,7 @@
          * Plain text formatter: newline→<br> and URL auto-linking only.
          */
         formatBotMessagePlain: function(text) {
+            var self = this;
             var fragment = document.createDocumentFragment();
             // Split on URL pattern, preserving the matched URLs as separate tokens
             var urlPattern = /https?:\/\/[^\s<>"')\]]+/g;
@@ -2384,7 +2428,7 @@
                 if (i < urls.length) {
                     var a = document.createElement('a');
                     a.href = urls[i];
-                    a.target = '_blank';
+                    a.target = self.config.link_target || '_blank';
                     a.rel = 'noopener noreferrer';
                     a.textContent = urls[i];
                     fragment.appendChild(a);
@@ -2565,6 +2609,7 @@
          * All content is created via DOM API — no innerHTML.
          */
         _appendInlineMarkdown: function(el, text) {
+            var self = this;
             // Tokenize: inline code, bold, italic, markdown links, URLs, line breaks, plain text
             // Order matters: code first, then bold, italic, markdown links [text](url), raw URLs
             var pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\(https?:\/\/[^\s\)]+\)|https?:\/\/[^\s<>"'\)\]]+|\n)/g;
@@ -2601,7 +2646,7 @@
                     if (linkMatch) {
                         var a = document.createElement('a');
                         a.href = linkMatch[2];
-                        a.target = '_blank';
+                        a.target = self.config.link_target || '_blank';
                         a.rel = 'noopener noreferrer';
                         a.textContent = linkMatch[1];
                         el.appendChild(a);
@@ -2612,7 +2657,7 @@
                     // Raw URL
                     var a = document.createElement('a');
                     a.href = token;
-                    a.target = '_blank';
+                    a.target = self.config.link_target || '_blank';
                     a.rel = 'noopener noreferrer';
                     a.textContent = token;
                     el.appendChild(a);

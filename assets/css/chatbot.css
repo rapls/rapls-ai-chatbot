@@ -323,6 +323,33 @@
     height: 20px;
 }
 
+/* "Start a new conversation" header button — same visual treatment as
+   the close button so they read as a pair, just a different icon. */
+.chatbot-new-conversation {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.chatbot-new-conversation:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+.chatbot-new-conversation:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: -2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+.chatbot-new-conversation svg {
+    width: 18px;
+    height: 18px;
+}
+
 /* ============================================
    メッセージエリア
 ============================================ */

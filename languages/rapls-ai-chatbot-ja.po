@@ -7709,3 +7709,31 @@ msgstr "用語を追加"
 #:#: templates/admin/settings.php
 msgid "Up to 50 terms."
 msgstr "最大 50 件まで登録できます。"
+
+#:#: templates/admin/settings.php
+msgid "Link Open Behavior"
+msgstr "リンクの開き方"
+
+#:#: templates/admin/settings.php
+msgid "Open in new window/tab"
+msgstr "新しいウィンドウ/タブで開く"
+
+#:#: templates/admin/settings.php
+msgid "Open in the same window"
+msgstr "同じウィンドウで開く"
+
+#:#: templates/admin/settings.php
+msgid "Controls how links inside chat responses (knowledge base sources, web sources, content cards, action buttons, product cards, etc.) are opened."
+msgstr "チャット応答内のリンク (ナレッジベースの参照元、Web 参照元、コンテンツカード、アクションボタン、商品カードなど) の開き方を制御します。"
+
+#:#: templates/frontend/chatbot-widget.php
+msgid "Start a new conversation"
+msgstr "新しい会話を始める"
+
+#:#: includes/frontend/class-chatbot-widget.php
+msgid "Start a new conversation? Current chat history will be cleared on this device."
+msgstr "新しい会話を始めますか ? このデバイス上の現在のチャット履歴は消去されます。"
+
+#:#: templates/admin/settings.php
+msgid "Drag to reorder"
+msgstr "ドラッグして並び替え"
