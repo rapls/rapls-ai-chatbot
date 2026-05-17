@@ -258,16 +258,19 @@ class RAPLSAICH_Main {
      * @return array
      */
     public function add_cron_schedules($schedules) {
+        // Guard against pre-init translation: wp_schedule_event() from Pro plugin
+        // at plugins_loaded applies this filter before WP 6.7's textdomain is ready.
+        $i18n_ready = did_action('init');
         if (!isset($schedules['monthly'])) {
             $schedules['monthly'] = [
                 'interval' => 30 * DAY_IN_SECONDS,
-                'display'  => __('Monthly', 'rapls-ai-chatbot'),
+                'display'  => $i18n_ready ? __('Monthly', 'rapls-ai-chatbot') : 'Monthly',
             ];
         }
         if (!isset($schedules['raplsaich_half_hourly'])) {
             $schedules['raplsaich_half_hourly'] = [
                 'interval' => 30 * MINUTE_IN_SECONDS,
-                'display'  => __('Every 30 minutes', 'rapls-ai-chatbot'),
+                'display'  => $i18n_ready ? __('Every 30 minutes', 'rapls-ai-chatbot') : 'Every 30 minutes',
             ];
         }
         return $schedules;

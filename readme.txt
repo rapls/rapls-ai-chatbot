@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 6.9
-Stable tag: 1.7.6
+Stable tag: 1.7.7
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.7.7 =
+* Fixed: WordPress 6.7+ admin notice "Function _load_textdomain_just_in_time was called incorrectly. Translation loading for the rapls-ai-chatbot domain was triggered too early." The custom `cron_schedules` filter callback called `__()` to build its `display` strings. When Pro's updater / report schedulers fired `wp_schedule_event()` from `plugins_loaded` (before `init`), WordPress applied the filter and triggered just-in-time textdomain loading. The callback now defers the `__()` call until `did_action('init')` is true and falls back to the English literal otherwise — the display string is only shown in technical UIs (Tools → Cron Events) so the pre-init fallback is acceptable.
 
 = 1.7.6 =
 * Fixed: Conversation list message search returned no hits when AES-256-GCM encryption was on. The search ran a SQL `LIKE` against `messages.content`, but with encryption enabled the column holds `encg:...` ciphertext that can never match a plaintext keyword. The list now also scans the most recent N encrypted messages in PHP after decryption (default 2000, filterable via `raplsaich_search_decrypt_limit`). Plaintext sites keep using the cheaper SQL path.
