@@ -829,7 +829,7 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
             // Reasoning models (non-GPT prefix)
             'o3'            => 'o3 (' . __('Advanced reasoning', 'rapls-ai-chatbot') . ')',
             'o3-mini'       => 'o3 mini (' . __('Reasoning, affordable', 'rapls-ai-chatbot') . ')',
-            'o4-mini'       => 'o4 mini (' . __('Latest reasoning, fast', 'rapls-ai-chatbot') . ')',
+            'o4-mini'       => 'o4 mini (' . __('Compact reasoning, fast', 'rapls-ai-chatbot') . ')',
         ];
     }
 

@@ -133,8 +133,8 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                     <th style="width: 36px;"><input type="checkbox" id="raplsaich-select-all" aria-label="<?php esc_attr_e('Select all conversations', 'rapls-ai-chatbot'); ?>"></th>
                     <th style="width: 130px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('session_id', __('Session', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 70px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('message_count', __('Msgs', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
-                    <th style="width: 200px;"><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
-                    <th><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('page_url', __('Start Page', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
+                    <th style="width: 140px;"><?php esc_html_e('Lead', 'rapls-ai-chatbot'); ?></th>
+                    <th style="width: 70px;" class="raplsaich-col-page-url"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('page_url', __('Start Page', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 120px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('status', __('Status', 'rapls-ai-chatbot'), $orderby, $order)); ?></th>
                     <th style="width: 120px;"><?php echo wp_kses_post(RAPLSAICH_Admin::sortable_column_header('updated_at', __('Last Active', 'rapls-ai-chatbot'), $orderby, $order, 'DESC')); ?></th>
                     <th style="width: 150px;"><?php esc_html_e('Actions', 'rapls-ai-chatbot'); ?></th>
@@ -189,10 +189,18 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                                 <em style="color: #999;">-</em>
                             <?php endif; ?>
                         </td>
-                        <td>
+                        <td class="raplsaich-col-page-url">
                             <?php if (!empty($conv['page_url'])): ?>
-                                <a href="<?php echo esc_url($conv['page_url']); ?>" target="_blank" rel="noopener noreferrer" title="<?php echo esc_attr($conv['page_url']); ?>">
-                                    <?php echo esc_html(mb_strlen($conv['page_url']) > 50 ? mb_substr($conv['page_url'], 0, 50) . '...' : $conv['page_url']); ?>
+                                <a href="<?php echo esc_url($conv['page_url']); ?>"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="button button-small"
+                                   title="<?php echo esc_attr($conv['page_url']); ?>"
+                                   aria-label="<?php
+                                       /* translators: %s: page URL */
+                                       echo esc_attr(sprintf(__('Open start page: %s', 'rapls-ai-chatbot'), $conv['page_url']));
+                                   ?>">
+                                    <?php esc_html_e('URL', 'rapls-ai-chatbot'); ?>
                                 </a>
                             <?php else: ?>
                                 <em>-</em>

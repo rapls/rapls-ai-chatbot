@@ -66,14 +66,27 @@
         var urlParams = new URLSearchParams(window.location.search);
         var settingsUpdated = urlParams.get('settings-updated');
 
-        if (window.location.hash) {
-            // URLハッシュがある場合はそのタブを表示
+        // Activate the tab matching window.location.hash. Used both on initial
+        // load and on hashchange events so deep-links work even when the user
+        // is already on the settings page (in which case the browser changes
+        // only the fragment and never re-fires document.ready).
+        function activateTabFromHash() {
+            if (!window.location.hash) {
+                return;
+            }
             var $tab = $('.raplsaich-settings-tabs .nav-tab').filter(function() {
                 return $(this).attr('href') === window.location.hash;
             });
             if ($tab.length) {
                 $tab.trigger('click');
             }
+        }
+
+        $(window).on('hashchange', activateTabFromHash);
+
+        if (window.location.hash) {
+            // URLハッシュがある場合はそのタブを表示
+            activateTabFromHash();
         } else if (settingsUpdated) {
             // 設定保存後は保存されたタブを復元
             var savedTab = null; try { savedTab = localStorage.getItem('raplsaich_active_tab'); } catch (e) { /* storage unavailable */ }

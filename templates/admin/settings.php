@@ -61,7 +61,18 @@ if (!defined('ABSPATH')) {
                                 <option value="claude" <?php selected($settings['ai_provider'] ?? '', 'claude'); ?>>Anthropic (Claude)</option>
                                 <option value="gemini" <?php selected($settings['ai_provider'] ?? '', 'gemini'); ?>>Google (Gemini)</option>
                                 <option value="openrouter" <?php selected($settings['ai_provider'] ?? '', 'openrouter'); ?>>OpenRouter</option>
+                                <?php if (RAPLSAICH_WPAI_Provider::is_available()) : ?>
+                                    <option value="wpai" <?php selected($settings['ai_provider'] ?? '', 'wpai'); ?>><?php esc_html_e('WordPress AI Client (Connectors)', 'rapls-ai-chatbot'); ?></option>
+                                <?php endif; ?>
                             </select>
+                            <details class="raplsaich-model-list-note" style="margin-top: 8px;">
+                                <summary style="cursor: pointer; color: #50575e; font-style: italic;">
+                                    <strong><?php esc_html_e('Note about the model list:', 'rapls-ai-chatbot'); ?></strong>
+                                </summary>
+                                <p class="description" style="margin-top: 6px;">
+                                    <?php esc_html_e('The model dropdown below shows a curated list of known model identifiers per provider. Providers add, rename, and retire models continuously, and access to specific models also depends on your account plan and API key permissions. As a result, some entries in this list may not exist anymore, may be unavailable to your account, or may have been replaced by newer versions. If a chat request fails with "model not found" or "access denied", switch to a different model and try again. You can also use the refresh button next to the model dropdown to re-fetch the latest list from the provider (where supported).', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </details>
                         </td>
                     </tr>
                 </table>
@@ -217,6 +228,109 @@ if (!defined('ABSPATH')) {
                 </div>
 
                 <!-- OpenRouter Settings -->
+                <?php if (RAPLSAICH_WPAI_Provider::is_available()) : ?>
+                <div id="wpai-settings" class="provider-settings">
+                    <h3><?php esc_html_e('WordPress AI Client', 'rapls-ai-chatbot'); ?></h3>
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Routes chat requests through the core AI Client introduced in WordPress 7.0. The provider and model are chosen by the site administrator under Settings → Connectors, so no API key is configured here.', 'rapls-ai-chatbot'); ?>
+                    </p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Credentials', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <?php
+                                $wpai_provider = new RAPLSAICH_WPAI_Provider();
+                                $wpai_ready = $wpai_provider->validate_api_key();
+                                ?>
+                                <?php if ($wpai_ready) : ?>
+                                    <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('A Connector is configured for text generation.', 'rapls-ai-chatbot'); ?></span>
+                                <?php else : ?>
+                                    <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('No text-generation Connector is configured yet.', 'rapls-ai-chatbot'); ?></span>
+                                <?php endif; ?>
+                                <p class="description">
+                                    <?php
+                                    printf(
+                                        /* translators: %s: WordPress admin menu path */
+                                        esc_html__('Open %s in wp-admin to connect OpenAI, Anthropic, or Google as a provider.', 'rapls-ai-chatbot'),
+                                        '<strong>' . esc_html__('Settings → Connectors', 'rapls-ai-chatbot') . '</strong>'
+                                    );
+                                    ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <select name="raplsaich_settings[wpai_model]" id="raplsaich-wpai-model">
+                                    <?php foreach ($wpai_provider->get_available_models() as $value => $label) : ?>
+                                        <option value="<?php echo esc_attr($value); ?>"
+                                            <?php selected($settings['wpai_model'] ?? '', $value); ?>>
+                                            <?php echo esc_html($label); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="description">
+                                    <?php esc_html_e('This is a preference passed to using_model_preference(). The AI Client tries this model first and silently falls back to any compatible model in the active Connector if it is not available.', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <h4 style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e5e5;">
+                        <?php esc_html_e('Embedding API Key (for RAG)', 'rapls-ai-chatbot'); ?>
+                    </h4>
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('WordPress AI Client does not expose an embedding API, so RAG (vector search over your site content) needs a direct OpenAI or Gemini API key. Enter the key here even if your chat goes through Connectors. The key is used for embeddings only.', 'rapls-ai-chatbot'); ?>
+                    </p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php esc_html_e('OpenAI API Key', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[openai_api_key]"
+                                           id="openai_api_key_wpai_rag"
+                                           value=""
+                                           class="regular-text" autocomplete="off"
+                                           placeholder="<?php echo !empty($settings['openai_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : 'sk-...'; ?>">
+                                    <input type="hidden" name="raplsaich_settings[delete_openai_api_key]" id="delete_openai_api_key_wpai_rag" value="0">
+                                    <?php if (!empty($settings['openai_api_key'])): ?>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="openai_api_key_wpai_rag"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php else: ?>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="description">
+                                    <?php esc_html_e('Used by the embedding generator when Embedding Provider is set to OpenAI (or Auto with OpenAI key present).', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Gemini API Key', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[gemini_api_key]"
+                                           id="gemini_api_key_wpai_rag"
+                                           value=""
+                                           class="regular-text" autocomplete="off"
+                                           placeholder="<?php echo !empty($settings['gemini_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : 'AIza...'; ?>">
+                                    <input type="hidden" name="raplsaich_settings[delete_gemini_api_key]" id="delete_gemini_api_key_wpai_rag" value="0">
+                                    <?php if (!empty($settings['gemini_api_key'])): ?>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="gemini_api_key_wpai_rag"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php else: ?>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="description">
+                                    <?php esc_html_e('Used by the embedding generator when Embedding Provider is set to Gemini.', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <?php endif; ?>
+
                 <div id="openrouter-settings" class="provider-settings">
                     <h3><?php esc_html_e('OpenRouter Settings', 'rapls-ai-chatbot'); ?></h3>
                     <p class="description" style="margin-bottom: 12px;">
@@ -297,10 +411,10 @@ if (!defined('ABSPATH')) {
                             </select>
                             <?php
                             $current_provider = $settings['ai_provider'] ?? 'openai';
-                            if (in_array($current_provider, ['claude', 'openrouter'], true)) :
+                            if (in_array($current_provider, ['claude', 'openrouter', 'wpai'], true)) :
                             ?>
                             <p class="description" style="color: #d63638;">
-                                <?php esc_html_e('Note: Claude and OpenRouter do not provide embedding APIs. An OpenAI or Gemini API key is required for embeddings.', 'rapls-ai-chatbot'); ?>
+                                <?php esc_html_e('Note: Claude, OpenRouter, and the WordPress AI Client do not expose embedding APIs. An OpenAI or Gemini API key is required for embeddings.', 'rapls-ai-chatbot'); ?>
                             </p>
                             <?php endif; ?>
                         </td>
@@ -950,6 +1064,32 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Reset', 'rapls-ai-chatbot'); ?>
                             </button>
                             <p class="description"><?php esc_html_e('Closer to 0 is more deterministic, closer to 2 is more random.', 'rapls-ai-chatbot'); ?></p>
+                            <?php
+                            // Warning is rendered server-side (with `hidden`)
+                            // and toggled by JS based on the live input value,
+                            // so it works for both saved and freshly-typed values.
+                            $temp_initial_over = ((float) ($settings['temperature'] ?? 0.7)) > 1.0;
+                            ?>
+                            <p class="description raplsaich-temperature-warning"
+                               id="raplsaich-temperature-warning"
+                               style="color: #d63638; margin-top: 4px;<?php echo $temp_initial_over ? '' : ' display: none;'; ?>">
+                                <strong><?php esc_html_e('Warning:', 'rapls-ai-chatbot'); ?></strong>
+                                <?php esc_html_e('Values above 1.0 often produce broken or multilingual gibberish output because the token probability distribution flattens. Recommended range is 0.0 – 1.0; use 0.2 for deterministic, 0.9 for creative.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <script>
+                            (function () {
+                                var input = document.getElementById('raplsaich_temperature');
+                                var warn  = document.getElementById('raplsaich-temperature-warning');
+                                if (!input || !warn) { return; }
+                                function syncWarning() {
+                                    var v = parseFloat(input.value);
+                                    warn.style.display = (!isNaN(v) && v > 1.0) ? '' : 'none';
+                                }
+                                input.addEventListener('input', syncWarning);
+                                input.addEventListener('change', syncWarning);
+                                syncWarning();
+                            })();
+                            </script>
                         </td>
                     </tr>
                     <tr>

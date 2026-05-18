@@ -840,27 +840,33 @@ class RAPLSAICH_REST_Controller {
             ? $bot_config['ai_provider']
             : ($settings['ai_provider'] ?? 'openai');
 
-        switch ($provider_name) {
-            case 'claude':
-                $api_key = $this->decrypt_api_key($settings['claude_api_key'] ?? '');
-                break;
-            case 'gemini':
-                $api_key = $this->decrypt_api_key($settings['gemini_api_key'] ?? '');
-                break;
-            case 'openrouter':
-                $api_key = $this->decrypt_api_key($settings['openrouter_api_key'] ?? '');
-                break;
-            default:
-                $api_key = $this->decrypt_api_key($settings['openai_api_key'] ?? '');
-                break;
-        }
+        // wpai (WP 7.0 AI Client) reads credentials from Settings → Connectors,
+        // so there is no plugin-stored key to pre-check here. The provider's
+        // is_supported_for_text_generation() guard inside send_message() runs
+        // the equivalent availability check at call time.
+        if ($provider_name !== 'wpai') {
+            switch ($provider_name) {
+                case 'claude':
+                    $api_key = $this->decrypt_api_key($settings['claude_api_key'] ?? '');
+                    break;
+                case 'gemini':
+                    $api_key = $this->decrypt_api_key($settings['gemini_api_key'] ?? '');
+                    break;
+                case 'openrouter':
+                    $api_key = $this->decrypt_api_key($settings['openrouter_api_key'] ?? '');
+                    break;
+                default:
+                    $api_key = $this->decrypt_api_key($settings['openai_api_key'] ?? '');
+                    break;
+            }
 
-        if (empty($api_key)) {
-            return new WP_REST_Response([
-                'success'    => false,
-                'error'      => __('AI API key is not configured. Please configure it in the admin settings.', 'rapls-ai-chatbot'),
-                'error_code' => 'api_key_missing',
-            ], 400);
+            if (empty($api_key)) {
+                return new WP_REST_Response([
+                    'success'    => false,
+                    'error'      => __('AI API key is not configured. Please configure it in the admin settings.', 'rapls-ai-chatbot'),
+                    'error_code' => 'api_key_missing',
+                ], 400);
+            }
         }
 
         try {

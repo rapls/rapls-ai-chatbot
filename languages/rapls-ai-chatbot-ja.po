@@ -1969,8 +1969,8 @@ msgstr "高度な推論"
 msgid "Reasoning, affordable"
 msgstr "推論・低コスト"
 #:#: includes/ai-providers/class-openai-provider.php:731
-msgid "Latest reasoning, fast"
-msgstr "最新推論・高速"
+msgid "Compact reasoning, fast"
+msgstr "コンパクト推論・高速"
 #:#: includes/api/class-rest-controller.php:251
 #, php-format
 msgid "Message exceeds maximum length of %d characters."
@@ -7745,3 +7745,108 @@ msgstr "会話 #%d のみを表示しています (分析からのディープ�
 #:#: templates/admin/conversations.php
 msgid "Show all conversations"
 msgstr "すべての会話を表示"
+
+# WordPress 7.0 AI Client integration
+#:#: includes/ai-providers/class-wpai-provider.php
+msgid "WordPress AI Client is unavailable. Requires WordPress 7.0 or later."
+msgstr "WordPress AI Client が利用できません。WordPress 7.0 以降が必要です。"
+
+#:#: includes/ai-providers/class-wpai-provider.php
+msgid "Auto (Recommended — managed via Settings → Connectors)"
+msgstr "自動（推奨 — 設定 → Connectors で管理）"
+
+#:#: includes/ai-providers/class-wpai-provider.php
+msgid "No AI Connector is configured for text generation. Open Settings → Connectors and connect an AI provider."
+msgstr "テキスト生成用の AI Connector が設定されていません。設定 → Connectors を開いて AI プロバイダを接続してください。"
+
+#:#: includes/ai-providers/class-wpai-provider.php
+msgid "WordPress AI Client returned an empty response."
+msgstr "WordPress AI Client が空のレスポンスを返しました。"
+
+#:#: templates/admin/settings.php
+msgid "WordPress AI Client (Connectors)"
+msgstr "WordPress AI Client（Connectors 経由）"
+
+#:#: templates/admin/settings.php
+msgid "WordPress AI Client"
+msgstr "WordPress AI Client"
+
+#:#: templates/admin/settings.php
+msgid "Routes chat requests through the core AI Client introduced in WordPress 7.0. The provider and model are chosen by the site administrator under Settings → Connectors, so no API key is configured here."
+msgstr "WordPress 7.0 で導入されたコアの AI Client 経由でチャットリクエストを処理します。プロバイダとモデルはサイト管理者が 設定 → Connectors で選択するため、ここでは API キーを設定しません。"
+
+#:#: templates/admin/settings.php
+msgid "Credentials"
+msgstr "認証情報"
+
+#:#: templates/admin/settings.php
+msgid "A Connector is configured for text generation."
+msgstr "テキスト生成用の Connector が設定されています。"
+
+#:#: templates/admin/settings.php
+msgid "No text-generation Connector is configured yet."
+msgstr "テキスト生成用の Connector がまだ設定されていません。"
+
+#:#: templates/admin/settings.php
+msgid "Open %s in wp-admin to connect OpenAI, Anthropic, or Google as a provider."
+msgstr "wp-admin の %s を開いて、OpenAI／Anthropic／Google のいずれかをプロバイダとして接続してください。"
+
+#:#: templates/admin/settings.php
+msgid "Settings → Connectors"
+msgstr "設定 → Connectors"
+
+#:#: templates/admin/settings.php
+msgid "This is a preference passed to using_model_preference(). The AI Client tries this model first and silently falls back to any compatible model in the active Connector if it is not available."
+msgstr "これは using_model_preference() に渡される優先指定です。指定したモデルが利用できない場合、アクティブな Connector で利用可能な互換モデルへ自動的にフォールバックします。"
+
+#:#: templates/admin/settings.php
+msgid "Note: Claude, OpenRouter, and the WordPress AI Client do not expose embedding APIs. An OpenAI or Gemini API key is required for embeddings."
+msgstr "注意：Claude、OpenRouter、WordPress AI Client は埋め込み API を提供していません。埋め込みには OpenAI または Gemini の API キーが必要です。"
+
+#:#: templates/admin/settings.php
+msgid "Embedding API Key (for RAG)"
+msgstr "埋め込み API キー（RAG 用）"
+
+#:#: templates/admin/settings.php
+msgid "WordPress AI Client does not expose an embedding API, so RAG (vector search over your site content) needs a direct OpenAI or Gemini API key. Enter the key here even if your chat goes through Connectors. The key is used for embeddings only."
+msgstr "WordPress AI Client は埋め込み API を提供していないため、RAG（サイト内コンテンツのベクトル検索）には OpenAI または Gemini の API キーを直接設定する必要があります。チャットが Connectors 経由でも、ここにキーを入力してください。このキーは埋め込み用途のみに使用されます。"
+
+#:#: templates/admin/settings.php
+msgid "OpenAI API Key"
+msgstr "OpenAI API キー"
+
+#:#: templates/admin/settings.php
+msgid "Gemini API Key"
+msgstr "Gemini API キー"
+
+#:#: templates/admin/settings.php
+msgid "Used by the embedding generator when Embedding Provider is set to OpenAI (or Auto with OpenAI key present)."
+msgstr "埋め込みプロバイダが OpenAI（または OpenAI キーがある状態の Auto）の場合に、埋め込み生成で使用されます。"
+
+#:#: templates/admin/settings.php
+msgid "Used by the embedding generator when Embedding Provider is set to Gemini."
+msgstr "埋め込みプロバイダが Gemini の場合に、埋め込み生成で使用されます。"
+
+#:#: templates/admin/conversations.php
+msgid "URL"
+msgstr "URL"
+
+#:#: templates/admin/conversations.php
+msgid "Open start page: %s"
+msgstr "開始ページを開く: %s"
+
+#:#: templates/admin/settings.php
+msgid "Warning:"
+msgstr "警告："
+
+#:#: templates/admin/settings.php
+msgid "Values above 1.0 often produce broken or multilingual gibberish output because the token probability distribution flattens. Recommended range is 0.0 – 1.0; use 0.2 for deterministic, 0.9 for creative."
+msgstr "1.0 を超える値はトークンの確率分布がフラットになり、しばしば破綻した出力や多言語の文字列がランダムに混ざった意味不明な応答になります。推奨範囲は 0.0〜1.0 で、決定的にしたい場合は 0.2、創造的にしたい場合は 0.9 を目安にしてください。"
+
+#:#: templates/admin/settings.php
+msgid "Note about the model list:"
+msgstr "モデル一覧についての注意："
+
+#:#: templates/admin/settings.php
+msgid "The model dropdown below shows a curated list of known model identifiers per provider. Providers add, rename, and retire models continuously, and access to specific models also depends on your account plan and API key permissions. As a result, some entries in this list may not exist anymore, may be unavailable to your account, or may have been replaced by newer versions. If a chat request fails with \"model not found\" or \"access denied\", switch to a different model and try again. You can also use the refresh button next to the model dropdown to re-fetch the latest list from the provider (where supported)."
+msgstr "以下のモデル選択肢は、各プロバイダーで知られているモデル ID をプラグイン側でリスト化したものです。プロバイダーはモデルの追加・改名・廃止を継続的に行っており、また個別モデルの利用可否はご利用のアカウントプランや API キーの権限にも依存します。そのため、この一覧には既に存在しないモデルや、お使いのアカウントで利用できないモデル、新しいバージョンに置き換わっているモデルが含まれる可能性があります。チャットで「model not found」や「access denied」のエラーが返る場合は、別のモデルに切り替えてお試しください。モデル選択欄の横にある更新ボタンを押すと、最新の一覧をプロバイダーから再取得できます（対応プロバイダーのみ）。"

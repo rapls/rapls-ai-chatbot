@@ -3,8 +3,8 @@
 Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
-Tested up to: 6.9
-Stable tag: 1.7.7
+Tested up to: 7.0
+Stable tag: 1.8.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,21 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.8.0 =
+* Added: WordPress 7.0 AI Client / Connectors integration as a new "WordPress AI Client (Connectors)" provider option. When selected, chat requests go through core's `wp_ai_client_prompt()` builder and credentials / models live in Settings → Connectors instead of the plugin. The option appears in the AI Provider dropdown only on WP 7.0+ (gated by `function_exists('wp_ai_client_prompt')`). Multi-turn history is converted to `WordPress\AiClient\Messages\DTO\UserMessage` / `ModelMessage` objects to satisfy the `with_history(Message ...$messages)` signature. If the routed model rejects a custom `temperature` (GPT-5 / o-series), the request is automatically retried once without the temperature override.
+* Added: Embedding API Key sub-section under the WordPress AI Client provider settings. RAG (vector search) still needs a direct OpenAI or Gemini key because the AI Client does not expose an embedding endpoint, so the existing `openai_api_key` / `gemini_api_key` fields are also surfaced inside the wpai section for embedding-only use.
+* Added: Curated cross-provider model dropdown for the WordPress AI Client provider (GPT-5 / 5-mini / 4.1 / 4o / 4o-mini, Claude Opus 4.7 / Sonnet 4.6 / Haiku 4.5, Gemini 2.5 Pro / 2.5 Flash / 2.0 Flash). Selection is passed via `using_model_preference()` — a hint, not a hard requirement; the AI Client falls back to any compatible model the active Connector supports.
+* Added: `temperature > 1.0` inline warning in the settings UI. Values above 1.0 flatten the token probability distribution and tend to produce broken or multilingual gibberish output; the input still accepts up to 2.0 to match the OpenAI API spec, but the warning surfaces in real time as the value is typed.
+* Added: Collapsible "Note about the model list" disclaimer under the AI Provider dropdown. Model lists are curated locally and entries may no longer exist, may be unavailable to the user's account, or may have been replaced by newer versions. Rendered as a native `<details>` / `<summary>` element with no JS dependency.
+* Added: Conversations admin list now renders the "Start Page" column as a compact "URL" button instead of the truncated URL text. Clicking opens the originating page in a new tab; the full URL is preserved in `title` / `aria-label` for hover and screen-reader users. Lead column shrunk from 200px to 140px so the row has more breathing room on narrow viewports.
+* Fixed: API-key-decryption "please re-enter" admin notice no longer fires for keys belonging to providers other than the currently-active one. The notice handler now checks `ai_provider` and the corresponding key field, and silently clears the stale transient if the active provider's key still decrypts cleanly. The `wpai` provider (no plugin-stored credentials) is skipped entirely.
+* Fixed: Security notice "Go to Settings" link now actually opens the Security tab. The link appends `#tab-security`, and `admin.js` was extended with a `hashchange` listener so the tab switches even when the user is already on the settings page (in which case the browser does not reload and `$(document).ready` never re-fires).
+* Fixed: Dashicons inside `.button` (refresh-model-list, etc.) were rendered off-centre on WordPress 7.0 RC4 because core changed the default vertical metrics for `.dashicons`. Reset to inline-flex centering with `line-height: 1` to land the glyph in the exact middle of the button regardless of theme / admin colour-scheme overrides.
+* Fixed: `maybe_migrate_legacy_keys()` no longer triggers the decryption-failed admin notice during best-effort legacy key migration. The migration loop now calls the global `raplsaich_decrypt_api_key()` helper directly, bypassing the wrapper that sets the user-facing transient.
+* Fixed: Chat REST handler no longer rejects requests with `api_key_missing` when the active provider is `wpai`. Pre-check is bypassed for that path because credentials are managed by Connectors, not the plugin.
+* Changed: o4-mini model label "Latest reasoning, fast" → "Compact reasoning, fast" (it is not actually the latest reasoning model in the OpenAI line-up; the previous label was misleading).
+* Tested up to: WordPress 7.0.
 
 = 1.7.7 =
 * Fixed: WordPress 6.7+ admin notice "Function _load_textdomain_just_in_time was called incorrectly. Translation loading for the rapls-ai-chatbot domain was triggered too early." The custom `cron_schedules` filter callback called `__()` to build its `display` strings. When Pro's updater / report schedulers fired `wp_schedule_event()` from `plugins_loaded` (before `init`), WordPress applied the filter and triggered just-in-time textdomain loading. The callback now defers the `__()` call until `did_action('init')` is true and falls back to the English literal otherwise — the display string is only shown in technical UIs (Tools → Cron Events) so the pre-init fallback is acceptable.

@@ -147,3 +147,18 @@
     color: #fff;
     margin-left: 6px;
 }
+
+/*
+ * Start Page column — a compact "URL" button that opens the originating
+ * page in a new tab. The cell is given a small fixed width so the column
+ * never competes for horizontal space with Status. Full URL is preserved
+ * in the link's title/aria-label attributes for hover and screen-reader.
+ */
+table.wp-list-table td.raplsaich-col-page-url {
+    text-align: center;
+}
+table.wp-list-table td.raplsaich-col-page-url .button {
+    padding: 0 8px;
+    min-height: 24px;
+    line-height: 22px;
+}

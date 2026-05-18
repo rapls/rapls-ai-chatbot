@@ -1289,3 +1289,38 @@
     vertical-align: middle;
     margin-right: 4px;
 }
+
+/* ============================================
+   Dashicons inside .button — WP 7.0 RC4 fix
+============================================ */
+/*
+ * WordPress 7.0 RC4 changed default line-height / vertical metrics for
+ * `.dashicons` rendered inside `.button`, which pushed icon-only buttons
+ * (refresh model list, copy session id, etc.) off-centre. Reset the icon
+ * to be flex-centred within the button so the glyph sits in the exact
+ * middle regardless of theme / admin colour-scheme overrides.
+ *
+ * Targeting `.wp-core-ui` keeps the rule scoped to wp-admin, matching how
+ * WP core scopes its own button styles.
+ */
+.wp-core-ui .button .dashicons,
+.wp-core-ui .button-primary .dashicons,
+.wp-core-ui .button-secondary .dashicons,
+.wp-core-ui .button-small .dashicons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1em;
+    height: 1em;
+    font-size: 16px;
+    line-height: 1;
+    vertical-align: middle;
+}
+.wp-core-ui .button .dashicons::before,
+.wp-core-ui .button-primary .dashicons::before,
+.wp-core-ui .button-secondary .dashicons::before,
+.wp-core-ui .button-small .dashicons::before {
+    line-height: 1;
+    vertical-align: middle;
+    display: block;
+}

@@ -166,6 +166,11 @@ function raplsaich_get_max_context_chars(): int {
         case 'openrouter':
             return 30000;
 
+        case 'wpai':
+            // Connectors-routed: target model is unknown to us. Stay on the
+            // conservative side of common 128k-token windows.
+            return 30000;
+
         default:
             return 20000;
     }
@@ -291,6 +296,15 @@ function raplsaich_create_ai_provider(array $settings, ?array $bot_config = null
             $provider = new RAPLSAICH_OpenRouter_Provider();
             $provider->set_api_key(raplsaich_decrypt_api_key($settings['openrouter_api_key'] ?? ''));
             $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openrouter_model'] ?? 'openrouter/auto'));
+            break;
+
+        case 'wpai':
+            // WordPress 7.0 AI Client: credentials come from Settings → Connectors.
+            // The model is a *preference* — passed to using_model_preference() —
+            // and falls back to whatever the active Connector supports if the
+            // preferred model isn't available. Empty = let Connectors decide.
+            $provider = new RAPLSAICH_WPAI_Provider();
+            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['wpai_model'] ?? ''));
             break;
 
         default: // openai

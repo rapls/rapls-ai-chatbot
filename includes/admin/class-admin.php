@@ -241,7 +241,7 @@ class RAPLSAICH_Admin {
 
         // AI provider allowlist
         if (isset($settings['ai_provider'])) {
-            $valid_providers = ['openai', 'claude', 'gemini', 'openrouter'];
+            $valid_providers = ['openai', 'claude', 'gemini', 'openrouter', 'wpai'];
             if (!in_array($settings['ai_provider'], $valid_providers, true)) {
                 $settings['ai_provider'] = $existing['ai_provider'] ?? 'openai';
             }
@@ -354,6 +354,7 @@ class RAPLSAICH_Admin {
         $sanitized['claude_model'] = sanitize_text_field($input['claude_model'] ?? ($existing['claude_model'] ?? 'claude-haiku-4-5-20251001'));
         $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash'));
         $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model'] ?? ($existing['openrouter_model'] ?? 'openrouter/auto'));
+        $sanitized['wpai_model']       = sanitize_text_field($input['wpai_model'] ?? ($existing['wpai_model'] ?? ''));
 
         // Chatbot settings
         $sanitized['bot_name'] = sanitize_text_field($input['bot_name'] ?? ($existing['bot_name'] ?? 'Assistant'));
@@ -1110,12 +1111,16 @@ class RAPLSAICH_Admin {
                 continue;
             }
 
-            // Decrypt fully (handles double/triple encryption from older sanitize_settings bug)
+            // Decrypt fully (handles double/triple encryption from older sanitize_settings bug).
+            // Best-effort: bypass the notice-setting wrapper so a stale leftover key
+            // (e.g. from a now-unused provider) doesn't trigger the user-facing
+            // "decryption failed" admin notice. The notice should only fire when the
+            // currently-active provider's key is genuinely unusable.
             $decrypted = $value;
             for ($i = 0; $i < 3 && (strpos($decrypted, 'encg:') === 0 || strpos($decrypted, 'enc:') === 0); $i++) {
                 $inner = ($field === 'recaptcha_secret_key')
                     ? self::decrypt_secret_static($decrypted)
-                    : $this->decrypt_api_key($decrypted);
+                    : raplsaich_decrypt_api_key($decrypted);
                 if (empty($inner)) {
                     break; // Decryption failed, stop
                 }
@@ -1689,6 +1694,36 @@ class RAPLSAICH_Admin {
         if (!get_transient('raplsaich_api_key_decryption_failed')) {
             return;
         }
+        $settings = get_option('raplsaich_settings', []);
+
+        // wpai provider (WordPress 7.0 AI Client) reads credentials from
+        // Settings → Connectors, so a broken plugin-stored API key is
+        // irrelevant. Clear the stale transient and skip the notice.
+        $active_provider = $settings['ai_provider'] ?? 'openai';
+        if ($active_provider === 'wpai') {
+            delete_transient('raplsaich_api_key_decryption_failed');
+            return;
+        }
+
+        // The transient may have been set while decrypting an *unused*
+        // provider's stale key (e.g. an old Claude key left behind after
+        // the user switched to OpenAI). Only nag the user if the active
+        // provider's own key actually fails to decrypt. Otherwise clear
+        // the transient and stay quiet.
+        $active_key_field = $active_provider . '_api_key';
+        $encrypted = $settings[$active_key_field] ?? '';
+        if ($encrypted === '') {
+            // No key set on the active provider — nothing to warn about.
+            delete_transient('raplsaich_api_key_decryption_failed');
+            return;
+        }
+        if (raplsaich_decrypt_api_key($encrypted) !== '') {
+            // Active provider's key decrypts fine — the failure that set the
+            // transient came from another (unused) provider's stored key.
+            delete_transient('raplsaich_api_key_decryption_failed');
+            return;
+        }
+
         if (!current_user_can(self::get_manage_cap())) {
             return;
         }
@@ -1780,7 +1815,11 @@ class RAPLSAICH_Admin {
             }
         }
 
-        $settings_url = admin_url('admin.php?page=raplsaich-settings');
+        // Deep-link to the Security tab. assets/js/admin.js reads window.location.hash
+        // on settings page load and activates the matching nav-tab, so appending the
+        // anchor lands the admin directly on the relevant section instead of the
+        // default AI Settings tab.
+        $settings_url = admin_url('admin.php?page=raplsaich-settings') . '#tab-security';
 
         // Critical errors (red, not dismissible, shown on all admin pages)
         if (!empty($errors)) {
@@ -2592,6 +2631,7 @@ class RAPLSAICH_Admin {
             'gemini_model'          => 'gemini-2.0-flash',
             'openrouter_api_key'    => '',
             'openrouter_model'      => 'openrouter/auto',
+            'wpai_model'            => '',
 
             // Chatbot Settings
             'bot_name'              => 'Assistant',
