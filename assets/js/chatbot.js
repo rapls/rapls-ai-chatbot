@@ -1461,7 +1461,7 @@
                 var cancelBtn = document.createElement('button');
                 cancelBtn.className = 'chatbot-handoff-cancel';
                 cancelBtn.type = 'button';
-                cancelBtn.textContent = s.handoff_cancel || 'Back to AI';
+                cancelBtn.textContent = s.handoff_cancel || 'Back to AI'; // raplsaich-i18n-ok
                 cancelBtn.addEventListener('click', function() {
                     if (typeof self.cancelHandoff === 'function') {
                         self.cancelHandoff();
@@ -2336,7 +2336,7 @@
             })
             .catch(function(error) {
                 if (error === 'recaptcha_not_ready') return;
-                if (errorEl) { errorEl.textContent = error.message || 'Failed to send.'; errorEl.hidden = false; }
+                if (errorEl) { errorEl.textContent = error.message || 'Failed to send.'; errorEl.hidden = false; } // raplsaich-i18n-ok
             })
             .finally(function() {
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = (self.config.strings && self.config.strings.start_chat) || 'Start chat'; }

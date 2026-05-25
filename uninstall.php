@@ -19,8 +19,8 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
  * so the completed_at marker accurately reflects success.
  */
 function raplsaich_uninstall_site() {
-    // MUST: If adding try/catch here, always rethrow — never swallow.
-    // Silent catch breaks completed_at accuracy (see PHPDoc above).
+    // MUST: If adding exception handling here, always rethrow — never swallow.
+    // Silent error-swallowing breaks completed_at accuracy (see PHPDoc above).
     global $wpdb;
 
     // Check if user opted to delete data on uninstall.

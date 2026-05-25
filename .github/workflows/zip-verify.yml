@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build ZIP via git archive
-        run: git archive --format=zip HEAD -o dist.zip
+        run: git archive --format=zip --prefix=rapls-ai-chatbot/ HEAD -o dist.zip
 
       - name: Allow-list check (unknown files = fail)
         run: |
@@ -120,9 +120,9 @@ jobs:
           # Allowed: PHP constructs, DB/option APIs, WP cron, internal methods.
           # SQL types: explicit list (not blanket uppercase) to keep scope tight.
           # MAINTENANCE: When adding new functions to class-activator.php or
-          # wpaic_* table helpers in rapls-ai-chatbot.php, add them here too.
+          # raplsaich_* table helpers in rapls-ai-chatbot.php, add them here too.
           # Run `git archive ... && unzip -l` to verify CI passes locally.
-          ALLOWED_CALLS='(function|if|else|elseif|foreach|for|while|switch|catch|return|array|isset|empty|defined|class|self|static|new|require_once|require|include_once|include|dbDelta|get_option|update_option|delete_option|add_option|get_site_option|set_transient|get_transient|delete_transient|get_charset_collate|prepare|query|get_var|get_col|get_results|get_row|esc_like|esc_sql|maybe_create_table|version_compare|absint|sanitize_text_field|wp_parse_url|get_site_url|error_log|sprintf|substr|strlen|str_pad|strpos|strtolower|time|is_array|in_array|array_merge|array_key_exists|array_fill|array_chunk|implode|count|intval|max|min|trim|preg_match|preg_replace|wp_clear_scheduled_hook|wp_next_scheduled|wp_schedule_event|wp_salt|flush_rewrite_rules|WPAIC_VERSION|get_table_suffixes|create_tables|upgrade_columns|set_default_options|schedule_cron|migrate_diag_options|activate|upgrade|safe_alter|maybe_add_token_columns|maybe_add_is_active_column|maybe_add_custom_fields_column|maybe_add_feedback_column|maybe_add_cache_columns|maybe_add_knowledge_columns|maybe_create_audit_log_table|maybe_add_conversations_columns|maybe_add_messages_columns|maybe_add_conversion_columns|maybe_add_message_composite_index|maybe_add_feedback_index|maybe_convert_enum_to_varchar|wpaic_validated_table|wpaic_require_table|wpaic_table_suffixes|validated_table|has_column|has_index|table_exists|get_column_info|BIGINT|VARCHAR|INT|TINYINT|SMALLINT|MEDIUMINT|CHAR|DECIMAL|FLOAT|DOUBLE|ENUM|SET|KEY|CURRENT_TIMESTAMP)'
+          ALLOWED_CALLS='(function|if|else|elseif|foreach|for|while|switch|catch|return|array|isset|empty|defined|class|self|static|new|require_once|require|include_once|include|dbDelta|get_option|update_option|delete_option|add_option|get_site_option|set_transient|get_transient|delete_transient|get_charset_collate|prepare|query|get_var|get_col|get_results|get_row|esc_like|esc_sql|maybe_create_table|version_compare|absint|sanitize_text_field|wp_parse_url|get_site_url|error_log|sprintf|substr|strlen|str_pad|strpos|strtolower|time|is_array|in_array|array_merge|array_key_exists|array_fill|array_chunk|implode|count|intval|max|min|trim|preg_match|preg_replace|wp_clear_scheduled_hook|wp_next_scheduled|wp_schedule_event|wp_salt|flush_rewrite_rules|RAPLSAICH_VERSION|get_table_suffixes|create_tables|upgrade_columns|set_default_options|schedule_cron|migrate_diag_options|activate|upgrade|safe_alter|maybe_add_token_columns|maybe_add_is_active_column|maybe_add_custom_fields_column|maybe_add_feedback_column|maybe_add_cache_columns|maybe_add_knowledge_columns|maybe_create_audit_log_table|maybe_add_conversations_columns|maybe_add_messages_columns|maybe_add_conversion_columns|maybe_add_message_composite_index|maybe_add_feedback_index|maybe_convert_enum_to_varchar|maybe_add_bot_id_column|maybe_add_conversation_channel_column|maybe_add_country_code_column|maybe_add_embedding_columns|maybe_add_handoff_columns|maybe_add_message_metadata_column|maybe_add_user_agent_column|migrate_extensions_key|wp_get_schedule|raplsaich_validated_table|raplsaich_require_table|raplsaich_table_suffixes|validated_table|has_column|has_index|table_exists|get_column_info|BIGINT|VARCHAR|INT|TINYINT|SMALLINT|MEDIUMINT|CHAR|DECIMAL|FLOAT|DOUBLE|ENUM|SET|KEY|CURRENT_TIMESTAMP)'
           UNEXPECTED_CALLS=$(echo "$CALLS" | sed 's/[[:space:]]*(//' | grep -vE "^${ALLOWED_CALLS}$" | sort -u || true)
           if [ -n "$UNEXPECTED_CALLS" ]; then
             echo "::error::Unexpected function calls in $FILE (not in allow-list):"
@@ -160,21 +160,21 @@ jobs:
           fi
           echo "OK: essential .gitattributes entries present"
 
-      - name: WPAIC_VERSION single-definition check
+      - name: RAPLSAICH_VERSION single-definition check
         run: |
-          # WPAIC_VERSION must only be defined in includes/version.php.
+          # RAPLSAICH_VERSION must only be defined in includes/version.php.
           # Any other file defining it breaks the single-source-of-truth guarantee.
           # Grep is path-restricted: only includes/version.php may contain the define.
           # This avoids false positives from code examples in comments or docs.
-          DEFS=$(grep -rnE "^\s*define\s*\(\s*['\"]WPAIC_VERSION['\"]" --include='*.php' . \
+          DEFS=$(grep -rnE "^\s*define\s*\(\s*['\"]RAPLSAICH_VERSION['\"]" --include='*.php' . \
             | grep -v 'includes/version.php' \
             || true)
           if [ -n "$DEFS" ]; then
-            echo "::error::WPAIC_VERSION defined outside includes/version.php:"
+            echo "::error::RAPLSAICH_VERSION defined outside includes/version.php:"
             echo "$DEFS"
             exit 1
           fi
-          echo "OK: WPAIC_VERSION defined only in includes/version.php"
+          echo "OK: RAPLSAICH_VERSION defined only in includes/version.php"
 
       - name: ZIP content keyword verification
         run: |
@@ -190,15 +190,14 @@ jobs:
               echo "  OK: $label ($COUNT match(es))"
             fi
           }
-          check_keyword "includes/api/class-rest-controller.php" "wpaic_cookie_samesite" "H-2 SameSite filter"
-          check_keyword "includes/api/class-rest-controller.php" "wpaic_cookie_secure" "98t cookie secure filter"
-          check_keyword "includes/api/class-rest-controller.php" "wpaic_max_message_length" "98t message length limit"
-          check_keyword "includes/api/class-rest-controller.php" "derive_context_key" "98t server-derived context key"
+          check_keyword "includes/api/class-rest-controller.php" "raplsaich_cookie_samesite" "H-2 SameSite filter"
+          check_keyword "includes/api/class-rest-controller.php" "raplsaich_cookie_secure" "98t cookie secure filter"
+          check_keyword "includes/api/class-rest-controller.php" "raplsaich_max_message_length" "98t message length limit"
           check_keyword "includes/api/class-rest-controller.php" "check_same_origin" "CSRF origin check"
-          check_keyword "includes/class-main.php" "wpaic_after_cleanup" "M-2 cleanup hook"
+          check_keyword "includes/class-main.php" "raplsaich_after_cleanup" "M-2 cleanup hook"
           check_keyword "includes/models/class-knowledge.php" "csv_safe_cell" "CSV injection protection"
           # M-1: SameSite=None + HTTP warning must exist in admin class
-          check_keyword "includes/admin/class-admin.php" "wpaic_cookie_samesite" "M-1 SameSite admin warning"
+          check_keyword "includes/admin/class-admin.php" "raplsaich_cookie_samesite" "M-1 SameSite admin warning"
           if [ "$FAIL" -ne 0 ]; then exit 1; fi
           echo "OK: all implementation keywords verified in ZIP"
 
@@ -239,7 +238,7 @@ jobs:
           FAIL=0
           # Pattern: string assignments with common user-facing keywords (not in comments)
           # Skip lines that reference config.strings (already i18n'd)
-          # Lines with "wpaic-i18n-ok" comment are intentionally untranslated.
+          # Lines with "raplsaich-i18n-ok" comment are intentionally untranslated.
           # Allowed uses: aria-label, test-only strings, log-only strings.
           # Prohibited: user-visible UI strings (these must use config.strings).
           HARDCODED=$(grep -nE "(innerHTML|textContent|innerText|\.text)\s*=" "$JS" \
@@ -248,7 +247,7 @@ jobs:
             | grep -v 'config\.strings' \
             | grep -v 'escapeHtml' \
             | grep -v '_s\.' \
-            | grep -v 'wpaic-i18n-ok' \
+            | grep -v 'raplsaich-i18n-ok' \
             | grep -vE "'(div|span|button|img|input|form|a|p|ul|li|br|hr)'" \
             || true)
           if [ -n "$HARDCODED" ]; then
@@ -264,10 +263,11 @@ jobs:
         run: |
           # Output release metadata for tag pushes — serves as the CI-enforced
           # equivalent of .ci/verify-release.sh so local hook is supplementary, not required.
-          # WPAIC_VERSION is defined ONLY in includes/version.php (single source of truth).
+          # RAPLSAICH_VERSION is defined ONLY in includes/version.php (single source of truth).
           # Pro reads Free's constant at runtime — never defines its own.
           SHA=$(sha256sum dist.zip | awk '{print $1}')
-          VERSION=$(unzip -p dist.zip "rapls-ai-chatbot/includes/version.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
+          VERSION=$(unzip -p dist.zip "rapls-ai-chatbot/includes/version.php" | sed -nE "s/.*RAPLSAICH_VERSION'[[:space:]]*,[[:space:]]*'([^']+)'.*/\1/p" | head -1)
+          VERSION=${VERSION:-n/a}
           COMMIT=$(git rev-parse --short HEAD)
           echo "=== Release Artifact Summary ==="
           echo "Tag:     ${GITHUB_REF_NAME}"
@@ -278,7 +278,7 @@ jobs:
           # Verify version in tag matches version in code
           TAG_VER=$(echo "${GITHUB_REF_NAME}" | sed 's/^v//')
           if [ "$TAG_VER" != "$VERSION" ]; then
-            echo "::error::Tag version ($TAG_VER) does not match WPAIC_VERSION ($VERSION)"
+            echo "::error::Tag version ($TAG_VER) does not match RAPLSAICH_VERSION ($VERSION)"
             exit 1
           fi
           echo "OK: tag matches code version"

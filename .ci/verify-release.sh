@@ -17,7 +17,7 @@ echo "Commit: ${COMMIT} (${BRANCH})"
 echo ""
 
 # 1. Build ZIP via git archive
-git archive --format=zip HEAD -o "${ZIP_PATH}"
+git archive --format=zip --prefix=${PLUGIN_SLUG}/ HEAD -o "${ZIP_PATH}"
 echo "1. ZIP created: ${ZIP_PATH}"
 
 # 2. Allow-list check (mirrors CI)
@@ -38,8 +38,10 @@ SHA=$(shasum -a 256 "${ZIP_PATH}" | awk '{print $1}')
 echo "3. SHA-256: ${SHA}"
 
 # 4. Build label from ZIP
-BUILD=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/${PLUGIN_SLUG}.php" | grep -oP "WPAIC_BUILD.*?'\K[^']*" || echo "n/a")
-VERSION=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/includes/version.php" | grep -oP "WPAIC_VERSION.*?'\K[^']*" || echo "n/a")
+BUILD=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/${PLUGIN_SLUG}.php" | sed -nE "s/.*RAPLSAICH_BUILD'[[:space:]]*,[[:space:]]*'([^']+)'.*/\1/p" | head -1)
+BUILD=${BUILD:-n/a}
+VERSION=$(unzip -p "${ZIP_PATH}" "${PLUGIN_SLUG}/includes/version.php" | sed -nE "s/.*RAPLSAICH_VERSION'[[:space:]]*,[[:space:]]*'([^']+)'.*/\1/p" | head -1)
+VERSION=${VERSION:-n/a}
 echo "4. Version: ${VERSION} | Build: ${BUILD}"
 
 # 5. Dev file leak check
