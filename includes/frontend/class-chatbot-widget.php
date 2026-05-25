@@ -292,7 +292,7 @@ class RAPLSAICH_Chatbot_Widget {
             'show_feedback'       => !empty($settings['show_feedback_buttons']),
             // Whitelisted to '_blank' / '_self' in admin sanitiser.
             'link_target'         => in_array(($settings['link_target'] ?? '_blank'), ['_blank', '_self'], true)
-                ? $settings['link_target']
+                ? ($settings['link_target'] ?? '_blank')
                 : '_blank',
             // Preset question chips shown under the welcome message.
             // Pro can override via the raplsaich_frontend_config filter — for

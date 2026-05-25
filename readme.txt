@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai, openai, claude, gemini
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -456,6 +456,9 @@ Release ZIPs are CI-verified for packaging correctness. Report any issues via th
 * [Chart.js](https://www.chartjs.org/) (MIT License) — Usage statistics charts
 
 == Changelog ==
+
+= 1.8.1 =
+* Fixed: PHP "Undefined array key \"link_target\"" warning emitted by the chatbot widget on sites where the link-target option had never been saved (fresh installs, or upgrades that predate the setting). The frontend config builder guarded the `in_array()` check with `?? '_blank'`, but the matching ternary branch still read `$settings['link_target']` directly; both paths now fall back to `_blank`.
 
 = 1.8.0 =
 * Added: WordPress 7.0 AI Client / Connectors integration as a new "WordPress AI Client (Connectors)" provider option. When selected, chat requests go through core's `wp_ai_client_prompt()` builder and credentials / models live in Settings → Connectors instead of the plugin. The option appears in the AI Provider dropdown only on WP 7.0+ (gated by `function_exists('wp_ai_client_prompt')`). Multi-turn history is converted to `WordPress\AiClient\Messages\DTO\UserMessage` / `ModelMessage` objects to satisfy the `with_history(Message ...$messages)` signature. If the routed model rejects a custom `temperature` (GPT-5 / o-series), the request is automatically retried once without the temperature override.

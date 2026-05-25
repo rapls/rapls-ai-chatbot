@@ -58,6 +58,23 @@ build_zip() {
         --exclude="build/" \
         "$plugin_dir/" "$tmpdir/$plugin_name/"
 
+    # Inject the git build hash into the staged main plugin file.
+    # Working-tree builds bypass git-archive's export-subst, so the
+    # $Format:%h$ (Free) / @@BUILD_HASH@@ (Pro) placeholders would otherwise
+    # ship unreplaced. Rewrite the build-constant value in place; the regex
+    # matches either placeholder form.
+    local main_file="$tmpdir/$plugin_name/$plugin_name.php"
+    local build_hash
+    build_hash="$(git -C "$plugin_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    if [[ -n "$(git -C "$plugin_dir" status --porcelain 2>/dev/null || true)" ]]; then
+        build_hash="${build_hash}-dirty"
+        warn "${plugin_name}: building with uncommitted changes (build hash ${build_hash})"
+    fi
+    if [[ -f "$main_file" ]]; then
+        sed -i '' -E "s/(define\('RAPLSAICH_BUILD', ')[^']*('\);)/\1${build_hash}\2/" "$main_file"
+        sed -i '' -E "s/(define\('RAPLSAICH_PRO_BUILD', ')[^']*('\);)/\1${build_hash}\2/" "$main_file"
+    fi
+
     # Create ZIP from temp directory
     (cd "$tmpdir" && zip -r "$output" "$plugin_name") > /dev/null
 
@@ -87,7 +104,12 @@ verify_zip() {
         "/\.github/"
         "/\.serena/"
         "/\.claude/"
+        "/\.ci/"
         "CLAUDE\.md"
+        "README\.md"
+        "\.gitattributes"
+        "\.distignore"
+        "wp-cli\.phar"
     )
 
     local zip_contents
