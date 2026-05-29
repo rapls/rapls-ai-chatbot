@@ -208,16 +208,13 @@ You can disable these features in the plugin settings:
 * Documentation: refreshed the plugin description, feature list, FAQ, and search tags. No functional changes.
 
 = 1.8.1 =
-* Enhanced WordPress 7.0 Connectors API integration
-* Connectors-registered provider support
-* Updated claude model support (Opus 4.6, Sonnet 4.5, Haiku 4.5)
-* Security improvements
+* Fixed: "Undefined array key link_target" PHP warning emitted by the chatbot widget on sites where the link-target option had never been saved.
 
 = 1.8.0 =
-* Full WordPress 7.0 WP AI Client compatibility
-* Connectors API provider registration
-* Abilities API integration for MCP tool discovery
-* MCP Server 7-tool builtin suite
+* Added: WordPress 7.0 "AI Client (Connectors)" provider — chat routes through wp_ai_client_prompt(); API keys and models are managed in Settings → Connectors instead of the plugin.
+* Added: Curated cross-provider model dropdown, plus an automatic one-shot retry without temperature for models (GPT-5 / o-series) that reject a custom value.
+* Fixed: API-key-decryption "please re-enter" notice now fires only when the active provider's own key is broken; the wpai path skips the plugin-side key pre-check.
+* Tested up to: WordPress 7.0.
 
 = 1.5.6 =
 * Response Language setting fix
@@ -241,10 +238,10 @@ You can disable these features in the plugin settings:
 Documentation refresh — updated description, features, and FAQ. No functional changes.
 
 = 1.8.1 =
-WordPress 7.0 Connectors API full support. Recommended for all.
+Fixes a PHP "Undefined array key" warning in the chatbot widget. Recommended for all.
 
 = 1.8.0 =
-WordPress 7.0 WP AI Client & Connectors API integration. Breaking change: some filter names updated. See upgrade guide.
+Adds the WordPress 7.0 "AI Client (Connectors)" provider option. Recommended for WordPress 7.0 sites.
 
 = 1.5.0 =
 Major release: Gutenberg block, Abilities API, language auto-detect. Recommended for all users.
