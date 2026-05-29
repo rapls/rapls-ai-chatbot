@@ -121,6 +121,8 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
             <li><a href="#conversion">コンバージョントラッキング</a></li>
             <li><a href="#ui-customize">UI カスタマイズ</a></li>
             <li><a href="#badge-icon">バッジアイコン</a></li>
+            <li><a href="#hierarchical-presets">階層型プリセット質問ボタン</a></li>
+            <li><a href="#bot-presets">ボット別プリセット質問</a></li>
             <li><a href="#footer-css">フッター & CSS</a></li>
         </ul>
     </details>
@@ -215,7 +217,7 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
 <main class="wpaic-content">
 
 <h1>Rapls AI Chatbot マニュアル（Pro版）</h1>
-<p class="wpaic-subtitle">バージョン 1.5.1 | PHP 7.4+ | WordPress 5.8+<br>Pro版は Free版の全機能に加え、以下の高度な機能を提供します。Free版の設定については<a href="/rapls-ai-chatbot-free-manual-ja/">Free版マニュアル</a>をご覧ください。</p>
+<p class="wpaic-subtitle">バージョン 1.6.5 | PHP 7.4+ | WordPress 6.3+ | 必要な Free版 1.7.6+<br>Pro版は Free版の全機能に加え、以下の高度な機能を提供します。Free版の設定については<a href="/rapls-ai-chatbot-free-manual-ja/">Free版マニュアル</a>をご覧ください。</p>
 
 <div class="wpaic-box wpaic-box-gold">
     <strong>Pro版の有効化:</strong> Pro版プラグインをインストール・有効化すると、Free版のメニューに「Pro 設定」「サイト学習」「会話履歴」「アナリティクス」「リード」「監査ログ」の各ページが完全に機能する状態で表示されます。Pro 設定は6つのグループ（CUSTOMER / AI / OPERATIONS / INTEGRATIONS / MANAGEMENT / SYSTEM）に整理され、合計32のサブタブで構成されています。
@@ -412,6 +414,59 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
 
 <div class="wpaic-box wpaic-box-tip">
     <strong>ヒント:</strong> ブランドロゴをバッジアイコンに使用する場合、背景が透過された正方形の PNG 画像（最低 120x120px）を推奨します。ホワイトラベル機能と組み合わせると、完全にブランド統一されたチャットボットを提供できます。
+</div>
+
+<h3 id="hierarchical-presets">階層型プリセット質問ボタン（Pro 1.6.0+）</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; CUSTOMER &gt; Hierarchical Presets</strong> タブで設定します。</p>
+<p>Free版のフラットなプリセット質問ボタン（最大10件）に対し、Pro版では <strong>「グループ ▸ 子ボタン」</strong> の2階層構造で最大 8グループ × 8子 = 64項目を設定できます。チャットウィジェットでは、まずグループボタンが表示され、訪問者がグループをタップすると子ボタンが表示されます。子画面には自動で「← 戻る」ナビゲーションが付与されます。</p>
+
+<p><strong>設定キー:</strong> <code>hierarchical_presets_enabled</code> / <code>hierarchical_presets</code></p>
+
+<p><strong>各レベルの構造:</strong></p>
+<table class="wpaic-table">
+    <tr><th>レベル</th><th>フィールド</th><th>説明</th></tr>
+    <tr><td rowspan="2"><strong>グループ</strong></td><td>ラベル</td><td>グループボタンに表示されるテキスト（最大40文字）</td></tr>
+    <tr><td>子ボタン</td><td>1グループあたり最大8件まで追加可能</td></tr>
+    <tr><td rowspan="3"><strong>子ボタン</strong></td><td>ラベル</td><td>子ボタンに表示されるテキスト（最大40文字）</td></tr>
+    <tr><td>送信される質問文</td><td>クリック時に AI に送信される実際の質問内容（最大200文字）。Free版と同じ仕様</td></tr>
+    <tr><td>固定回答</td><td>AI を呼ばず固定文を返す場合に入力（最大1000文字、Free 1.6.6+ と同じ仕様）</td></tr>
+</table>
+
+<p><strong>ドラッグ&ドロップ並べ替え（Pro 1.6.5+）:</strong></p>
+<p>各行の左端にあるドラッグハンドル <code>⋮⋮</code> をマウスでつかんでドラッグすると、グループおよび子ボタンの表示順を入れ替えられます。</p>
+<ul>
+    <li><strong>グループハンドル:</strong> グループ全体（ヘッダー＋紐づくすべての子ボタン）を上下に移動</li>
+    <li><strong>子ボタンハンドル:</strong> 同一グループ内で子ボタンを上下に移動。クロスグループ（別のグループへの移動）はブロックされ、ドロップしても元の位置に戻ります</li>
+    <li><strong>並べ替え後の保存:</strong> <strong>変更を保存</strong> をクリックすると DOM の表示順がそのまま保存されます。並べ替え専用ボタンは不要です</li>
+</ul>
+
+<p><strong>親（グループ）ボタンの色（Free 1.7.6+ で調整）:</strong></p>
+<p>1.7.5 以前はグループボタンが「メインカラー」で塗られていたため、ユーザーメッセージバブルと色が混同される指摘がありました。1.7.6 以降は中性的なグレーで描画され、子ボタン展開を促す UI として機能します。子ボタンのスタイルは Free のフラットプリセットと同じです。</p>
+
+<p><strong>クリック解析（Pro 1.6.1+）:</strong></p>
+<p>アナリティクスダッシュボードの「プリセット質問のクリック数」パネルで、階層型ボタンも <code>Group ▸ Child</code> 形式で表示されます。1.6.0 では「Preset #N」のままラベルが解決されない不具合がありましたが、1.6.1 で修正済みです。</p>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 階層型を使うと「料金 / 機能 / サポート / 申込」のようなトップレベル分類で訪問者の意図を吸い上げ、子レベルで具体的な質問に分岐させる FAQ ナビゲーションが構築できます。フラットなプリセット（Free設定）と階層型は <strong>排他</strong> ではなく、ボット別プリセットでフラットにし、別ボットで階層型にする運用も可能です。
+</div>
+
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> 階層型プリセットは Free 1.7.1+ が必要です。Free版を 1.7.0 以前から使い続けている場合は、Free版を先にアップデートしてください。
+</div>
+
+<h3 id="bot-presets">ボット別プリセット質問（Pro 1.5.0+）</h3>
+<p><strong>AI Chatbot &gt; Pro 設定 &gt; OPERATIONS &gt; Chatbots</strong> 内の各ボット設定で個別に編集します。</p>
+<p>マルチボット環境（<a href="#chatbots">マルチボット</a>参照）で、ボットごとに独立したプリセット質問ボタンを設定できます。ページ毎に表示されるボットが異なる場合、ボットの担当領域に合わせた最適な質問候補を出し分けられます。</p>
+
+<p><strong>動作:</strong></p>
+<ul>
+    <li>各ボットがフラット型・階層型のどちらかを選択して保有可能</li>
+    <li>ページ割当やインテントルーティング（マルチボット参照）で切り替わったボットのプリセットが自動的に適用されます</li>
+    <li>クリック数はアナリティクスでボット別に集計され、「プリセット質問のクリック数」パネルでボット名と合わせて表示されます</li>
+</ul>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> セールスボットには「料金プラン」「デモ予約」「事例」、サポートボットには「使い方」「トラブル対応」「マニュアル」のように、ボット担当領域に合わせて出し分けると CV 率が上がります。
 </div>
 
 <h3 id="footer-css">フッター & CSS</h3>
@@ -1143,6 +1198,38 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
     <strong>ヒント:</strong> LINE Messaging API の無料プランでは月500通までのメッセージ送信が可能です。ビジネス利用の場合は LINE のライトプラン以上への加入を検討してください。
 </div>
 
+<h4>Markdown → プレーンテキスト変換（1.6.2+）</h4>
+<p>LINE のテキストメッセージは Markdown レンダリングをサポートしないため、AI 応答に含まれる Markdown 記号（<code>**bold**</code>、<code>*italic*</code>、<code>[link](url)</code>、<code># heading</code> など）を <strong>そのまま送ると</strong> 訪問者には記号付きの読みづらい文として届きます。1.6.2 以降は LINE 送信前に Markdown を LINE フレンドリーなプレーン整形に変換します。</p>
+
+<p><strong>変換ルール（適用順）:</strong></p>
+<table class="wpaic-table">
+    <tr><th>パターン</th><th>変換後</th></tr>
+    <tr><td><code>```code block```</code> / インデントブロック</td><td>中身のコードのみを残し、囲い記号を削除</td></tr>
+    <tr><td><code>![alt](image.png)</code></td><td>削除（LINE では画像 URL は別途リッチメッセージで送る必要があるため）</td></tr>
+    <tr><td><code>[label](https://...)</code></td><td><code>label (https://...)</code> 形式</td></tr>
+    <tr><td><code>**太字**</code> / <code>__太字__</code></td><td>装飾を外して中身のみ</td></tr>
+    <tr><td><code>*斜体*</code> / <code>_斜体_</code></td><td>装飾を外して中身のみ</td></tr>
+    <tr><td><code>~~取り消し~~</code></td><td>装飾を外して中身のみ</td></tr>
+    <tr><td><code># 見出し</code> ~ <code>###### 見出し</code></td><td>先頭の <code>#</code> 記号を除去し、本文のみを残す</td></tr>
+    <tr><td><code>- 項目</code> / <code>* 項目</code> / <code>+ 項目</code></td><td>「・ 項目」</td></tr>
+    <tr><td><code>1. 項目</code></td><td>番号付きはそのまま維持</td></tr>
+    <tr><td><code>&gt; 引用</code></td><td>「│ 引用」</td></tr>
+    <tr><td><code>---</code> / <code>***</code> / <code>___</code>（水平線）</td><td>削除</td></tr>
+    <tr><td>インラインコード <code>`code`</code></td><td>バッククォートを除去し、中身のみ</td></tr>
+    <tr><td>3行以上の連続改行</td><td>2行に圧縮</td></tr>
+</table>
+
+<p><strong>カスタマイズ:</strong></p>
+<p>変換結果を上書きしたい場合は <code>raplsaich_line_markdown_to_plain</code> フィルターを使用します。元の Markdown と変換後テキストの両方を受け取り、好きな整形を返せます。</p>
+<pre>add_filter('raplsaich_line_markdown_to_plain', function($plain, $original_markdown) {
+    // 例: 末尾に署名を追加
+    return rtrim($plain) . "\n\n— サポートチームより";
+}, 10, 2);</pre>
+
+<div class="wpaic-box wpaic-box-info">
+    <strong>背景:</strong> 1.6.1 以前は <code>preg_replace('/[#*_`~]/', '', $content)</code> という単純な記号削除を行っていたため、リンク（<code>[label](url)</code>）が壊れる、コードブロックの中身が消える、リスト記号「・」が出ないなどの問題がありました。1.6.2 で順序依存の正規表現チェーンとして再実装しています。
+</div>
+
 <h3 id="slack-sheets">Slack & Google Sheets</h3>
 <p><strong>AI Chatbot &gt; Pro 設定 &gt; INTEGRATIONS &gt; Slack & Sheets</strong> タブで設定します。</p>
 
@@ -1720,7 +1807,31 @@ function doPost(e) {
     <li><strong>フィードバック分析:</strong> サマリーカード、満足度バー、日別推移</li>
     <li><strong>ナレッジギャップ:</strong> AI が回答できなかった質問一覧</li>
     <li><strong>低評価フィードバック:</strong> 否定的フィードバックのメッセージ一覧</li>
+    <li><strong>未回答の質問（1.4.0+）:</strong> AI が「分かりません」「ナレッジベースに情報がない」と返した質問の一覧。「会話を見る」ボタンから該当会話に直接ジャンプ可能</li>
+    <li><strong>プリセット質問のクリック数（1.5.0+）:</strong> ボット別プリセット・階層型プリセットのクリック回数を集計。階層型は <code>Group ▸ Child</code> 形式で表示（1.6.1 で表示不具合を修正）</li>
 </ul>
+
+<p><strong>「会話を見る」ボタン（1.6.5 で改修）:</strong></p>
+<p>「未回答の質問」「プリセット質問」「低評価フィードバック」などの行から、該当する会話を会話履歴ページで開くためのリンクです。バージョンによって挙動が変化しています:</p>
+<table class="wpaic-table">
+    <tr><th>バージョン</th><th>方式</th><th>状態</th></tr>
+    <tr><td>1.6.2 以前</td><td><code>?highlight=N</code>（未実装パラメータ）</td><td>不具合（リンクが効かない）</td></tr>
+    <tr><td>1.6.3</td><td><code>?s=&lt;質問文&gt;</code> 検索プリフィル</td><td>暗号化 OFF 時のみ動作</td></tr>
+    <tr><td>1.6.4</td><td><code>?s=</code> + 二重エンコード修正</td><td>暗号化 ON で機能しない</td></tr>
+    <tr><td><strong>1.6.5</strong> <span class="wpaic-default">現行</span></td><td><code>?conversation_id=N</code> 直接フィルター</td><td>暗号化 ON でも会話 ID で確実にジャンプ</td></tr>
+</table>
+<p>ボタンクリックで会話履歴ページが新規タブで開き、対象会話 1 件のみが表示されます（リスト上部に「会話 ID N のみ表示中 — すべての会話を表示」というインライン通知が表示され、リセット用のリンクが併設されます）。</p>
+
+<p><strong>「未回答の質問」の精度向上（1.6.1+）:</strong></p>
+<ul>
+    <li>プリセット質問の固定回答（fixed_response）はナレッジ不足ではなく意図的な定型応答なので、未回答リストから除外</li>
+    <li>API クォータ超過・空回答などのインフラ起因の失敗も除外</li>
+    <li>CJK（日本語・中国語・韓国語）の短文閾値を10文字から4文字に緩和（1.3.11+）</li>
+    <li>「最終質問日時」列を追加し、頻出度と合わせて優先順位を判断可能</li>
+</ul>
+
+<p><strong>「よくある質問」「ナレッジギャップ」の暗号化対応（1.3.10+）:</strong></p>
+<p>暗号化（<code>encg:</code> プレフィックス）の生データがそのまま画面表示されていた不具合を 1.3.10 で修正しました。1.3.10 以降は復号後の本文が表示されます。</p>
 
 <p><strong>PDF/印刷レポート:</strong> Dompdf を使用したサーバーサイド PDF エクスポート。すべてのチャートと指標がプレゼンテーション用にフォーマットされます。日本語フォント（Noto Sans JP）対応。管理画面の「PDF エクスポート」ボタンからダウンロード可能です。</p>
 

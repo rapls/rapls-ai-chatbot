@@ -121,6 +121,8 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
             <li><a href="#conversion">Conversion Tracking</a></li>
             <li><a href="#ui">UI Customization</a></li>
             <li><a href="#badge-icon">Badge Icon</a></li>
+            <li><a href="#hierarchical-presets">Hierarchical Preset Questions</a></li>
+            <li><a href="#bot-presets">Per-Bot Preset Questions</a></li>
             <li><a href="#footer-css">Footer &amp; CSS</a></li>
         </ul>
     </details>
@@ -215,7 +217,7 @@ pre { background: var(--bg-code); padding: 16px; border-radius: 8px; overflow-x:
 <main class="wpaic-content">
 
 <h1>Rapls AI Chatbot Manual (Pro Edition)</h1>
-<p class="wpaic-subtitle">Version 1.5.1 | PHP 7.4+ | WordPress 5.8+<br>
+<p class="wpaic-subtitle">Version 1.6.5 | PHP 7.4+ | WordPress 6.3+ | Requires Free 1.7.6+<br>
 The Pro edition includes all Free features plus the advanced capabilities documented below.<br>For settings available in the Free version, please refer to the <a href="/rapls-ai-chatbot-free-manual-en/">Free Manual</a>.</p>
 
 <div class="wpaic-box wpaic-box-gold">
@@ -386,6 +388,59 @@ The Pro edition includes all Free features plus the advanced capabilities docume
 
 <div class="wpaic-box wpaic-box-tip">
     <strong>Tip:</strong> Use a custom image that matches your brand. A 64x64px transparent PNG works best. Larger images are automatically resized.
+</div>
+
+<h3 id="hierarchical-presets">Hierarchical Preset Question Buttons (Pro 1.6.0+)</h3>
+<p>Configure under <strong>AI Chatbot &gt; Pro Settings &gt; CUSTOMER &gt; Hierarchical Presets</strong>.</p>
+<p>Free's preset buttons are flat (up to 10 entries). Pro adds a <strong>two-level "Group ▸ Child"</strong> structure with up to 8 groups × 8 children = 64 entries. The widget first shows the group buttons; tapping a group reveals its children with an automatic "← Back" navigation.</p>
+
+<p><strong>Setting keys:</strong> <code>hierarchical_presets_enabled</code> / <code>hierarchical_presets</code></p>
+
+<p><strong>Per-level structure:</strong></p>
+<table class="wpaic-table">
+    <tr><th>Level</th><th>Field</th><th>Description</th></tr>
+    <tr><td rowspan="2"><strong>Group</strong></td><td>Label</td><td>Text shown on the group button (max 40 chars)</td></tr>
+    <tr><td>Children</td><td>Up to 8 child entries per group</td></tr>
+    <tr><td rowspan="3"><strong>Child</strong></td><td>Label</td><td>Text shown on the child button (max 40 chars)</td></tr>
+    <tr><td>Question</td><td>Actual question sent to the AI on click (max 200 chars). Same semantics as Free presets</td></tr>
+    <tr><td>Fixed response</td><td>Optional canned reply that bypasses the AI (max 1000 chars; matches Free 1.6.6+)</td></tr>
+</table>
+
+<p><strong>Drag &amp; drop reordering (Pro 1.6.5+):</strong></p>
+<p>Each row has a drag handle <code>⋮⋮</code> on the left. Drag to reorder both groups and children:</p>
+<ul>
+    <li><strong>Group handle:</strong> moves the entire group (header + all its children) up or down</li>
+    <li><strong>Child handle:</strong> moves a child within the same group only. Cross-group drops are blocked — dropping outside the source group snaps the child back</li>
+    <li><strong>Saving order:</strong> click <strong>Save Changes</strong> and the DOM order is persisted as-is. No separate reorder button</li>
+</ul>
+
+<p><strong>Group button color (adjusted in Free 1.7.6+):</strong></p>
+<p>Before 1.7.6, group buttons used the primary brand color, which clashed visually with user message bubbles (matsuura's feedback). From 1.7.6, group buttons render in neutral grey to read clearly as "tap to expand" UI. Child buttons retain the same styling as Free flat presets.</p>
+
+<p><strong>Click analytics (Pro 1.6.1+):</strong></p>
+<p>The Analytics dashboard's "Preset question clicks" panel shows hierarchical entries in <code>Group ▸ Child</code> form. (Pro 1.6.0 had a bug where labels stayed as "Preset #N"; fixed in 1.6.1.)</p>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Hierarchical presets work well for FAQ navigation — top level captures intent (Pricing / Features / Support / Sign-up), child level drills down to specific questions. Hierarchical and flat presets are <strong>not exclusive</strong>: with per-bot presets you can keep one bot flat and another hierarchical.
+</div>
+
+<div class="wpaic-box wpaic-box-info">
+    <strong>Note:</strong> Hierarchical presets require Free 1.7.1+. Update Free first if you've been on 1.7.0 or earlier.
+</div>
+
+<h3 id="bot-presets">Per-Bot Preset Questions (Pro 1.5.0+)</h3>
+<p>Configured per bot under <strong>AI Chatbot &gt; Pro Settings &gt; OPERATIONS &gt; Chatbots</strong>.</p>
+<p>In a multi-bot setup (see <a href="#chatbots">Multiple Chatbots</a>), each bot has its own independent preset question buttons. Pages routed to different bots can show different question suggestions tailored to each bot's domain.</p>
+
+<p><strong>Behavior:</strong></p>
+<ul>
+    <li>Each bot can be flat or hierarchical, independently of the others</li>
+    <li>Whichever bot is resolved by page assignment or intent routing has its presets applied automatically</li>
+    <li>Click counts are aggregated per bot in Analytics, with the bot name shown alongside the entry in the "Preset question clicks" panel</li>
+</ul>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> A sales bot might lead with "Pricing", "Book demo", "Case studies"; a support bot with "How to use", "Troubleshooting", "Manuals". Tailoring per bot meaningfully lifts conversion.
 </div>
 
 <!-- Footer & CSS -->
@@ -922,6 +977,38 @@ Fallback: Sales Assistant (shown on unassigned pages)</pre>
     <strong>Warning:</strong> The Channel Secret is sensitive. Never expose it in client-side code. The plugin stores it encrypted in the WordPress database.
 </div>
 
+<h4>Markdown → Plain Text Conversion (1.6.2+)</h4>
+<p>LINE messages don't support Markdown rendering, so AI responses with raw Markdown (<code>**bold**</code>, <code>*italic*</code>, <code>[link](url)</code>, <code># heading</code>, etc.) would otherwise reach the user with the symbols intact and read poorly. From 1.6.2, the plugin converts Markdown to LINE-friendly plain text before sending.</p>
+
+<p><strong>Conversion rules (applied in order):</strong></p>
+<table class="wpaic-table">
+    <tr><th>Pattern</th><th>Result</th></tr>
+    <tr><td><code>```code block```</code> / indented blocks</td><td>Inner code preserved, fences removed</td></tr>
+    <tr><td><code>![alt](image.png)</code></td><td>Removed (LINE images need rich-message API instead)</td></tr>
+    <tr><td><code>[label](https://...)</code></td><td><code>label (https://...)</code></td></tr>
+    <tr><td><code>**bold**</code> / <code>__bold__</code></td><td>Strip markers, keep text</td></tr>
+    <tr><td><code>*italic*</code> / <code>_italic_</code></td><td>Strip markers, keep text</td></tr>
+    <tr><td><code>~~strike~~</code></td><td>Strip markers, keep text</td></tr>
+    <tr><td><code># Heading</code> through <code>######</code></td><td>Strip leading <code>#</code>, keep text</td></tr>
+    <tr><td><code>- item</code> / <code>* item</code> / <code>+ item</code></td><td>"・ item"</td></tr>
+    <tr><td><code>1. item</code></td><td>Numbered lists preserved as-is</td></tr>
+    <tr><td><code>&gt; quote</code></td><td>"│ quote"</td></tr>
+    <tr><td><code>---</code> / <code>***</code> / <code>___</code> (horizontal rule)</td><td>Removed</td></tr>
+    <tr><td>Inline code <code>`code`</code></td><td>Backticks stripped, text kept</td></tr>
+    <tr><td>3+ consecutive newlines</td><td>Collapsed to 2</td></tr>
+</table>
+
+<p><strong>Customization:</strong></p>
+<p>To override the converted output, hook the <code>raplsaich_line_markdown_to_plain</code> filter. It receives both the converted plain text and the original Markdown, so any further reshaping is possible.</p>
+<pre>add_filter('raplsaich_line_markdown_to_plain', function($plain, $original_markdown) {
+    // e.g. append a signature
+    return rtrim($plain) . "\n\n— Support team";
+}, 10, 2);</pre>
+
+<div class="wpaic-box wpaic-box-info">
+    <strong>Background:</strong> Before 1.6.2, the plugin used a naive <code>preg_replace('/[#*_`~]/', '', $content)</code> which broke link syntax (<code>[label](url)</code>), stripped code-block content, and dropped list bullets. 1.6.2 reimplements this as an order-dependent regex chain.
+</div>
+
 <!-- Slack & Sheets -->
 <h3 id="slack-sheets">Slack &amp; Google Sheets</h3>
 <p>Send notifications to Slack channels and export conversation data to Google Sheets automatically.</p>
@@ -1343,12 +1430,18 @@ function doGet(e) {
 <table class="wpaic-table">
     <tr><th>Feature</th><th>Description</th></tr>
     <tr><td>Statistics Cards</td><td>Total / Active / Closed / Today / Archived / Handoff count</td></tr>
-    <tr><td>Search &amp; Filter</td><td>Message search, status filter, date range</td></tr>
+    <tr><td>Search &amp; Filter</td><td>Message search (encryption-aware, 1.7.6+), status filter, date range, or pin to a single conversation via <code>?conversation_id=N</code> (1.7.6+)</td></tr>
     <tr><td>Bulk Operations</td><td>Select and delete, delete all, reset all sessions</td></tr>
     <tr><td>Export</td><td>CSV / JSON with date filters</td></tr>
     <tr><td>Conversation Detail</td><td>Click to view full message history with timestamps</td></tr>
     <tr><td>Operator Mode</td><td>Take over a conversation for live human chat</td></tr>
 </table>
+
+<p><strong>Encryption-aware search (Free 1.7.6+):</strong></p>
+<p>Search now works under AES-256-GCM message encryption. It runs in two phases: an SQL <code>LIKE</code> sweep for plaintext rows (cap 500 conversation IDs), then if any <code>encg:</code>-prefixed rows exist, a decrypt-and-match scan over the most recent rows (cap 2000, configurable via the <code>raplsaich_search_decrypt_limit</code> filter). Before 1.7.6, search silently returned zero results on encryption-enabled sites.</p>
+
+<p><strong>Direct conversation ID filter (Free 1.7.6+):</strong></p>
+<p>Append <code>?page=raplsaich-conversations&amp;conversation_id=123</code> to deep-link straight to a single conversation (status/date filters are bypassed). An inline notice with a "Show all conversations" reset link is shown above the list. Used by the Pro 1.6.5 Analytics "View Conversation" button and by external systems linking to a specific thread.</p>
 
 <!-- Analytics -->
 <h3 id="analytics">Analytics Dashboard</h3>
@@ -1370,7 +1463,31 @@ function doGet(e) {
     <tr><td>Feedback Analysis</td><td>Satisfaction bar, daily feedback trend, summary cards</td></tr>
     <tr><td>Knowledge Gaps</td><td>Questions the AI could not answer well</td></tr>
     <tr><td>Low-Rated Feedback</td><td>Responses that received negative feedback</td></tr>
+    <tr><td>Unanswered Questions (1.4.0+)</td><td>Questions where the AI replied "I don't know" or could not source an answer. Each row has a "View Conversation" button that jumps directly to the source conversation</td></tr>
+    <tr><td>Preset Question Clicks (1.5.0+)</td><td>Click counts for per-bot and hierarchical presets. Hierarchical entries display as <code>Group ▸ Child</code> (label resolution fixed in 1.6.1)</td></tr>
 </table>
+
+<p><strong>"View Conversation" button (overhauled in 1.6.5):</strong></p>
+<p>Used by Unanswered Questions, Preset Question Clicks, and Low-Rated Feedback rows to open the source conversation. Behavior has changed across versions:</p>
+<table class="wpaic-table">
+    <tr><th>Version</th><th>Method</th><th>Status</th></tr>
+    <tr><td>≤ 1.6.2</td><td><code>?highlight=N</code> (unimplemented param)</td><td>Broken — link did nothing</td></tr>
+    <tr><td>1.6.3</td><td><code>?s=&lt;question text&gt;</code> search prefill</td><td>Works only with encryption disabled</td></tr>
+    <tr><td>1.6.4</td><td><code>?s=</code> with double-encoding fix</td><td>Still fails on encrypted sites</td></tr>
+    <tr><td><strong>1.6.5</strong> <span class="wpaic-default">current</span></td><td><code>?conversation_id=N</code> direct filter</td><td>Works under encryption — jumps to the exact conversation by ID</td></tr>
+</table>
+<p>Clicking opens the Conversations page in a new tab pinned to the target conversation. An inline notice ("Showing conversation #N only — Show all conversations") appears at the top of the list with a reset link.</p>
+
+<p><strong>"Unanswered Questions" accuracy (1.6.1+):</strong></p>
+<ul>
+    <li>Preset fixed responses are excluded — they are intentional canned replies, not knowledge gaps</li>
+    <li>Infrastructure failures (API quota exceeded, empty AI responses) are also excluded</li>
+    <li>CJK short-text threshold loosened from 10 to 4 characters in 1.3.11+</li>
+    <li>Added a "Last asked" timestamp column to help prioritize alongside frequency</li>
+</ul>
+
+<p><strong>"FAQ Ranking" / "Knowledge Gaps" encryption fix (1.3.10+):</strong></p>
+<p>Before 1.3.10, encrypted message ciphertext (<code>encg:</code> prefix) leaked directly into these tables. From 1.3.10 they show decrypted text.</p>
 
 <div class="wpaic-box wpaic-box-tip">
     <strong>Tip:</strong> Review Knowledge Gaps weekly and add answers to your Knowledge Base. This continuously improves the chatbot's accuracy. Use the "FAQ Auto-Generation" feature to draft knowledge entries from gaps automatically.

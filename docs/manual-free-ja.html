@@ -304,6 +304,7 @@ pre {
             <li><a href="#max-tokens">最大トークン数</a></li>
             <li><a href="#temperature">Temperature</a></li>
             <li><a href="#feedback-buttons">フィードバックボタン</a></li>
+            <li><a href="#preset-questions">プリセット質問ボタン</a></li>
             <li><a href="#quota-error">API 制限超過メッセージ</a></li>
             <li><a href="#web-search">Web 検索</a></li>
         </ul>
@@ -318,6 +319,8 @@ pre {
             <li><a href="#badge-position">バッジ位置</a></li>
             <li><a href="#badge-icon">バッジアイコン</a></li>
             <li><a href="#markdown">Markdown</a></li>
+            <li><a href="#link-target">リンクの開き方</a></li>
+            <li><a href="#new-conversation-button">新しい会話ボタン</a></li>
             <li><a href="#mobile">モバイル表示</a></li>
             <li><a href="#page-visibility">ページ表示設定</a></li>
             <li><a href="#page-exclusion">ページ除外</a></li>
@@ -337,6 +340,8 @@ pre {
             <li><a href="#rate-limit">レート制限</a></li>
             <li><a href="#proxy">プロキシ設定</a></li>
             <li><a href="#recaptcha-fail">失敗時モード</a></li>
+            <li><a href="#session-token">セッショントークン</a></li>
+            <li><a href="#offline-permission">オフラインメッセージのアクセス制御</a></li>
             <li><a href="#security-diag">セキュリティ診断</a></li>
         </ul>
     </details>
@@ -432,7 +437,7 @@ pre {
 <main class="wpaic-content">
 
 <h1>Rapls AI Chatbot マニュアル（Free版）</h1>
-<p class="wpaic-subtitle">WordPress 用 AI チャットボットプラグインの全設定を詳しく解説します。<br>バージョン: 1.5.1 | PHP 7.4+ | WordPress 5.8+</p>
+<p class="wpaic-subtitle">WordPress 用 AI チャットボットプラグインの全設定を詳しく解説します。<br>バージョン: 1.7.6 | PHP 7.4+ | WordPress 6.3+</p>
 
 <!-- ============================================================ -->
 <h2 id="dashboard"><i class="fa-solid fa-gauge-high"></i> ダッシュボード</h2>
@@ -883,6 +888,30 @@ pre {
     <strong>ヒント:</strong> 品質データを収集するためにこの機能を有効にしてください。Pro版では、アナリティクスダッシュボードでフィードバック分析や満足度スコアを確認できます。肯定的に評価された応答は AI の学習例として、否定的に評価された応答は避けるべきパターンとして活用されます。
 </div>
 
+<h3 id="preset-questions">プリセット質問ボタン</h3>
+<p>ウェルカムメッセージの下に「ワンタップで質問できる」ボタンを並べる機能です。訪問者は入力せずに会話を開始でき、最初のメッセージ送信後は自動的に非表示になります。最大10件まで登録できます。</p>
+<p><strong>設定キー:</strong> <code>preset_questions_enabled</code> / <code>preset_questions</code> / <code>preset_questions_persistent</code></p>
+<p><strong>有効:</strong> ウェルカムメッセージ下にプリセットボタンが表示されます。クリックするとそのままユーザー発話として送信され、AI が応答します。</p>
+<p><strong>無効:</strong> ボタンは表示されません。<span class="wpaic-default">デフォルト: 無効</span></p>
+
+<p><strong>各エントリのフィールド:</strong></p>
+<table class="wpaic-table">
+    <tr><th>フィールド</th><th>説明</th></tr>
+    <tr><td><strong>ラベル</strong></td><td>ボタンに表示される短いテキスト（最大40文字）</td></tr>
+    <tr><td><strong>送信される質問文</strong></td><td>ボタンをクリックした際に AI に送信される実際の質問内容（最大200文字）。ラベルと別の文を指定することで、短いボタンから長い質問文を送信できます</td></tr>
+    <tr><td><strong>固定回答</strong></td><td>このボタンに対して AI を呼び出さず固定文言を返したい場合に入力（最大1000文字、空欄なら通常 AI 応答）。よくある質問の即答用途に最適です</td></tr>
+</table>
+
+<p><strong>並べ替え（1.7.3+）:</strong></p>
+<p>各行の左端にあるドラッグハンドル <code>⋮⋮</code> をマウスでつかんで上下にドラッグすると、ボタン表示順を変更できます。ドラッグハンドル以外の部分（入力欄など）はドラッグ対象になりません。並べ替え後に <strong>変更を保存</strong> をクリックすると、画面上の順序のまま保存されます。</p>
+
+<p><strong>常時表示（永続化）:</strong></p>
+<p><code>preset_questions_persistent</code> を有効にすると、最初のメッセージ送信後もボタンを表示し続けます。FAQ 主体のサイトで毎回ワンタップ起動を維持したい場合に便利です。</p>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 上から順に「最も多い質問」「次に多い質問」と並べると効果的です。Pro版ではボット別プリセット、階層型ボタン（グループ × 子）、クリック解析パネルが追加されます。
+</div>
+
 <h3 id="quota-error">API 制限超過メッセージ</h3>
 <p>OpenAI・Claude・Gemini などの AI プロバイダー側の API レート制限やクォータ超過、課金エラーが発生した場合にユーザーに表示されるメッセージです。プラグイン独自のメッセージ制限とは無関係です。</p>
 <p><strong>設定キー:</strong> <code>quota_error_message</code></p>
@@ -990,6 +1019,31 @@ pre {
 <p><span class="wpaic-default">デフォルト: 有効</span></p>
 <div class="wpaic-box wpaic-box-tip">
     <strong>ヒント:</strong> Markdown を有効にしておくことを推奨します。AI モデルは自然に Markdown フォーマット（特にコードスニペット、リスト、強調）を使用するため、レンダリングすると応答がはるかに読みやすくなります。
+</div>
+
+<h3 id="link-target">リンクの開き方（1.7.3+）</h3>
+<p>チャット応答に含まれるリンク（ナレッジベースの参照元 URL、Web 検索結果、コンテンツカード、アクションボタン、商品カード等）を新しいタブで開くか、現在のタブで開くかを選択できます。</p>
+<p><strong>設定キー:</strong> <code>link_target</code></p>
+<table class="wpaic-table">
+    <tr><th>選択肢</th><th>値</th><th>説明</th></tr>
+    <tr><td><strong>新しいウィンドウ/タブで開く</strong> <span class="wpaic-default">デフォルト</span></td><td><code>_blank</code></td><td>会話の継続性を維持しつつ参照先を別タブで開きます。一般的な FAQ チャットでの推奨設定です</td></tr>
+    <tr><td><strong>同じウィンドウで開く</strong></td><td><code>_self</code></td><td>同タブで遷移します。商品ページや申込フォームへの導線として使う場合や、iframe 埋め込みでチャット内ナビゲーションをそのまま親フレームに反映させたい場合に有効です</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> ローカル UX に応じて選択してください。チャット内で長い会話を継続させたい場合は新しいタブ、ランディングページから直接サービスページに遷移させたい場合は同じウィンドウが向いています。
+</div>
+
+<h3 id="new-conversation-button">新しい会話ボタン（1.7.3+）</h3>
+<p>チャットウィジェットのヘッダー右上（音声読み上げトグルと閉じるボタンの間）に、円形の矢印アイコンの「新しい会話を開始」ボタンが常時表示されます。クリックすると確認ダイアログが表示され、承諾すると現在の会話履歴がクリアされ、ウェルカムメッセージとプリセット質問ボタンが再表示されます。</p>
+<p><strong>動作:</strong></p>
+<ul>
+    <li>ローカルストレージに保存された会話 ID とメッセージ履歴を破棄します（このデバイス上の表示のみ）</li>
+    <li>ウェルカムメッセージとプリセット質問ボタン（有効時）が再表示されます</li>
+    <li>サーバー側に保存済みの会話履歴は削除されません（管理画面から確認できます）</li>
+</ul>
+<p><strong>テーマ対応:</strong> Default、Simple、Classic、Light、Minimal、Flat の全 Free テーマに加え、Pro の各テーマでも視認できるようコントラスト調整済みです（1.7.4 で Simple/Light の白地に白文字となる不具合を修正）。</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>注意:</strong> このボタンは常時表示されオフにできません。会話の頻繁な切り替えを想定している FAQ チャットでは、訪問者が話題を切り替えたいときにスムーズにリセットできるよう設計されています。
 </div>
 
 <h3 id="mobile">モバイル表示</h3>
@@ -1204,6 +1258,50 @@ proxy_set_header X-Real-IP $remote_addr;</pre>
 </table>
 <div class="wpaic-box wpaic-box-tip">
     <strong>ヒント:</strong> ほとんどのサイトでは「Open」が推奨です。Google のサーバーへの一時的な接続障害でユーザーがチャットできなくなることを防ぎます。金融サービスやヘルスケアなど、高いセキュリティ要件があるサイトでは「Closed」を検討してください。
+</div>
+
+<h3 id="session-token">セッショントークン（1.7.5+）</h3>
+<p>各チャットセッションにはサーバー署名付きのトークンが付与され、すべての REST API リクエストで検証されます。1.7.5 で「期限切れ + リボーク機能」を備えた v2 トークン形式に強化されました。</p>
+
+<p><strong>トークン形式（v2）:</strong></p>
+<pre>version.iat.exp.hmac_sha256(version.iat.exp.session_id, wp_salt('auth'))</pre>
+<p>WordPress 認証ソルト（<code>wp_salt('auth')</code>）で署名されるため、データベース流出時もトークンが直接利用される心配はありません。</p>
+
+<p><strong>TTL（有効期限）:</strong></p>
+<ul>
+    <li><strong>デフォルト:</strong> 7日間</li>
+    <li><strong>下限:</strong> 1分（<code>MINUTE_IN_SECONDS</code>）</li>
+    <li><strong>上限:</strong> 30日（<code>30 * DAY_IN_SECONDS</code>）</li>
+    <li>カスタマイズは <code>raplsaich_session_token_ttl</code> フィルターで秒単位の値を返します</li>
+</ul>
+
+<p><strong>カスタマイズ例（24時間に短縮）:</strong></p>
+<pre>add_filter('raplsaich_session_token_ttl', function() {
+    return DAY_IN_SECONDS;
+});</pre>
+
+<p><strong>一括リボーク（既存トークンの無効化）:</strong></p>
+<p>トークンに埋め込まれる <code>version</code> は WordPress オプション <code>raplsaich_session_version</code>（デフォルト 1）に基づきます。インシデント発生時など、すべての既存トークンを一括無効化したい場合はこの値をインクリメントします:</p>
+<pre>update_option('raplsaich_session_version', (int) get_option('raplsaich_session_version', 1) + 1);</pre>
+<p>これにより、過去に発行されたすべてのトークンが即座に拒否され、訪問者は次回のリクエスト時に新しいセッションを取得します。</p>
+
+<p><strong>v1 互換:</strong></p>
+<p>1.7.4 以前に発行された古い形式（HMAC のみ、TTL なし）のトークンは、1.7.5 以降では <strong>受け入れられません</strong>。アップグレード後、進行中のセッションは自動的に新しい v2 トークンへ切り替わります。</p>
+
+<div class="wpaic-box wpaic-box-warn">
+    <strong>セキュリティ:</strong> TTL を長く設定するほど、トークン漏洩時の影響期間が長くなります。サポートチャット主体のサイトでは7日間で問題ありませんが、機微な情報を扱うサイトでは1～24時間程度に短縮することを推奨します。
+</div>
+
+<h3 id="offline-permission">オフラインメッセージのアクセス制御（1.7.5+）</h3>
+<p>営業時間外にユーザーが残すオフラインメッセージ（リード送信、メールフォールバック）の REST エンドポイントには、通常のセッショントークン検証に加えて <strong>同一オリジンチェック</strong> が適用されるようになりました。</p>
+<p><strong>動作:</strong></p>
+<ul>
+    <li>リクエストの <code>Origin</code> または <code>Referer</code> ヘッダーが、サイト本体のホストまたは <code>wpaic_allowed_origins</code> フィルターで許可されたホストと一致しない場合、403 で拒否します</li>
+    <li>セッショントークンが有効でも、同一オリジンチェックを通過しない限りオフラインメッセージは送信できません</li>
+    <li>外部サイト埋め込み（embed-loader.js / iframe）で利用する場合は、埋め込み元ドメインを <code>wpaic_allowed_origins</code> に追加する必要があります</li>
+</ul>
+<div class="wpaic-box wpaic-box-info">
+    <strong>背景:</strong> 1.7.4 以前は、攻撃者がトークンを取得できれば任意のオリジンからオフラインメッセージを偽装送信できる可能性がありました。1.7.5 で同一オリジンチェックを必須化し、CSRF 系の攻撃面を縮小しました。
 </div>
 
 <h3 id="security-diag">セキュリティ診断</h3>
@@ -1547,10 +1645,29 @@ proxy_set_header X-Real-IP $remote_addr;</pre>
 
 <p><strong>検索・フィルター:</strong></p>
 <ul>
-    <li>メッセージ内容の全文検索</li>
+    <li>メッセージ内容の全文検索（暗号化 ON 時も対応 / 1.7.6+）</li>
     <li>ステータスフィルター（すべて、アクティブ、クローズ、アーカイブ）</li>
     <li>日付範囲でのフィルタリング</li>
+    <li>会話 ID 直接フィルター（<code>?conversation_id=N</code> URL クエリ / 1.7.6+）</li>
 </ul>
+
+<p><strong>暗号化対応検索（1.7.6+）:</strong></p>
+<p>Pro 暗号化機能（AES-256-GCM）が有効でも会話本文を検索できます。検索は2段階で実行されます:</p>
+<ol>
+    <li><strong>SQL LIKE フェーズ:</strong> 平文として保存されているメッセージ（暗号化 OFF 時、または暗号化導入前のレガシーデータ）を従来通り高速検索します。最大500件の <code>conversation_id</code> を取得します。</li>
+    <li><strong>復号スキャンフェーズ:</strong> <code>encg:</code> プレフィックスの暗号化メッセージが1件でも存在する場合、最近の最大2000件を復号して照合します（件数は <code>raplsaich_search_decrypt_limit</code> フィルターで変更可能）。一致した会話の ID のみがフィルター結果に追加されます。</li>
+</ol>
+<p>これにより、暗号化前後のメッセージが混在するデータベースでも検索結果が漏れません。1.7.5 以前は SQL LIKE のみだったため、暗号化 ON のサイトでは検索が機能しない不具合がありました。</p>
+
+<p><strong>会話 ID 直接フィルター（1.7.6+）:</strong></p>
+<p>URL に <code>?page=raplsaich-conversations&amp;conversation_id=123</code> を付けると、その会話 1 件だけを表示します（ステータス・日付フィルターはバイパスされます）。リスト上部に「会話 ID 123 のみ表示中 — すべての会話を表示」というインライン通知が表示され、リセット用のリンクも併設されます。</p>
+<p>Pro 1.6.5 のアナリティクス「会話を見る」ボタンや、外部システムからの直接リンクで利用されます。</p>
+
+<p><strong>復号件数の調整例:</strong></p>
+<pre>// 復号スキャンの上限を 5000 件に拡大（パフォーマンス影響に注意）
+add_filter('raplsaich_search_decrypt_limit', function() {
+    return 5000;
+});</pre>
 
 <p><strong>一括操作:</strong></p>
 <ul>

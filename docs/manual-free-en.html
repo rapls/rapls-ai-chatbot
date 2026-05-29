@@ -276,6 +276,7 @@ pre {
             <li><a href="#max-tokens">Max Tokens</a></li>
             <li><a href="#temperature">Temperature</a></li>
             <li><a href="#feedback-buttons">Feedback Buttons</a></li>
+            <li><a href="#preset-questions">Preset Question Buttons</a></li>
             <li><a href="#quota-error">API Quota Error</a></li>
             <li><a href="#web-search">Web Search</a></li>
         </ul>
@@ -290,6 +291,8 @@ pre {
             <li><a href="#badge-position">Badge Position</a></li>
             <li><a href="#badge-icon">Badge Icon</a></li>
             <li><a href="#markdown">Markdown</a></li>
+            <li><a href="#link-target">Link Open Behavior</a></li>
+            <li><a href="#new-conversation-button">New Conversation Button</a></li>
             <li><a href="#mobile">Mobile Display</a></li>
             <li><a href="#page-visibility">Page Visibility</a></li>
             <li><a href="#page-exclusion">Page Exclusion</a></li>
@@ -317,6 +320,8 @@ pre {
             <li><a href="#consent">WP Consent API</a></li>
             <li><a href="#rate-limit">Rate Limiting</a></li>
             <li><a href="#proxy">Proxy Settings</a></li>
+            <li><a href="#session-token">Session Tokens</a></li>
+            <li><a href="#offline-permission">Offline Message Access Control</a></li>
             <li><a href="#security-diag">Security Diagnostics</a></li>
         </ul>
     </details>
@@ -370,7 +375,7 @@ pre {
 <main class="wpaic-content">
 
 <h1>Rapls AI Chatbot Manual (Free Edition)</h1>
-<p class="wpaic-subtitle">Complete documentation for every setting in the WordPress AI Chatbot plugin.<br>Version: 1.5.1 | PHP 7.4+ | WordPress 5.8+</p>
+<p class="wpaic-subtitle">Complete documentation for every setting in the WordPress AI Chatbot plugin.<br>Version: 1.7.6 | PHP 7.4+ | WordPress 6.3+</p>
 
 
 <!-- ============================================================ -->
@@ -851,6 +856,30 @@ pre {
     <strong>Tip:</strong> Enable this to collect quality data and continuously improve your chatbot. The feedback is used as learning examples in subsequent conversations -- the AI learns to produce responses similar to positively-rated ones and avoid patterns from negatively-rated ones. With the Pro edition, you can view feedback analytics and satisfaction scores in the Analytics dashboard.
 </div>
 
+<h3 id="preset-questions">Preset Question Buttons</h3>
+<p>Suggests common questions as one-tap buttons under the welcome message so visitors can start a conversation without typing. Buttons disappear once the user sends their first message. Up to 10 entries.</p>
+<p><strong>Setting keys:</strong> <code>preset_questions_enabled</code> / <code>preset_questions</code> / <code>preset_questions_persistent</code></p>
+<p><strong>Enabled:</strong> Preset buttons appear under the welcome message. Clicking sends the configured question as the user message and the AI responds.</p>
+<p><strong>Disabled:</strong> No buttons. <span class="wpaic-default">Default: Disabled</span></p>
+
+<p><strong>Per-row fields:</strong></p>
+<table class="wpaic-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Label</strong></td><td>Short text shown on the button (max 40 chars)</td></tr>
+    <tr><td><strong>Question sent to the bot</strong></td><td>Actual question text submitted when the button is clicked (max 200 chars). Lets a short label fire a longer prompt</td></tr>
+    <tr><td><strong>Fixed response</strong></td><td>Optional canned response (max 1000 chars). When set, the AI is bypassed and this exact text is returned. Ideal for top FAQs that need an instant answer</td></tr>
+</table>
+
+<p><strong>Reordering (1.7.3+):</strong></p>
+<p>Each row has a drag handle <code>⋮⋮</code> on the left. Drag it up or down to reorder the buttons. Only the handle itself is draggable — input fields stay editable. After reordering, click <strong>Save Changes</strong> and the order is persisted exactly as shown.</p>
+
+<p><strong>Persistent display:</strong></p>
+<p>Enable <code>preset_questions_persistent</code> to keep the buttons visible after the first message. Useful for FAQ-driven sites where one-tap restart is desirable across the entire conversation.</p>
+
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Order rows by frequency — most-asked at the top. Pro adds per-bot presets, hierarchical buttons (Group ▸ Child), and a click analytics panel.
+</div>
+
 <h3 id="quota-error">API Quota Error Message</h3>
 <p>The message displayed to users when the AI provider's API quota is exceeded or a billing issue occurs (e.g., you have run out of API credits).</p>
 <p><strong>Setting key:</strong> <code>quota_error_message</code></p>
@@ -996,6 +1025,31 @@ pre {
 <p>A character counter is displayed to the user as they type, showing remaining characters.</p>
 <div class="wpaic-box wpaic-box-tip">
     <strong>Tip:</strong> 1000 characters is sufficient for most support queries. Increase to 2000-5000 if users need to paste longer text (e.g., error logs, code snippets).
+</div>
+
+<h3 id="link-target">Link Open Behavior (1.7.3+)</h3>
+<p>Controls whether links inside chat responses (knowledge base sources, web sources, content cards, action buttons, product cards, etc.) open in a new tab or in the current tab.</p>
+<p><strong>Setting key:</strong> <code>link_target</code></p>
+<table class="wpaic-table">
+    <tr><th>Option</th><th>Value</th><th>Description</th></tr>
+    <tr><td><strong>Open in new window/tab</strong> <span class="wpaic-default">Default</span></td><td><code>_blank</code></td><td>Keeps the chat in place while the destination opens in a new tab. Recommended for typical FAQ chat flows</td></tr>
+    <tr><td><strong>Open in the same window</strong></td><td><code>_self</code></td><td>Navigates in the same tab. Useful when chat is a funnel into product/signup pages, or for iframe embeds where parent navigation should follow</td></tr>
+</table>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> Pick based on your UX. New tab if you want the conversation to stay alive; same window if the chat is a launchpad to dedicated landing pages.
+</div>
+
+<h3 id="new-conversation-button">New Conversation Button (1.7.3+)</h3>
+<p>A circular-arrow "Start a new conversation" button is shown in the widget header (between the TTS toggle and the close button). Clicking it shows a confirmation dialog; on accept, the local conversation is cleared and the welcome message + preset question buttons reappear.</p>
+<p><strong>Behavior:</strong></p>
+<ul>
+    <li>Discards the local conversation ID and message history (this device only)</li>
+    <li>Re-renders the welcome message and preset buttons (when enabled)</li>
+    <li>Does <strong>not</strong> delete server-side history — admins can still see the conversation in the dashboard</li>
+</ul>
+<p><strong>Theme support:</strong> Visible against all six Free themes (Default, Simple, Classic, Light, Minimal, Flat) and the Pro themes (1.7.4 fixed a white-on-white contrast bug in Simple/Light).</p>
+<div class="wpaic-box wpaic-box-info">
+    <strong>Note:</strong> The button is always shown and cannot be turned off. It's designed for FAQ chats where visitors need to switch topics quickly.
 </div>
 
 <h3 id="mobile">Mobile Display</h3>
@@ -1237,6 +1291,50 @@ pre {
 </table>
 <div class="wpaic-box wpaic-box-tip">
     <strong>Tip:</strong> "Fail-open" is recommended for most sites. Google's reCAPTCHA service is highly reliable, but transient network issues can occur. "Fail-closed" is appropriate only for high-security environments where bot prevention is more important than availability.
+</div>
+
+<h3 id="session-token">Session Tokens (1.7.5+)</h3>
+<p>Each chat session is issued a server-signed token verified on every REST request. Version 1.7.5 introduced a v2 token format with TTL and revocation support.</p>
+
+<p><strong>Token format (v2):</strong></p>
+<pre>version.iat.exp.hmac_sha256(version.iat.exp.session_id, wp_salt('auth'))</pre>
+<p>Signed using the WordPress auth salt (<code>wp_salt('auth')</code>), so even a database leak doesn't immediately give attackers usable tokens.</p>
+
+<p><strong>TTL:</strong></p>
+<ul>
+    <li><strong>Default:</strong> 7 days</li>
+    <li><strong>Minimum:</strong> 1 minute (<code>MINUTE_IN_SECONDS</code>)</li>
+    <li><strong>Maximum:</strong> 30 days (<code>30 * DAY_IN_SECONDS</code>)</li>
+    <li>Adjust via the <code>raplsaich_session_token_ttl</code> filter (return seconds)</li>
+</ul>
+
+<p><strong>Example — shorten to 24 hours:</strong></p>
+<pre>add_filter('raplsaich_session_token_ttl', function() {
+    return DAY_IN_SECONDS;
+});</pre>
+
+<p><strong>Mass revocation:</strong></p>
+<p>The <code>version</code> embedded in each token tracks the WordPress option <code>raplsaich_session_version</code> (default 1). Bumping this option invalidates every existing token at once — useful during incident response:</p>
+<pre>update_option('raplsaich_session_version', (int) get_option('raplsaich_session_version', 1) + 1);</pre>
+<p>All previously issued tokens are rejected immediately; visitors get a fresh session on their next request.</p>
+
+<p><strong>Legacy v1 compatibility:</strong></p>
+<p>Tokens issued before 1.7.5 (HMAC only, no TTL) are <strong>not accepted</strong> from 1.7.5 onward. Active sessions transparently swap to the new v2 format on the next request.</p>
+
+<div class="wpaic-box wpaic-box-warn">
+    <strong>Security:</strong> A longer TTL widens the window during which a leaked token remains usable. 7 days is fine for support chat; for sensitive deployments consider shortening to 1–24 hours.
+</div>
+
+<h3 id="offline-permission">Offline Message Access Control (1.7.5+)</h3>
+<p>The REST endpoint that accepts offline messages (lead submissions, email fallback when AI is unavailable) now enforces a <strong>same-origin check</strong> in addition to session token verification.</p>
+<p><strong>Behavior:</strong></p>
+<ul>
+    <li>Returns 403 if the request's <code>Origin</code> or <code>Referer</code> header doesn't match the site host or hosts allowed via the <code>wpaic_allowed_origins</code> filter</li>
+    <li>A valid session token alone is not sufficient — same-origin must also pass</li>
+    <li>For external embeds (embed-loader.js / iframe), add the embed parent domain to <code>wpaic_allowed_origins</code></li>
+</ul>
+<div class="wpaic-box wpaic-box-info">
+    <strong>Background:</strong> Before 1.7.5, an attacker who could obtain a token could forge offline submissions from any origin. 1.7.5 added the same-origin requirement to shrink the CSRF-style attack surface.
 </div>
 
 <h3 id="security-diag">Security Diagnostics</h3>
@@ -1578,11 +1676,28 @@ pre {
 <h3 id="conv-list">Conversation List <span class="wpaic-pro-badge">PRO</span></h3>
 <p>The main table shows all conversations with:</p>
 <ul>
-    <li><strong>Search and Filter:</strong> Search by message content, filter by status, and date range</li>
+    <li><strong>Search and Filter:</strong> Search by message content (encryption-aware, 1.7.6+), filter by status and date range, or pin to a single conversation via the <code>?conversation_id=N</code> query (1.7.6+)</li>
     <li><strong>Bulk Operations:</strong> Select and delete multiple conversations, reset all sessions</li>
     <li><strong>Table Columns:</strong> ID, Session ID, Message Count, Lead info, Start Page, Status, Handoff status, Start Time, Last Update, Actions</li>
     <li><strong>Pagination:</strong> Navigate through large conversation lists</li>
 </ul>
+
+<p><strong>Encryption-aware search (1.7.6+):</strong></p>
+<p>Search now works even when AES-256-GCM message encryption is enabled (Pro feature). It runs in two phases:</p>
+<ol>
+    <li><strong>SQL LIKE phase:</strong> matches plaintext messages quickly (encryption disabled, or pre-encryption legacy rows). Up to 500 conversation IDs are collected.</li>
+    <li><strong>Decrypt-and-scan phase:</strong> if any <code>encg:</code>-prefixed (encrypted) row exists, the most recent rows (default cap 2000, configurable via the <code>raplsaich_search_decrypt_limit</code> filter) are decrypted in PHP and matched against the keyword. Matching conversation IDs are merged into the result.</li>
+</ol>
+<p>This avoids missing results in databases that mix encrypted and plaintext content. Before 1.7.6, search was SQL-only and silently returned zero results on encryption-enabled sites.</p>
+
+<p><strong>Direct conversation ID filter (1.7.6+):</strong></p>
+<p>Appending <code>?page=raplsaich-conversations&amp;conversation_id=123</code> to the URL pins the list to that single conversation (status/date filters are bypassed). An inline notice at the top of the list reads "Showing conversation #123 only — Show all conversations" with a reset link. Used by the Pro 1.6.5 Analytics "View Conversation" button and by external systems linking to a specific thread.</p>
+
+<p><strong>Tuning the decrypt cap:</strong></p>
+<pre>// Raise the decrypt-scan cap to 5000 (watch for performance impact)
+add_filter('raplsaich_search_decrypt_limit', function() {
+    return 5000;
+});</pre>
 
 <h3 id="conv-detail">Message View <span class="wpaic-pro-badge">PRO</span></h3>
 <p>Click a conversation to view the full chronological exchange between user and AI. Features include:</p>
