@@ -1,7 +1,7 @@
 === Rapls AI Chatbot ===
 
 Contributors: rapls
-Tags: chatbot, ai, claude, anthropic, wordpress-7
+Tags: chatbot, ai, claude, rag, wordpress-7
 Requires at least: 6.3
 Tested up to: 7.0
 Stable tag: 1.8.2
