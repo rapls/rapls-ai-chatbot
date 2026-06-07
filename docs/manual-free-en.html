@@ -252,6 +252,7 @@ pre {
     <details class="wpaic-sidebar-section" open>
         <summary><i class="fa-solid fa-microchip"></i> AI Settings</summary>
         <ul>
+            <li><a href="#quickstart-free">Quick Start (Free)</a></li>
             <li><a href="#ai-provider">AI Provider</a></li>
             <li><a href="#openai">OpenAI</a></li>
             <li><a href="#claude">Claude</a></li>
@@ -375,7 +376,7 @@ pre {
 <main class="wpaic-content">
 
 <h1>Rapls AI Chatbot Manual (Free Edition)</h1>
-<p class="wpaic-subtitle">Complete documentation for every setting in the WordPress AI Chatbot plugin.<br>Version: 1.7.6 | PHP 7.4+ | WordPress 6.3+</p>
+<p class="wpaic-subtitle">Complete documentation for every setting in the WordPress AI Chatbot plugin.<br>Version: 1.9.0 | PHP 7.4+ | WordPress 6.3+</p>
 
 
 <!-- ============================================================ -->
@@ -426,6 +427,24 @@ pre {
 <!-- ============================================================ -->
 
 <p>Configure your AI provider, API keys, models, vector embedding, and MCP server. Navigate to <strong>AI Chatbot &gt; Settings &gt; AI Settings</strong> tab.</p>
+
+<h3 id="quickstart-free">Quick Start (run it for free)</h3>
+<p>When no provider API key has been saved yet, an onboarding panel titled <strong>"Start for free"</strong> appears at the top of the Settings page. It walks you from zero to a working chatbot in about a minute, with no credit card required.</p>
+<p><strong>Steps:</strong></p>
+<ol>
+    <li>From the panel, sign up at <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a> and <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">create an API key</a> (it starts with <code>sk-or-</code>).</li>
+    <li>Paste the key into the panel's input field.</li>
+    <li>Click <strong>Test Connection</strong>. The plugin sends a small test request to OpenRouter to verify the key.</li>
+    <li>On success, the key is encrypted and saved, the AI Provider is switched to <strong>OpenRouter</strong>, and a concrete <code>:free</code> model id (e.g. <code>meta-llama/llama-3.3-70b-instruct:free</code>, picked from a preference list against the live <code>/v1/models</code> response) is saved as the active model.</li>
+    <li>Use the CTA shown below to drop the chatbot onto your site via the Gutenberg block "AI Chatbot" or the <code>[raplsaich_chatbot]</code> shortcode.</li>
+</ol>
+<div class="wpaic-box wpaic-box-info">
+    <strong>Free tier limits:</strong> OpenRouter's free models have per-minute and per-day rate limits. For production traffic, switch to your own OpenAI / Claude / Gemini key, or pick a paid model. See the <a href="https://openrouter.ai/docs" target="_blank" rel="noopener noreferrer">OpenRouter documentation</a> for the current limits.
+</div>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>Tip:</strong> If you already have your own API key, the panel's "Or use your own OpenAI / Claude / Gemini key instead" link jumps you straight to the regular AI Provider settings.
+</div>
+<p>Once any provider key has been saved (OpenAI, Claude, Gemini, or OpenRouter), the panel disappears. From that point on, manage providers and keys through the regular AI Provider settings described below.</p>
 
 <h3 id="ai-provider">AI Provider</h3>
 <p>Select the AI service your chatbot will use. Each provider requires its own API key and model selection.</p>
@@ -541,14 +560,14 @@ pre {
     <li>Sign in or create an OpenRouter account</li>
     <li>Click <strong>Create Key</strong></li>
     <li>Copy the key -- it starts with <code>sk-or-</code></li>
-    <li>Add credits under <strong>Account &gt; Credits</strong> to enable API usage</li>
+    <li>If you only plan to use free models, you can skip adding credits. Add credits only when you switch to a paid model.</li>
 </ol>
 
 <p><strong>API Key</strong> (<code>openrouter_api_key</code>) <span class="wpaic-required">Required</span>: Enter a key starting with <code>sk-or-</code>. Encrypted at rest.</p>
-<p><strong>Model</strong> (<code>openrouter_model</code>): The default is <code>openrouter/auto</code>, which automatically selects the best model for each request. Click the refresh button to fetch the full list of available models.</p>
+<p><strong>Model</strong> (<code>openrouter_model</code>): The default is <code>openrouter/auto</code>, which automatically selects the best model for each request. Click the refresh button to fetch the full list of available models. To run without spending credits, refresh the list and pick any model whose id ends in <code>:free</code> (e.g. <code>meta-llama/llama-3.3-70b-instruct:free</code>).</p>
 <p><span class="wpaic-default">Default: openrouter/auto</span></p>
 <div class="wpaic-box wpaic-box-tip">
-    <strong>Tip:</strong> OpenRouter lets you try models from different providers without managing separate API keys. Use the refresh button to discover newly added models. Popular choices include <code>anthropic/claude-3.5-sonnet</code>, <code>google/gemini-2.0-flash-exp</code>, and <code>meta-llama/llama-3.1-70b-instruct</code>.
+    <strong>Tip:</strong> OpenRouter lets you try models from different providers without managing separate API keys. Use the refresh button to discover newly added models. Popular choices include <code>anthropic/claude-3.5-sonnet</code>, <code>google/gemini-2.0-flash-exp</code>, and <code>meta-llama/llama-3.1-70b-instruct</code>. To try without adding a credit card, pick a model whose id ends in <code>:free</code> (rate-limited).
 </div>
 
 <h3 id="embedding">Vector Embedding (RAG)</h3>

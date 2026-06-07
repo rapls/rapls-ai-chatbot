@@ -29,6 +29,83 @@ if (!defined('ABSPATH')) {
     </div>
     <?php endif; ?>
 
+    <?php if (RAPLSAICH_Admin::should_show_onboarding($settings)) : ?>
+    <section class="raplsaich-onboarding" id="raplsaich-onboarding" aria-labelledby="raplsaich-onboarding-title">
+        <h2 class="raplsaich-onboarding__title" id="raplsaich-onboarding-title">
+            <?php esc_html_e('Start for free', 'rapls-ai-chatbot'); ?>
+        </h2>
+        <p class="raplsaich-onboarding__lead">
+            <?php esc_html_e('No credit card needed. Grab a free OpenRouter key (about a minute), paste it below, and the chatbot starts answering right away.', 'rapls-ai-chatbot'); ?>
+        </p>
+
+        <ol class="raplsaich-onboarding__steps">
+            <li class="raplsaich-onboarding__step">
+                <?php esc_html_e('Sign up at OpenRouter and create a free API key.', 'rapls-ai-chatbot'); ?>
+                <div class="raplsaich-onboarding__links">
+                    <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" class="button">
+                        <?php esc_html_e('Sign up at OpenRouter (no card)', 'rapls-ai-chatbot'); ?>
+                    </a>
+                    <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="button">
+                        <?php esc_html_e('Create a key', 'rapls-ai-chatbot'); ?>
+                    </a>
+                </div>
+            </li>
+            <li class="raplsaich-onboarding__step">
+                <?php esc_html_e('Paste the key into the field below.', 'rapls-ai-chatbot'); ?>
+                <div class="raplsaich-onboarding__field">
+                    <input type="password"
+                           id="raplsaich-onboarding-key"
+                           class="regular-text"
+                           autocomplete="off"
+                           spellcheck="false"
+                           placeholder="sk-or-v1-…">
+                </div>
+            </li>
+            <li class="raplsaich-onboarding__step">
+                <?php esc_html_e('Press Test Connection to verify and save the key.', 'rapls-ai-chatbot'); ?>
+                <div class="raplsaich-onboarding__field">
+                    <button type="button" class="button button-primary" id="raplsaich-onboarding-test">
+                        <?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?>
+                    </button>
+                </div>
+            </li>
+        </ol>
+
+        <div class="raplsaich-onboarding__status" id="raplsaich-onboarding-status" role="status" aria-live="polite"></div>
+
+        <div class="raplsaich-onboarding__success-cta" id="raplsaich-onboarding-cta" hidden>
+            <strong><?php esc_html_e('Next: add the chatbot to your site.', 'rapls-ai-chatbot'); ?></strong>
+            <ul style="margin: 6px 0 0 18px;">
+                <li><?php esc_html_e('Insert the Gutenberg block "AI Chatbot" into any page or post.', 'rapls-ai-chatbot'); ?></li>
+                <li>
+                    <?php
+                    // translators: %s is the [raplsaich_chatbot] shortcode.
+                    printf(esc_html__('Or place the shortcode %s anywhere in your content.', 'rapls-ai-chatbot'), '<code>[raplsaich_chatbot]</code>');
+                    ?>
+                </li>
+                <li>
+                    <?php
+                    // translators: %s is the path to the Display Settings tab.
+                    printf(esc_html__('Or enable sitewide display from %s.', 'rapls-ai-chatbot'), '<a href="#tab-display">' . esc_html__('Display Settings', 'rapls-ai-chatbot') . '</a>');
+                    ?>
+                </li>
+            </ul>
+            <p style="margin: 10px 0 0;">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=raplsaich-settings')); ?>"><?php esc_html_e('Reload settings to refresh this page', 'rapls-ai-chatbot'); ?></a>
+            </p>
+        </div>
+
+        <p class="raplsaich-onboarding__rate-limit">
+            <?php esc_html_e('Free models have per-minute and per-day rate limits.', 'rapls-ai-chatbot'); ?>
+            <a href="https://openrouter.ai/docs" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See OpenRouter docs for current limits.', 'rapls-ai-chatbot'); ?></a>
+        </p>
+
+        <p class="raplsaich-onboarding__escape">
+            <a href="#raplsaich-onboarding-skip" id="raplsaich-onboarding-skip-link"><?php esc_html_e('Or use your own OpenAI / Claude / Gemini key instead.', 'rapls-ai-chatbot'); ?></a>
+        </p>
+    </section>
+    <?php endif; ?>
+
     <form method="post" action="options.php">
         <?php settings_fields('raplsaich_settings_group'); ?>
 

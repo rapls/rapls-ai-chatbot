@@ -280,6 +280,7 @@ pre {
     <details class="wpaic-sidebar-section" open>
         <summary><i class="fa-solid fa-microchip"></i> AI 設定</summary>
         <ul>
+            <li><a href="#quickstart-free">クイックスタート（無料）</a></li>
             <li><a href="#ai-provider">AI プロバイダー</a></li>
             <li><a href="#openai">OpenAI 設定</a></li>
             <li><a href="#claude">Claude 設定</a></li>
@@ -437,7 +438,7 @@ pre {
 <main class="wpaic-content">
 
 <h1>Rapls AI Chatbot マニュアル（Free版）</h1>
-<p class="wpaic-subtitle">WordPress 用 AI チャットボットプラグインの全設定を詳しく解説します。<br>バージョン: 1.7.6 | PHP 7.4+ | WordPress 6.3+</p>
+<p class="wpaic-subtitle">WordPress 用 AI チャットボットプラグインの全設定を詳しく解説します。<br>バージョン: 1.9.0 | PHP 7.4+ | WordPress 6.3+</p>
 
 <!-- ============================================================ -->
 <h2 id="dashboard"><i class="fa-solid fa-gauge-high"></i> ダッシュボード</h2>
@@ -492,6 +493,24 @@ pre {
 <!-- ============================================================ -->
 
 <p>AI プロバイダー、API キー、モデル、ベクトル埋め込み、MCP サーバーを設定します。<strong>AI Chatbot &gt; 設定 &gt; AI 設定</strong> タブで設定します。</p>
+
+<h3 id="quickstart-free">クイックスタート（無料で動かす）</h3>
+<p>API キーがまだ 1 件も保存されていない初期状態では、設定画面の上部に<strong>「まず無料で動かす」</strong>パネルが表示されます。クレジットカード不要で、約 1 分でチャットボットを動作確認できる導線です。</p>
+<p><strong>手順:</strong></p>
+<ol>
+    <li>パネル内のリンクから <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a> に無料登録し、<a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">キーを作成</a>します（<code>sk-or-</code> で始まる文字列）。</li>
+    <li>取得したキーをパネルの入力欄に貼り付けます。</li>
+    <li><strong>接続テスト</strong> ボタンを押すと、OpenRouter にテストリクエストを送信して有効性を確認します。</li>
+    <li>成功すると、キーが暗号化されて保存され、AI プロバイダーが <strong>OpenRouter</strong> に切り替わります。モデルは <code>/v1/models</code> から実在する <code>:free</code> モデル（例: <code>meta-llama/llama-3.3-70b-instruct:free</code> など、優先候補リストから順に検索）を自動選択して保存します。</li>
+    <li>続いて表示される CTA から、Gutenberg ブロック「AI チャットボット」または <code>[raplsaich_chatbot]</code> ショートコードを使ってサイトに設置します。</li>
+</ol>
+<div class="wpaic-box wpaic-box-info">
+    <strong>無料枠の上限:</strong> OpenRouter の無料モデルは 1 分あたり・1 日あたりのリクエスト上限があります。本番運用や高トラフィックでは、自分の OpenAI / Claude / Gemini キーへの切り替えか、有料モデルの選択を推奨します。最新の上限は <a href="https://openrouter.ai/docs" target="_blank" rel="noopener noreferrer">OpenRouter の公式ドキュメント</a>を参照してください。
+</div>
+<div class="wpaic-box wpaic-box-tip">
+    <strong>ヒント:</strong> 最初から自分の API キーを使いたい場合は、パネル下部の「自分の OpenAI / Claude / Gemini のキーを使う」リンクから、通常の AI プロバイダー設定に直接ジャンプできます。
+</div>
+<p>1 件でも API キーを保存済みの場合（OpenAI / Claude / Gemini / OpenRouter のいずれか）、このパネルは表示されません。以後は下記の通常の AI プロバイダー設定を使ってプロバイダー切り替えやキー管理を行います。</p>
 
 <h3 id="ai-provider">AI プロバイダー</h3>
 <p>チャットボットが使用する AI サービスを選択します。各プロバイダーごとに API キーの取得とモデルの選択が必要です。</p>
@@ -616,14 +635,14 @@ pre {
     <li>ダッシュボードの <strong>Keys</strong> セクション（<a href="https://openrouter.ai/keys" target="_blank">https://openrouter.ai/keys</a>）にアクセスします。</li>
     <li><strong>Create Key</strong> をクリックし、名前を入力します。</li>
     <li>表示されたキー（<code>sk-or-</code> で始まる文字列）をコピーします。</li>
-    <li>クレジットを追加して利用を開始します。</li>
+    <li>無料モデルのみを使う場合はクレジット追加は不要です。有料モデルを使う場合のみクレジットを追加します。</li>
 </ol>
 
 <p><strong>API キー</strong>（<code>openrouter_api_key</code>）: <code>sk-or-</code> で始まるキーを入力してください。保存時に暗号化されます。</p>
-<p><strong>モデル</strong>（<code>openrouter_model</code>）: デフォルトは <code>openrouter/auto</code> で、リクエスト内容に応じて最適なモデルを自動選択します。更新ボタンをクリックすると、利用可能なモデルの完全なリストを取得できます。</p>
+<p><strong>モデル</strong>（<code>openrouter_model</code>）: デフォルトは <code>openrouter/auto</code> で、リクエスト内容に応じて最適なモデルを自動選択します。更新ボタンをクリックすると、利用可能なモデルの完全なリストを取得できます。クレジット消費なしで使いたい場合は、ドロップダウンを「Refresh」してから ID 末尾が <code>:free</code> のモデル（例: <code>meta-llama/llama-3.3-70b-instruct:free</code>）を選んでください。</p>
 <p><span class="wpaic-default">デフォルト: openrouter/auto</span></p>
 <div class="wpaic-box wpaic-box-tip">
-    <strong>ヒント:</strong> OpenRouter を使うと、1つの API キーで様々なプロバイダーのモデルを試すことができます。モデル料金は OpenRouter の料金表に基づき、プロバイダーの直接料金よりもわずかに高い場合があります。
+    <strong>ヒント:</strong> OpenRouter を使うと、1つの API キーで様々なプロバイダーのモデルを試すことができます。モデル料金は OpenRouter の料金表に基づき、プロバイダーの直接料金よりもわずかに高い場合があります。無料で試したい場合は <code>:free</code> サフィックス付きのモデルを選択してください（上限あり）。
 </div>
 
 <h3 id="embedding">ベクトル埋め込み (RAG)</h3>

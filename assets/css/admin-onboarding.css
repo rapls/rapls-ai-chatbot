@@ -1,0 +1,156 @@
+/* Onboarding empty-state panel — shown when no provider API key is configured. */
+
+.raplsaich-onboarding {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #2271b1;
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin: 16px 0 24px;
+    max-width: 760px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.raplsaich-onboarding__title {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.raplsaich-onboarding__lead {
+    margin: 0 0 18px;
+    color: #50575e;
+    font-size: 14px;
+}
+
+.raplsaich-onboarding__steps {
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+    counter-reset: raplsaich-step;
+}
+
+.raplsaich-onboarding__step {
+    position: relative;
+    padding: 8px 0 8px 36px;
+    counter-increment: raplsaich-step;
+    color: #1d2327;
+    font-size: 14px;
+}
+
+.raplsaich-onboarding__step::before {
+    content: counter(raplsaich-step);
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    background: #2271b1;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.raplsaich-onboarding__links {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.raplsaich-onboarding__links .button {
+    margin: 0;
+}
+
+.raplsaich-onboarding__field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.raplsaich-onboarding__field input[type="password"] {
+    flex: 1 1 320px;
+    min-width: 280px;
+}
+
+.raplsaich-onboarding__rate-limit {
+    margin: 12px 0 0;
+    color: #646970;
+    font-size: 12px;
+    font-style: italic;
+}
+
+.raplsaich-onboarding__rate-limit a {
+    text-decoration: none;
+}
+
+.raplsaich-onboarding__status {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+    display: none;
+}
+
+.raplsaich-onboarding__status--info {
+    display: block;
+    background: #f0f6fc;
+    border: 1px solid #c5d9ed;
+    color: #0a4b78;
+}
+
+.raplsaich-onboarding__status--success {
+    display: block;
+    background: #edfaef;
+    border: 1px solid #b5e3bd;
+    color: #00540c;
+}
+
+.raplsaich-onboarding__status--error {
+    display: block;
+    background: #fcf0f1;
+    border: 1px solid #f0c3c7;
+    color: #8a1f24;
+}
+
+.raplsaich-onboarding__success-cta {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #dcdcde;
+    color: #1d2327;
+    font-size: 13px;
+}
+
+.raplsaich-onboarding__success-cta code {
+    background: #f0f0f1;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.raplsaich-onboarding__escape {
+    margin: 14px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid #dcdcde;
+    color: #646970;
+    font-size: 12px;
+}
+
+.raplsaich-onboarding__escape a {
+    text-decoration: none;
+}
+
+@media (max-width: 600px) {
+    .raplsaich-onboarding {
+        padding: 16px;
+    }
+    .raplsaich-onboarding__field input[type="password"] {
+        flex-basis: 100%;
+    }
+}

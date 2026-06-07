@@ -7828,10 +7828,6 @@ msgid "Used by the embedding generator when Embedding Provider is set to Gemini.
 msgstr "埋め込みプロバイダが Gemini の場合に、埋め込み生成で使用されます。"
 
 #:#: templates/admin/conversations.php
-msgid "URL"
-msgstr "URL"
-
-#:#: templates/admin/conversations.php
 msgid "Open start page: %s"
 msgstr "開始ページを開く: %s"
 
@@ -7850,3 +7846,104 @@ msgstr "モデル一覧についての注意："
 #:#: templates/admin/settings.php
 msgid "The model dropdown below shows a curated list of known model identifiers per provider. Providers add, rename, and retire models continuously, and access to specific models also depends on your account plan and API key permissions. As a result, some entries in this list may not exist anymore, may be unavailable to your account, or may have been replaced by newer versions. If a chat request fails with \"model not found\" or \"access denied\", switch to a different model and try again. You can also use the refresh button next to the model dropdown to re-fetch the latest list from the provider (where supported)."
 msgstr "以下のモデル選択肢は、各プロバイダーで知られているモデル ID をプラグイン側でリスト化したものです。プロバイダーはモデルの追加・改名・廃止を継続的に行っており、また個別モデルの利用可否はご利用のアカウントプランや API キーの権限にも依存します。そのため、この一覧には既に存在しないモデルや、お使いのアカウントで利用できないモデル、新しいバージョンに置き換わっているモデルが含まれる可能性があります。チャットで「model not found」や「access denied」のエラーが返る場合は、別のモデルに切り替えてお試しください。モデル選択欄の横にある更新ボタンを押すと、最新の一覧をプロバイダーから再取得できます（対応プロバイダーのみ）。"
+
+# Onboarding (empty-state) panel — first-run OpenRouter free-key flow
+#:#: templates/admin/settings.php
+msgid "Start for free"
+msgstr "まず無料で動かす"
+
+#:#: templates/admin/settings.php
+msgid "No credit card needed. Grab a free OpenRouter key (about a minute), paste it below, and the chatbot starts answering right away."
+msgstr "クレジットカードは不要です。OpenRouter で無料の API キーを約 1 分で取得し、下の入力欄に貼り付ければ、その場でチャットボットが応答を返し始めます。"
+
+#:#: templates/admin/settings.php
+msgid "Sign up at OpenRouter and create a free API key."
+msgstr "OpenRouter に無料登録して API キーを作成します。"
+
+#:#: templates/admin/settings.php
+msgid "Sign up at OpenRouter (no card)"
+msgstr "OpenRouter に無料登録（カード不要）"
+
+#:#: templates/admin/settings.php
+msgid "Create a key"
+msgstr "キーを作成"
+
+#:#: templates/admin/settings.php
+msgid "Paste the key into the field below."
+msgstr "取得したキーを下の欄に貼り付けます。"
+
+#:#: templates/admin/settings.php
+msgid "Press Test Connection to verify and save the key."
+msgstr "「接続テスト」を押して動作確認と保存をおこないます。"
+
+#:#: templates/admin/settings.php
+msgid "Next: add the chatbot to your site."
+msgstr "次のステップ：チャットボットをサイトに設置します。"
+
+#:#: templates/admin/settings.php
+msgid "Insert the Gutenberg block \"AI Chatbot\" into any page or post."
+msgstr "ブロックエディタで「AI チャットボット」ブロックを任意の固定ページ・投稿に挿入します。"
+
+#:#: templates/admin/settings.php
+msgid "Or place the shortcode %s anywhere in your content."
+msgstr "またはショートコード %s をコンテンツ内の任意の位置に貼り付けます。"
+
+#:#: templates/admin/settings.php
+msgid "Or enable sitewide display from %s."
+msgstr "または %s でサイト全体への表示を有効化します。"
+
+#:#: templates/admin/settings.php
+msgid "Reload settings to refresh this page"
+msgstr "設定を再読み込みしてこのページを更新する"
+
+#:#: templates/admin/settings.php
+msgid "Free models have per-minute and per-day rate limits."
+msgstr "無料モデルには 1 分あたり・1 日あたりの利用上限があります。"
+
+#:#: templates/admin/settings.php
+msgid "See OpenRouter docs for current limits."
+msgstr "最新の上限は OpenRouter 公式ドキュメントを参照してください。"
+
+#:#: templates/admin/settings.php
+msgid "Or use your own OpenAI / Claude / Gemini key instead."
+msgstr "または自分の OpenAI / Claude / Gemini のキーを使う"
+
+#:#: includes/admin/class-admin.php
+msgid "Testing connection…"
+msgstr "接続を確認しています…"
+
+#:#: includes/admin/class-admin.php
+msgid "Key is not valid. Check that you copied it correctly."
+msgstr "キーが正しくありません。コピーミスがないかご確認ください。"
+
+#:#: includes/admin/class-admin.php
+msgid "Free tier rate limit reached. Wait a moment or switch to a paid model."
+msgstr "無料枠の上限に達しています。少し待つか、別モデル／有料枠への切り替えをご検討ください。"
+
+#:#: includes/admin/class-admin.php
+msgid "Could not reach OpenRouter. Please try again later."
+msgstr "OpenRouter に接続できませんでした。時間をおいて再度お試しください。"
+
+#:#: includes/admin/class-admin.php
+msgid "Got an unexpected response. Please retry."
+msgstr "想定外の応答が返りました。もう一度お試しください。"
+
+#:#: includes/admin/class-admin.php
+msgid "Connected. Your chatbot is ready to deploy."
+msgstr "接続に成功しました。チャットボットの設置に進めます。"
+
+#:#: includes/admin/class-admin.php
+msgid "Connection test failed."
+msgstr "接続テストに失敗しました。"
+
+#:#: includes/ai-providers/class-openrouter-provider.php
+msgid "Free models auto-routed, rate-limited"
+msgstr "無料モデルを自動選択／上限あり"
+
+#:#: includes/admin/class-admin.php
+msgid "This does not look like an OpenRouter API key. OpenRouter keys start with \"sk-or-\". Generate one at openrouter.ai/keys."
+msgstr "OpenRouter の API キーではないようです。OpenRouter のキーは \"sk-or-\" で始まります。openrouter.ai/keys で発行できます。"
+
+#:#: includes/admin/class-admin.php
+msgid "This does not look like an OpenRouter key. It should start with \"sk-or-\"."
+msgstr "OpenRouter のキーではないようです。\"sk-or-\" で始まる必要があります。"

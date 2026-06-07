@@ -49,6 +49,13 @@ class RAPLSAICH_OpenRouter_Provider implements RAPLSAICH_AI_Provider_Interface {
             throw new Exception(esc_html__('OpenRouter API key is not configured.', 'rapls-ai-chatbot'));
         }
 
+        // Legacy/virtual id: OpenRouter has no "openrouter/free" router. Resolve to a
+        // concrete :free model at request time so installs from pre-1.9.1 onboarding
+        // (which saved this magic value) keep working without manual settings cleanup.
+        if ($this->model === 'openrouter/free') {
+            $this->model = $this->resolve_free_model_id();
+        }
+
         // Inject file as text into the last user message (no native file support)
         if (!empty($options['file'])) {
             $file_name = $options['file_name'] ?? '';
@@ -96,6 +103,35 @@ class RAPLSAICH_OpenRouter_Provider implements RAPLSAICH_AI_Provider_Interface {
             }
         }
 
+        try {
+            return $this->_send_message_once($messages, $options);
+        } catch (RAPLSAICH_Quota_Exceeded_Exception $e) {
+            // Free models on OpenRouter are routed through upstream providers (Venice,
+            // OpenAI, NVIDIA, etc) that throttle the free pool aggressively. When the
+            // active :free model 429s, mark it throttled, pick a different :free model
+            // from the catalog, persist the change so the next request uses it directly,
+            // and retry the chat ONCE. Paid models legitimately 429 on quota and should
+            // surface the error to the user unchanged.
+            if (substr($this->model, -5) !== ':free') {
+                throw $e;
+            }
+            $failed_model = $this->model;
+            $this->mark_model_throttled($failed_model);
+            $alternative = $this->resolve_free_model_id([$failed_model]);
+            if ($alternative === $failed_model || $alternative === 'openrouter/auto') {
+                throw $e; // no viable alternative — surface original quota error
+            }
+            $this->model = $alternative;
+            $this->persist_model_change($alternative);
+            return $this->_send_message_once($messages, $options);
+        }
+    }
+
+    /**
+     * Single HTTP round-trip to OpenRouter's chat/completions endpoint with the
+     * current $this->model and $this->api_key. Throws on non-2xx via handle_api_error.
+     */
+    private function _send_message_once(array $messages, array $options): array {
         $body = [
             'model'    => $this->model,
             'messages' => $messages,
@@ -351,14 +387,154 @@ class RAPLSAICH_OpenRouter_Provider implements RAPLSAICH_AI_Provider_Interface {
     }
 
     /**
+     * Resolve "openrouter/free" (or pick a free fallback) to a concrete :free model id.
+     *
+     * Hits /v1/models, then picks from a preferred shortlist of currently-existing
+     * chat-tuned free models. Excludes anything in $exclude or in the throttled
+     * transient (models that recently returned 429). Falls back to the first
+     * chat-capable :free model in the catalog, then to 'openrouter/auto'.
+     *
+     * Cached for 1 hour (short, because free model availability flutters).
+     *
+     * @param string[] $exclude Model ids to skip (e.g. one that just 429'd this turn).
+     */
+    public function resolve_free_model_id(array $exclude = []): string {
+        $cache_key = 'raplsaich_or_free_model_v1';
+        $throttled = get_transient('raplsaich_or_throttled_models_v1');
+        if (!is_array($throttled)) {
+            $throttled = [];
+        }
+        $skip = array_merge($exclude, $throttled);
+
+        $cached = get_transient($cache_key);
+        if (is_string($cached) && $cached !== '' && !in_array($cached, $skip, true)) {
+            return $cached;
+        }
+
+        $headers = [];
+        if (!empty($this->api_key)) {
+            $headers['Authorization'] = 'Bearer ' . $this->api_key;
+        }
+        $response = wp_remote_get('https://openrouter.ai/api/v1/models', [
+            'headers' => $headers,
+            'timeout' => 10,
+        ]);
+
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            return 'openrouter/auto';
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($body) || empty($body['data']) || !is_array($body['data'])) {
+            return 'openrouter/auto';
+        }
+
+        $ids = [];
+        foreach ($body['data'] as $m) {
+            if (!empty($m['id']) && is_string($m['id'])) {
+                $ids[$m['id']] = $m;
+            }
+        }
+
+        // Preferred shortlist: currently-existing chat-tuned free models, ordered
+        // by general quality. Verified against the live OpenRouter catalog in
+        // June 2026 — the previous list (Llama 3.1, Mistral 7B, Gemma 2, Qwen 2.5)
+        // was 4-of-7 retired and never matched. Extenders can override.
+        $preferred = apply_filters('raplsaich_openrouter_free_preferred', [
+            'openai/gpt-oss-120b:free',
+            'nvidia/nemotron-3-super-120b-a12b:free',
+            'google/gemma-4-31b-it:free',
+            'z-ai/glm-4.5-air:free',
+            'openai/gpt-oss-20b:free',
+            'meta-llama/llama-3.3-70b-instruct:free',
+            'nousresearch/hermes-3-llama-3.1-405b:free',
+        ]);
+
+        foreach ($preferred as $candidate) {
+            if (isset($ids[$candidate]) && !in_array($candidate, $skip, true)) {
+                set_transient($cache_key, $candidate, HOUR_IN_SECONDS);
+                return $candidate;
+            }
+        }
+
+        // Fallback: first :free model with zero prompt price, excluding obvious
+        // non-chat patterns (safety classifiers, embeddings, audio, TTS).
+        $non_chat_patterns = ['safety', 'embed', '-audio', 'tts', 'guard'];
+        foreach ($ids as $id => $m) {
+            if (substr($id, -5) !== ':free') {
+                continue;
+            }
+            if ((float) ($m['pricing']['prompt'] ?? 1) != 0) {
+                continue;
+            }
+            if (in_array($id, $skip, true)) {
+                continue;
+            }
+            $lower = strtolower($id);
+            $is_non_chat = false;
+            foreach ($non_chat_patterns as $pat) {
+                if (strpos($lower, $pat) !== false) {
+                    $is_non_chat = true;
+                    break;
+                }
+            }
+            if ($is_non_chat) {
+                continue;
+            }
+            set_transient($cache_key, $id, HOUR_IN_SECONDS);
+            return $id;
+        }
+
+        return 'openrouter/auto';
+    }
+
+    /**
+     * Mark a free model as throttled so resolve_free_model_id() skips it for the
+     * next 10 minutes. Used by the chat-time 429 fallback.
+     */
+    private function mark_model_throttled(string $model): void {
+        $key = 'raplsaich_or_throttled_models_v1';
+        $list = get_transient($key);
+        if (!is_array($list)) {
+            $list = [];
+        }
+        if (!in_array($model, $list, true)) {
+            $list[] = $model;
+        }
+        set_transient($key, $list, 10 * MINUTE_IN_SECONDS);
+        // Force re-resolve so the cached id (now throttled) is not reused.
+        delete_transient('raplsaich_or_free_model_v1');
+    }
+
+    /**
+     * Persist a model swap to plugin settings so the next request uses the
+     * fallback automatically instead of re-discovering it.
+     */
+    private function persist_model_change(string $new_model): void {
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings)) {
+            return;
+        }
+        if (($settings['ai_provider'] ?? '') !== 'openrouter') {
+            return;
+        }
+        $settings['openrouter_model'] = $new_model;
+        update_option('raplsaich_settings', $settings);
+    }
+
+    /**
      * Validate API Key
+     *
+     * Uses /v1/auth/key (requires real auth — returns 401 for invalid keys),
+     * not /v1/models (which returns the public catalog with 200 even when the
+     * supplied bearer is bogus, so it cannot distinguish a real key from junk).
      */
     public function validate_api_key(): bool {
-        if (empty($this->api_key)) {
+        if (empty($this->api_key) || strpos($this->api_key, 'sk-or-') !== 0) {
             return false;
         }
 
-        $response = wp_remote_get('https://openrouter.ai/api/v1/models', [
+        $response = wp_remote_get('https://openrouter.ai/api/v1/auth/key', [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->api_key,
             ],

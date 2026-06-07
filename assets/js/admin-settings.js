@@ -352,4 +352,88 @@ jQuery(document).ready(function($) {
             setTimeout(function() { $btn.text(orig); }, 2000);
         }
     });
+
+    // ---- Onboarding (empty-state) panel: OpenRouter free-key test ----
+    var onboarding = (window.raplsaichSettingsData && raplsaichSettingsData.onboarding) || null;
+    if (onboarding && onboarding.visible) {
+        var $panel  = $('#raplsaich-onboarding');
+        var $input  = $('#raplsaich-onboarding-key');
+        var $button = $('#raplsaich-onboarding-test');
+        var $status = $('#raplsaich-onboarding-status');
+        var $cta    = $('#raplsaich-onboarding-cta');
+        var $skip   = $('#raplsaich-onboarding-skip-link');
+        var oi18n   = onboarding.i18n || {};
+
+        function setStatus(level, message) {
+            $status.removeClass('raplsaich-onboarding__status--info raplsaich-onboarding__status--success raplsaich-onboarding__status--error');
+            if (!message) {
+                $status.text('').hide();
+                return;
+            }
+            $status.addClass('raplsaich-onboarding__status--' + level).text(message).show();
+        }
+
+        $skip.on('click', function(e) {
+            e.preventDefault();
+            var $provider = $('#ai_provider');
+            if ($provider.length) {
+                $('html, body').animate({ scrollTop: Math.max(0, $provider.offset().top - 80) }, 300);
+                $provider.trigger('focus');
+            }
+        });
+
+        $button.on('click', function() {
+            var key = ($input.val() || '').trim();
+            if (!key) {
+                setStatus('error', oi18n.emptyKey || 'Please enter an API key.');
+                $input.trigger('focus');
+                return;
+            }
+            if (key.indexOf('sk-or-') !== 0) {
+                setStatus('error', oi18n.wrongFormat || 'This does not look like an OpenRouter key. It should start with "sk-or-".');
+                $input.trigger('focus').trigger('select');
+                return;
+            }
+            $button.prop('disabled', true);
+            setStatus('info', oi18n.testing || 'Testing connection…');
+            $cta.attr('hidden', true);
+
+            $.ajax({
+                url:    raplsaichAdmin.ajaxUrl,
+                method: 'POST',
+                data:   {
+                    action:  'raplsaich_onboard_openrouter_test',
+                    nonce:   raplsaichAdmin.nonce,
+                    api_key: key
+                },
+                dataType: 'json'
+            }).done(function(resp) {
+                if (resp && resp.success) {
+                    var message = (resp.data && resp.data.message) || oi18n.success || 'Connected.';
+                    setStatus('success', message);
+                    $cta.removeAttr('hidden');
+                    $input.val('').prop('disabled', true);
+                } else {
+                    var err  = (resp && resp.data) || {};
+                    var text = err.message || oi18n.genericError || 'Connection test failed.';
+                    setStatus('error', text);
+                }
+            }).fail(function(xhr) {
+                var fallback = oi18n.networkError || 'Could not reach OpenRouter. Please try again later.';
+                if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                    fallback = xhr.responseJSON.data.message;
+                }
+                setStatus('error', fallback);
+            }).always(function() {
+                $button.prop('disabled', false);
+            });
+        });
+
+        $input.on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $button.trigger('click');
+            }
+        });
+    }
 });

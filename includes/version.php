@@ -14,5 +14,5 @@ if (!defined('ABSPATH')) {
 }
 
 if (!defined('RAPLSAICH_VERSION')) {
-    define('RAPLSAICH_VERSION', '1.8.2');
+    define('RAPLSAICH_VERSION', '1.9.0');
 }

@@ -2017,10 +2017,14 @@
             var btn = this.inputForm.querySelector('button[type="submit"]');
             if (!btn) return;
             var remaining = Math.min(Math.max(1, Math.ceil(seconds)), 120);
-            // Save current text to data attribute (survives DOM replacement by
-            // page builders) and always update on each countdown start to handle
-            // dynamic text changes from translations or theme overrides.
-            btn.setAttribute('data-raplsaich-retry-original-text', btn.textContent);
+            // Save current INNER HTML (not textContent) to survive the SVG icon
+            // intact. textContent of a button containing only <svg> is "", so the
+            // original code blew the paper-plane away on first overwrite.
+            // Only save once per countdown — subsequent ticks reuse it.
+            if (!btn.hasAttribute('data-raplsaich-retry-original-html')) {
+                btn.setAttribute('data-raplsaich-retry-original-html', btn.innerHTML);
+            }
+            btn.classList.add('raplsaich-retry-active');
             btn.disabled = true;
             self.isLoading = true;
 
@@ -2036,14 +2040,23 @@
                     return;
                 }
                 if (remaining <= 0) {
-                    currentBtn.textContent = currentBtn.getAttribute('data-raplsaich-retry-original-text') || '';
-                    currentBtn.removeAttribute('data-raplsaich-retry-original-text');
+                    var orig = currentBtn.getAttribute('data-raplsaich-retry-original-html') || '';
+                    currentBtn.innerHTML = orig;
+                    currentBtn.removeAttribute('data-raplsaich-retry-original-html');
+                    currentBtn.classList.remove('raplsaich-retry-active');
                     currentBtn.disabled = false;
                     self.isLoading = false;
                     self._retryTimerId = null;
                     return;
                 }
-                currentBtn.textContent = remaining + 's';
+                // textContent on the span (not the button) avoids re-parsing HTML.
+                var span = currentBtn.querySelector('.raplsaich-retry-countdown');
+                if (span) {
+                    span.textContent = remaining + 's';
+                } else {
+                    // First tick (or DOM was replaced): rebuild the badge.
+                    currentBtn.innerHTML = '<span class="raplsaich-retry-countdown">' + remaining + 's</span>';
+                }
                 remaining--;
                 self._retryTimerId = setTimeout(tick, 1000);
             };

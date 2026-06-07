@@ -161,6 +161,7 @@ class RAPLSAICH_Main {
         $this->loader->add_action('wp_ajax_raplsaich_crawler_exclude_post', $admin, 'ajax_crawler_exclude_post');
         $this->loader->add_action('wp_ajax_raplsaich_crawler_include_post', $admin, 'ajax_crawler_include_post');
         $this->loader->add_action('wp_ajax_raplsaich_test_api', $admin, 'ajax_test_api');
+        $this->loader->add_action('wp_ajax_raplsaich_onboard_openrouter_test', $admin, 'ajax_onboard_openrouter_test');
         $this->loader->add_action('wp_ajax_raplsaich_get_conversation_messages', $admin, 'ajax_get_conversation_messages');
         $this->loader->add_action('wp_ajax_raplsaich_delete_conversation', $admin, 'ajax_delete_conversation');
         $this->loader->add_action('wp_ajax_raplsaich_archive_conversation', $admin, 'ajax_archive_conversation');

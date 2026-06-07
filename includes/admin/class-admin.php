@@ -860,6 +860,20 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * Whether the first-run onboarding panel should be shown.
+     * True only when no provider API key has been saved yet.
+     */
+    public static function should_show_onboarding(array $settings): bool {
+        $keys = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key'];
+        foreach ($keys as $k) {
+            if (!empty($settings[$k])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Enqueue admin styles
      */
     public function enqueue_styles(string $hook): void {
@@ -903,10 +917,27 @@ class RAPLSAICH_Admin {
         if (strpos($hook, 'raplsaich-settings') !== false) {
             $pro_settings = get_option('raplsaich_settings', []);
             $pro_feat = $pro_settings['extensions'] ?? [];
+            $show_onboarding = self::should_show_onboarding($pro_settings);
+            if ($show_onboarding) {
+                wp_enqueue_style('raplsaich-onboarding', RAPLSAICH_PLUGIN_URL . 'assets/css/admin-onboarding.css', ['raplsaich-admin'], RAPLSAICH_VERSION);
+            }
             wp_enqueue_script('raplsaich-admin-settings', RAPLSAICH_PLUGIN_URL . 'assets/js/admin-settings.js', ['jquery', 'raplsaich-admin'], RAPLSAICH_VERSION, true);
-            // Pass multimodal flag to JS
             wp_localize_script('raplsaich-admin-settings', 'raplsaichSettingsData', [
                 'multimodalEnabled' => !empty($pro_feat['multimodal_enabled']),
+                'onboarding'        => [
+                    'visible' => $show_onboarding,
+                    'i18n'    => [
+                        'emptyKey'        => __('Please enter an API key.', 'rapls-ai-chatbot'),
+                        'testing'         => __('Testing connection…', 'rapls-ai-chatbot'),
+                        'invalidKey'      => __('Key is not valid. Check that you copied it correctly.', 'rapls-ai-chatbot'),
+                        'wrongFormat'     => __('This does not look like an OpenRouter key. It should start with "sk-or-".', 'rapls-ai-chatbot'),
+                        'rateLimited'     => __('Free tier rate limit reached. Wait a moment or switch to a paid model.', 'rapls-ai-chatbot'),
+                        'networkError'    => __('Could not reach OpenRouter. Please try again later.', 'rapls-ai-chatbot'),
+                        'parseError'      => __('Got an unexpected response. Please retry.', 'rapls-ai-chatbot'),
+                        'success'         => __('Connected. Your chatbot is ready to deploy.', 'rapls-ai-chatbot'),
+                        'genericError'    => __('Connection test failed.', 'rapls-ai-chatbot'),
+                    ],
+                ],
             ]);
         }
 
@@ -1565,6 +1596,173 @@ class RAPLSAICH_Admin {
             self::log_diagnostic_event('api_test_failed');
             wp_send_json_error(__('API request failed. Please check your API key and try again.', 'rapls-ai-chatbot'));
         }
+    }
+
+    /**
+     * Onboarding: validate a freshly entered OpenRouter API key, and on success
+     * save it (encrypted), switch the active provider to OpenRouter, and set
+     * the model to a concrete :free model id (resolved from /v1/models — the
+     * "openrouter/free" router does not exist on the OpenRouter side). Used by
+     * the empty-state panel for brand-new installs without any provider key.
+     */
+    public function ajax_onboard_openrouter_test(): void {
+        check_ajax_referer('raplsaich_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(['code' => 'forbidden', 'message' => __('Permission denied.', 'rapls-ai-chatbot')]);
+        }
+
+        // Lighter sanitization for API keys — control chars + trim only.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
+
+        if (empty($api_key)) {
+            wp_send_json_error(['code' => 'empty', 'message' => __('Please enter an API key.', 'rapls-ai-chatbot')]);
+        }
+
+        // OpenRouter keys always begin with "sk-or-". Reject early so an OpenAI /
+        // Anthropic key pasted into the wrong field never reaches OpenRouter.
+        if (strpos($api_key, 'sk-or-') !== 0) {
+            wp_send_json_error([
+                'code'    => 'wrong_format',
+                'message' => __('This does not look like an OpenRouter API key. OpenRouter keys start with "sk-or-". Generate one at openrouter.ai/keys.', 'rapls-ai-chatbot'),
+            ]);
+        }
+
+        // Validate via GET /v1/auth/key (requires real auth — returns 401 for an
+        // invalid or unrecognized key, unlike /v1/models which returns the public
+        // catalog and falsely 200s for any string).
+        $response = wp_remote_get('https://openrouter.ai/api/v1/auth/key', [
+            'timeout' => 15,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $api_key,
+                'HTTP-Referer'  => get_site_url(),
+                'X-Title'       => 'Rapls AI Chatbot',
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('RAPLSAICH ajax_onboard_openrouter_test (network): ' . $response->get_error_message());
+            }
+            wp_send_json_error(['code' => 'network', 'message' => __('Could not reach OpenRouter. Please try again later.', 'rapls-ai-chatbot')]);
+        }
+
+        $code = (int) wp_remote_retrieve_response_code($response);
+
+        if ($code === 401 || $code === 403) {
+            wp_send_json_error(['code' => 'auth', 'message' => __('Key is not valid. Check that you copied it correctly.', 'rapls-ai-chatbot')]);
+        }
+        if ($code === 429) {
+            wp_send_json_error(['code' => 'rate_limit', 'message' => __('Free tier rate limit reached. Wait a moment or switch to a paid model.', 'rapls-ai-chatbot')]);
+        }
+        if ($code < 200 || $code >= 300) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('RAPLSAICH ajax_onboard_openrouter_test (http ' . $code . '): ' . wp_remote_retrieve_body($response));
+            }
+            wp_send_json_error(['code' => 'http_' . $code, 'message' => __('Got an unexpected response. Please retry.', 'rapls-ai-chatbot')]);
+        }
+
+        // /v1/auth/key returns {"data": {"label": ..., "usage": ..., "limit": ...}}
+        // The presence of a "data" object confirms a genuine, authenticated reply.
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($body) || empty($body['data'])) {
+            wp_send_json_error(['code' => 'parse', 'message' => __('Got an unexpected response. Please retry.', 'rapls-ai-chatbot')]);
+        }
+
+        // Key valid — now fetch the model catalog to pick a concrete :free model.
+        $models_response = wp_remote_get('https://openrouter.ai/api/v1/models', [
+            'timeout' => 15,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $api_key,
+                'HTTP-Referer'  => get_site_url(),
+                'X-Title'       => 'Rapls AI Chatbot',
+            ],
+        ]);
+        $picked = 'openrouter/auto';
+        if (!is_wp_error($models_response) && wp_remote_retrieve_response_code($models_response) === 200) {
+            $models_body = json_decode(wp_remote_retrieve_body($models_response), true);
+            if (is_array($models_body) && !empty($models_body['data']) && is_array($models_body['data'])) {
+                $picked = $this->pick_free_model_from_models_payload($models_body['data']);
+            }
+        }
+
+        // Success — persist key (encrypted), switch provider + model.
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+        $settings['openrouter_api_key'] = $this->maybe_encrypt_api_key($api_key);
+        $settings['ai_provider']        = 'openrouter';
+        $settings['openrouter_model']   = $picked;
+        update_option('raplsaich_settings', $settings);
+
+        // Pre-warm the runtime resolver cache so /v1/models is not re-hit on first chat.
+        set_transient('raplsaich_or_free_model_v1', $picked, 6 * HOUR_IN_SECONDS);
+
+        wp_send_json_success([
+            'message'  => __('Connected. Your chatbot is ready to deploy.', 'rapls-ai-chatbot'),
+            'provider' => 'openrouter',
+            'model'    => $picked,
+        ]);
+    }
+
+    /**
+     * Pick a concrete :free model id from a /v1/models data array.
+     * Same preference order as RAPLSAICH_OpenRouter_Provider::resolve_free_model_id().
+     * Returns 'openrouter/auto' if no free model is present in the payload.
+     */
+    private function pick_free_model_from_models_payload(array $data): string {
+        $ids = [];
+        foreach ($data as $m) {
+            if (!empty($m['id']) && is_string($m['id'])) {
+                $ids[$m['id']] = $m;
+            }
+        }
+
+        $preferred = apply_filters('raplsaich_openrouter_free_preferred', [
+            'openai/gpt-oss-120b:free',
+            'nvidia/nemotron-3-super-120b-a12b:free',
+            'google/gemma-4-31b-it:free',
+            'z-ai/glm-4.5-air:free',
+            'openai/gpt-oss-20b:free',
+            'meta-llama/llama-3.3-70b-instruct:free',
+            'nousresearch/hermes-3-llama-3.1-405b:free',
+        ]);
+
+        foreach ($preferred as $candidate) {
+            if (isset($ids[$candidate])) {
+                return $candidate;
+            }
+        }
+
+        // Fallback: any :free model with zero prompt price, excluding obvious
+        // non-chat patterns (safety classifiers, embeddings, audio, guard).
+        $non_chat_patterns = ['safety', 'embed', '-audio', 'tts', 'guard'];
+        foreach ($ids as $id => $m) {
+            if (substr($id, -5) !== ':free') {
+                continue;
+            }
+            if ((float) ($m['pricing']['prompt'] ?? 1) != 0) {
+                continue;
+            }
+            $lower = strtolower($id);
+            $is_non_chat = false;
+            foreach ($non_chat_patterns as $pat) {
+                if (strpos($lower, $pat) !== false) {
+                    $is_non_chat = true;
+                    break;
+                }
+            }
+            if ($is_non_chat) {
+                continue;
+            }
+            return $id;
+        }
+
+        return 'openrouter/auto';
     }
 
     /**

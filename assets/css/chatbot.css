@@ -1024,6 +1024,23 @@
     color: #ffffff;
 }
 
+/* Rate-limit countdown: keep the primary-color disc so the digits
+   sit on a high-contrast background instead of the default gray. */
+.chatbot-input button[type="submit"].raplsaich-retry-active,
+.chatbot-input button[type="submit"].raplsaich-retry-active:disabled {
+    background: var(--raplsaich-primary);
+    opacity: 0.85;
+}
+
+.chatbot-input button[type="submit"] .raplsaich-retry-countdown {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    letter-spacing: 0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
 /* ============================================
    画像アップロード（Pro: マルチモーダル）
 ============================================ */
