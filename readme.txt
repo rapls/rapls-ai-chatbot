@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -170,6 +170,12 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.9.1 =
+* Fixed: Chat window froze with no reply shown when the AI answered with a markdown table. The table separator-row regex rejected the standard GFM trailing pipe (`|---|---|`), and the paragraph fallback then looped forever on the unconsumed line, exhausting browser memory. Tables now render, and the renderer always makes forward progress on any input.
+* Fixed: Literal `<br>` tags that AI models emit inside markdown table cells now render as line breaks instead of showing as raw text.
+* Fixed: The Remove button for the OpenAI / Gemini API key had no effect on WordPress 7.0 sites. The "WordPress AI Client" RAG section renders duplicate hidden fields with the same names later in the DOM, so its delete-flag "0" and empty key field overrode the visible section's values on submit. Hidden provider sections are now excluded from form submission.
+* Improved: After the onboarding connection test succeeds, a prominent "Reload this page now" button appears (with auto-scroll and focus) so the saved provider and model are applied before any further edits to the settings form.
+
 = 1.9.0 =
 * Added: "Start for free" onboarding panel that appears on the Settings page when no provider API key has been saved. Walks new users from zero to a working chatbot in about a minute using an OpenRouter free API key (no credit card required). Key is encrypted (AES-256-GCM), provider auto-set to OpenRouter, and a concrete free model id (e.g. `openai/gpt-oss-120b:free`) is picked from the live `/v1/models` catalog and saved as the active model.
 * Added: Automatic 429 fallback for free models. When the active `:free` model is throttled upstream (Venice / NVIDIA / etc), the active model is marked as throttled for 10 minutes, an alternative `:free` model is picked from the catalog, persisted to settings, and the chat request is retried once. Paid models pass quota errors through unchanged.
@@ -207,6 +213,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.9.1 =
+Fixes a chat freeze when AI responses contain markdown tables, and API key deletion on WordPress 7.0 sites. Recommended for all users.
 
 = 1.9.0 =
 Adds a one-minute onboarding flow that lets new users connect a free OpenRouter API key (no credit card) and start chatting immediately. Includes automatic fallback when free models are rate-limited upstream.

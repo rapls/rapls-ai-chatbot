@@ -74,6 +74,17 @@ if (!defined('ABSPATH')) {
         <div class="raplsaich-onboarding__status" id="raplsaich-onboarding-status" role="status" aria-live="polite"></div>
 
         <div class="raplsaich-onboarding__success-cta" id="raplsaich-onboarding-cta" hidden>
+            <p class="raplsaich-onboarding__reload-lead">
+                <strong><?php esc_html_e('Setup complete. Reload this page to apply the saved settings.', 'rapls-ai-chatbot'); ?></strong>
+            </p>
+            <p class="raplsaich-onboarding__reload-action">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=raplsaich-settings')); ?>" class="button button-primary button-hero" id="raplsaich-onboarding-reload">
+                    <?php esc_html_e('Reload this page now', 'rapls-ai-chatbot'); ?>
+                </a>
+            </p>
+            <p class="raplsaich-onboarding__reload-note">
+                <?php esc_html_e('Until you reload, the settings form below still shows the previous values. Reload first so you do not accidentally overwrite the key you just saved.', 'rapls-ai-chatbot'); ?>
+            </p>
             <strong><?php esc_html_e('Next: add the chatbot to your site.', 'rapls-ai-chatbot'); ?></strong>
             <ul style="margin: 6px 0 0 18px;">
                 <li><?php esc_html_e('Insert the Gutenberg block "AI Chatbot" into any page or post.', 'rapls-ai-chatbot'); ?></li>
@@ -90,9 +101,6 @@ if (!defined('ABSPATH')) {
                     ?>
                 </li>
             </ul>
-            <p style="margin: 10px 0 0;">
-                <a href="<?php echo esc_url(admin_url('admin.php?page=raplsaich-settings')); ?>"><?php esc_html_e('Reload settings to refresh this page', 'rapls-ai-chatbot'); ?></a>
-            </p>
         </div>
 
         <p class="raplsaich-onboarding__rate-limit">

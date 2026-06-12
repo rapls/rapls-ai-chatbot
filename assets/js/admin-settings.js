@@ -413,6 +413,14 @@ jQuery(document).ready(function($) {
                     setStatus('success', message);
                     $cta.removeAttr('hidden');
                     $input.val('').prop('disabled', true);
+                    // Bring the big "reload this page" CTA into view and focus it,
+                    // so the recommended next step is unmissable.
+                    var $reload = $('#raplsaich-onboarding-reload');
+                    if ($reload.length) {
+                        $('html, body').animate({ scrollTop: Math.max(0, $cta.offset().top - 120) }, 300, function() {
+                            $reload.trigger('focus');
+                        });
+                    }
                 } else {
                     var err  = (resp && resp.data) || {};
                     var text = err.message || oi18n.genericError || 'Connection test failed.';

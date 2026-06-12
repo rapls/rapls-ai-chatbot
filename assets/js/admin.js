@@ -110,8 +110,15 @@
             // 全てのプロバイダー設定を非表示
             $('.provider-settings').hide();
 
+            // 非表示セクションのAPIキー欄・削除フラグはdisabledにして送信から除外する。
+            // openai/gemini のキーはWPAIのRAGセクションにも同名フィールドがあり、
+            // 同名は後勝ちのため、有効なままだと表示中セクションの入力値や
+            // 削除フラグ(=1)が後方の空値・0で上書きされてしまう
+            $('.provider-settings').find('.raplsaich-api-key-wrapper input').prop('disabled', true);
+
             // 選択されたプロバイダーの設定を表示
-            $('#' + provider + '-settings').show();
+            $('#' + provider + '-settings').show()
+                .find('.raplsaich-api-key-wrapper input').prop('disabled', false);
         }).trigger('change');
 
         // APIキー削除 — sets hidden delete flag; key removed on save
@@ -122,8 +129,10 @@
             var $wrapper = $(this).closest('.raplsaich-api-key-wrapper');
 
             if (confirm(raplsaichAdmin.i18n.confirmDeleteApiKey || 'Delete this API key?\nPlease save settings after deletion.')) {
-                $input.val('').attr('placeholder', '');
-                $deleteFlag.val('1');
+                // 同名の重複フィールド(WPAI RAGセクション等)もまとめて空にし、
+                // 削除フラグも同名すべてを1にする(後勝ちで0に戻るのを防ぐ)
+                $('input[name="' + $input.attr('name') + '"]').val('').attr('placeholder', '');
+                $('input[name="' + $deleteFlag.attr('name') + '"]').val('1');
                 $(this).hide();
                 $wrapper.find('.raplsaich-key-status')
                     .removeClass('raplsaich-key-set')

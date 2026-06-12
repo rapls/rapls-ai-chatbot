@@ -7877,6 +7877,18 @@ msgid "Press Test Connection to verify and save the key."
 msgstr "「接続テスト」を押して動作確認と保存をおこないます。"
 
 #:#: templates/admin/settings.php
+msgid "Setup complete. Reload this page to apply the saved settings."
+msgstr "設定が完了しました。ページを再読み込みして、保存した設定を反映してください。"
+
+#:#: templates/admin/settings.php
+msgid "Reload this page now"
+msgstr "今すぐページを再読み込み"
+
+#:#: templates/admin/settings.php
+msgid "Until you reload, the settings form below still shows the previous values. Reload first so you do not accidentally overwrite the key you just saved."
+msgstr "再読み込みするまで、下の設定フォームには以前の値が表示されたままです。保存したキーを誤って上書きしないよう、先に再読み込みしてください。"
+
+#:#: templates/admin/settings.php
 msgid "Next: add the chatbot to your site."
 msgstr "次のステップ：チャットボットをサイトに設置します。"
 

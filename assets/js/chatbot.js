@@ -2544,7 +2544,10 @@
                 }
 
                 // Table (| col | col | with separator |---|---|)
-                if (/^\|(.+\|)+\s*$/.test(line) && i + 1 < lines.length && /^\|[\s\-:]+(\|[\s\-:]+)+\s*$/.test(lines[i + 1])) {
+                // Separator regex: trailing pipe is optional ("|---|---|" and "|---|---"
+                // both valid GFM); lookahead requires at least one dash so a row of
+                // empty cells ("| | |") is not mistaken for a separator.
+                if (/^\|(.+\|)+\s*$/.test(line) && i + 1 < lines.length && /^\|(?=.*-)[\s\-:]+(\|[\s\-:]+)*\|?\s*$/.test(lines[i + 1])) {
                     var table = document.createElement('table');
                     var thead = document.createElement('thead');
                     var tbody = document.createElement('tbody');
@@ -2609,6 +2612,14 @@
                     paraLines.push(lines[i]);
                     i++;
                 }
+                if (paraLines.length === 0) {
+                    // The line matched a block-element pattern above but its branch
+                    // didn't consume it (e.g. a table-row-like line with no separator
+                    // row). Take it as plain text — without this, i never advances
+                    // and the while loop spins forever.
+                    paraLines.push(lines[i]);
+                    i++;
+                }
                 var p = document.createElement('p');
                 self._appendInlineMarkdown(p, paraLines.join('\n'));
                 fragment.appendChild(p);
@@ -2625,7 +2636,7 @@
             var self = this;
             // Tokenize: inline code, bold, italic, markdown links, URLs, line breaks, plain text
             // Order matters: code first, then bold, italic, markdown links [text](url), raw URLs
-            var pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\(https?:\/\/[^\s\)]+\)|https?:\/\/[^\s<>"'\)\]]+|\n)/g;
+            var pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_|\[[^\]]+\]\(https?:\/\/[^\s\)]+\)|https?:\/\/[^\s<>"'\)\]]+|<[bB][rR]\s*\/?>|\n)/g;
             var lastIndex = 0;
             var match;
 
@@ -2636,7 +2647,9 @@
                 }
                 var token = match[0];
 
-                if (token === '\n') {
+                if (token === '\n' || token.charAt(0) === '<') {
+                    // '\n' or a literal <br>/<br/> tag (AI models emit these inside
+                    // table cells where a real newline would break the row)
                     el.appendChild(document.createElement('br'));
                 } else if (token.charAt(0) === '`') {
                     // Inline code

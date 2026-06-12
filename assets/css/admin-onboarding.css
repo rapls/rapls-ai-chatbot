@@ -134,6 +134,23 @@
     font-size: 12px;
 }
 
+.raplsaich-onboarding__reload-lead {
+    margin: 0 0 10px;
+    font-size: 15px;
+}
+
+.raplsaich-onboarding__reload-action {
+    margin: 0 0 10px;
+}
+
+.raplsaich-onboarding__reload-note {
+    margin: 0 0 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #dcdcde;
+    color: #646970;
+    font-size: 12px;
+}
+
 .raplsaich-onboarding__escape {
     margin: 14px 0 0;
     padding-top: 14px;
