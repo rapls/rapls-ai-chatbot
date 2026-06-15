@@ -30,6 +30,8 @@ OpenAI / Claude / Gemini / OpenRouter に対応。会話データは自分のサ
 
 WordPress サイトの内容を、MCP 経由で AI クライアントの文脈に直接持ち込めるのが特徴です。「自分のサイトについて答えられる AI」を、チャットウィジェットとしてだけでなく、手元の MCP クライアントからも使えます。
 
+For full setup instructions (enabling the server, generating an API key, client configuration, curl testing, and troubleshooting), see the [MCP Server Manual](./MCP.md).
+
 ## Installation
 
 ### WordPress.org から（推奨）
@@ -124,7 +126,6 @@ WordPress サイトの内容を、MCP 経由で AI クライアントの文脈�
 
 **Rapls（ラプルス）**
 フリーランス Web 開発者 / WordPress Polyglots PTE（日本語翻訳責任者）
-
 - [Rapls Works](https://raplsworks.com/)
 - [WordPress.org プロフィール](https://profiles.wordpress.org/rapls/)
 - [GitHub](https://github.com/rapls)
