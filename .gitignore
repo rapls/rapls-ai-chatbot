@@ -15,3 +15,11 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# 公開ミラーから除外する開発・内部ファイル
+.ci/
+.github/
+build/
+docs/
+scripts/
+.distignore
