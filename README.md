@@ -98,6 +98,22 @@ For full setup instructions (enabling the server, generating an API key, client 
 - [プラグイン紹介ページ](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 - [サポートフォーラム](https://wordpress.org/support/plugin/rapls-ai-chatbot/)
 
+### 解説・レビュー記事（日本語）
+
+導入の流れや、実装で迷った設計判断を記事に書いています。
+
+- [WordPress のチャットボットを無料で設置する（クレジットカード不要・OpenRouter 無料モデル対応）](https://qiita.com/Rapls/items/698ef151bfc5a0e7e7db) — Qiita
+- [実際に数日使ったレビュー：無料版が試用版ではない WordPress AI チャットボット](https://gift-by-gifted.com/wordpress-ai-chatbot-rapls/)
+- [「許可したつもりだった」AI チャットボットを自分のサイトに置いた話](https://note.com/raplsworks/n/n437728b9ff8c) — note
+
+### English articles
+
+Same design story, posted across a few platforms — pick whichever you read on:
+
+- [DEV.to](https://dev.to/rapls/i-built-a-wordpress-ai-chatbot-where-the-free-tier-isnt-a-trial-heres-the-design-story-2n25)
+- [Medium](https://medium.com/@raplsworks/i-built-a-wordpress-ai-chatbot-where-the-free-tier-isnt-a-trial-here-s-the-design-story-195b3251fc1f)
+- [Hashnode](https://raplsworks.hashnode.dev/a-wordpress-chatbot-that-answers-from-your-own-content-the-design-decisions-behind-it)
+
 ## Pro 版
 
 有料の Pro 版では、アナリティクス、リードキャプチャ・Webhook 連携、会話シナリオ、WooCommerce 連携、LINE Messaging API 連携、音声入出力（STT / TTS）、ホワイトラベル、Slack 通知・Google Sheets エクスポート、データ暗号化（AES-256-GCM・PII マスキング）、マルチサイト対応など、80 以上の機能が利用できます。
