@@ -9,13 +9,23 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Answer visitor questions from your own site content. Self-hosted AI chatbot for WordPress with bring-your-own-key (OpenAI, Claude, Gemini, OpenRouter), RAG, and MCP.
+AI chatbot for WordPress that answers visitors from your own content. Start free in 5 minutes, no credit card. OpenAI, Claude, Gemini, OpenRouter.
 
 == Description ==
 
-Rapls AI Chatbot adds an AI assistant that answers your visitors from your own content. When someone asks a question, the bot searches your posts, pages, and knowledge base first, then replies in their own words. It runs on your own API key, so there is no monthly SaaS fee and no third party storing your conversations. You connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter.
+**Add an AI chatbot to WordPress that answers visitors from *your own* content — not generic web answers.** When someone asks a question, Rapls AI Chatbot searches your posts, pages, and knowledge base first, then replies in natural language, in the visitor's own language. It turns the content you already have into a 24/7 assistant for support, pre-sales, and FAQs.
 
-It is built for developers, agencies, and technical site owners who want control over the model, the data, and the cost. If you do not have an API key yet, you can start for free with no credit card: pick OpenRouter free models or the Google Gemini free tier, and the plugin guides you through it on first setup.
+**You can be live in about five minutes, for free, with no credit card.** On first setup a guided "Start for free" panel hands you a free key from OpenRouter or the Google Gemini free tier, tests it, auto-selects a working model, and switches the chatbot on — no AI or API experience needed. There is no monthly SaaS fee and no per-message markup: it runs on your own API key, and your conversations stay on your own server.
+
+Built for site owners, agencies, and developers who want control over the model, the data, and the cost. Connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, and switch anytime.
+
+= Why site owners pick Rapls =
+
+* **Free to try, fast to launch.** Guided onboarding gets you from install to a working chatbot in minutes, with a no-credit-card OpenRouter or Gemini key.
+* **Answers from your site, not the open web.** RAG hybrid search grounds replies in your actual posts, pages, and knowledge base, so answers stay on-brand and accurate.
+* **Your data, your bill.** Self-hosted: conversations and keys live on your WordPress install, and you pay your AI provider directly with no markup.
+* **No lock-in.** Switch between OpenAI, Claude, Gemini, and OpenRouter whenever you want.
+* **Speaks your visitors' language.** Automatic multi-language replies, so one bot serves an international audience.
 
 = What it does =
 
@@ -36,9 +46,15 @@ Conversations and keys stay on your own WordPress install. You are billed by you
 
 The free version covers the full chatbot, site learning, knowledge base, RAG, MCP, and the usage dashboard. Pro adds lead capture automation and RAG hybrid search fine-tuning.
 
-= Get started without paying =
+= Up and running in about 5 minutes (free, no credit card) =
 
-On first setup the plugin shows two no-credit-card paths: an OpenRouter free key or a Google Gemini free-tier key. Pick one, paste the key, run the connection test, and the chatbot works immediately — a working free model is auto-selected for you. Each option states its data-handling trade-off up front (the Gemini free tier may use submitted content to improve Google's models), so you choose with eyes open. You can switch to your own OpenAI, Claude, or Gemini key at any time.
+You do not need an API key or any AI experience to start. On first setup the plugin shows a "Start for free" panel with two no-credit-card paths: an OpenRouter free key or a Google Gemini free-tier key.
+
+1. Pick OpenRouter or Gemini.
+2. Click through to get a free key (about a minute) and paste it in.
+3. Press Test Connection — the key is validated and saved, a working free model is auto-selected, and the chatbot is switched on.
+
+That's it. Each option states its data-handling trade-off up front (the Gemini free tier may use submitted content to improve Google's models), so you choose with eyes open. You can switch to your own OpenAI, Claude, or Gemini key at any time.
 
 Learn more: [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) | [Source code (GitHub)](https://github.com/rapls/rapls-ai-chatbot)
 
@@ -93,6 +109,17 @@ Yes. Data Management tab lets you save/review all conversations. Configure reten
 
 = More questions? =
 See [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) or [WordPress.org Support](https://wordpress.org/support/plugin/rapls-ai-chatbot/)
+
+== Screenshots ==
+
+1. Dashboard — conversations, messages, indexed pages, and custom knowledge counts, the active AI provider status, and 30-day token usage with an estimated cost.
+2. AI Settings — choose your provider (OpenAI, Anthropic Claude, Google Gemini, or OpenRouter), enter your API key, pick a model, and enable Vector Embedding (RAG).
+3. Site Learning — auto-crawl posts, pages, and custom post types so the bot answers from your own content.
+4. Knowledge base — add custom text/Q&A or import TXT, CSV, MD, PDF, or DOCX files.
+5. Conversations — review, filter, archive, and export visitor conversations with lead and status details.
+6. Chat widget — the front-end chatbot answering a visitor from your site content.
+7. Analytics — conversation, message, cost, and quality metrics (Pro).
+8. Start for free — the onboarding panel connects a no-credit-card OpenRouter or Google Gemini free key in about a minute, with each option's data-handling trade-off shown up front.
 
 == External Services ==
 
