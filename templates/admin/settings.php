@@ -35,18 +35,62 @@ if (!defined('ABSPATH')) {
             <?php esc_html_e('Start for free', 'rapls-ai-chatbot'); ?>
         </h2>
         <p class="raplsaich-onboarding__lead">
-            <?php esc_html_e('No credit card needed. Grab a free OpenRouter key (about a minute), paste it below, and the chatbot starts answering right away.', 'rapls-ai-chatbot'); ?>
+            <?php esc_html_e('No credit card needed. Choose a free provider, paste a key, and the chatbot starts answering in about a minute.', 'rapls-ai-chatbot'); ?>
         </p>
+
+        <fieldset class="raplsaich-onboarding__providers" id="raplsaich-onboarding-providers">
+            <legend class="raplsaich-onboarding__providers-legend">
+                <?php esc_html_e('Choose how to start for free', 'rapls-ai-chatbot'); ?>
+            </legend>
+
+            <label class="raplsaich-onboarding__provider" for="raplsaich-onboarding-provider-openrouter">
+                <input type="radio" name="raplsaich_onboarding_provider" value="openrouter"
+                       id="raplsaich-onboarding-provider-openrouter" checked>
+                <span class="raplsaich-onboarding__provider-body">
+                    <span class="raplsaich-onboarding__provider-name"><?php esc_html_e('OpenRouter', 'rapls-ai-chatbot'); ?></span>
+                    <span class="raplsaich-onboarding__provider-desc">
+                        <?php esc_html_e('Free community models from many vendors. The line-up changes over time and per-minute limits are tight.', 'rapls-ai-chatbot'); ?>
+                    </span>
+                    <span class="raplsaich-onboarding__provider-note">
+                        <?php esc_html_e('Free models are served by various upstream providers, each with its own data-handling policy.', 'rapls-ai-chatbot'); ?>
+                    </span>
+                </span>
+            </label>
+
+            <label class="raplsaich-onboarding__provider" for="raplsaich-onboarding-provider-gemini">
+                <input type="radio" name="raplsaich_onboarding_provider" value="gemini"
+                       id="raplsaich-onboarding-provider-gemini">
+                <span class="raplsaich-onboarding__provider-body">
+                    <span class="raplsaich-onboarding__provider-name"><?php esc_html_e('Google Gemini', 'rapls-ai-chatbot'); ?></span>
+                    <span class="raplsaich-onboarding__provider-desc">
+                        <?php esc_html_e("Google's stable models with solid Japanese quality. The free tier has per-minute and daily limits.", 'rapls-ai-chatbot'); ?>
+                    </span>
+                    <span class="raplsaich-onboarding__provider-note raplsaich-onboarding__provider-note--warn">
+                        <?php esc_html_e("Gemini's free tier may use your submitted content to improve Google's models. If you do not want that, choose a paid tier or another provider.", 'rapls-ai-chatbot'); ?>
+                    </span>
+                </span>
+            </label>
+        </fieldset>
 
         <ol class="raplsaich-onboarding__steps">
             <li class="raplsaich-onboarding__step">
-                <?php esc_html_e('Sign up at OpenRouter and create a free API key.', 'rapls-ai-chatbot'); ?>
-                <div class="raplsaich-onboarding__links">
+                <span class="raplsaich-onboarding__step-text" data-provider="openrouter">
+                    <?php esc_html_e('Sign up at OpenRouter and create a free API key.', 'rapls-ai-chatbot'); ?>
+                </span>
+                <span class="raplsaich-onboarding__step-text" data-provider="gemini" hidden>
+                    <?php esc_html_e('Open Google AI Studio and create a free API key.', 'rapls-ai-chatbot'); ?>
+                </span>
+                <div class="raplsaich-onboarding__links" data-provider="openrouter">
                     <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" class="button">
                         <?php esc_html_e('Sign up at OpenRouter (no card)', 'rapls-ai-chatbot'); ?>
                     </a>
                     <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" class="button">
                         <?php esc_html_e('Create a key', 'rapls-ai-chatbot'); ?>
+                    </a>
+                </div>
+                <div class="raplsaich-onboarding__links" data-provider="gemini" hidden>
+                    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" class="button">
+                        <?php esc_html_e('Get a Gemini API key (no card)', 'rapls-ai-chatbot'); ?>
                     </a>
                 </div>
             </li>
@@ -103,13 +147,17 @@ if (!defined('ABSPATH')) {
             </ul>
         </div>
 
-        <p class="raplsaich-onboarding__rate-limit">
+        <p class="raplsaich-onboarding__rate-limit" data-provider="openrouter">
             <?php esc_html_e('Free models have per-minute and per-day rate limits.', 'rapls-ai-chatbot'); ?>
             <a href="https://openrouter.ai/docs" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See OpenRouter docs for current limits.', 'rapls-ai-chatbot'); ?></a>
         </p>
+        <p class="raplsaich-onboarding__rate-limit" data-provider="gemini" hidden>
+            <?php esc_html_e('The Gemini free tier has per-minute and per-day request limits.', 'rapls-ai-chatbot'); ?>
+            <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener noreferrer"><?php esc_html_e('See Google AI docs for current limits.', 'rapls-ai-chatbot'); ?></a>
+        </p>
 
         <p class="raplsaich-onboarding__escape">
-            <a href="#raplsaich-onboarding-skip" id="raplsaich-onboarding-skip-link"><?php esc_html_e('Or use your own OpenAI / Claude / Gemini key instead.', 'rapls-ai-chatbot'); ?></a>
+            <a href="#raplsaich-onboarding-skip" id="raplsaich-onboarding-skip-link"><?php esc_html_e('Or use your own OpenAI / Claude / Gemini API key instead.', 'rapls-ai-chatbot'); ?></a>
         </p>
     </section>
     <?php endif; ?>

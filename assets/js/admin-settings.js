@@ -353,7 +353,7 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // ---- Onboarding (empty-state) panel: OpenRouter free-key test ----
+    // ---- Onboarding (empty-state) panel: free-key test (OpenRouter / Gemini) ----
     var onboarding = (window.raplsaichSettingsData && raplsaichSettingsData.onboarding) || null;
     if (onboarding && onboarding.visible) {
         var $panel  = $('#raplsaich-onboarding');
@@ -363,6 +363,33 @@ jQuery(document).ready(function($) {
         var $cta    = $('#raplsaich-onboarding-cta');
         var $skip   = $('#raplsaich-onboarding-skip-link');
         var oi18n   = onboarding.i18n || {};
+        var oproviders = onboarding.providers || {};
+
+        function selectedProvider() {
+            var val = $('input[name="raplsaich_onboarding_provider"]:checked').val();
+            return (val && oproviders[val]) ? val : 'openrouter';
+        }
+
+        function providerConfig() {
+            return oproviders[selectedProvider()] || {};
+        }
+
+        // Show only the markup blocks (links, step text, rate-limit note) that match
+        // the chosen provider, and swap the key field placeholder to match.
+        function applyProvider() {
+            var provider = selectedProvider();
+            $('[data-provider]', $panel).each(function() {
+                var $el = $(this);
+                $el.prop('hidden', $el.attr('data-provider') !== provider);
+            });
+            var cfg = providerConfig();
+            if (cfg.placeholder) {
+                $input.attr('placeholder', cfg.placeholder);
+            }
+            // Reset transient state when switching providers.
+            setStatus(null, '');
+            $cta.attr('hidden', true);
+        }
 
         function setStatus(level, message) {
             $status.removeClass('raplsaich-onboarding__status--info raplsaich-onboarding__status--success raplsaich-onboarding__status--error');
@@ -372,6 +399,9 @@ jQuery(document).ready(function($) {
             }
             $status.addClass('raplsaich-onboarding__status--' + level).text(message).show();
         }
+
+        $('input[name="raplsaich_onboarding_provider"]').on('change', applyProvider);
+        applyProvider();
 
         $skip.on('click', function(e) {
             e.preventDefault();
@@ -383,14 +413,15 @@ jQuery(document).ready(function($) {
         });
 
         $button.on('click', function() {
+            var cfg = providerConfig();
             var key = ($input.val() || '').trim();
             if (!key) {
                 setStatus('error', oi18n.emptyKey || 'Please enter an API key.');
                 $input.trigger('focus');
                 return;
             }
-            if (key.indexOf('sk-or-') !== 0) {
-                setStatus('error', oi18n.wrongFormat || 'This does not look like an OpenRouter key. It should start with "sk-or-".');
+            if (cfg.keyPrefix && key.indexOf(cfg.keyPrefix) !== 0) {
+                setStatus('error', cfg.wrongFormat || oi18n.wrongFormat || 'The key format does not look right.');
                 $input.trigger('focus').trigger('select');
                 return;
             }
@@ -402,7 +433,7 @@ jQuery(document).ready(function($) {
                 url:    raplsaichAdmin.ajaxUrl,
                 method: 'POST',
                 data:   {
-                    action:  'raplsaich_onboard_openrouter_test',
+                    action:  cfg.action || 'raplsaich_onboard_openrouter_test',
                     nonce:   raplsaichAdmin.nonce,
                     api_key: key
                 },
@@ -427,7 +458,7 @@ jQuery(document).ready(function($) {
                     setStatus('error', text);
                 }
             }).fail(function(xhr) {
-                var fallback = oi18n.networkError || 'Could not reach OpenRouter. Please try again later.';
+                var fallback = cfg.networkError || oi18n.networkError || 'Could not reach the provider. Please try again later.';
                 if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
                     fallback = xhr.responseJSON.data.message;
                 }

@@ -925,14 +925,30 @@ class RAPLSAICH_Admin {
             wp_localize_script('raplsaich-admin-settings', 'raplsaichSettingsData', [
                 'multimodalEnabled' => !empty($pro_feat['multimodal_enabled']),
                 'onboarding'        => [
-                    'visible' => $show_onboarding,
+                    'visible'   => $show_onboarding,
+                    'providers' => [
+                        'openrouter' => [
+                            'action'      => 'raplsaich_onboard_openrouter_test',
+                            'keyPrefix'   => 'sk-or-',
+                            'placeholder' => 'sk-or-v1-…',
+                            'wrongFormat' => __('This does not look like an OpenRouter key. It should start with "sk-or-".', 'rapls-ai-chatbot'),
+                            'networkError'=> __('Could not reach OpenRouter. Please try again later.', 'rapls-ai-chatbot'),
+                        ],
+                        'gemini'     => [
+                            'action'      => 'raplsaich_onboard_gemini_test',
+                            'keyPrefix'   => 'AIza',
+                            'placeholder' => 'AIza…',
+                            'wrongFormat' => __('This does not look like a Gemini key. It should start with "AIza".', 'rapls-ai-chatbot'),
+                            'networkError'=> __('Could not reach Google. Please try again later.', 'rapls-ai-chatbot'),
+                        ],
+                    ],
                     'i18n'    => [
                         'emptyKey'        => __('Please enter an API key.', 'rapls-ai-chatbot'),
                         'testing'         => __('Testing connection…', 'rapls-ai-chatbot'),
                         'invalidKey'      => __('Key is not valid. Check that you copied it correctly.', 'rapls-ai-chatbot'),
                         'wrongFormat'     => __('This does not look like an OpenRouter key. It should start with "sk-or-".', 'rapls-ai-chatbot'),
                         'rateLimited'     => __('Free tier rate limit reached. Wait a moment or switch to a paid model.', 'rapls-ai-chatbot'),
-                        'networkError'    => __('Could not reach OpenRouter. Please try again later.', 'rapls-ai-chatbot'),
+                        'networkError'    => __('Could not reach the provider. Please try again later.', 'rapls-ai-chatbot'),
                         'parseError'      => __('Got an unexpected response. Please retry.', 'rapls-ai-chatbot'),
                         'success'         => __('Connected. Your chatbot is ready to deploy.', 'rapls-ai-chatbot'),
                         'genericError'    => __('Connection test failed.', 'rapls-ai-chatbot'),
@@ -1707,6 +1723,133 @@ class RAPLSAICH_Admin {
             'provider' => 'openrouter',
             'model'    => $picked,
         ]);
+    }
+
+    /**
+     * Onboarding: validate a freshly entered Google Gemini API key, and on success
+     * save it (encrypted), switch the active provider to Gemini, and set the model
+     * to a free-tier model id (gemini-2.5-flash). Used by the empty-state panel for
+     * brand-new installs without any provider key.
+     *
+     * Note: Gemini has no ":free" model suffix — "free" is a usage tier, not a model
+     * variant. The OpenRouter free-model catalog logic does not apply here, so a
+     * known free-tier model id is set directly.
+     */
+    public function ajax_onboard_gemini_test(): void {
+        check_ajax_referer('raplsaich_admin_nonce', 'nonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(['code' => 'forbidden', 'message' => __('Permission denied.', 'rapls-ai-chatbot')]);
+        }
+
+        // Lighter sanitization for API keys — control chars + trim only.
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $api_key = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', wp_unslash($_POST['api_key'] ?? '')));
+
+        if (empty($api_key)) {
+            wp_send_json_error(['code' => 'empty', 'message' => __('Please enter an API key.', 'rapls-ai-chatbot')]);
+        }
+
+        // Google AI Studio API keys begin with "AIza". Reject early so an OpenRouter /
+        // OpenAI key pasted into the wrong field never reaches Google.
+        if (strpos($api_key, 'AIza') !== 0) {
+            wp_send_json_error([
+                'code'    => 'wrong_format',
+                'message' => __('This does not look like a Gemini API key. Gemini keys start with "AIza". Create one at aistudio.google.com/apikey.', 'rapls-ai-chatbot'),
+            ]);
+        }
+
+        // Validate via GET /v1beta/models (requires a valid key — returns 400/403 for
+        // an invalid or unauthorized key). Same endpoint the provider uses for
+        // validate_api_key().
+        $response = wp_remote_get('https://generativelanguage.googleapis.com/v1beta/models?key=' . rawurlencode($api_key), [
+            'timeout' => 15,
+        ]);
+
+        if (is_wp_error($response)) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('RAPLSAICH ajax_onboard_gemini_test (network): ' . $response->get_error_message());
+            }
+            wp_send_json_error(['code' => 'network', 'message' => __('Could not reach Google. Please try again later.', 'rapls-ai-chatbot')]);
+        }
+
+        $code = (int) wp_remote_retrieve_response_code($response);
+
+        if ($code === 400 || $code === 401 || $code === 403) {
+            wp_send_json_error(['code' => 'auth', 'message' => __('Key is not valid. Check that you copied it correctly.', 'rapls-ai-chatbot')]);
+        }
+        if ($code === 429) {
+            wp_send_json_error(['code' => 'rate_limit', 'message' => __('Free tier rate limit reached. Wait a moment or switch to a paid tier.', 'rapls-ai-chatbot')]);
+        }
+        if ($code < 200 || $code >= 300) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log('RAPLSAICH ajax_onboard_gemini_test (http ' . $code . '): ' . wp_remote_retrieve_body($response));
+            }
+            wp_send_json_error(['code' => 'http_' . $code, 'message' => __('Got an unexpected response. Please retry.', 'rapls-ai-chatbot')]);
+        }
+
+        // A 200 with a "models" array confirms a genuine, authorized reply.
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($body) || empty($body['models'])) {
+            wp_send_json_error(['code' => 'parse', 'message' => __('Got an unexpected response. Please retry.', 'rapls-ai-chatbot')]);
+        }
+
+        // Pick a free-tier default model, preferring gemini-2.5-flash, but fall back
+        // to whatever the account can actually call if the preferred id is absent.
+        $picked = $this->pick_free_gemini_model($body['models']);
+
+        // Success — persist key (encrypted), switch provider + model.
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+        $settings['gemini_api_key'] = $this->maybe_encrypt_api_key($api_key);
+        $settings['ai_provider']    = 'gemini';
+        $settings['gemini_model']   = $picked;
+        update_option('raplsaich_settings', $settings);
+
+        wp_send_json_success([
+            'message'  => __('Connected. Your chatbot is ready to deploy.', 'rapls-ai-chatbot'),
+            'provider' => 'gemini',
+            'model'    => $picked,
+        ]);
+    }
+
+    /**
+     * Pick a free-tier Gemini chat model id from a /v1beta/models "models" array.
+     * Prefers gemini-2.5-flash, then flash-lite, then 2.0 flash; falls back to the
+     * preferred default id if the payload cannot be matched.
+     */
+    private function pick_free_gemini_model(array $models): string {
+        $available = [];
+        foreach ($models as $m) {
+            if (empty($m['name']) || !is_string($m['name'])) {
+                continue;
+            }
+            // Only models that support text generation are usable for chat.
+            $methods = $m['supportedGenerationMethods'] ?? [];
+            if (is_array($methods) && !empty($methods) && !in_array('generateContent', $methods, true)) {
+                continue;
+            }
+            $available[str_replace('models/', '', $m['name'])] = true;
+        }
+
+        $preferred = apply_filters('raplsaich_gemini_free_preferred', [
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-lite',
+        ]);
+
+        foreach ($preferred as $candidate) {
+            if (isset($available[$candidate])) {
+                return $candidate;
+            }
+        }
+
+        return 'gemini-2.5-flash';
     }
 
     /**

@@ -4,18 +4,18 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Self-hosted AI chatbot for WordPress. Bring your own key for OpenAI, Claude, Gemini, or OpenRouter. RAG, knowledge base, and MCP built in.
+Answer visitor questions from your own site content. Self-hosted AI chatbot for WordPress with bring-your-own-key (OpenAI, Claude, Gemini, OpenRouter), RAG, and MCP.
 
 == Description ==
 
-Rapls AI Chatbot adds an AI assistant to your WordPress site that runs on your own API key. There is no monthly SaaS fee and no third party storing your conversations. You connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, and the chatbot answers from your own content.
+Rapls AI Chatbot adds an AI assistant that answers your visitors from your own content. When someone asks a question, the bot searches your posts, pages, and knowledge base first, then replies in their own words. It runs on your own API key, so there is no monthly SaaS fee and no third party storing your conversations. You connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter.
 
-It is built for developers, agencies, and technical site owners who want control over the model, the data, and the cost. If you do not have an API key yet, you can start for free: OpenRouter offers free models with no credit card required, and the plugin guides you through it on first setup.
+It is built for developers, agencies, and technical site owners who want control over the model, the data, and the cost. If you do not have an API key yet, you can start for free with no credit card: pick OpenRouter free models or the Google Gemini free tier, and the plugin guides you through it on first setup.
 
 = What it does =
 
@@ -24,7 +24,7 @@ It is built for developers, agencies, and technical site owners who want control
 * Knowledge base: add Q&A or upload PDF/DOCX files, with priority over general answers.
 * RAG hybrid search: combines keyword and semantic retrieval for grounded replies.
 * Web search: lets the bot pull current information when configured.
-* MCP tools: exposes 7 Model Context Protocol tools, so agents such as Claude or ChatGPT can read and act on your site through conversation.
+* MCP tools: exposes 5 Model Context Protocol tools, so agents such as Claude or ChatGPT can read and act on your site through conversation.
 * Usage dashboard: tracks conversations, messages, and API cost.
 * Gutenberg block: drop the chatbot into any page or post.
 
@@ -38,35 +38,38 @@ The free version covers the full chatbot, site learning, knowledge base, RAG, MC
 
 = Get started without paying =
 
-On first setup the plugin shows a guided path to an OpenRouter free key (no credit card). Paste the key, run the connection test, and the chatbot works immediately. You can switch to your own OpenAI, Claude, or Gemini key at any time.
+On first setup the plugin shows two no-credit-card paths: an OpenRouter free key or a Google Gemini free-tier key. Pick one, paste the key, run the connection test, and the chatbot works immediately — a working free model is auto-selected for you. Each option states its data-handling trade-off up front (the Gemini free tier may use submitted content to improve Google's models), so you choose with eyes open. You can switch to your own OpenAI, Claude, or Gemini key at any time.
 
-Learn more: [Pro Features](https://raplsworks.com/rapls-ai-chatbot-pro/) | [Developer Overview](https://raplsworks.com/rapls-ai-chatbot-guide/)
+Learn more: [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) | [Source code (GitHub)](https://github.com/rapls/rapls-ai-chatbot)
 
 == Installation ==
 
 1. Upload `rapls-ai-chatbot` folder to `/wp-content/plugins/`
 2. Activate via Plugins menu
 3. Go to AI Chatbot > Settings
-4. Follow the onboarding panel to get a free OpenRouter key, or paste your own OpenAI / Claude / Gemini key.
+4. Follow the onboarding panel to start free with an OpenRouter or Google Gemini key, or paste your own OpenAI / Claude / Gemini key.
 5. Enable site learning or create knowledge base entries
 6. Insert Gutenberg block or enable sitewide display
 
 = Getting Started =
 
-1. **API Key**: get an OpenRouter free key from the onboarding panel, or your own key from [console.anthropic.com](https://console.anthropic.com), OpenAI, or Google AI Studio.
+1. **API Key**: get a free OpenRouter or Google Gemini key from the onboarding panel, or your own key from [console.anthropic.com](https://console.anthropic.com), OpenAI, or Google AI Studio.
 2. **Enable RAG**: add site learning (auto-crawl) or create knowledge base entries.
 3. **Customize**: set bot name, avatar, welcome message, system prompt.
 4. **Deploy**: insert the Gutenberg block, paste the shortcode, or enable sitewide display.
 
-👉 **Setup Guide:** [Rapls AI Chatbot Implementation Guide](https://raplsworks.com/rapls-ai-chatbot-guide/)
+👉 **Plugin details:** [Rapls AI Chatbot](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 
 == Frequently Asked Questions ==
 
 = Do I need an API key? =
-Yes. Rapls runs on your own API key so your data and cost stay under your control. If you do not have one, the plugin guides you to a free OpenRouter key on first setup, which needs no credit card.
+Yes. Rapls runs on your own API key so your data and cost stay under your control. If you do not have one, the plugin guides you to a free OpenRouter key or a free Google Gemini key on first setup — both need no credit card.
 
 = Can I use it for free? =
-Yes. The plugin itself is free, and you can run it at no cost using OpenRouter free models. Free models have rate limits, so for production traffic you may want a paid model or your own provider key.
+Yes. The plugin itself is free, and you can run it at no cost using either OpenRouter free models or the Google Gemini free tier. The onboarding panel lets you pick either one. Free models and free tiers have rate limits, so for production traffic you may want a paid model or your own provider key.
+
+= Is my data private on the free options? =
+It depends on the provider you choose, and the plugin tells you before you pick. OpenRouter free models are served by various upstream providers, each with its own data-handling policy. The Google Gemini free tier may use your submitted content to improve Google's models — if you do not want that, use a paid Gemini tier or another provider. Either way, your conversations and keys are stored on your own WordPress install, not on Rapls servers.
 
 = Can I use multiple AI providers? =
 Yes. Configure multiple providers in Settings and switch between them. WordPress 7.0 Connectors API also supports unified key management.
@@ -89,7 +92,7 @@ Yes. Data Management tab lets you save/review all conversations. Configure reten
 * Review Security Diagnostics for rate limit, IP detection, or consent issues
 
 = More questions? =
-See [Implementation Guide](https://raplsworks.com/rapls-ai-chatbot-guide/) or [WordPress.org Support](https://wordpress.org/support/plugin/rapls-ai-chatbot/)
+See [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) or [WordPress.org Support](https://wordpress.org/support/plugin/rapls-ai-chatbot/)
 
 == External Services ==
 
@@ -170,6 +173,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.9.2 =
+* Added: The "Start for free" onboarding now offers two no-credit-card paths — OpenRouter free models and the Google Gemini free tier — so new users can pick the provider that fits. Either choice validates the key, runs a connection test, and auto-selects a working free model (Gemini defaults to `gemini-2.5-flash`).
+* Added: Clear in-panel disclosure for each free option, shown before you choose. The Gemini free tier may use submitted content to improve Google's models; the panel says so and points to paid tiers or other providers if you want your data excluded. OpenRouter free models carry an equivalent note that upstream data-handling varies.
+* Docs: Refreshed the description, Getting Started, and FAQ for the two free paths, and added a "Is my data private on the free options?" FAQ entry.
+
 = 1.9.1 =
 * Fixed: Chat window froze with no reply shown when the AI answered with a markdown table. The table separator-row regex rejected the standard GFM trailing pipe (`|---|---|`), and the paragraph fallback then looped forever on the unconsumed line, exhausting browser memory. Tables now render, and the renderer always makes forward progress on any input.
 * Fixed: Literal `<br>` tags that AI models emit inside markdown table cells now render as line breaks instead of showing as raw text.
@@ -213,6 +221,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.9.2 =
+The free onboarding now lets you choose between OpenRouter free models and the Google Gemini free tier, each with an up-front data-handling note. Recommended for all users.
 
 = 1.9.1 =
 Fixes a chat freeze when AI responses contain markdown tables, and API key deletion on WordPress 7.0 sites. Recommended for all users.

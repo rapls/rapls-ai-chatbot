@@ -7917,8 +7917,8 @@ msgid "See OpenRouter docs for current limits."
 msgstr "最新の上限は OpenRouter 公式ドキュメントを参照してください。"
 
 #:#: templates/admin/settings.php
-msgid "Or use your own OpenAI / Claude / Gemini key instead."
-msgstr "または自分の OpenAI / Claude / Gemini のキーを使う"
+msgid "Or use your own OpenAI / Claude / Gemini API key instead."
+msgstr "または、自分の OpenAI / Claude / Gemini の API キーを使うこともできます。"
 
 #:#: includes/admin/class-admin.php
 msgid "Testing connection…"
@@ -7959,3 +7959,67 @@ msgstr "OpenRouter の API キーではないようです。OpenRouter のキー
 #:#: includes/admin/class-admin.php
 msgid "This does not look like an OpenRouter key. It should start with \"sk-or-\"."
 msgstr "OpenRouter のキーではないようです。\"sk-or-\" で始まる必要があります。"
+
+#: templates/admin/settings.php
+msgid "No credit card needed. Choose a free provider, paste a key, and the chatbot starts answering in about a minute."
+msgstr "クレジットカードは不要です。無料のプロバイダーを選び、キーを貼り付ければ、約 1 分でチャットボットが応答を始めます。"
+
+#: templates/admin/settings.php
+msgid "Choose how to start for free"
+msgstr "無料で始める方法を選ぶ"
+
+#: templates/admin/settings.php
+msgid "Free community models from many vendors. The line-up changes over time and per-minute limits are tight."
+msgstr "多数のベンダーによる無料のコミュニティモデル。ラインナップは時期によって変わり、毎分のレート制限は厳しめです。"
+
+#: templates/admin/settings.php
+msgid "Free models are served by various upstream providers, each with its own data-handling policy."
+msgstr "無料モデルはさまざまな提供元から配信され、データの取り扱いは提供元ごとに異なります。"
+
+#: templates/admin/settings.php
+msgid "Google Gemini"
+msgstr "Google Gemini"
+
+#: templates/admin/settings.php
+msgid "Google's stable models with solid Japanese quality. The free tier has per-minute and daily limits."
+msgstr "日本語品質が安定した Google のモデル。無料枠には毎分および 1 日あたりの制限があります。"
+
+#: templates/admin/settings.php
+msgid "Gemini's free tier may use your submitted content to improve Google's models. If you do not want that, choose a paid tier or another provider."
+msgstr "Gemini の無料枠では、送信した内容が Google のモデル改善に使われる場合があります。使わせたくない場合は、有料枠か別のプロバイダーを選んでください。"
+
+#: templates/admin/settings.php
+msgid "Open Google AI Studio and create a free API key."
+msgstr "Google AI Studio を開いて、無料の API キーを発行します。"
+
+#: templates/admin/settings.php
+msgid "Get a Gemini API key (no card)"
+msgstr "Gemini の API キーを取得（カード不要）"
+
+#: templates/admin/settings.php
+msgid "The Gemini free tier has per-minute and per-day request limits."
+msgstr "Gemini の無料枠には、毎分および 1 日あたりのリクエスト制限があります。"
+
+#: templates/admin/settings.php
+msgid "See Google AI docs for current limits."
+msgstr "現在の制限は Google AI のドキュメントを参照してください。"
+
+#: includes/admin/class-admin.php
+msgid "This does not look like a Gemini key. It should start with \"AIza\"."
+msgstr "Gemini のキーではないようです。\"AIza\" で始まる必要があります。"
+
+#: includes/admin/class-admin.php
+msgid "Could not reach Google. Please try again later."
+msgstr "Google に接続できませんでした。しばらくしてからもう一度お試しください。"
+
+#: includes/admin/class-admin.php
+msgid "Could not reach the provider. Please try again later."
+msgstr "プロバイダーに接続できませんでした。しばらくしてからもう一度お試しください。"
+
+#: includes/admin/class-admin.php
+msgid "This does not look like a Gemini API key. Gemini keys start with \"AIza\". Create one at aistudio.google.com/apikey."
+msgstr "Gemini の API キーではないようです。Gemini のキーは \"AIza\" で始まります。aistudio.google.com/apikey で発行できます。"
+
+#: includes/admin/class-admin.php
+msgid "Free tier rate limit reached. Wait a moment or switch to a paid tier."
+msgstr "無料枠のレート制限に達しました。少し待つか、有料枠に切り替えてください。"

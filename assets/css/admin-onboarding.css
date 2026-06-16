@@ -24,6 +24,82 @@
     font-size: 14px;
 }
 
+/* Provider chooser — two free-tier paths (OpenRouter / Gemini). */
+.raplsaich-onboarding__providers {
+    border: 0;
+    padding: 0;
+    margin: 0 0 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.raplsaich-onboarding__providers-legend {
+    grid-column: 1 / -1;
+    padding: 0;
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.raplsaich-onboarding__provider {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.raplsaich-onboarding__provider:hover {
+    border-color: #2271b1;
+}
+
+.raplsaich-onboarding__provider input[type="radio"] {
+    margin: 3px 0 0;
+    flex: 0 0 auto;
+}
+
+.raplsaich-onboarding__provider:has(input[type="radio"]:checked) {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    background: #f6fafd;
+}
+
+.raplsaich-onboarding__provider-body {
+    display: block;
+}
+
+.raplsaich-onboarding__provider-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+    margin-bottom: 2px;
+}
+
+.raplsaich-onboarding__provider-desc {
+    display: block;
+    font-size: 12px;
+    color: #50575e;
+    margin-bottom: 6px;
+}
+
+.raplsaich-onboarding__provider-note {
+    display: block;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #646970;
+}
+
+.raplsaich-onboarding__provider-note--warn {
+    color: #8a5700;
+}
+
 .raplsaich-onboarding__steps {
     margin: 0 0 18px;
     padding: 0;
@@ -53,6 +129,13 @@
     border-radius: 50%;
     font-size: 13px;
     font-weight: 600;
+}
+
+/* The [hidden] attribute must win over the explicit display rules below
+   (display:flex on the links row would otherwise keep a hidden provider's
+   block visible). Scoped to the panel so it cannot leak elsewhere. */
+.raplsaich-onboarding [hidden] {
+    display: none !important;
 }
 
 .raplsaich-onboarding__links {
@@ -166,6 +249,9 @@
 @media (max-width: 600px) {
     .raplsaich-onboarding {
         padding: 16px;
+    }
+    .raplsaich-onboarding__providers {
+        grid-template-columns: 1fr;
     }
     .raplsaich-onboarding__field input[type="password"] {
         flex-basis: 100%;
