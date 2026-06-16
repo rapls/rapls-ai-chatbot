@@ -54,7 +54,7 @@ For full setup instructions (enabling the server, generating an API key, client 
 - **PHP 7.4 以上**
 - **API キー** — OpenAI / Anthropic Claude / Google Gemini / OpenRouter のいずれか
 
-クレジットカードを使いたくない場合は、OpenRouter の無料キー（カード登録不要）で始められます。設定画面の「まず無料で動かす」パネルにキーを貼り付けて接続テストを押すと、その場で使えるモデルまで自動設定されます。
+クレジットカードを使いたくない場合は、**OpenRouter または Google Gemini の無料枠**（どちらもカード登録不要）で始められます。設定画面の「まず無料で動かす」パネルでどちらかを選び、キーを貼り付けて接続テストを押すと、その場で使えるモデルまで自動設定されます。パネルには各オプションのデータの扱い（Gemini 無料枠は送信内容が Google のモデル改善に使われる場合がある、など）が選ぶ前に表示されるので、納得したうえで選べます。
 
 ## よくある質問 / トラブルシューティング
 
