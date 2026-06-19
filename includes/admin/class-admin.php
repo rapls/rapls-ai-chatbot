@@ -324,7 +324,7 @@ class RAPLSAICH_Admin {
         $key_prefixes = [
             'openai_api_key'  => ['prefixes' => ['sk-'], 'label' => 'OpenAI'],
             'claude_api_key'  => ['prefixes' => ['sk-ant-'], 'label' => 'Claude'],
-            'gemini_api_key'  => ['prefixes' => ['AIza'], 'label' => 'Gemini'],
+            'gemini_api_key'  => ['prefixes' => ['AIza', 'AQ.'], 'label' => 'Gemini'],
             'openrouter_api_key' => ['prefixes' => ['sk-or-'], 'label' => 'OpenRouter'],
         ];
         foreach ($key_prefixes as $kf => $meta) {
@@ -936,9 +936,12 @@ class RAPLSAICH_Admin {
                         ],
                         'gemini'     => [
                             'action'      => 'raplsaich_onboard_gemini_test',
-                            'keyPrefix'   => 'AIza',
-                            'placeholder' => 'AIza…',
-                            'wrongFormat' => __('This does not look like a Gemini key. It should start with "AIza".', 'rapls-ai-chatbot'),
+                            // No client-side prefix gate: Gemini keys are migrating from
+                            // the legacy "AIza" format to the new "AQ." auth keys, so the
+                            // server + live API call validate the key instead.
+                            'keyPrefix'   => '',
+                            'placeholder' => 'AIza… / AQ.Ab…',
+                            'wrongFormat' => __('This does not look like a Gemini key.', 'rapls-ai-chatbot'),
                             'networkError'=> __('Could not reach Google. Please try again later.', 'rapls-ai-chatbot'),
                         ],
                     ],
@@ -1750,20 +1753,27 @@ class RAPLSAICH_Admin {
             wp_send_json_error(['code' => 'empty', 'message' => __('Please enter an API key.', 'rapls-ai-chatbot')]);
         }
 
-        // Google AI Studio API keys begin with "AIza". Reject early so an OpenRouter /
-        // OpenAI key pasted into the wrong field never reaches Google.
-        if (strpos($api_key, 'AIza') !== 0) {
+        // Gemini keys come in two shapes: the legacy "AIza" standard key and the
+        // newer "AQ." auth key that Google AI Studio now issues by default (the
+        // "AIza" format is being phased out — standard keys are rejected from
+        // 2026-06-19 unless restricted, and fully from 2026-09). We therefore do
+        // not hard-require a Gemini prefix — the live API check below is
+        // authoritative — but we still reject keys that clearly belong to another
+        // provider so an OpenAI / OpenRouter key pasted here fails fast.
+        if (strpos($api_key, 'sk-') === 0) {
             wp_send_json_error([
                 'code'    => 'wrong_format',
-                'message' => __('This does not look like a Gemini API key. Gemini keys start with "AIza". Create one at aistudio.google.com/apikey.', 'rapls-ai-chatbot'),
+                'message' => __('This looks like an OpenAI or OpenRouter key, not a Gemini key. Create a Gemini key at aistudio.google.com/apikey.', 'rapls-ai-chatbot'),
             ]);
         }
 
         // Validate via GET /v1beta/models (requires a valid key — returns 400/403 for
-        // an invalid or unauthorized key). Same endpoint the provider uses for
-        // validate_api_key().
-        $response = wp_remote_get('https://generativelanguage.googleapis.com/v1beta/models?key=' . rawurlencode($api_key), [
+        // an invalid or unauthorized key). The key goes in the x-goog-api-key header
+        // (Google's recommended method; keeps it out of logs and works with both the
+        // legacy "AIza" and new "AQ." key formats). Same approach the provider uses.
+        $response = wp_remote_get('https://generativelanguage.googleapis.com/v1beta/models', [
             'timeout' => 15,
+            'headers' => ['x-goog-api-key' => $api_key],
         ]);
 
         if (is_wp_error($response)) {
@@ -2019,7 +2029,7 @@ class RAPLSAICH_Admin {
         $decrypted = raplsaich_decrypt_api_key($encrypted);
 
         // Set transient on failure so admin notice is shown
-        if ($decrypted === '' && !empty($encrypted) && strpos($encrypted, 'sk-') !== 0 && strpos($encrypted, 'AIza') !== 0) {
+        if ($decrypted === '' && !empty($encrypted) && strpos($encrypted, 'sk-') !== 0 && strpos($encrypted, 'AIza') !== 0 && strpos($encrypted, 'AQ.') !== 0) {
             if (!get_transient('raplsaich_api_key_decryption_failed')) {
                 set_transient('raplsaich_api_key_decryption_failed', true, HOUR_IN_SECONDS);
             }
@@ -2085,6 +2095,85 @@ class RAPLSAICH_Admin {
         <?php
         // Clear the transient once shown
         delete_transient('raplsaich_api_key_decryption_failed');
+    }
+
+    /**
+     * Warn users whose Google Gemini key is a legacy "AIza" standard key.
+     *
+     * Google is retiring the standard "AIza" key format: from 2026-06-19 the
+     * Gemini API rejects requests from *unrestricted* standard keys, and from
+     * 2026-09 it rejects all standard keys. New keys issued by AI Studio are the
+     * "AQ." auth format. This notice tells affected users how to keep working
+     * (migrate to an "AQ." key, or restrict the existing key). It self-clears
+     * once the stored key is an "AQ." key (the condition simply stops matching).
+     *
+     * Shown only on the plugin's own admin pages, and only when Gemini is
+     * actually in use (chat provider or embedding provider).
+     */
+    public function gemini_legacy_key_notice(): void {
+        if (!current_user_can(self::get_manage_cap())) {
+            return;
+        }
+
+        // Plugin pages only — do not nag across all of wp-admin.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
+        if (strpos($page, 'raplsaich') !== 0) {
+            return;
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings) || empty($settings['gemini_api_key'])) {
+            return;
+        }
+
+        // Only warn when Gemini is actually used for chat or embeddings.
+        $gemini_in_use = ($settings['ai_provider'] ?? '') === 'gemini'
+            || ($settings['embedding_provider'] ?? '') === 'gemini';
+        if (!$gemini_in_use) {
+            return;
+        }
+
+        // Legacy standard keys start with "AIza"; the new auth keys start with
+        // "AQ.". Only the legacy format is affected by the retirement.
+        $key = raplsaich_decrypt_api_key($settings['gemini_api_key']);
+        if ($key === '' || strpos($key, 'AIza') !== 0) {
+            return;
+        }
+
+        $studio_url   = 'https://aistudio.google.com/apikey';
+        $settings_url = admin_url('admin.php?page=raplsaich-settings');
+        ?>
+        <div class="notice notice-warning is-dismissible">
+            <p>
+                <strong><?php esc_html_e('Rapls AI Chatbot — Google Gemini API key action needed', 'rapls-ai-chatbot'); ?></strong>
+            </p>
+            <p>
+                <?php esc_html_e('Your saved Google Gemini API key is a legacy "AIza" standard key. Google is retiring this key format: since June 19, 2026 the Gemini API rejects requests from unrestricted standard keys, and from September 2026 it rejects all standard keys. If you do nothing, your chatbot (and Gemini-based site learning, if enabled) will stop responding.', 'rapls-ai-chatbot'); ?>
+            </p>
+            <p><strong><?php esc_html_e('How to fix it (pick one):', 'rapls-ai-chatbot'); ?></strong></p>
+            <ol style="margin: 4px 0 8px 20px;">
+                <li>
+                    <?php
+                    printf(
+                        /* translators: 1: opening link tag to Google AI Studio, 2: closing link tag, 3: opening link tag to settings, 4: closing link tag */
+                        esc_html__('Recommended — create a new key in %1$sGoogle AI Studio%2$s (it will be issued in the new "AQ." auth format) and paste it into %3$sSettings → AI Settings → Gemini%4$s.', 'rapls-ai-chatbot'),
+                        '<a href="' . esc_url($studio_url) . '" target="_blank" rel="noopener noreferrer">',
+                        '</a>',
+                        '<a href="' . esc_url($settings_url) . '">',
+                        '</a>'
+                    );
+                    ?>
+                </li>
+                <li>
+                    <?php esc_html_e('Or keep your current key working for now: in Google AI Studio, open the API Keys page, hover the key, choose "Add restrictions" → "Restrict to Gemini API only", and save. A restricted standard key keeps working past June 19, 2026, but is still fully retired in September 2026 — so plan to switch to an "AQ." key.', 'rapls-ai-chatbot'); ?>
+                </li>
+            </ol>
+            <p>
+                <?php esc_html_e('This notice disappears automatically once you save an "AQ." key.', 'rapls-ai-chatbot'); ?>
+            </p>
+        </div>
+        <?php
     }
 
     /**

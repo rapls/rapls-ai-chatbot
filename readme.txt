@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.9.2
+Stable tag: 1.9.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -86,6 +86,9 @@ Yes. The plugin itself is free, and you can run it at no cost using either OpenR
 
 = Is my data private on the free options? =
 It depends on the provider you choose, and the plugin tells you before you pick. OpenRouter free models are served by various upstream providers, each with its own data-handling policy. The Google Gemini free tier may use your submitted content to improve Google's models — if you do not want that, use a paid Gemini tier or another provider. Either way, your conversations and keys are stored on your own WordPress install, not on Rapls servers.
+
+= My Gemini key starts with "AQ." instead of "AIza" — is that OK? =
+Yes. Google is moving Gemini API keys from the legacy "AIza" standard format to the new "AQ." auth format, and Google AI Studio now issues "AQ." keys by default. Rapls works with both. Google is retiring the standard format (unrestricted "AIza" keys are rejected from 2026-06-19, and all "AIza" keys from 2026-09), so if you still have an "AIza" key the plugin shows a notice with how to migrate. New keys created today are already "AQ." keys and need no action.
 
 = Can I use multiple AI providers? =
 Yes. Configure multiple providers in Settings and switch between them. WordPress 7.0 Connectors API also supports unified key management.
@@ -200,6 +203,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.9.3 =
+* Added: Support for Google's new "AQ." Gemini API keys. Google AI Studio now issues keys in the new auth-key format (`AQ.Ab…`) instead of the legacy "AIza" standard keys, which Google is retiring (unrestricted standard keys rejected from 2026-06-19, all standard keys from 2026-09). Onboarding, key validation, and every Gemini API call (chat, model list, and site-learning embeddings) now accept and work with both formats.
+* Changed: Gemini requests now send the key in the `x-goog-api-key` header instead of the `?key=` query string — Google's recommended method, required for the new "AQ." keys, and it keeps the key out of server/proxy/CDN logs.
+* Added: An admin notice warns when your saved Gemini key is a legacy "AIza" standard key, with the retirement dates and how to migrate to an "AQ." key (or restrict the existing one). It clears automatically once an "AQ." key is saved.
+
 = 1.9.2 =
 * Added: The "Start for free" onboarding now offers two no-credit-card paths — OpenRouter free models and the Google Gemini free tier — so new users can pick the provider that fits. Either choice validates the key, runs a connection test, and auto-selects a working free model (Gemini defaults to `gemini-2.5-flash`).
 * Added: Clear in-panel disclosure for each free option, shown before you choose. The Gemini free tier may use submitted content to improve Google's models; the panel says so and points to paid tiers or other providers if you want your data excluded. OpenRouter free models carry an equivalent note that upstream data-handling varies.
@@ -248,6 +256,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.9.3 =
+Adds support for Google's new "AQ." Gemini API keys (the legacy "AIza" format is being retired by Google) and warns if your current Gemini key needs migrating. Recommended for all Gemini users.
 
 = 1.9.2 =
 The free onboarding now lets you choose between OpenRouter free models and the Google Gemini free tier, each with an up-front data-handling note. Recommended for all users.

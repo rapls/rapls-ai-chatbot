@@ -446,7 +446,7 @@ if (!defined('ABSPATH')) {
                                            id="gemini_api_key_wpai_rag"
                                            value=""
                                            class="regular-text" autocomplete="off"
-                                           placeholder="<?php echo !empty($settings['gemini_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : 'AIza...'; ?>">
+                                           placeholder="<?php echo !empty($settings['gemini_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : 'AIza... / AQ.Ab...'; ?>">
                                     <input type="hidden" name="raplsaich_settings[delete_gemini_api_key]" id="delete_gemini_api_key_wpai_rag" value="0">
                                     <?php if (!empty($settings['gemini_api_key'])): ?>
                                         <button type="button" class="button raplsaich-clear-api-key" data-target="gemini_api_key_wpai_rag"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>

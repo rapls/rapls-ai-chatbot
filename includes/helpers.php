@@ -30,6 +30,7 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
         strpos($encrypted, 'sk-') === 0
         || strpos($encrypted, 'sk-ant-') === 0
         || strpos($encrypted, 'AIza') === 0
+        || strpos($encrypted, 'AQ.') === 0   // new Gemini "AQ." auth keys (legacy "AIza" being phased out)
         || strpos($encrypted, 'sk-or-') === 0
     ) {
         return $encrypted;

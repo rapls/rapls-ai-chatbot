@@ -131,7 +131,12 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             $has_web_search = true;
         }
 
-        $url = $this->api_url . rawurlencode($this->model) . ':generateContent?key=' . $this->api_key;
+        // Pass the API key in the x-goog-api-key header (not the ?key= query string).
+        // This is Google's recommended method, keeps the key out of URLs/logs, and is
+        // required for the new "AQ." auth keys that AI Studio now issues (the legacy
+        // "AIza" query-string style is being phased out — standard keys are rejected
+        // from 2026-06-19 unless restricted, and fully from 2026-09).
+        $url = $this->api_url . rawurlencode($this->model) . ':generateContent';
 
         // Pass base URL (without API key) to the filter to prevent key leakage
         $filter_url = $this->api_url . $this->model . ':generateContent';
@@ -143,7 +148,8 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
 
         $request_args = [
             'headers' => [
-                'Content-Type' => 'application/json',
+                'Content-Type'   => 'application/json',
+                'x-goog-api-key' => $this->api_key,
             ],
             'body'    => wp_json_encode($body),
             'timeout' => $timeout,
@@ -352,9 +358,10 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             return $cached;
         }
 
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . $this->api_key;
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models';
         $response = wp_remote_get($url, [
             'timeout' => 15,
+            'headers' => ['x-goog-api-key' => $this->api_key],
         ]);
 
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
@@ -476,9 +483,10 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             return false;
         }
 
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . $this->api_key;
+        $url = 'https://generativelanguage.googleapis.com/v1beta/models';
         $response = wp_remote_get($url, [
             'timeout' => 10,
+            'headers' => ['x-goog-api-key' => $this->api_key],
         ]);
 
         if (is_wp_error($response)) {

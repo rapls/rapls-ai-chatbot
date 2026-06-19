@@ -8023,3 +8023,35 @@ msgstr "Gemini の API キーではないようです。Gemini のキーは \"AI
 #: includes/admin/class-admin.php
 msgid "Free tier rate limit reached. Wait a moment or switch to a paid tier."
 msgstr "無料枠のレート制限に達しました。少し待つか、有料枠に切り替えてください。"
+
+#: includes/admin/class-admin.php
+msgid "This looks like an OpenAI or OpenRouter key, not a Gemini key. Create a Gemini key at aistudio.google.com/apikey."
+msgstr "OpenAI または OpenRouter のキーのようです。Gemini のキーではありません。Gemini のキーは aistudio.google.com/apikey で発行できます。"
+
+#: includes/admin/class-admin.php
+msgid "This does not look like a Gemini key."
+msgstr "Gemini のキーではないようです。"
+
+#: includes/admin/class-admin.php
+msgid "Rapls AI Chatbot — Google Gemini API key action needed"
+msgstr "Rapls AI Chatbot — Google Gemini API キーの対応が必要です"
+
+#: includes/admin/class-admin.php
+msgid "Your saved Google Gemini API key is a legacy \"AIza\" standard key. Google is retiring this key format: since June 19, 2026 the Gemini API rejects requests from unrestricted standard keys, and from September 2026 it rejects all standard keys. If you do nothing, your chatbot (and Gemini-based site learning, if enabled) will stop responding."
+msgstr "保存されている Google Gemini API キーは旧形式の「AIza」標準キーです。Google はこの形式を廃止しつつあり、2026 年 6 月 19 日以降は制限なしの標準キーからのリクエストを拒否し、2026 年 9 月にはすべての標準キーを拒否します。このまま放置すると、チャットボット（および Gemini を使ったサイト学習を有効にしている場合はそれも）が応答しなくなります。"
+
+#: includes/admin/class-admin.php
+msgid "How to fix it (pick one):"
+msgstr "対処方法（いずれか 1 つ）:"
+
+#: includes/admin/class-admin.php
+msgid "Recommended — create a new key in %1$sGoogle AI Studio%2$s (it will be issued in the new \"AQ.\" auth format) and paste it into %3$sSettings → AI Settings → Gemini%4$s."
+msgstr "推奨 — %1$sGoogle AI Studio%2$s で新しいキーを発行し（新しい「AQ.」認証形式で発行されます）、%3$s設定 → AI 設定 → Gemini%4$s に貼り付けてください。"
+
+#: includes/admin/class-admin.php
+msgid "Or keep your current key working for now: in Google AI Studio, open the API Keys page, hover the key, choose \"Add restrictions\" → \"Restrict to Gemini API only\", and save. A restricted standard key keeps working past June 19, 2026, but is still fully retired in September 2026 — so plan to switch to an \"AQ.\" key."
+msgstr "または現在のキーを当面動かし続ける: Google AI Studio の API キーページを開き、対象キーにカーソルを合わせて「Add restrictions」→「Restrict to Gemini API only」を選んで保存します。制限をかけた標準キーは 2026 年 6 月 19 日以降も動作しますが、2026 年 9 月には完全廃止されるため、「AQ.」キーへの切り替えを計画してください。"
+
+#: includes/admin/class-admin.php
+msgid "This notice disappears automatically once you save an \"AQ.\" key."
+msgstr "「AQ.」キーを保存すると、この通知は自動的に消えます。"

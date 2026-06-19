@@ -277,13 +277,19 @@ class RAPLSAICH_Embedding_Generator {
             }
 
             $body = wp_json_encode(['requests' => $requests]);
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . ':batchEmbedContents?key=' . $this->api_key;
+            // Key in the x-goog-api-key header (not ?key=) — Google's recommended
+            // method; keeps the key out of logs and works with both the legacy
+            // "AIza" and the new "AQ." auth keys.
+            $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $this->model . ':batchEmbedContents';
 
             /** This filter is documented in includes/ai-providers/class-openai-provider.php */
             $timeout = (int) apply_filters('raplsaich_api_timeout', 30);
 
             $response = wp_remote_post($url, [
-                'headers' => ['Content-Type' => 'application/json'],
+                'headers' => [
+                    'Content-Type'   => 'application/json',
+                    'x-goog-api-key' => $this->api_key,
+                ],
                 'body'    => $body,
                 'timeout' => $timeout,
             ]);
