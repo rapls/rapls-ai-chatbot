@@ -615,7 +615,7 @@ class RAPLSAICH_Admin {
         if ($settings_page_submitted) {
             $sanitized['show_feedback_buttons'] = !empty($input['show_feedback_buttons']);
         } else {
-            $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? true;
+            $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? false;
         }
 
         // Preset question buttons (Chat Settings tab) — chips shown under the welcome message.
@@ -3099,7 +3099,7 @@ class RAPLSAICH_Admin {
             'widget_theme'          => 'default',
             'dark_mode'             => false,
             'markdown_enabled'      => true,
-            'show_feedback_buttons' => true,
+            'show_feedback_buttons' => false,
             'sources_display_mode'  => 'matched',
             // Where chat reply links open: '_blank' (new window/tab) or '_self' (same window).
             'link_target'           => '_blank',

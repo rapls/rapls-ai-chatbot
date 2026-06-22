@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.9.3
+Stable tag: 1.9.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -57,6 +57,12 @@ You do not need an API key or any AI experience to start. On first setup the plu
 That's it. Each option states its data-handling trade-off up front (the Gemini free tier may use submitted content to improve Google's models), so you choose with eyes open. You can switch to your own OpenAI, Claude, or Gemini key at any time.
 
 Learn more: [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) | [Source code (GitHub)](https://github.com/rapls/rapls-ai-chatbot)
+
+= See it in action =
+
+Watch the full setup — from install to first reply — in about 5 minutes, no credit card required:
+
+https://youtu.be/4LQdWdgv1UM
 
 == Installation ==
 
@@ -203,6 +209,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.9.4 =
+* Changed: The feedback buttons (👍👎) on bot messages now default to OFF on new installs. You can turn them on anytime in Settings → Chat Settings → "Show feedback buttons". Existing sites keep their current setting.
+
 = 1.9.3 =
 * Added: Support for Google's new "AQ." Gemini API keys. Google AI Studio now issues keys in the new auth-key format (`AQ.Ab…`) instead of the legacy "AIza" standard keys, which Google is retiring (unrestricted standard keys rejected from 2026-06-19, all standard keys from 2026-09). Onboarding, key validation, and every Gemini API call (chat, model list, and site-learning embeddings) now accept and work with both formats.
 * Changed: Gemini requests now send the key in the `x-goog-api-key` header instead of the `?key=` query string — Google's recommended method, required for the new "AQ." keys, and it keeps the key out of server/proxy/CDN logs.
@@ -256,6 +265,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.9.4 =
+Feedback buttons (👍👎) on bot messages now default to off for new installs. Existing settings are unchanged.
 
 = 1.9.3 =
 Adds support for Google's new "AQ." Gemini API keys (the legacy "AIza" format is being retired by Google) and warns if your current Gemini key needs migrating. Recommended for all Gemini users.

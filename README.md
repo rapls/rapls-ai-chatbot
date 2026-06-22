@@ -98,6 +98,12 @@ For full setup instructions (enabling the server, generating an API key, client 
 - [プラグイン紹介ページ](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 - [サポートフォーラム](https://wordpress.org/support/plugin/rapls-ai-chatbot/)
 
+### 動画で見る
+
+5 分で無料チャットボットを設置する手順を動画にしました。
+
+[![WordPress に5分で無料 AI チャットボットを設置する](https://img.youtube.com/vi/4LQdWdgv1UM/maxresdefault.jpg)](https://youtu.be/4LQdWdgv1UM)
+
 ### 解説・レビュー記事（日本語）
 
 導入の流れや、実装で迷った設計判断を記事に書いています。

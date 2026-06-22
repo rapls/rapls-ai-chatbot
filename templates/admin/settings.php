@@ -866,7 +866,7 @@ if (!defined('ABSPATH')) {
                         <td>
                             <label>
                                 <input type="checkbox" name="raplsaich_settings[show_feedback_buttons]" value="1"
-                                    <?php checked($settings['show_feedback_buttons'] ?? true); ?>>
+                                    <?php checked($settings['show_feedback_buttons'] ?? false); ?>>
                                 <?php esc_html_e('Show feedback buttons (👍👎) on bot messages', 'rapls-ai-chatbot'); ?>
                             </label>
                             <p class="description"><?php esc_html_e('Allow users to rate bot responses with 👍👎. Feedback is used to improve AI response quality.', 'rapls-ai-chatbot'); ?></p>
