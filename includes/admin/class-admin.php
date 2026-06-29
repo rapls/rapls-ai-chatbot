@@ -224,7 +224,7 @@ class RAPLSAICH_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -616,6 +616,18 @@ class RAPLSAICH_Admin {
             $sanitized['show_feedback_buttons'] = !empty($input['show_feedback_buttons']);
         } else {
             $sanitized['show_feedback_buttons'] = $existing['show_feedback_buttons'] ?? false;
+        }
+
+        // Humanizer / AI-smell scoring (Chat Settings tab) — detection only.
+        if ($settings_page_submitted) {
+            $sanitized['humanizer_enabled'] = !empty($input['humanizer_enabled']);
+            $threshold = isset($input['humanizer_threshold']) ? (int) $input['humanizer_threshold'] : 40;
+            $sanitized['humanizer_threshold'] = max(0, min(100, $threshold));
+        } else {
+            $sanitized['humanizer_enabled']   = $existing['humanizer_enabled'] ?? false;
+            $sanitized['humanizer_threshold'] = isset($existing['humanizer_threshold'])
+                ? max(0, min(100, (int) $existing['humanizer_threshold']))
+                : 40;
         }
 
         // Preset question buttons (Chat Settings tab) — chips shown under the welcome message.
@@ -2454,7 +2466,12 @@ class RAPLSAICH_Admin {
         $messages = RAPLSAICH_Message::get_by_conversation($conversation_id);
         $conversation = RAPLSAICH_Conversation::get_by_id($conversation_id);
 
-        $formatted = array_map(function($msg) {
+        // AI-smell scoring (B-layer) is computed once here, only when enabled.
+        $humanizer = (class_exists('RAPLSAICH_Humanizer') && RAPLSAICH_Humanizer::is_enabled())
+            ? new RAPLSAICH_Humanizer()
+            : null;
+
+        $formatted = array_map(function($msg) use ($humanizer) {
             $data = [
                 'id'         => (int) $msg['id'],
                 'role'       => $msg['role'],
@@ -2474,6 +2491,13 @@ class RAPLSAICH_Admin {
                 }
                 if (!empty($msg['cache_hit'])) {
                     $data['cache_hit'] = true;
+                }
+                // Attach AI-smell score (detection only; never alters content).
+                if ($humanizer) {
+                    $res = $humanizer->analyze((string) $msg['content']);
+                    if (!$res->skipped) {
+                        $data['humanizer'] = $res->to_array();
+                    }
                 }
             }
             return $data;
@@ -3112,6 +3136,10 @@ class RAPLSAICH_Admin {
             // Glossary (proper nouns / brand terms protected from mistranslation)
             'glossary_enabled' => false,
             'glossary'         => [],
+
+            // Humanizer (AI-smell detection + scoring; detection only, no rewrite)
+            'humanizer_enabled'   => false,
+            'humanizer_threshold' => 40,
 
             // Page Visibility
             'badge_show_on_home'    => true,

@@ -873,6 +873,33 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('AI-smell Score (Japanese)', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[humanizer_enabled]" value="1"
+                                    <?php checked($settings['humanizer_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Score Japanese bot replies for "AI-smell" in the Conversations log', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Adds a read-only score and breakdown to each Japanese bot reply in Conversations, so you can spot stiff, AI-sounding wording. It only detects and scores — it never changes replies, and non-Japanese replies are skipped.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <p style="margin-top:8px;">
+                                <label for="raplsaich_humanizer_threshold">
+                                    <?php esc_html_e('Flag threshold', 'rapls-ai-chatbot'); ?>:
+                                </label>
+                                <input type="range" id="raplsaich_humanizer_threshold"
+                                       name="raplsaich_settings[humanizer_threshold]"
+                                       min="0" max="100" step="5"
+                                       value="<?php echo esc_attr((string) ($settings['humanizer_threshold'] ?? 40)); ?>"
+                                       oninput="document.getElementById('raplsaich_humanizer_threshold_val').textContent = this.value;">
+                                <span id="raplsaich_humanizer_threshold_val"><?php echo esc_html((string) ($settings['humanizer_threshold'] ?? 40)); ?></span> / 100
+                            </p>
+                            <p class="description">
+                                <?php esc_html_e('Scores above this value are shown in red ("high"). The banned-vocabulary and weights can be customized via the rapls_humanizer_* filters.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Preset Question Buttons', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>

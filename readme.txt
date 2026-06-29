@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.9.4
+Stable tag: 1.10.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,7 +62,7 @@ Learn more: [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) |
 
 Watch the full setup — from install to first reply — in about 5 minutes, no credit card required:
 
-https://youtu.be/4LQdWdgv1UM
+https://youtu.be/IzGM4BK7N8Q
 
 == Installation ==
 
@@ -209,6 +209,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.10.0 =
+* Added: "AI-smell score" for Japanese bot replies in the Conversations log. When enabled (Settings → Chat Settings), each Japanese reply gets a read-only score and a category breakdown (stiff connectives, over-emphatic vocabulary, monotone endings, and more) with in-text highlighting, so you can spot wording that sounds machine-written. It only detects and scores — replies are never altered, non-Japanese replies are skipped, and it makes no external calls. Banned vocabulary and weights are customizable via the `rapls_humanizer_*` filters.
+
 = 1.9.4 =
 * Changed: The feedback buttons (👍👎) on bot messages now default to OFF on new installs. You can turn them on anytime in Settings → Chat Settings → "Show feedback buttons". Existing sites keep their current setting.
 
@@ -265,6 +268,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.10.0 =
+Adds an optional "AI-smell score" for Japanese bot replies in the Conversations log (detection only; replies are never changed). Recommended for all users.
 
 = 1.9.4 =
 Feedback buttons (👍👎) on bot messages now default to off for new installs. Existing settings are unchanged.

@@ -123,7 +123,125 @@ jQuery(document).ready(function($) {
             wrap.appendChild(metaDiv);
         }
 
+        // AI-smell score (B-layer; detection only). Read-only badge + breakdown.
+        if (msg.role === 'assistant' && msg.humanizer && !msg.humanizer.skipped) {
+            wrap.appendChild(buildHumanizerPanel(msg.humanizer, p, textContent));
+        }
+
         return wrap;
+    }
+
+    // Escape a string for use inside a RegExp.
+    function reEscape(s) {
+        return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Build the read-only AI-smell panel: score badge, collapsible breakdown,
+    // and a per-category "show in text" highlight toggle over the message <p>.
+    function buildHumanizerPanel(h, pEl, originalText) {
+        var conv = window.raplsaichConv || {};
+        var cats = conv.humanizerCategories || {};
+        var level = h.level || 'green';
+        var score = (typeof h.score === 'number') ? h.score : 0;
+        var labelMap = { green: conv.aiSmellLow || 'low', yellow: conv.aiSmellMedium || 'somewhat high', red: conv.aiSmellHigh || 'high' };
+
+        var panel = document.createElement('div');
+        panel.className = 'raplsaich-humanizer raplsaich-humanizer--' + level;
+
+        // Badge row: number + label (never color alone).
+        var badge = document.createElement('span');
+        badge.className = 'raplsaich-humanizer-badge raplsaich-humanizer-badge--' + level;
+        badge.textContent = (conv.aiSmellScore || 'AI-smell score') + ': ' + score + '/100 (' + (labelMap[level] || '') + ')';
+        panel.appendChild(badge);
+
+        var hits = h.hits || {};
+        var hitKeys = Object.keys(hits);
+
+        if (hitKeys.length) {
+            var toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'button button-small raplsaich-humanizer-toggle';
+            toggle.textContent = (conv.aiSmellBreakdown || 'Breakdown') + ' (' + hitKeys.length + ')';
+            panel.appendChild(toggle);
+
+            var list = document.createElement('ul');
+            list.className = 'raplsaich-humanizer-list';
+            list.hidden = true;
+
+            hitKeys.forEach(function(cat) {
+                var info = hits[cat] || {};
+                var li = document.createElement('li');
+                var name = document.createElement('span');
+                name.className = 'raplsaich-humanizer-cat';
+                name.textContent = (cats[cat] || cat) + ' ×' + (info.count || 0);
+                li.appendChild(name);
+
+                var matches = info.matches || [];
+                if (matches.length) {
+                    var hl = document.createElement('button');
+                    hl.type = 'button';
+                    hl.className = 'button-link raplsaich-humanizer-highlight';
+                    hl.textContent = ' [' + (conv.aiSmellHighlight || 'Show in text') + ']';
+                    hl.addEventListener('click', function() {
+                        applyHighlight(pEl, originalText, matches);
+                    });
+                    li.appendChild(hl);
+                }
+                list.appendChild(li);
+            });
+            panel.appendChild(list);
+
+            toggle.addEventListener('click', function() {
+                list.hidden = !list.hidden;
+            });
+
+            // Clear-highlight control.
+            var clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'button-link raplsaich-humanizer-clear';
+            clear.textContent = conv.aiSmellClear || 'Clear';
+            clear.addEventListener('click', function() {
+                pEl.textContent = originalText;
+            });
+            panel.appendChild(clear);
+        }
+
+        // Non-blocking warnings (e.g. sparse specifics). Never auto-fixed.
+        (h.warnings || []).forEach(function(w) {
+            var warn = document.createElement('div');
+            warn.className = 'raplsaich-humanizer-warning';
+            warn.textContent = '⚠ ' + w;
+            panel.appendChild(warn);
+        });
+
+        return panel;
+    }
+
+    // Wrap matched substrings in <mark> within the message paragraph. Rebuilds
+    // from the original text each time (idempotent), so toggles never stack.
+    function applyHighlight(pEl, originalText, matches) {
+        var valid = (matches || []).filter(function(m) { return m && m.length; });
+        if (!valid.length) { pEl.textContent = originalText; return; }
+        // Longest-first so overlapping shorter matches don't split longer ones.
+        valid.sort(function(a, b) { return b.length - a.length; });
+        var pattern = new RegExp(valid.map(reEscape).join('|'), 'g');
+
+        pEl.textContent = '';
+        var last = 0, m;
+        while ((m = pattern.exec(originalText)) !== null) {
+            if (m.index > last) {
+                pEl.appendChild(document.createTextNode(originalText.slice(last, m.index)));
+            }
+            var mark = document.createElement('mark');
+            mark.className = 'raplsaich-humanizer-mark';
+            mark.textContent = m[0];
+            pEl.appendChild(mark);
+            last = m.index + m[0].length;
+            if (m.index === pattern.lastIndex) { pattern.lastIndex++; } // zero-width guard
+        }
+        if (last < originalText.length) {
+            pEl.appendChild(document.createTextNode(originalText.slice(last)));
+        }
     }
 
     // Update operator UI state based on handoff status

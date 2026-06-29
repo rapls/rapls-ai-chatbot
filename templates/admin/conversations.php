@@ -393,5 +393,13 @@ wp_localize_script("raplsaich-admin-conversations", "raplsaichConv", [
     "forceNewSessions" => __("This will force all users to start new conversations on their next visit.", "rapls-ai-chatbot"),
     "tokens" => __("tokens", "rapls-ai-chatbot"),
     "user" => __("User", "rapls-ai-chatbot"),
+    "aiSmellScore" => __("AI-smell score", "rapls-ai-chatbot"),
+    "aiSmellLow" => __("low", "rapls-ai-chatbot"),
+    "aiSmellMedium" => __("somewhat high", "rapls-ai-chatbot"),
+    "aiSmellHigh" => __("high", "rapls-ai-chatbot"),
+    "aiSmellBreakdown" => __("Breakdown", "rapls-ai-chatbot"),
+    "aiSmellHighlight" => __("Show in text", "rapls-ai-chatbot"),
+    "aiSmellClear" => __("Clear", "rapls-ai-chatbot"),
+    "humanizerCategories" => RAPLSAICH_Humanizer_Rules::category_labels(),
 ]);
 ?>

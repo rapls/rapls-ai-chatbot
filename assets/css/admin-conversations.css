@@ -162,3 +162,42 @@ table.wp-list-table td.raplsaich-col-page-url .button {
     min-height: 24px;
     line-height: 22px;
 }
+
+/* ── AI-smell score (Humanizer B-layer) — read-only badge + breakdown ── */
+.raplsaich-humanizer {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #f6f7f7;
+    border: 1px solid #e0e0e0;
+    font-size: 12px;
+}
+.raplsaich-humanizer-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #1d2327;
+}
+.raplsaich-humanizer-badge--green  { background: #c6e9c9; }
+.raplsaich-humanizer-badge--yellow { background: #f5e6a8; }
+.raplsaich-humanizer-badge--red    { background: #f3bcbc; }
+.raplsaich-humanizer-toggle { margin-left: 8px; }
+.raplsaich-humanizer-clear  { margin-left: 8px; }
+.raplsaich-humanizer-list {
+    margin: 8px 0 0;
+    padding-left: 18px;
+    list-style: disc;
+}
+.raplsaich-humanizer-list li { margin: 2px 0; }
+.raplsaich-humanizer-cat { color: #1d2327; }
+.raplsaich-humanizer-highlight { font-size: 11px; }
+.raplsaich-humanizer-warning {
+    margin-top: 6px;
+    color: #8a5700;
+}
+.raplsaich-humanizer-mark {
+    background: #fff2a8;
+    border-radius: 2px;
+    padding: 0 1px;
+}

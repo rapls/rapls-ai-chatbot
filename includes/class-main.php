@@ -123,6 +123,13 @@ class RAPLSAICH_Main {
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-search-engine.php';
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/crawler/class-site-crawler.php';
 
+        // Humanizer (B-layer: AI-smell detection + scoring; detection only)
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer-result.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer-rules.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer-detector.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer-cleaner.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer.php';
+
         // API
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/api/class-rest-controller.php';
 
