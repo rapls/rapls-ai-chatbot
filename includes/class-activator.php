@@ -240,6 +240,9 @@ class RAPLSAICH_Activator {
 
         dbDelta($sql_knowledge_versions);
 
+        // Usage metering (⑤ usage control)
+        self::maybe_create_usage_table();
+
         // Add is_active column if not exists
         self::maybe_add_is_active_column();
     }
@@ -360,6 +363,7 @@ class RAPLSAICH_Activator {
         self::maybe_add_is_active_column();
         self::maybe_add_cache_columns();
         self::maybe_create_audit_log_table();
+        self::maybe_create_usage_table();
         self::maybe_add_conversion_columns();
         self::maybe_convert_enum_to_varchar();
         self::maybe_add_message_composite_index();
@@ -537,6 +541,42 @@ class RAPLSAICH_Activator {
             KEY user_id (user_id),
             KEY object_type (object_type),
             KEY created_at (created_at)
+        ) {$charset_collate};";
+
+        dbDelta($sql);
+    }
+
+    /**
+     * Usage table — per-actor request/token/credit metering for ⑤ usage control.
+     *
+     * One row per (actor_type, actor_key, window_type, window_start). The UNIQUE
+     * key enables atomic INSERT … ON DUPLICATE KEY UPDATE so concurrent requests
+     * never double-count. actor_key holds a numeric user id, a role slug, or a
+     * hashed (never raw) guest id (≤64 chars).
+     */
+    public static function maybe_create_usage_table() {
+        if (self::table_exists('raplsaich_usage')) {
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'raplsaich_usage';
+        $charset_collate = $wpdb->get_charset_collate();
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+        $sql = "CREATE TABLE {$table} (
+            id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            actor_type VARCHAR(10) NOT NULL,
+            actor_key VARCHAR(64) NOT NULL,
+            window_type VARCHAR(10) NOT NULL,
+            window_start DATETIME NOT NULL,
+            requests INT UNSIGNED DEFAULT 0,
+            tokens BIGINT(20) UNSIGNED DEFAULT 0,
+            credits_used INT UNSIGNED DEFAULT 0,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY actor_window (actor_type, actor_key, window_type, window_start),
+            KEY updated_at (updated_at)
         ) {$charset_collate};";
 
         dbDelta($sql);

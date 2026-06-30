@@ -1276,6 +1276,89 @@ class RAPLSAICH_REST_Controller {
                 $system_prompt .= "\n\n[RESPONSE LANGUAGE — MANDATORY]\nYou MUST respond in {$lang_name}. This overrides everything above. Even if the context, knowledge base, or user message is in another language, your response MUST be in {$lang_name}.";
             }
 
+            // Grounding gate (strict mode, opt-in): if the question has no
+            // relevant source in the site's content and web search is off, refuse
+            // rather than letting the model answer from general knowledge (which
+            // risks hallucination). Bots that intentionally have no knowledge base
+            // are never gated. Source citation is unchanged (handled below).
+            if (
+                !empty($settings['grounding_strict_enabled'])
+                && !$web_search_enabled
+                && !$bot_no_knowledge
+            ) {
+                $min_score = (float) apply_filters(
+                    'raplsaich_grounding_min_score',
+                    (float) ($settings['grounding_min_score'] ?? 0.2)
+                );
+                $embedding_enabled = !empty($settings['embedding_enabled']);
+                if (!$this->is_query_grounded($related_content, (string) $context, $embedding_enabled, $min_score)) {
+                    $fallback = $settings['grounding_fallback_message'] ?? '';
+                    if (trim($fallback) === '') {
+                        $fallback = __('Sorry, I could not find information about that on this site.', 'rapls-ai-chatbot');
+                    }
+                    /** Allow Pro/customizations to adjust the grounding refusal. */
+                    $fallback = (string) apply_filters('raplsaich_grounding_fallback_message', $fallback, $message, $settings);
+
+                    $ground_msg_id = 0;
+                    if ($save_history) {
+                        $ai_message = RAPLSAICH_Message::create([
+                            'conversation_id' => $conversation_id,
+                            'role'            => 'assistant',
+                            'content'         => $fallback,
+                        ]);
+                        $ground_msg_id = $ai_message ? $ai_message['id'] : 0;
+                    } else {
+                        $this->append_transient_context($session_id, 'assistant', $fallback);
+                        $this->increment_no_history_monthly_count();
+                    }
+                    return $this->no_cache(new WP_REST_Response([
+                        'success' => true,
+                        'data'    => [
+                            'message_id'  => $ground_msg_id,
+                            'content'     => $fallback,
+                            'is_auto'     => true,
+                            'sources'     => [],
+                            'session_id'  => $session_id,
+                        ],
+                    ], 200));
+                }
+            }
+
+            // Usage control gate (⑤): block BEFORE the LLM call when the actor is
+            // over their request/token limit. Server-side; the client is never
+            // trusted. Admins bypass. Resolved here so $usage_actor can also be
+            // used to meter the response below.
+            $usage_actor = null;
+            if (class_exists('RAPLSAICH_Usage_Limiter') && RAPLSAICH_Usage_Limiter::is_enabled()) {
+                $usage_actor = RAPLSAICH_Usage_Actor::resolve($session_id, $this->get_client_ip());
+                $usage_check = RAPLSAICH_Usage_Limiter::check($usage_actor);
+                if (empty($usage_check['allowed'])) {
+                    $block_msg = RAPLSAICH_Usage_Limiter::block_message($usage_check);
+                    $blk_msg_id = 0;
+                    if ($save_history) {
+                        $ai_message = RAPLSAICH_Message::create([
+                            'conversation_id' => $conversation_id,
+                            'role'            => 'assistant',
+                            'content'         => $block_msg,
+                        ]);
+                        $blk_msg_id = $ai_message ? $ai_message['id'] : 0;
+                    } else {
+                        $this->append_transient_context($session_id, 'assistant', $block_msg);
+                    }
+                    return $this->no_cache(new WP_REST_Response([
+                        'success' => true,
+                        'data'    => [
+                            'message_id' => $blk_msg_id,
+                            'content'    => $block_msg,
+                            'is_auto'    => true,
+                            'limited'    => true,
+                            'sources'    => [],
+                            'session_id' => $session_id,
+                        ],
+                    ], 200));
+                }
+            }
+
             // Build message array
             $messages = [
                 ['role' => 'system', 'content' => $system_prompt],
@@ -1380,6 +1463,14 @@ class RAPLSAICH_REST_Controller {
                 // save_history OFF — store in transient and increment counter
                 $this->append_transient_context($session_id, 'assistant', $response['content']);
                 $this->increment_no_history_monthly_count();
+            }
+
+            // Usage control (⑤): record this request's real token usage against
+            // the actor resolved at the gate. Reuses $usage_actor so we don't
+            // re-resolve. Credits decrement is a Pro concern (0 here).
+            if ($usage_actor instanceof RAPLSAICH_Usage_Actor) {
+                $used_tokens = (int) ($response['tokens_used'] ?? 0);
+                RAPLSAICH_Usage_Meter::record($usage_actor, $used_tokens, 0);
             }
 
             // Budget alert check (Pro feature)
@@ -2468,6 +2559,40 @@ class RAPLSAICH_REST_Controller {
         $expected_payload = $version . '.' . $iat . '.' . $exp;
         $expected_hmac    = hash_hmac('sha256', $expected_payload . '.' . $session_id, wp_salt('auth'));
         return hash_equals($expected_hmac, $client_hmac);
+    }
+
+    /**
+     * Whether the user's question is actually grounded in site content.
+     *
+     * Robust across search modes: an "[EXACT MATCH]" in the built context, or a
+     * result that keyword-matched the query, counts as grounded. When embeddings
+     * are enabled, a result whose (hybrid/vector) score meets the threshold also
+     * counts. Always-injected priority knowledge (keyword_matched = false, no
+     * score) does NOT by itself prove relevance to this specific question.
+     *
+     * @param array  $related_content Results from the search engine.
+     * @param string $context         The built context string.
+     * @param bool   $embedding_enabled Whether vector search is active.
+     * @param float  $min_score       Minimum hybrid/vector score (0–1) to accept.
+     * @return bool
+     */
+    private function is_query_grounded(array $related_content, string $context, bool $embedding_enabled, float $min_score): bool {
+        // Exact Q&A match is definitive grounding.
+        if (strpos($context, '[EXACT MATCH') !== false || strpos($context, '[BEST MATCH') !== false) {
+            return true;
+        }
+        foreach ($related_content as $r) {
+            if (!empty($r['keyword_matched'])) {
+                return true;
+            }
+            if ($embedding_enabled) {
+                $score = isset($r['vector_score']) ? (float) $r['vector_score'] : (float) ($r['score'] ?? 0);
+                if ($score >= $min_score) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

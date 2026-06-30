@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.10.0
+Stable tag: 1.11.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -209,6 +209,10 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.11.0 =
+* Added: "Grounded Answers Only" mode (Settings → AI Settings). When on, if the knowledge base and site learning have no content relevant to a question, the bot replies that it could not find the information instead of answering from the model's general knowledge — reducing hallucination. The relevance threshold and the "not found" message are configurable; works across keyword and vector (RAG) search. Off by default; ignored when Web Search is on.
+* Added: "Usage Control" (Settings → Security) — an optional safety valve for your own API spend (BYOK) when the chatbot is open to guests or members. Caps total daily usage per guest and per logged-in user (separate from the per-IP rate limit). Counts are kept server-side and cannot be bypassed by the client; guests are identified by a salted hash (never a raw IP) with a configurable retention period and automatic cleanup. Role-based limits, per-user credits, and a usage dashboard are available in Pro.
+
 = 1.10.0 =
 * Added: "AI-smell score" for Japanese bot replies in the Conversations log. When enabled (Settings → Chat Settings), each Japanese reply gets a read-only score and a category breakdown (stiff connectives, over-emphatic vocabulary, monotone endings, and more) with in-text highlighting, so you can spot wording that sounds machine-written. It only detects and scores — replies are never altered, non-Japanese replies are skipped, and it makes no external calls. Banned vocabulary and weights are customizable via the `rapls_humanizer_*` filters.
 
@@ -268,6 +272,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.11.0 =
+Adds optional "Grounded Answers Only" (anti-hallucination) and "Usage Control" (per-visitor/user caps to protect your API spend). Both off by default. Recommended for all users.
 
 = 1.10.0 =
 Adds an optional "AI-smell score" for Japanese bot replies in the Conversations log (detection only; replies are never changed). Recommended for all users.

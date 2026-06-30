@@ -130,6 +130,12 @@ class RAPLSAICH_Main {
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer-cleaner.php';
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/humanizer/class-rapls-humanizer.php';
 
+        // Usage control (⑤): per-actor metering + limiting (server-side, BYOK-safe)
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/usage/class-rapls-usage-actor.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/usage/class-rapls-usage-store.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/usage/class-rapls-usage-meter.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/usage/class-rapls-usage-limiter.php';
+
         // API
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/api/class-rest-controller.php';
 
@@ -371,6 +377,15 @@ class RAPLSAICH_Main {
                     ...$batch
                 ));
             }
+        }
+
+        // Usage metering rows (⑤) — short TTL housekeeping, especially for guest
+        // rows (privacy). Independent of conversation retention.
+        if (class_exists('RAPLSAICH_Usage_Store')) {
+            $usage_ttl = isset($settings['usage_retention_days'])
+                ? max(1, (int) $settings['usage_retention_days'])
+                : 30;
+            RAPLSAICH_Usage_Store::cleanup($usage_ttl);
         }
 
         /**

@@ -1264,6 +1264,38 @@ if (!defined('ABSPATH')) {
                             <p class="description"><strong><?php esc_html_e('Note: Additional charges may apply depending on the provider.', 'rapls-ai-chatbot'); ?></strong></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Grounded Answers Only', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[grounding_strict_enabled]" value="1"
+                                    <?php checked(!empty($settings['grounding_strict_enabled'])); ?>>
+                                <?php esc_html_e('Only answer from this site\'s content; otherwise say it was not found', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When on, if the knowledge base and site learning have no content relevant to the question, the bot replies that it could not find the information instead of answering from the model\'s general knowledge. This reduces hallucination. (Ignored when Web Search is on, or for bots with no knowledge base.)', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <p style="margin-top:8px;">
+                                <label for="raplsaich_grounding_min_score">
+                                    <?php esc_html_e('Relevance threshold (vector search)', 'rapls-ai-chatbot'); ?>:
+                                </label>
+                                <input type="number" id="raplsaich_grounding_min_score"
+                                       name="raplsaich_settings[grounding_min_score]"
+                                       min="0" max="1" step="0.05" style="width:80px;"
+                                       value="<?php echo esc_attr((string) ($settings['grounding_min_score'] ?? 0.2)); ?>">
+                                <span class="description" style="display:inline;"><?php esc_html_e('0–1. Higher = stricter. Used when Vector Embedding (RAG) is enabled.', 'rapls-ai-chatbot'); ?></span>
+                            </p>
+                            <p style="margin-top:8px;">
+                                <label for="raplsaich_grounding_fallback_message">
+                                    <?php esc_html_e('"Not found" message', 'rapls-ai-chatbot'); ?>:
+                                </label><br>
+                                <textarea id="raplsaich_grounding_fallback_message"
+                                          name="raplsaich_settings[grounding_fallback_message]"
+                                          rows="2" class="large-text"
+                                          placeholder="<?php esc_attr_e('Sorry, I could not find information about that on this site.', 'rapls-ai-chatbot'); ?>"><?php echo esc_textarea($settings['grounding_fallback_message'] ?? ''); ?></textarea>
+                            </p>
+                        </td>
+                    </tr>
                 </table>
 
                 <hr style="margin: 30px 0;">
@@ -1979,6 +2011,57 @@ if (!defined('ABSPATH')) {
                                 </div>
                             </div>
                             <p class="description"><?php esc_html_e('Limit per IP address. Set requests to 0 for unlimited.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Usage Control', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[usage_enabled]" value="1"
+                                    <?php checked(!empty($settings['usage_enabled'])); ?>>
+                                <?php esc_html_e('Cap how much the chatbot can be used per visitor / user', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Protects your own API spend (BYOK) when the chatbot is open to guests or members. Counts are kept on your server. This is separate from the per-IP Rate Limit above: it caps total daily usage per visitor/user, not request frequency.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <div style="margin-top:8px; display:flex; gap:18px; flex-wrap:wrap;">
+                                <div>
+                                    <label for="raplsaich_usage_guest_daily_limit"><?php esc_html_e('Guest limit (per day)', 'rapls-ai-chatbot'); ?></label><br>
+                                    <input type="number" id="raplsaich_usage_guest_daily_limit" min="0" class="small-text"
+                                           name="raplsaich_settings[usage_guest_daily_limit]"
+                                           value="<?php echo esc_attr((string) ($settings['usage_guest_daily_limit'] ?? 0)); ?>">
+                                    <span class="description" style="display:inline;"><?php esc_html_e('messages (0 = unlimited)', 'rapls-ai-chatbot'); ?></span>
+                                </div>
+                                <div>
+                                    <label for="raplsaich_usage_user_daily_limit"><?php esc_html_e('Logged-in user limit (per day)', 'rapls-ai-chatbot'); ?></label><br>
+                                    <input type="number" id="raplsaich_usage_user_daily_limit" min="0" class="small-text"
+                                           name="raplsaich_settings[usage_user_daily_limit]"
+                                           value="<?php echo esc_attr((string) ($settings['usage_user_daily_limit'] ?? 0)); ?>">
+                                    <span class="description" style="display:inline;"><?php esc_html_e('messages (0 = unlimited)', 'rapls-ai-chatbot'); ?></span>
+                                </div>
+                            </div>
+                            <p style="margin-top:10px;">
+                                <label>
+                                    <input type="checkbox" name="raplsaich_settings[usage_guest_ip_identify]" value="1"
+                                        <?php checked(!isset($settings['usage_guest_ip_identify']) || !empty($settings['usage_guest_ip_identify'])); ?>>
+                                    <?php esc_html_e('Identify guests by IP + session (more accurate). Uncheck for session-only (stricter privacy).', 'rapls-ai-chatbot'); ?>
+                                </label>
+                                <br>
+                                <span class="description"><?php esc_html_e('The IP is never stored in plain text — only a salted hash is used to count usage. Guest usage rows are auto-deleted after the retention period below. Mention this in your privacy policy if you enable IP identification.', 'rapls-ai-chatbot'); ?></span>
+                            </p>
+                            <p style="margin-top:8px;">
+                                <label for="raplsaich_usage_retention_days"><?php esc_html_e('Usage data retention (days)', 'rapls-ai-chatbot'); ?></label>
+                                <input type="number" id="raplsaich_usage_retention_days" min="1" class="small-text"
+                                       name="raplsaich_settings[usage_retention_days]"
+                                       value="<?php echo esc_attr((string) ($settings['usage_retention_days'] ?? 30)); ?>">
+                            </p>
+                            <p style="margin-top:8px;">
+                                <label for="raplsaich_usage_block_message"><?php esc_html_e('"Limit reached" message', 'rapls-ai-chatbot'); ?></label><br>
+                                <textarea id="raplsaich_usage_block_message" name="raplsaich_settings[usage_block_message]"
+                                          rows="2" class="large-text"
+                                          placeholder="<?php esc_attr_e('The daily limit has been reached. Please try again later, or sign in.', 'rapls-ai-chatbot'); ?>"><?php echo esc_textarea($settings['usage_block_message'] ?? ''); ?></textarea>
+                            </p>
+                            <p class="description"><?php esc_html_e('Role-based limits, per-user credits, and a usage dashboard are available in Pro.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

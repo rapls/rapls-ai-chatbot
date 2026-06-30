@@ -224,7 +224,7 @@ class RAPLSAICH_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -628,6 +628,41 @@ class RAPLSAICH_Admin {
             $sanitized['humanizer_threshold'] = isset($existing['humanizer_threshold'])
                 ? max(0, min(100, (int) $existing['humanizer_threshold']))
                 : 40;
+        }
+
+        // Grounding strict mode (refuse when no relevant site content is found).
+        if ($settings_page_submitted) {
+            $sanitized['grounding_strict_enabled'] = !empty($input['grounding_strict_enabled']);
+            $gscore = isset($input['grounding_min_score']) ? (float) $input['grounding_min_score'] : 0.2;
+            $sanitized['grounding_min_score'] = max(0.0, min(1.0, $gscore));
+            $sanitized['grounding_fallback_message'] = isset($input['grounding_fallback_message'])
+                ? sanitize_textarea_field($input['grounding_fallback_message'])
+                : '';
+        } else {
+            $sanitized['grounding_strict_enabled'] = $existing['grounding_strict_enabled'] ?? false;
+            $sanitized['grounding_min_score'] = isset($existing['grounding_min_score'])
+                ? max(0.0, min(1.0, (float) $existing['grounding_min_score']))
+                : 0.2;
+            $sanitized['grounding_fallback_message'] = $existing['grounding_fallback_message'] ?? '';
+        }
+
+        // Usage control (⑤) — Free safety valve.
+        if ($settings_page_submitted) {
+            $sanitized['usage_enabled']           = !empty($input['usage_enabled']);
+            $sanitized['usage_guest_ip_identify'] = !empty($input['usage_guest_ip_identify']);
+            $sanitized['usage_guest_daily_limit'] = max(0, (int) ($input['usage_guest_daily_limit'] ?? 0));
+            $sanitized['usage_user_daily_limit']  = max(0, (int) ($input['usage_user_daily_limit'] ?? 0));
+            $sanitized['usage_retention_days']    = max(1, (int) ($input['usage_retention_days'] ?? 30));
+            $sanitized['usage_block_message']     = isset($input['usage_block_message'])
+                ? sanitize_textarea_field($input['usage_block_message'])
+                : '';
+        } else {
+            $sanitized['usage_enabled']           = $existing['usage_enabled'] ?? false;
+            $sanitized['usage_guest_ip_identify'] = $existing['usage_guest_ip_identify'] ?? true;
+            $sanitized['usage_guest_daily_limit'] = max(0, (int) ($existing['usage_guest_daily_limit'] ?? 0));
+            $sanitized['usage_user_daily_limit']  = max(0, (int) ($existing['usage_user_daily_limit'] ?? 0));
+            $sanitized['usage_retention_days']    = max(1, (int) ($existing['usage_retention_days'] ?? 30));
+            $sanitized['usage_block_message']     = $existing['usage_block_message'] ?? '';
         }
 
         // Preset question buttons (Chat Settings tab) — chips shown under the welcome message.
@@ -3140,6 +3175,19 @@ class RAPLSAICH_Admin {
             // Humanizer (AI-smell detection + scoring; detection only, no rewrite)
             'humanizer_enabled'   => false,
             'humanizer_threshold' => 40,
+
+            // Grounding (strict mode: refuse when no relevant site content found)
+            'grounding_strict_enabled'  => false,
+            'grounding_min_score'       => 0.2,
+            'grounding_fallback_message' => '',
+
+            // Usage control (⑤) — Free safety valve; Pro adds roles/credits/dashboard
+            'usage_enabled'             => false,
+            'usage_guest_daily_limit'   => 0,   // 0 = unlimited
+            'usage_user_daily_limit'    => 0,   // 0 = unlimited
+            'usage_guest_ip_identify'   => true,
+            'usage_retention_days'      => 30,
+            'usage_block_message'       => '',
 
             // Page Visibility
             'badge_show_on_home'    => true,

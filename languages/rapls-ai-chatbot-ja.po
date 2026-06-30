@@ -8055,3 +8055,83 @@ msgstr "または現在のキーを当面動かし続ける: Google AI Studio �
 #: includes/admin/class-admin.php
 msgid "This notice disappears automatically once you save an \"AQ.\" key."
 msgstr "「AQ.」キーを保存すると、この通知は自動的に消えます。"
+
+#: includes/api/class-rest-controller.php
+msgid "Sorry, I could not find information about that on this site."
+msgstr "申し訳ありません。このサイト内には、その情報が見つかりませんでした。"
+
+#: templates/admin/settings.php
+msgid "Grounded Answers Only"
+msgstr "根拠のある回答のみ"
+
+#: templates/admin/settings.php
+msgid "Only answer from this site's content; otherwise say it was not found"
+msgstr "このサイトの内容からのみ回答し、無ければ「見つからない」と返す"
+
+#: templates/admin/settings.php
+msgid "When on, if the knowledge base and site learning have no content relevant to the question, the bot replies that it could not find the information instead of answering from the model's general knowledge. This reduces hallucination. (Ignored when Web Search is on, or for bots with no knowledge base.)"
+msgstr "オンにすると、ナレッジベースとサイト学習に質問へ関連する内容が無い場合、モデルの一般知識で答えず「情報が見つからなかった」と返します。ハルシネーション（事実の捏造）を抑えられます。（Web 検索がオンのとき、またはナレッジベースを持たないボットでは無視されます。）"
+
+#: templates/admin/settings.php
+msgid "Relevance threshold (vector search)"
+msgstr "関連度のしきい値（ベクトル検索）"
+
+#: templates/admin/settings.php
+msgid "0–1. Higher = stricter. Used when Vector Embedding (RAG) is enabled."
+msgstr "0〜1。大きいほど厳格。ベクトル埋め込み（RAG）が有効なときに使われます。"
+
+#: templates/admin/settings.php
+msgid "\"Not found\" message"
+msgstr "「見つからない」ときのメッセージ"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "You have reached the usage limit for now. Please try again later."
+msgstr "現在、利用上限に達しています。しばらくしてからもう一度お試しください。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "The daily limit has been reached. Please try again later, or sign in."
+msgstr "本日の上限に達しました。時間をおくか、ログインしてからお試しください。"
+
+#: templates/admin/settings.php
+msgid "Usage Control"
+msgstr "利用制御"
+
+#: templates/admin/settings.php
+msgid "Cap how much the chatbot can be used per visitor / user"
+msgstr "訪問者／ユーザーごとに、チャットボットの利用量に上限を設ける"
+
+#: templates/admin/settings.php
+msgid "Protects your own API spend (BYOK) when the chatbot is open to guests or members. Counts are kept on your server. This is separate from the per-IP Rate Limit above: it caps total daily usage per visitor/user, not request frequency."
+msgstr "チャットボットをゲストや会員に開放したときに、ご自身の API 料金（BYOK）の暴走を防ぎます。カウントはサーバー側で保持されます。上の IP 単位のレート制限とは別物で、リクエストの頻度ではなく、訪問者／ユーザーごとの 1 日あたりの総利用量に上限を設けます。"
+
+#: templates/admin/settings.php
+msgid "Guest limit (per day)"
+msgstr "ゲストの上限（1 日あたり）"
+
+#: templates/admin/settings.php
+msgid "Logged-in user limit (per day)"
+msgstr "ログインユーザーの上限（1 日あたり）"
+
+#: templates/admin/settings.php
+msgid "messages (0 = unlimited)"
+msgstr "メッセージ（0 = 無制限）"
+
+#: templates/admin/settings.php
+msgid "Identify guests by IP + session (more accurate). Uncheck for session-only (stricter privacy)."
+msgstr "ゲストを IP ＋セッションで識別する（より正確）。チェックを外すとセッションのみで識別（プライバシー重視）。"
+
+#: templates/admin/settings.php
+msgid "The IP is never stored in plain text — only a salted hash is used to count usage. Guest usage rows are auto-deleted after the retention period below. Mention this in your privacy policy if you enable IP identification."
+msgstr "IP は平文では一切保存されません。利用量の集計にはソルト付きのハッシュのみを使います。ゲストの利用記録は、下の保持期間を過ぎると自動削除されます。IP 識別を有効にする場合は、プライバシーポリシーにその旨を記載してください。"
+
+#: templates/admin/settings.php
+msgid "Usage data retention (days)"
+msgstr "利用データの保持期間（日）"
+
+#: templates/admin/settings.php
+msgid "\"Limit reached\" message"
+msgstr "「上限に達した」ときのメッセージ"
+
+#: templates/admin/settings.php
+msgid "Role-based limits, per-user credits, and a usage dashboard are available in Pro."
+msgstr "ロール別の上限、ユーザー別クレジット、利用状況ダッシュボードは Pro で利用できます。"
