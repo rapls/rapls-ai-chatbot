@@ -803,13 +803,19 @@ class RAPLSAICH_REST_Controller {
             $rate_limit_result = $this->check_rate_limit();
             if ($rate_limit_result !== true) {
                 do_action('raplsaich_rate_limit_exceeded', $this->get_client_ip());
+                // rate_limit is the highest-priority reason: it fires first in the
+                // flow (before the monthly quota and usage gates), so when several
+                // limits would apply, this one wins by execution order.
                 $rate_limit_msg = is_string($rate_limit_result) && $rate_limit_result !== ''
                     ? $rate_limit_result
-                    : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot');
+                    : (class_exists('RAPLSAICH_Usage_Limiter')
+                        ? RAPLSAICH_Usage_Limiter::message_for_reason('rate_limit')
+                        : __('Too many messages. Please wait a moment before sending again.', 'rapls-ai-chatbot'));
                 return new WP_REST_Response([
                     'success'    => false,
                     'error'      => $rate_limit_msg,
                     'error_code' => 'rate_limited',
+                    'reason'     => 'rate_limit',
                 ], 429);
             }
         }
@@ -957,7 +963,10 @@ class RAPLSAICH_REST_Controller {
                 $faq_answer = $this->extract_faq_answer($faq_results, $message);
 
                 if (empty($faq_answer)) {
-                    $faq_answer = __('Unable to generate an AI response at this time. Please try again later.', 'rapls-ai-chatbot');
+                    // No FAQ fallback — explain *which* limit was hit (monthly quota).
+                    $faq_answer = class_exists('RAPLSAICH_Usage_Limiter')
+                        ? RAPLSAICH_Usage_Limiter::message_for_reason('message_quota')
+                        : __('Unable to generate an AI response at this time. Please try again later.', 'rapls-ai-chatbot');
                 }
 
                 // Save synthetic assistant message (only when history is enabled)
@@ -981,6 +990,8 @@ class RAPLSAICH_REST_Controller {
                         'sources'            => [],
                         'remaining_messages' => 0,
                         'limit_reached'      => true,
+                        'limited'            => true,
+                        'reason'             => 'message_quota',
                     ],
                 ], 200);
             }
@@ -1352,6 +1363,7 @@ class RAPLSAICH_REST_Controller {
                             'content'    => $block_msg,
                             'is_auto'    => true,
                             'limited'    => true,
+                            'reason'     => (string) ($usage_check['reason'] ?? 'daily_limit'),
                             'sources'    => [],
                             'session_id' => $session_id,
                         ],

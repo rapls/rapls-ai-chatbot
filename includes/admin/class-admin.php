@@ -224,7 +224,7 @@ class RAPLSAICH_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'usage_show_remaining', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -650,6 +650,7 @@ class RAPLSAICH_Admin {
         if ($settings_page_submitted) {
             $sanitized['usage_enabled']           = !empty($input['usage_enabled']);
             $sanitized['usage_guest_ip_identify'] = !empty($input['usage_guest_ip_identify']);
+            $sanitized['usage_show_remaining']    = !empty($input['usage_show_remaining']);
             $sanitized['usage_guest_daily_limit'] = max(0, (int) ($input['usage_guest_daily_limit'] ?? 0));
             $sanitized['usage_user_daily_limit']  = max(0, (int) ($input['usage_user_daily_limit'] ?? 0));
             $sanitized['usage_retention_days']    = max(1, (int) ($input['usage_retention_days'] ?? 30));
@@ -659,6 +660,7 @@ class RAPLSAICH_Admin {
         } else {
             $sanitized['usage_enabled']           = $existing['usage_enabled'] ?? false;
             $sanitized['usage_guest_ip_identify'] = $existing['usage_guest_ip_identify'] ?? true;
+            $sanitized['usage_show_remaining']    = $existing['usage_show_remaining'] ?? false;
             $sanitized['usage_guest_daily_limit'] = max(0, (int) ($existing['usage_guest_daily_limit'] ?? 0));
             $sanitized['usage_user_daily_limit']  = max(0, (int) ($existing['usage_user_daily_limit'] ?? 0));
             $sanitized['usage_retention_days']    = max(1, (int) ($existing['usage_retention_days'] ?? 30));
@@ -3188,6 +3190,7 @@ class RAPLSAICH_Admin {
             'usage_guest_ip_identify'   => true,
             'usage_retention_days'      => 30,
             'usage_block_message'       => '',
+            'usage_show_remaining'      => false,
 
             // Page Visibility
             'badge_show_on_home'    => true,

@@ -8135,3 +8135,31 @@ msgstr "「上限に達した」ときのメッセージ"
 #: templates/admin/settings.php
 msgid "Role-based limits, per-user credits, and a usage dashboard are available in Pro."
 msgstr "ロール別の上限、ユーザー別クレジット、利用状況ダッシュボードは Pro で利用できます。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "You have reached your message limit for this month."
+msgstr "今月のご利用回数の上限に達しました。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "You have used up your credits. Please wait until the next reset."
+msgstr "クレジットを使い切りました。次回リセットまでお待ちください。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "You have reached the usage limit. Please try again later."
+msgstr "ご利用量の上限に達しました。しばらくしてからもう一度お試しください。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "You have sent many messages in a short time. Please wait a moment."
+msgstr "短時間に多くの送信がありました。少し時間をおいてください。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "You have reached today's usage limit. Please try again later."
+msgstr "本日のご利用回数の上限に達しました。しばらくしてからもう一度お試しください。"
+
+#: includes/usage/class-rapls-usage-limiter.php
+msgid "(Remaining: %d)"
+msgstr "（残り %d 回）"
+
+#: templates/admin/settings.php
+msgid "Show the remaining allowance in the limit message (e.g. \"Remaining: 3\")"
+msgstr "上限メッセージに残量を表示する（例:「残り 3 回」）"

@@ -2056,6 +2056,13 @@ if (!defined('ABSPATH')) {
                                        value="<?php echo esc_attr((string) ($settings['usage_retention_days'] ?? 30)); ?>">
                             </p>
                             <p style="margin-top:8px;">
+                                <label>
+                                    <input type="checkbox" name="raplsaich_settings[usage_show_remaining]" value="1"
+                                        <?php checked(!empty($settings['usage_show_remaining'])); ?>>
+                                    <?php esc_html_e('Show the remaining allowance in the limit message (e.g. "Remaining: 3")', 'rapls-ai-chatbot'); ?>
+                                </label>
+                            </p>
+                            <p style="margin-top:8px;">
                                 <label for="raplsaich_usage_block_message"><?php esc_html_e('"Limit reached" message', 'rapls-ai-chatbot'); ?></label><br>
                                 <textarea id="raplsaich_usage_block_message" name="raplsaich_settings[usage_block_message]"
                                           rows="2" class="large-text"

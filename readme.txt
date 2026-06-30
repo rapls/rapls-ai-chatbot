@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, openrouter, claude, rag, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.11.0
+Stable tag: 1.11.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -209,6 +209,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.11.1 =
+* Improved: When a message is blocked by a limit, the reply now explains which limit was hit — monthly message quota, credits (Pro), token limit (Pro), the daily per-visitor cap, or the short-term rate limit — instead of a single generic message. Each message is translatable and filterable (`rapls_usage_reason_message`). Optional setting to show the remaining allowance (off by default).
+
 = 1.11.0 =
 * Added: "Grounded Answers Only" mode (Settings → AI Settings). When on, if the knowledge base and site learning have no content relevant to a question, the bot replies that it could not find the information instead of answering from the model's general knowledge — reducing hallucination. The relevance threshold and the "not found" message are configurable; works across keyword and vector (RAG) search. Off by default; ignored when Web Search is on.
 * Added: "Usage Control" (Settings → Security) — an optional safety valve for your own API spend (BYOK) when the chatbot is open to guests or members. Caps total daily usage per guest and per logged-in user (separate from the per-IP rate limit). Counts are kept server-side and cannot be bypassed by the client; guests are identified by a salted hash (never a raw IP) with a configurable retention period and automatic cleanup. Role-based limits, per-user credits, and a usage dashboard are available in Pro.
@@ -272,6 +275,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.11.1 =
+Blocked messages now say which limit was reached (quota, credits, token, daily, or rate limit). Recommended for sites using Usage Control.
 
 = 1.11.0 =
 Adds optional "Grounded Answers Only" (anti-hallucination) and "Usage Control" (per-visitor/user caps to protect your API spend). Both off by default. Recommended for all users.

@@ -100,13 +100,13 @@ class RAPLSAICH_Usage_Limiter {
 
             if ($max_requests > 0 && $usage['requests'] >= $max_requests) {
                 return [
-                    'allowed' => false, 'reason' => 'requests', 'scope' => $scope,
+                    'allowed' => false, 'reason' => 'daily_limit', 'scope' => $scope,
                     'window' => $window, 'limit' => $max_requests, 'used' => $usage['requests'],
                 ];
             }
             if ($max_tokens > 0 && $usage['tokens'] >= $max_tokens) {
                 return [
-                    'allowed' => false, 'reason' => 'tokens', 'scope' => $scope,
+                    'allowed' => false, 'reason' => 'token_limit', 'scope' => $scope,
                     'window' => $window, 'limit' => $max_tokens, 'used' => $usage['tokens'],
                 ];
             }
@@ -125,17 +125,81 @@ class RAPLSAICH_Usage_Limiter {
     }
 
     /**
-     * The visitor-facing message shown when a request is blocked.
+     * Visitor-facing message for a specific block reason.
+     *
+     * Reason codes (shared across every gate so a blocked user can tell which
+     * limit stopped them, even though the limits coexist):
+     *   - message_quota : the existing monthly message-count limit
+     *   - credit        : per-user credit balance exhausted (Pro)
+     *   - token_limit   : per-role token limit (Pro)
+     *   - daily_limit   : the free per-visitor/user daily request cap
+     *   - rate_limit    : short-term (per-IP) rate limit
+     *
+     * The message and reason are overridable via `rapls_usage_check_result`
+     * (set $check['message']) and the `rapls_usage_reason_message` filter, so
+     * nothing here is hard-coded.
+     *
+     * @param string $reason One of the codes above.
+     * @param array  $check  The failing limit details (scope/window/limit/used).
+     */
+    public static function message_for_reason(string $reason, array $check = []): string {
+        // An explicit per-result message (e.g. set by Pro via the filter) wins.
+        if (!empty($check['message'])) {
+            return (string) $check['message'];
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        // A site-wide custom override applies to the generic usage caps only.
+        $custom = trim((string) ($settings['usage_block_message'] ?? ''));
+
+        switch ($reason) {
+            case 'message_quota':
+                $msg = __('You have reached your message limit for this month.', 'rapls-ai-chatbot');
+                break;
+            case 'credit':
+                $msg = __('You have used up your credits. Please wait until the next reset.', 'rapls-ai-chatbot');
+                break;
+            case 'token_limit':
+                $msg = __('You have reached the usage limit. Please try again later.', 'rapls-ai-chatbot');
+                break;
+            case 'rate_limit':
+                $msg = __('You have sent many messages in a short time. Please wait a moment.', 'rapls-ai-chatbot');
+                break;
+            case 'daily_limit':
+            default:
+                $msg = $custom !== ''
+                    ? $custom
+                    : (is_user_logged_in()
+                        ? __('You have reached today\'s usage limit. Please try again later.', 'rapls-ai-chatbot')
+                        : __('The daily limit has been reached. Please try again later, or sign in.', 'rapls-ai-chatbot'));
+                break;
+        }
+
+        // Optional remaining display (off by default) — owner controls exposure.
+        if (!empty($settings['usage_show_remaining']) && isset($check['limit'], $check['used']) && (int) $check['limit'] > 0) {
+            $remaining = max(0, (int) $check['limit'] - (int) $check['used']);
+            /* translators: %d: remaining allowance */
+            $msg .= ' ' . sprintf(__('(Remaining: %d)', 'rapls-ai-chatbot'), $remaining);
+        }
+
+        /**
+         * Filter the final block message for a reason.
+         *
+         * @param string $msg    The message.
+         * @param string $reason The reason code.
+         * @param array  $check  The failing limit details.
+         */
+        return (string) apply_filters('rapls_usage_reason_message', $msg, $reason, $check);
+    }
+
+    /**
+     * The visitor-facing message shown when a usage-gate request is blocked.
+     * Thin wrapper kept for back-compat; routes by reason.
      */
     public static function block_message(array $check): string {
-        $settings = get_option('raplsaich_settings', []);
-        $msg = trim((string) ($settings['usage_block_message'] ?? ''));
-        if ($msg === '') {
-            $msg = is_user_logged_in()
-                ? __('You have reached the usage limit for now. Please try again later.', 'rapls-ai-chatbot')
-                : __('The daily limit has been reached. Please try again later, or sign in.', 'rapls-ai-chatbot');
-        }
-        /** @param array $check The failing limit details. */
+        $reason = (string) ($check['reason'] ?? 'daily_limit');
+        // Back-compat: honor the legacy single-message filter if hooked.
+        $msg = self::message_for_reason($reason, $check);
         return (string) apply_filters('rapls_usage_block_message', $msg, $check);
     }
 }
