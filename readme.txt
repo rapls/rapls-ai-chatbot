@@ -1,29 +1,32 @@
 === Rapls AI Chatbot ===
 
 Contributors: rapls
-Tags: ai chatbot, openrouter, claude, rag, mcp
+Tags: chatbot, ai chatbot, customer support, lead generation, faq
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.11.1
+Stable tag: 1.13.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot for WordPress that answers visitors from your own content. Start free in 5 minutes, no credit card. OpenAI, Claude, Gemini, OpenRouter.
+AI chatbot that answers from your own content, admits when it doesn't know, and can't run up your API bill. Start free in 5 minutes, no credit card.
 
 == Description ==
 
-**Add an AI chatbot to WordPress that answers visitors from *your own* content — not generic web answers.** When someone asks a question, Rapls AI Chatbot searches your posts, pages, and knowledge base first, then replies in natural language, in the visitor's own language. It turns the content you already have into a 24/7 assistant for support, pre-sales, and FAQs.
+**Add an AI chatbot that answers visitors from *your own* content — and admits when it doesn't know.** Rapls AI Chatbot searches your posts, pages, and knowledge base first, then replies in natural language, in the visitor's own language. With Grounded Answers Only mode, if your content has no answer, the bot says so instead of making something up.
 
-**You can be live in about five minutes, for free, with no credit card.** On first setup a guided "Start for free" panel hands you a free key from OpenRouter or the Google Gemini free tier, tests it, auto-selects a working model, and switches the chatbot on — no AI or API experience needed. There is no monthly SaaS fee and no per-message markup: it runs on your own API key, and your conversations stay on your own server.
+**You can be live in about five minutes, for free, with no credit card.** On first setup a guided "Start for free" panel hands you a free key from OpenRouter or the Google Gemini free tier, tests it, auto-selects a working model, and switches the chatbot on — no AI or API experience needed.
+
+**No monthly SaaS fee — and no runaway bill.** It runs on your own API key with no markup, and built-in Usage Control caps daily usage per visitor, so you can open the bot to the public without worrying about your API spend. Conversations and keys stay on your own server.
 
 Built for site owners, agencies, and developers who want control over the model, the data, and the cost. Connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, and switch anytime.
 
 = Why site owners pick Rapls =
 
 * **Free to try, fast to launch.** Guided onboarding gets you from install to a working chatbot in minutes, with a no-credit-card OpenRouter or Gemini key.
-* **Answers from your site, not the open web.** RAG hybrid search grounds replies in your actual posts, pages, and knowledge base, so answers stay on-brand and accurate.
-* **Your data, your bill.** Self-hosted: conversations and keys live on your WordPress install, and you pay your AI provider directly with no markup.
+* **Grounded answers, or an honest "I don't know."** RAG hybrid search grounds replies in your actual posts, pages, and knowledge base — and Grounded Answers Only mode keeps the bot from inventing answers your site doesn't contain.
+* **Your bill can't run away.** Self-hosted and BYOK with no markup, plus per-visitor daily caps (Usage Control) so public traffic can't drain your API budget.
+* **Replies that don't sound like a robot.** An optional AI-smell score reviews the bot's Japanese replies for machine-sounding wording, so you can tune the tone. (Detection only — replies are never altered.)
 * **No lock-in.** Switch between OpenAI, Claude, Gemini, and OpenRouter whenever you want.
 * **Speaks your visitors' language.** Automatic multi-language replies, so one bot serves an international audience.
 
@@ -33,9 +36,12 @@ Built for site owners, agencies, and developers who want control over the model,
 * Site learning: indexes your posts and pages so the bot answers from your content.
 * Knowledge base: add Q&A or upload PDF/DOCX files, with priority over general answers.
 * RAG hybrid search: combines keyword and semantic retrieval for grounded replies.
+* Grounded Answers Only: an optional mode that makes the bot reply "I couldn't find that" instead of inventing an answer your content doesn't support.
 * Web search: lets the bot pull current information when configured.
 * MCP tools: exposes 5 Model Context Protocol tools, so agents such as Claude or ChatGPT can read and act on your site through conversation.
 * Usage dashboard: tracks conversations, messages, and API cost.
+* Usage Control: optional per-visitor daily caps so public traffic can't run up your API bill.
+* AI-smell score: an optional read-only score that flags machine-sounding wording in Japanese replies (detection only — replies are never altered).
 * Gutenberg block: drop the chatbot into any page or post.
 
 = Self-hosted and private =
@@ -44,7 +50,16 @@ Conversations and keys stay on your own WordPress install. You are billed by you
 
 = Free and Pro =
 
-The free version covers the full chatbot, site learning, knowledge base, RAG, MCP, and the usage dashboard. Pro adds lead capture automation and RAG hybrid search fine-tuning.
+**Free — not a trial.** The free version is the full product: chatbot, site learning, knowledge base, RAG hybrid search, Grounded Answers Only, MCP server (5 tools), a usage dashboard (conversations, messages, and cost), and per-visitor daily caps. Run it forever at no cost on a free-tier key.
+
+**Pro — for sites that run the bot as a business tool:**
+
+* **Lead capture automation** — collect contacts from conversations, with Google Sheets and Slack sync.
+* **Analytics** — conversation, cost, and quality metrics at a glance.
+* **Usage Control suite** — role-based limits, per-user monthly credits with auto-reset, and a usage-control dashboard to grant and track credits, so members and guests each get a fair share of your API budget.
+* **Extra MCP tools** — product-search and analytics tools for AI agents, on top of the five in Free.
+* **Context &amp; embedding controls** — reprocess embeddings and shape the context retrieved for each reply.
+* **LINE integration (add-on)** — connect the chatbot to LINE messaging, the dominant messenger in Japan.
 
 = Up and running in about 5 minutes (free, no credit card) =
 
@@ -62,7 +77,7 @@ Learn more: [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) |
 
 Watch the full setup — from install to first reply — in about 5 minutes, no credit card required:
 
-https://youtu.be/IzGM4BK7N8Q
+https://www.youtube.com/watch?v=KWEeYuZ0uEg
 
 == Installation ==
 
@@ -84,11 +99,17 @@ https://youtu.be/IzGM4BK7N8Q
 
 == Frequently Asked Questions ==
 
+= Can I use it for free? =
+Yes — the plugin is free, and the onboarding panel connects a no-credit-card OpenRouter or Google Gemini free-tier key in about a minute. Free tiers have rate limits, so for production traffic you may want your own provider key.
+
 = Do I need an API key? =
 Yes. Rapls runs on your own API key so your data and cost stay under your control. If you do not have one, the plugin guides you to a free OpenRouter key or a free Google Gemini key on first setup — both need no credit card.
 
-= Can I use it for free? =
-Yes. The plugin itself is free, and you can run it at no cost using either OpenRouter free models or the Google Gemini free tier. The onboarding panel lets you pick either one. Free models and free tiers have rate limits, so for production traffic you may want a paid model or your own provider key.
+= Will the bot make things up? =
+Not if you don't want it to. Turn on Grounded Answers Only and the bot replies "I couldn't find that on this site" whenever your content has no relevant answer, instead of answering from the model's general knowledge.
+
+= Can visitors run up my API bill? =
+No. Usage Control caps daily usage per guest and per logged-in user on the server side, separate from rate limiting. Pro adds role-based limits and per-user credits.
 
 = Is my data private on the free options? =
 It depends on the provider you choose, and the plugin tells you before you pick. OpenRouter free models are served by various upstream providers, each with its own data-handling policy. The Google Gemini free tier may use your submitted content to improve Google's models — if you do not want that, use a paid Gemini tier or another provider. Either way, your conversations and keys are stored on your own WordPress install, not on Rapls servers.
@@ -121,14 +142,14 @@ See [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) or [WordP
 
 == Screenshots ==
 
-1. Dashboard — conversations, messages, indexed pages, and custom knowledge counts, the active AI provider status, and 30-day token usage with an estimated cost.
-2. AI Settings — choose your provider (OpenAI, Anthropic Claude, Google Gemini, or OpenRouter), enter your API key, pick a model, and enable Vector Embedding (RAG).
-3. Site Learning — auto-crawl posts, pages, and custom post types so the bot answers from your own content.
+1. Chat widget — the front-end chatbot answering a visitor from your site content.
+2. Start for free — the onboarding panel connects a no-credit-card OpenRouter or Google Gemini free key in about a minute, with each option's data-handling trade-off shown up front.
+3. Dashboard — conversations, messages, indexed pages, and custom knowledge counts, the active AI provider status, and 30-day token usage with an estimated cost.
 4. Knowledge base — add custom text/Q&A or import TXT, CSV, MD, PDF, or DOCX files.
 5. Conversations — review, filter, archive, and export visitor conversations with lead and status details.
-6. Chat widget — the front-end chatbot answering a visitor from your site content.
-7. Analytics — conversation, message, cost, and quality metrics (Pro).
-8. Start for free — the onboarding panel connects a no-credit-card OpenRouter or Google Gemini free key in about a minute, with each option's data-handling trade-off shown up front.
+6. Analytics — conversation, message, cost, and quality metrics (Pro).
+7. Site Learning — auto-crawl posts, pages, and custom post types so the bot answers from your own content.
+8. AI Settings — choose your provider (OpenAI, Anthropic Claude, Google Gemini, or OpenRouter), enter your API key, pick a model, and enable Vector Embedding (RAG).
 
 == External Services ==
 
@@ -208,6 +229,25 @@ You can disable these features in the plugin settings:
 * Web search
 
 == Changelog ==
+
+= 1.13.0 =
+* Added: Visitor history deletion (Settings → Data Management, off by default) — shows a "Delete my chat history" button in the widget so each visitor can permanently remove their own stored conversation (privacy / GDPR friendly).
+* Added: Unanswered Questions report on the dashboard — questions the bot could not answer from site content are recorded (latest 50) with counts, so you know exactly which pages or knowledge entries to add next.
+* Added: FAQ draft generator on the dashboard — one click clusters the last 30 days of real visitor questions into an editable Markdown FAQ draft using your configured AI provider.
+* Added: The weekly summary email now includes the questions the bot could not answer this week (content-gap report).
+* Added: Google Analytics 4 events (Settings → Data Management, off by default) — fires chat open / message sent / response received events through your site's existing gtag.js. The plugin never loads gtag.js itself.
+* Added: WP-CLI commands — `wp raplsaich status`, `wp raplsaich cleanup`, `wp raplsaich crawl`, and `wp raplsaich unanswered [--clear]`.
+* Fixed: The weekly summary cron event is now cleared on uninstall.
+
+= 1.12.0 =
+* Added: Setup checklist on the dashboard — shows which of the three first-run steps (connect a provider, run site learning, first conversation) are done and links to the next one. Disappears once setup is complete.
+* Added: Demo preview in the "Start for free" panel — a scripted sample conversation shows how the widget looks and behaves before any API key is set.
+* Added: Industry starter templates (Settings → Chat Settings) — one click applies a ready-made system prompt and preset questions for hotels/tourism, shops, clinics/salons, professional services, or company sites.
+* Added: Page Context (Settings → AI Settings, on by default) — the page the visitor is currently viewing is included as context, so questions like "does this product ship overseas?" resolve against the right page.
+* Added: Monthly Cost Guard (Settings → Security) — set a monthly budget (USD); when the estimated month-to-date API cost reaches it, the bot replies with a fixed message instead of calling the AI and resumes next month. Admin notice from 80% of budget.
+* Added: Model Fallback (Settings → AI Settings, off by default) — when the selected model hits its quota, the reply is retried once with the same provider's lightweight model instead of showing an error to the visitor.
+* Added: Weekly Summary Email (Settings → Data Management, off by default) — conversation count, AI replies, estimated cost, and recent visitor questions, mailed to the site admin once a week.
+* Improved: The review request is now shown only after the chatbot has actually handled conversations (usage-based, dismissible once, plugin screens only) instead of purely time-based.
 
 = 1.11.1 =
 * Improved: When a message is blocked by a limit, the reply now explains which limit was hit — monthly message quota, credits (Pro), token limit (Pro), the daily per-visitor cap, or the short-term rate limit — instead of a single generic message. Each message is translatable and filterable (`rapls_usage_reason_message`). Optional setting to show the remaining allowance (off by default).

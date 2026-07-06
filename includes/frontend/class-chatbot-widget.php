@@ -309,6 +309,12 @@ class RAPLSAICH_Chatbot_Widget {
             'save_history'         => !empty($settings['save_history']),
             'quick_replies'        => RAPLSAICH_Extensions::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),
+            // Visitor-initiated history deletion (privacy, opt-in). Only useful
+            // when history is actually stored server-side.
+            'visitor_delete'       => !empty($settings['visitor_delete_enabled']) && !empty($settings['save_history']),
+            // GA4 event bridge: fire gtag events on open/send/response when the
+            // site already loads gtag.js. The plugin never loads gtag itself.
+            'ga4_events'           => !empty($settings['ga4_events_enabled']),
             // raplsaich_frontend_debug filter: always include a capability check in callbacks.
             // Logged-in guard prevents accidental exposure to anonymous visitors.
             // Minimum cap (default edit_posts) required even when filter overrides,
@@ -344,6 +350,9 @@ class RAPLSAICH_Chatbot_Widget {
                 ],
                 'recaptcha_loading'      => __('Security verification loading. Please try again in a moment.', 'rapls-ai-chatbot'),
                 'confirm_new_conversation' => __('Start a new conversation? Current chat history will be cleared on this device.', 'rapls-ai-chatbot'),
+                'confirm_delete_history' => __('Delete your chat history? This removes the conversation from this site permanently and cannot be undone.', 'rapls-ai-chatbot'),
+                'history_deleted'        => __('Your chat history has been deleted.', 'rapls-ai-chatbot'),
+                'delete_failed'          => __('Deletion failed. Please try again later.', 'rapls-ai-chatbot'),
                 'sources_title'          => __('Reference pages:', 'rapls-ai-chatbot'),
                 'suggestions_title'      => __('You might also ask:', 'rapls-ai-chatbot'),
                 'good_response'          => __('Good response', 'rapls-ai-chatbot'),

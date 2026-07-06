@@ -16,6 +16,7 @@ class RAPLSAICH_Deactivator {
         // Clear scheduled cron jobs
         wp_clear_scheduled_hook('raplsaich_crawl_site');
         wp_clear_scheduled_hook('raplsaich_cleanup_old_conversations');
+        wp_clear_scheduled_hook('raplsaich_weekly_summary');
 
         // Flush rewrite rules
         flush_rewrite_rules();

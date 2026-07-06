@@ -65,6 +65,7 @@ function raplsaich_uninstall_site() {
     wp_clear_scheduled_hook('raplsaich_crawl_site');
     wp_clear_scheduled_hook('raplsaich_cleanup_old_conversations');
     wp_clear_scheduled_hook('raplsaich_monthly_report');
+    wp_clear_scheduled_hook('raplsaich_weekly_summary');
 
     // Only delete settings, options, and database tables if user opted in
     if ($delete_data) {
@@ -84,6 +85,7 @@ function raplsaich_uninstall_site() {
         delete_option('raplsaich_crawl_progress');
         delete_option('raplsaich_knowledge_schema_version');
         delete_option('raplsaich_nohist_msg_counts');
+        delete_option('raplsaich_unanswered_log');
 
         // Delete database tables.
         // raplsaich_table_suffixes() is defined in rapls-ai-chatbot.php which is NOT

@@ -323,9 +323,11 @@
     height: 20px;
 }
 
-/* "Start a new conversation" header button — same visual treatment as
-   the close button so they read as a pair, just a different icon. */
-.chatbot-new-conversation {
+/* "Start a new conversation" / "Delete my chat history" header buttons —
+   same visual treatment as the close button so they read as a group,
+   just different icons. */
+.chatbot-new-conversation,
+.chatbot-delete-history {
     background: transparent;
     border: none;
     color: #ffffff;
@@ -337,15 +339,21 @@
     align-items: center;
     justify-content: center;
 }
-.chatbot-new-conversation:hover {
+.chatbot-delete-history[hidden] {
+    display: none;
+}
+.chatbot-new-conversation:hover,
+.chatbot-delete-history:hover {
     background: rgba(255, 255, 255, 0.2);
 }
-.chatbot-new-conversation:focus {
+.chatbot-new-conversation:focus,
+.chatbot-delete-history:focus {
     outline: 2px solid rgba(255, 255, 255, 0.6);
     outline-offset: -2px;
     background: rgba(255, 255, 255, 0.2);
 }
-.chatbot-new-conversation svg {
+.chatbot-new-conversation svg,
+.chatbot-delete-history svg {
     width: 18px;
     height: 18px;
 }
@@ -1485,12 +1493,14 @@
 }
 
 .raplsaich-chatbot.theme-simple .chatbot-close,
-.raplsaich-chatbot.theme-simple .chatbot-new-conversation {
+.raplsaich-chatbot.theme-simple .chatbot-new-conversation,
+.raplsaich-chatbot.theme-simple .chatbot-delete-history {
     color: #666;
 }
 
 .raplsaich-chatbot.theme-simple .chatbot-close:hover,
-.raplsaich-chatbot.theme-simple .chatbot-new-conversation:hover {
+.raplsaich-chatbot.theme-simple .chatbot-new-conversation:hover,
+.raplsaich-chatbot.theme-simple .chatbot-delete-history:hover {
     color: #333;
     background: rgba(0, 0, 0, 0.05);
 }

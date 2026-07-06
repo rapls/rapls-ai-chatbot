@@ -154,12 +154,97 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * Show a review request once the plugin has proven useful.
+     *
+     * Unlike a pure time delay, this only asks sites that actually got value
+     * from the plugin, so we never prompt an install that never produced a
+     * single conversation (which would invite a poor review). Shown on plugin
+     * screens only, dismissible once and never shown again.
+     */
+    public function review_request_notice(): void {
+        // Only to users who manage the plugin.
+        if (!current_user_can(self::get_manage_cap())) {
+            return;
+        }
+
+        // Permanently dismissed already?
+        if (get_option('raplsaich_review_dismissed', false)) {
+            return;
+        }
+
+        // Plugin screens only — do not spam the rest of wp-admin.
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!$screen || strpos((string) $screen->id, 'raplsaich') === false) {
+            return;
+        }
+
+        // Bootstrap the activation timestamp for installs that predate it.
+        $activated_at = (int) get_option('raplsaich_activated_at', 0);
+        if (!$activated_at) {
+            $activated_at = time();
+            update_option('raplsaich_activated_at', $activated_at, false);
+        }
+
+        $convos = (int) RAPLSAICH_Conversation::get_count();
+
+        // Never ask a site that has not yet had a real conversation.
+        if ($convos < 1) {
+            return;
+        }
+
+        // Usage-proven threshold (strong signal, fires regardless of age) …
+        $usage_threshold = (int) apply_filters('raplsaich_review_convo_threshold', 10);
+        // … or a lighter "some use + enough time has passed" fallback.
+        $min_days = (int) apply_filters('raplsaich_review_min_days', 7);
+        $aged_enough = (time() - $activated_at) > $min_days * DAY_IN_SECONDS;
+
+        if ($convos < $usage_threshold && !$aged_enough) {
+            return;
+        }
+
+        $review_url = 'https://wordpress.org/support/plugin/rapls-ai-chatbot/reviews/#new-post';
+        ?>
+        <div class="notice notice-success is-dismissible raplsaich-review-notice" id="raplsaich-review-notice" style="border-left-color: #ffb900;">
+            <p>
+                <?php
+                echo wp_kses(
+                    sprintf(
+                        /* translators: %1$d: number of conversations handled, %2$s: five-star review link */
+                        _n(
+                            'Rapls AI Chatbot has already handled %1$d conversation on your site. If it has been useful, would you leave a %2$s review on WordPress.org? It genuinely helps a small plugin.',
+                            'Rapls AI Chatbot has already handled %1$d conversations on your site. If it has been useful, would you leave a %2$s review on WordPress.org? It genuinely helps a small plugin.',
+                            $convos,
+                            'rapls-ai-chatbot'
+                        ),
+                        (int) $convos,
+                        '<a href="' . esc_url($review_url) . '" target="_blank" rel="noopener noreferrer">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
+                    ),
+                    ['a' => ['href' => true, 'target' => true, 'rel' => true]]
+                );
+                ?>
+            </p>
+        </div>
+        <script>jQuery(function($){$('#raplsaich-review-notice').on('click','.notice-dismiss',function(){$.post(ajaxurl,{action:'raplsaich_dismiss_review',nonce:'<?php echo esc_js(wp_create_nonce('raplsaich_dismiss_review')); ?>'});});});</script>
+        <?php
+    }
+
+    /**
      * Register settings
      */
     public function register_settings(): void {
         register_setting('raplsaich_settings_group', 'raplsaich_settings', [
             'sanitize_callback' => [$this, 'sanitize_settings'],
         ]);
+
+        // Keep the weekly-summary cron in sync with its opt-in setting.
+        // Done lazily here (admin_init) so the activator stays side-effect-minimal.
+        $settings = get_option('raplsaich_settings', []);
+        $scheduled = wp_next_scheduled('raplsaich_weekly_summary');
+        if (!empty($settings['weekly_summary_enabled']) && !$scheduled) {
+            wp_schedule_event(time() + WEEK_IN_SECONDS, 'weekly', 'raplsaich_weekly_summary');
+        } elseif (empty($settings['weekly_summary_enabled']) && $scheduled) {
+            wp_unschedule_event($scheduled, 'raplsaich_weekly_summary');
+        }
     }
 
     /**
@@ -224,7 +309,7 @@ class RAPLSAICH_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'usage_show_remaining', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'usage_show_remaining', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall', 'page_context_enabled', 'model_fallback_enabled', 'cost_guard_enabled', 'weekly_summary_enabled', 'visitor_delete_enabled', 'ga4_events_enabled'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -644,6 +729,33 @@ class RAPLSAICH_Admin {
                 ? max(0.0, min(1.0, (float) $existing['grounding_min_score']))
                 : 0.2;
             $sanitized['grounding_fallback_message'] = $existing['grounding_fallback_message'] ?? '';
+        }
+
+        // 1.12.0 additions: page context / model fallback / cost guard / weekly summary.
+        if ($settings_page_submitted) {
+            $sanitized['page_context_enabled']   = !empty($input['page_context_enabled']);
+            $sanitized['model_fallback_enabled'] = !empty($input['model_fallback_enabled']);
+            $sanitized['cost_guard_enabled']     = !empty($input['cost_guard_enabled']);
+            $budget = isset($input['cost_guard_monthly_budget']) ? (float) $input['cost_guard_monthly_budget'] : 10.0;
+            $sanitized['cost_guard_monthly_budget'] = max(0.0, min(100000.0, $budget));
+            $sanitized['weekly_summary_enabled'] = !empty($input['weekly_summary_enabled']);
+        } else {
+            $sanitized['page_context_enabled']   = $existing['page_context_enabled'] ?? true;
+            $sanitized['model_fallback_enabled'] = $existing['model_fallback_enabled'] ?? false;
+            $sanitized['cost_guard_enabled']     = $existing['cost_guard_enabled'] ?? false;
+            $sanitized['cost_guard_monthly_budget'] = isset($existing['cost_guard_monthly_budget'])
+                ? max(0.0, min(100000.0, (float) $existing['cost_guard_monthly_budget']))
+                : 10.0;
+            $sanitized['weekly_summary_enabled'] = $existing['weekly_summary_enabled'] ?? false;
+        }
+
+        // 1.13.0 additions: visitor history deletion / GA4 event bridge.
+        if ($settings_page_submitted) {
+            $sanitized['visitor_delete_enabled'] = !empty($input['visitor_delete_enabled']);
+            $sanitized['ga4_events_enabled']     = !empty($input['ga4_events_enabled']);
+        } else {
+            $sanitized['visitor_delete_enabled'] = $existing['visitor_delete_enabled'] ?? false;
+            $sanitized['ga4_events_enabled']     = $existing['ga4_events_enabled'] ?? false;
         }
 
         // Usage control (⑤) — Free safety valve.
@@ -1113,9 +1225,308 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * Compute setup checklist steps for the dashboard.
+     *
+     * Each step: ['label' => string, 'done' => bool, 'url' => string, 'action' => string].
+     *
+     * @return array{steps: array, done: int, total: int}
+     */
+    public function get_setup_progress(): array {
+        $settings = get_option('raplsaich_settings', []);
+
+        $provider = $settings['ai_provider'] ?? 'openai';
+        // wpai (WordPress AI Client) needs no key of its own.
+        $key_done = ($provider === 'wpai') || !empty($settings[$provider . '_api_key']);
+
+        $learn_done = RAPLSAICH_Content_Index::get_count() > 0;
+        $convo_done = RAPLSAICH_Conversation::get_count() > 0;
+
+        $steps = [
+            [
+                'label'  => __('Connect an AI provider', 'rapls-ai-chatbot'),
+                'done'   => $key_done,
+                'url'    => admin_url('admin.php?page=raplsaich-settings#tab-ai'),
+                'action' => __('Set up API key', 'rapls-ai-chatbot'),
+            ],
+            [
+                'label'  => __('Let the AI learn your site', 'rapls-ai-chatbot'),
+                'done'   => $learn_done,
+                'url'    => admin_url('admin.php?page=raplsaich-knowledge'),
+                'action' => __('Run site learning', 'rapls-ai-chatbot'),
+            ],
+            [
+                'label'  => __('Have your first conversation', 'rapls-ai-chatbot'),
+                'done'   => $convo_done,
+                'url'    => home_url('/'),
+                'action' => __('Open your site and ask the bot', 'rapls-ai-chatbot'),
+            ],
+        ];
+
+        $done = count(array_filter(array_column($steps, 'done')));
+
+        return ['steps' => $steps, 'done' => $done, 'total' => count($steps)];
+    }
+
+    /**
+     * Warn on plugin screens when month-to-date cost approaches / exceeds the budget.
+     */
+    public function cost_guard_notice(): void {
+        if (!current_user_can(self::get_manage_cap())) {
+            return;
+        }
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!$screen || strpos((string) $screen->id, 'raplsaich') === false) {
+            return;
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        if (empty($settings['cost_guard_enabled'])) {
+            return;
+        }
+        $budget = (float) ($settings['cost_guard_monthly_budget'] ?? 0);
+        if ($budget <= 0) {
+            return;
+        }
+
+        $mtd = RAPLSAICH_Cost_Calculator::get_month_to_date_cost();
+        if ($mtd < $budget * 0.8) {
+            return;
+        }
+
+        $over = $mtd >= $budget;
+        $class = $over ? 'notice-error' : 'notice-warning';
+        ?>
+        <div class="notice <?php echo esc_attr($class); ?>">
+            <p>
+                <strong><?php esc_html_e('AI Chatbot — Cost Guard:', 'rapls-ai-chatbot'); ?></strong>
+                <?php
+                if ($over) {
+                    printf(
+                        /* translators: %1$s: month-to-date cost, %2$s: budget */
+                        esc_html__('The monthly budget has been reached (%1$s of %2$s). The chatbot now replies with a fixed message instead of calling the AI. It resumes automatically next month, or you can raise the budget in Security settings.', 'rapls-ai-chatbot'),
+                        esc_html(RAPLSAICH_Cost_Calculator::format_cost($mtd)),
+                        esc_html(RAPLSAICH_Cost_Calculator::format_cost($budget))
+                    );
+                } else {
+                    printf(
+                        /* translators: %1$s: month-to-date cost, %2$s: budget */
+                        esc_html__('This month\'s estimated API cost has reached %1$s of the %2$s budget (80%%+).', 'rapls-ai-chatbot'),
+                        esc_html(RAPLSAICH_Cost_Calculator::format_cost($mtd)),
+                        esc_html(RAPLSAICH_Cost_Calculator::format_cost($budget))
+                    );
+                }
+                ?>
+            </p>
+        </div>
+        <?php
+    }
+
+    /**
+     * Industry starter templates: system prompt + preset questions, applied in one click.
+     *
+     * Keys are stable ids; labels/prompts are translatable so the ja bundle
+     * ships Japanese-native templates.
+     *
+     * @return array<string, array{name: string, prompt: string, presets: array<int, array{label: string, question: string}>}>
+     */
+    public static function get_starter_templates(): array {
+        $base_rules = __("Base your answers on the reference information from this site. If the information does not cover a question, say honestly that you don't have it and suggest contacting us. Never invent prices, dates, or availability. Reply in the visitor's language, politely and concisely.", 'rapls-ai-chatbot');
+
+        return [
+            'hotel' => [
+                'name'    => __('Hotel / Tourism', 'rapls-ai-chatbot'),
+                'prompt'  => __('You are the front-desk assistant for this accommodation. Help guests with room types, rates, check-in/out times, access, meals, and nearby sights. For bookings or date-specific availability, guide the visitor to the reservation page or phone instead of guessing.', 'rapls-ai-chatbot') . "\n\n" . $base_rules,
+                'presets' => [
+                    ['label' => __('Check-in times', 'rapls-ai-chatbot'), 'question' => __('What are the check-in and check-out times?', 'rapls-ai-chatbot')],
+                    ['label' => __('Access', 'rapls-ai-chatbot'), 'question' => __('How do I get there from the nearest station or airport?', 'rapls-ai-chatbot')],
+                    ['label' => __('Meals', 'rapls-ai-chatbot'), 'question' => __('What are the meal options and times?', 'rapls-ai-chatbot')],
+                    ['label' => __('Cancellation', 'rapls-ai-chatbot'), 'question' => __('What is the cancellation policy?', 'rapls-ai-chatbot')],
+                ],
+            ],
+            'retail' => [
+                'name'    => __('Online Shop / Retail', 'rapls-ai-chatbot'),
+                'prompt'  => __('You are the customer support assistant for this shop. Help visitors with products, sizes, stock, shipping costs and times, payment methods, and returns. For order-specific questions, ask for no personal data in chat and guide them to the contact form.', 'rapls-ai-chatbot') . "\n\n" . $base_rules,
+                'presets' => [
+                    ['label' => __('Shipping', 'rapls-ai-chatbot'), 'question' => __('How much is shipping and how long does delivery take?', 'rapls-ai-chatbot')],
+                    ['label' => __('Returns', 'rapls-ai-chatbot'), 'question' => __('Can I return or exchange an item?', 'rapls-ai-chatbot')],
+                    ['label' => __('Payment', 'rapls-ai-chatbot'), 'question' => __('Which payment methods do you accept?', 'rapls-ai-chatbot')],
+                    ['label' => __('Gift wrapping', 'rapls-ai-chatbot'), 'question' => __('Do you offer gift wrapping?', 'rapls-ai-chatbot')],
+                ],
+            ],
+            'clinic' => [
+                'name'    => __('Clinic / Salon', 'rapls-ai-chatbot'),
+                'prompt'  => __('You are the reception assistant for this clinic or salon. Help visitors with services, prices, business hours, directions, and what to bring. Never give medical diagnoses or personal health advice; for symptoms or urgent issues, tell the visitor to call or see a professional directly.', 'rapls-ai-chatbot') . "\n\n" . $base_rules,
+                'presets' => [
+                    ['label' => __('Hours', 'rapls-ai-chatbot'), 'question' => __('What are your business hours and closed days?', 'rapls-ai-chatbot')],
+                    ['label' => __('First visit', 'rapls-ai-chatbot'), 'question' => __('What should I bring for my first visit?', 'rapls-ai-chatbot')],
+                    ['label' => __('Prices', 'rapls-ai-chatbot'), 'question' => __('How much do your main services cost?', 'rapls-ai-chatbot')],
+                    ['label' => __('Reservation', 'rapls-ai-chatbot'), 'question' => __('How do I make or change a reservation?', 'rapls-ai-chatbot')],
+                ],
+            ],
+            'professional' => [
+                'name'    => __('Professional Services / Consulting', 'rapls-ai-chatbot'),
+                'prompt'  => __('You are the intake assistant for this professional practice. Explain service areas, typical process, fees, and how consultations work. Do not give legal, tax, or case-specific advice in chat; encourage booking a consultation for anything specific.', 'rapls-ai-chatbot') . "\n\n" . $base_rules,
+                'presets' => [
+                    ['label' => __('Services', 'rapls-ai-chatbot'), 'question' => __('What services do you provide?', 'rapls-ai-chatbot')],
+                    ['label' => __('Fees', 'rapls-ai-chatbot'), 'question' => __('How are your fees structured?', 'rapls-ai-chatbot')],
+                    ['label' => __('Consultation', 'rapls-ai-chatbot'), 'question' => __('How do I book an initial consultation?', 'rapls-ai-chatbot')],
+                    ['label' => __('Online support', 'rapls-ai-chatbot'), 'question' => __('Do you support online meetings?', 'rapls-ai-chatbot')],
+                ],
+            ],
+            'corporate' => [
+                'name'    => __('Company Site', 'rapls-ai-chatbot'),
+                'prompt'  => __('You are the reception assistant for this company website. Help visitors with what the company does, products and services, company profile, recruitment, and how to get in touch. Route sales inquiries and partnership requests to the contact form.', 'rapls-ai-chatbot') . "\n\n" . $base_rules,
+                'presets' => [
+                    ['label' => __('About us', 'rapls-ai-chatbot'), 'question' => __('What does your company do?', 'rapls-ai-chatbot')],
+                    ['label' => __('Services', 'rapls-ai-chatbot'), 'question' => __('Can you tell me about your main products and services?', 'rapls-ai-chatbot')],
+                    ['label' => __('Recruit', 'rapls-ai-chatbot'), 'question' => __('Are you currently hiring?', 'rapls-ai-chatbot')],
+                    ['label' => __('Contact', 'rapls-ai-chatbot'), 'question' => __('How can I contact you?', 'rapls-ai-chatbot')],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * AJAX: apply an industry starter template (system prompt + preset questions).
+     */
+    public function ajax_apply_starter_template(): void {
+        check_ajax_referer('raplsaich_apply_template', 'nonce');
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(['message' => __('Permission denied.', 'rapls-ai-chatbot')], 403);
+        }
+
+        $template_id = sanitize_key(wp_unslash($_POST['template'] ?? ''));
+        $templates = self::get_starter_templates();
+        if (!isset($templates[$template_id])) {
+            wp_send_json_error(['message' => __('Unknown template.', 'rapls-ai-chatbot')], 400);
+        }
+
+        $template = $templates[$template_id];
+        $settings = get_option('raplsaich_settings', []);
+
+        $settings['system_prompt'] = $template['prompt'];
+        $settings['preset_questions_enabled'] = true;
+        $settings['preset_questions'] = array_map(static function ($row) {
+            return [
+                'label'    => sanitize_text_field($row['label']),
+                'question' => sanitize_text_field($row['question']),
+            ];
+        }, $template['presets']);
+
+        update_option('raplsaich_settings', $settings);
+
+        wp_send_json_success([
+            'message' => __('Template applied. Reloading…', 'rapls-ai-chatbot'),
+        ]);
+    }
+
+    /**
+     * AJAX: clear the unanswered-question log.
+     */
+    public function ajax_clear_unanswered(): void {
+        check_ajax_referer('raplsaich_clear_unanswered', 'nonce');
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(['message' => __('Permission denied.', 'rapls-ai-chatbot')], 403);
+        }
+
+        delete_option('raplsaich_unanswered_log');
+        wp_send_json_success([
+            'message' => __('Cleared.', 'rapls-ai-chatbot'),
+        ]);
+    }
+
+    /**
+     * AJAX: generate FAQ draft from recent visitor questions.
+     *
+     * Collects up to 100 distinct user questions from the last 30 days and
+     * asks the configured AI provider to cluster them into an FAQ draft
+     * (Markdown). The draft is for the admin to review/edit — it is never
+     * published automatically.
+     */
+    public function ajax_generate_faq(): void {
+        check_ajax_referer('raplsaich_generate_faq', 'nonce');
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(['message' => __('Permission denied.', 'rapls-ai-chatbot')], 403);
+        }
+
+        global $wpdb;
+        $table_messages = raplsaich_require_table_or_error('raplsaich_messages', __METHOD__);
+        if (is_wp_error($table_messages)) {
+            wp_send_json_error(['message' => $table_messages->get_error_message()], 500);
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $questions = $wpdb->get_col(
+            "SELECT content FROM {$table_messages} WHERE role = 'user' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) ORDER BY created_at DESC LIMIT 200"
+        );
+
+        $clean = [];
+        foreach ((array) $questions as $q) {
+            $q = trim(wp_strip_all_tags((string) $q));
+            if ($q === '') {
+                continue;
+            }
+            if (raplsaich_mb_strlen($q) > 200) {
+                $q = raplsaich_mb_substr($q, 0, 200);
+            }
+            $key = raplsaich_mb_strtolower($q);
+            if (isset($clean[$key])) {
+                continue;
+            }
+            $clean[$key] = $q;
+            if (count($clean) >= 100) {
+                break;
+            }
+        }
+
+        if (count($clean) < 3) {
+            wp_send_json_error([
+                'message' => __('Not enough visitor questions yet. At least 3 questions from the last 30 days are needed.', 'rapls-ai-chatbot'),
+            ], 400);
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        $lang = (strpos(get_locale(), 'ja') === 0) ? 'Japanese' : 'English';
+
+        $instruction = "You are helping a website owner draft an FAQ page.\n"
+            . "Below is a list of real questions visitors asked the site's chatbot in the last 30 days.\n"
+            . "1. Group similar questions together.\n"
+            . "2. Pick the 10 most frequent/important topics (fewer if there are fewer topics).\n"
+            . "3. Output in {$lang} as Markdown: for each topic write '### Q: <representative question>' followed by 'A: <short draft answer>'.\n"
+            . "4. IMPORTANT: Do NOT invent facts about this specific company or its products. When the correct answer cannot be known from the questions alone, write a placeholder like [TO BE FILLED BY SITE OWNER] instead of guessing.\n"
+            . "5. Output only the Markdown FAQ draft, no preamble.";
+
+        $prompt = $instruction . "\n\nVisitor questions:\n- " . implode("\n- ", array_values($clean));
+
+        try {
+            $provider = raplsaich_create_ai_provider($settings);
+            $result = $provider->send_message(
+                [['role' => 'user', 'content' => $prompt]],
+                ['max_tokens' => 2000, 'temperature' => 0.4]
+            );
+        } catch (Exception $e) {
+            wp_send_json_error([
+                /* translators: %s: error message from the AI provider */
+                'message' => sprintf(__('FAQ generation failed: %s', 'rapls-ai-chatbot'), $e->getMessage()),
+            ], 500);
+        }
+
+        $faq = trim((string) ($result['content'] ?? ''));
+        if ($faq === '') {
+            wp_send_json_error(['message' => __('The AI returned an empty response. Please try again.', 'rapls-ai-chatbot')], 500);
+        }
+
+        wp_send_json_success([
+            'faq'       => $faq,
+            'questions' => count($clean),
+        ]);
+    }
+
+    /**
      * Render dashboard page
      */
     public function render_dashboard_page(): void {
+        $setup_progress = $this->get_setup_progress();
         $stats = $this->get_dashboard_stats();
         $usage_stats = RAPLSAICH_Cost_Calculator::get_usage_stats(30);
         $chart_data = RAPLSAICH_Cost_Calculator::get_chart_data(30);
@@ -3244,6 +3655,17 @@ class RAPLSAICH_Admin {
             'web_search_enabled'    => false,
             'embedding_enabled'     => false,
             'embedding_provider'    => 'auto',
+
+            // Page context / reliability / cost (1.12.0)
+            'page_context_enabled'      => true,
+            'model_fallback_enabled'    => false,
+            'cost_guard_enabled'        => false,
+            'cost_guard_monthly_budget' => 10,
+            'weekly_summary_enabled'    => false,
+
+            // Privacy / analytics (1.13.0)
+            'visitor_delete_enabled'    => false,
+            'ga4_events_enabled'        => false,
 
             // Extension settings managed by Pro plugin via filters.
             'extensions'            => [],

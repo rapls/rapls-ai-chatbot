@@ -43,29 +43,39 @@ if (!defined('ABSPATH')) {
     <?php endif; ?>
 
     <?php
-    // Review request — show only if not dismissed and plugin has been active for 7+ days
-    $activated_at = get_option('raplsaich_activated_at', 0);
-    if (!$activated_at) {
-        update_option('raplsaich_activated_at', time(), false);
-        $activated_at = time();
-    }
-    $dismissed = get_option('raplsaich_review_dismissed', false);
-    if (!$dismissed && (time() - $activated_at) > 7 * DAY_IN_SECONDS): ?>
-    <div class="notice notice-success is-dismissible raplsaich-review-notice" id="raplsaich-review-notice" style="padding: 12px 16px; border-left-color: #ffb900;">
-        <p>
+    // Review request is now a usage-triggered admin notice registered globally
+    // (see RAPLSAICH_Admin::review_request_notice); it renders above this page
+    // and on other plugin screens, so it is intentionally no longer inline here.
+    ?>
+
+    <?php if (isset($setup_progress) && $setup_progress['done'] < $setup_progress['total']): ?>
+    <!-- Setup checklist — hidden automatically once every step is complete -->
+    <div class="raplsaich-setup-checklist" style="background: #fff; border: 1px solid #c3c4c7; border-left: 4px solid #2271b1; border-radius: 4px; padding: 16px 20px; margin: 15px 0;">
+        <p style="margin: 0 0 10px; font-weight: 600;">
             <?php
-            echo wp_kses(
-                sprintf(
-                    /* translators: %s: link to WordPress.org review page */
-                    esc_html__('Enjoying Rapls AI Chatbot? We\'d appreciate a %s review on WordPress.org!', 'rapls-ai-chatbot'),
-                    '<a href="https://wordpress.org/support/plugin/rapls-ai-chatbot/reviews/#new-post" target="_blank" rel="noopener noreferrer">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
-                ),
-                ['a' => ['href' => true, 'target' => true, 'rel' => true]]
+            printf(
+                /* translators: %1$d: completed steps, %2$d: total steps */
+                esc_html__('Setup: %1$d of %2$d steps complete', 'rapls-ai-chatbot'),
+                (int) $setup_progress['done'],
+                (int) $setup_progress['total']
             );
             ?>
         </p>
+        <ul style="margin: 0; list-style: none; padding: 0;">
+            <?php foreach ($setup_progress['steps'] as $i => $step): ?>
+            <li style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
+                <?php if ($step['done']): ?>
+                    <span class="dashicons dashicons-yes-alt" style="color: #00a32a;" aria-hidden="true"></span>
+                    <span style="color: #50575e;"><?php echo esc_html($step['label']); ?></span>
+                <?php else: ?>
+                    <span class="dashicons dashicons-marker" style="color: #c3c4c7;" aria-hidden="true"></span>
+                    <span><?php echo esc_html($step['label']); ?></span>
+                    <a href="<?php echo esc_url($step['url']); ?>" class="button button-small" style="margin-left: 6px;"><?php echo esc_html($step['action']); ?></a>
+                <?php endif; ?>
+            </li>
+            <?php endforeach; ?>
+        </ul>
     </div>
-    <script>jQuery(function($){$('#raplsaich-review-notice').on('click','.notice-dismiss',function(){$.post(ajaxurl,{action:'raplsaich_dismiss_review',nonce:'<?php echo esc_js(wp_create_nonce('raplsaich_dismiss_review')); ?>'});});});</script>
     <?php endif; ?>
 
     <div class="raplsaich-dashboard-grid">
@@ -251,8 +261,150 @@ if (!defined('ABSPATH')) {
             </div>
             <?php endif; ?>
         </div>
+
+        <!-- Content gaps: unanswered questions + FAQ draft generator (1.13.0) -->
+        <?php
+        $unanswered_log = get_option('raplsaich_unanswered_log', []);
+        if (!is_array($unanswered_log)) {
+            $unanswered_log = [];
+        }
+        $unanswered_reason_labels = [
+            'no_context' => __('No matching site content', 'rapls-ai-chatbot'),
+            'grounding'  => __('Refused (Grounded Answers Only)', 'rapls-ai-chatbot'),
+        ];
+        ?>
+        <div class="raplsaich-card raplsaich-card-full">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <h2 style="margin: 0;"><?php esc_html_e('Unanswered Questions', 'rapls-ai-chatbot'); ?></h2>
+                <div>
+                    <button type="button" id="raplsaich-generate-faq" class="button button-secondary">
+                        ✨ <?php esc_html_e('Generate FAQ draft from questions', 'rapls-ai-chatbot'); ?>
+                    </button>
+                    <?php if (!empty($unanswered_log)) : ?>
+                    <button type="button" id="raplsaich-clear-unanswered" class="button">
+                        <?php esc_html_e('Clear list', 'rapls-ai-chatbot'); ?>
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <p style="color: #666; margin-top: 0;">
+                <?php esc_html_e('Questions your visitors asked that the bot could not answer from site content. Adding pages or knowledge entries for these topics improves answer quality the most.', 'rapls-ai-chatbot'); ?>
+            </p>
+
+            <?php if (empty($unanswered_log)) : ?>
+                <p><em><?php esc_html_e('Nothing recorded yet — the bot has been able to answer from site content so far.', 'rapls-ai-chatbot'); ?></em></p>
+            <?php else : ?>
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Question', 'rapls-ai-chatbot'); ?></th>
+                            <th style="width: 70px; text-align: right;"><?php esc_html_e('Times', 'rapls-ai-chatbot'); ?></th>
+                            <th style="width: 220px;"><?php esc_html_e('Reason', 'rapls-ai-chatbot'); ?></th>
+                            <th style="width: 140px;"><?php esc_html_e('Last asked', 'rapls-ai-chatbot'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach (array_slice($unanswered_log, 0, 10) as $unanswered_entry) : ?>
+                        <tr>
+                            <td><?php echo esc_html((string) ($unanswered_entry['q'] ?? '')); ?></td>
+                            <td style="text-align: right;"><?php echo esc_html(number_format((int) ($unanswered_entry['n'] ?? 1))); ?></td>
+                            <td><?php echo esc_html($unanswered_reason_labels[$unanswered_entry['reason'] ?? ''] ?? (string) ($unanswered_entry['reason'] ?? '')); ?></td>
+                            <td>
+                                <?php
+                                $unanswered_ts = (int) ($unanswered_entry['t'] ?? 0);
+                                echo $unanswered_ts ? esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), $unanswered_ts)) : '—';
+                                ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php if (count($unanswered_log) > 10) : ?>
+                <p style="color: #999; font-size: 12px;">
+                    <?php
+                    printf(
+                        /* translators: %d: number of additional recorded questions not shown */
+                        esc_html__('…and %d more (latest 50 are kept).', 'rapls-ai-chatbot'),
+                        (int) (count($unanswered_log) - 10)
+                    );
+                    ?>
+                </p>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <!-- FAQ draft result -->
+            <div id="raplsaich-faq-result" style="margin-top: 15px;" hidden>
+                <h3 style="margin-bottom: 6px;"><?php esc_html_e('FAQ draft (review and edit before publishing)', 'rapls-ai-chatbot'); ?></h3>
+                <textarea id="raplsaich-faq-textarea" readonly rows="14" style="width: 100%; font-family: monospace;"></textarea>
+                <p>
+                    <button type="button" id="raplsaich-faq-copy" class="button button-secondary"><?php esc_html_e('Copy to clipboard', 'rapls-ai-chatbot'); ?></button>
+                    <span id="raplsaich-faq-copied" style="color: #00a32a; margin-left: 8px;" hidden><?php esc_html_e('Copied!', 'rapls-ai-chatbot'); ?></span>
+                </p>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+jQuery(function($) {
+    var faqNonce = <?php echo wp_json_encode(wp_create_nonce('raplsaich_generate_faq')); ?>;
+    var clearNonce = <?php echo wp_json_encode(wp_create_nonce('raplsaich_clear_unanswered')); ?>;
+    var i18n = {
+        generating: <?php echo wp_json_encode(__('Generating… this may take up to a minute.', 'rapls-ai-chatbot')); ?>,
+        generateLabel: <?php echo wp_json_encode('✨ ' . __('Generate FAQ draft from questions', 'rapls-ai-chatbot')); ?>,
+        errorOccurred: <?php echo wp_json_encode(__('An error occurred.', 'rapls-ai-chatbot')); ?>,
+        confirmClear: <?php echo wp_json_encode(__('Clear the unanswered-question list?', 'rapls-ai-chatbot')); ?>
+    };
+
+    $('#raplsaich-generate-faq').on('click', function() {
+        var $btn = $(this);
+        $btn.prop('disabled', true).text(i18n.generating);
+        $.post(ajaxurl, { action: 'raplsaich_generate_faq', nonce: faqNonce })
+            .done(function(resp) {
+                if (resp && resp.success && resp.data && resp.data.faq) {
+                    $('#raplsaich-faq-textarea').val(resp.data.faq);
+                    $('#raplsaich-faq-result').prop('hidden', false);
+                } else {
+                    alert((resp && resp.data && resp.data.message) || i18n.errorOccurred);
+                }
+            })
+            .fail(function(xhr) {
+                var msg = i18n.errorOccurred;
+                try {
+                    if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        msg = xhr.responseJSON.data.message;
+                    }
+                } catch (e) {}
+                alert(msg);
+            })
+            .always(function() {
+                $btn.prop('disabled', false).text(i18n.generateLabel);
+            });
+    });
+
+    $('#raplsaich-faq-copy').on('click', function() {
+        var el = document.getElementById('raplsaich-faq-textarea');
+        el.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(el.value).catch(function() {});
+        }
+        $('#raplsaich-faq-copied').prop('hidden', false);
+        setTimeout(function() { $('#raplsaich-faq-copied').prop('hidden', true); }, 2000);
+    });
+
+    $('#raplsaich-clear-unanswered').on('click', function() {
+        if (!window.confirm(i18n.confirmClear)) return;
+        var $btn = $(this).prop('disabled', true);
+        $.post(ajaxurl, { action: 'raplsaich_clear_unanswered', nonce: clearNonce })
+            .done(function() { window.location.reload(); })
+            .fail(function() {
+                alert(i18n.errorOccurred);
+                $btn.prop('disabled', false);
+            });
+    });
+});
+</script>
 
 <?php
 wp_enqueue_script('raplsaich-admin-dashboard', RAPLSAICH_PLUGIN_URL . 'assets/js/admin-dashboard.js', ['jquery', 'raplsaich-admin', 'raplsaich-chartjs'], RAPLSAICH_VERSION, true);

@@ -478,6 +478,20 @@
                 });
             }
 
+            // 履歴削除ボタン — server-side deletion of the visitor's own
+            // conversation (privacy feature, opt-in via settings). Unlike the
+            // new-conversation button above, this REMOVES the stored rows.
+            var deleteBtn = this.container.querySelector('.chatbot-delete-history');
+            if (deleteBtn && this.config.visitor_delete) {
+                deleteBtn.hidden = false;
+                deleteBtn.addEventListener('click', function() {
+                    var msg = (self.config.strings && self.config.strings.confirm_delete_history)
+                        || 'Delete your chat history? This cannot be undone.';
+                    if (!window.confirm(msg)) return;
+                    self.deleteHistory();
+                });
+            }
+
             // フォーム送信
             if (!this.inputForm || !this.inputTextarea) return;
             this.inputForm.addEventListener('submit', function(e) {
@@ -595,6 +609,7 @@
          */
         open: function() {
             this.isOpen = true;
+            this.trackGa4('raplsaich_chat_open');
             this.container.dataset.state = 'open';
             this.window.setAttribute('aria-hidden', 'false');
             this.window.inert = false;
@@ -889,6 +904,49 @@
                 this.messagesEl.innerHTML = '';
             }
             this.showWelcomeMessage();
+        },
+
+        /**
+         * Delete the visitor's stored conversation on the server (privacy
+         * feature, opt-in), then reset the local session like a fresh start.
+         */
+        deleteHistory: function() {
+            var self = this;
+            var strings = this.config.strings || {};
+
+            // Nothing stored server-side yet — just reset locally.
+            if (!this.sessionId) {
+                this.startNewConversation();
+                return;
+            }
+
+            this.apiRequest('POST', '/history/delete', { session_id: this.sessionId })
+                .then(function() {
+                    self.clearSession();
+                    self._lastPresetIndex = null;
+                    self._hasSentFirstMessage = false;
+                    self.showWelcomeMessage();
+                    self.addMessage('bot', strings.history_deleted || 'Your chat history has been deleted.');
+                })
+                .catch(function(error) {
+                    if (self.config.debug) console.error('History deletion failed:', error);
+                    self.addMessage('bot', strings.delete_failed || 'Deletion failed. Please try again later.');
+                });
+        },
+
+        /**
+         * GA4 event bridge — no-op unless the site loads gtag.js itself and
+         * the admin enabled GA4 events. Analytics must never break the chat.
+         */
+        trackGa4: function(eventName) {
+            if (!this.config.ga4_events) return;
+            try {
+                if (typeof window.gtag === 'function') {
+                    window.gtag('event', eventName, { event_category: 'rapls_ai_chatbot' });
+                } else if (window.dataLayer && typeof window.dataLayer.push === 'function') {
+                    window.dataLayer.push({ event: eventName });
+                }
+            } catch (_) { /* ignore analytics errors */ }
         },
 
         showWelcomeMessage: function() {
@@ -1189,6 +1247,8 @@
 
             var self = this;
 
+            this.trackGa4('raplsaich_message_sent');
+
             // ユーザーメッセージを表示
             this.addMessage('user', message);
 
@@ -1212,6 +1272,10 @@
             }
 
             sendPromise
+                .then(function(result) {
+                    self.trackGa4('raplsaich_response_received');
+                    return result;
+                })
                 .catch(function(error) {
                     // Skip if already handled (e.g. recaptcha_not_ready)
                     if (error === 'recaptcha_not_ready') return;

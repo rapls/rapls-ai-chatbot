@@ -790,6 +790,17 @@ class RAPLSAICH_Activator {
             'embedding_enabled'  => false,
             'embedding_provider' => 'auto',
 
+            // Page context / reliability / cost (1.12.0)
+            'page_context_enabled'      => true,
+            'model_fallback_enabled'    => false,
+            'cost_guard_enabled'        => false,
+            'cost_guard_monthly_budget' => 10,
+            'weekly_summary_enabled'    => false,
+
+            // Privacy / analytics (1.13.0)
+            'visitor_delete_enabled'    => false,
+            'ga4_events_enabled'        => false,
+
             // Uninstall settings
             'delete_data_on_uninstall' => false,
         ];

@@ -145,6 +145,11 @@ class RAPLSAICH_Main {
         // Frontend
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/frontend/class-chatbot-widget.php';
 
+        // WP-CLI commands (ops: status / cleanup / crawl / unanswered)
+        if (defined('WP_CLI') && WP_CLI) {
+            require_once RAPLSAICH_PLUGIN_DIR . 'includes/cli/class-cli.php';
+        }
+
         $this->loader = new RAPLSAICH_Loader();
     }
 
@@ -160,6 +165,8 @@ class RAPLSAICH_Main {
         $this->loader->add_action('admin_notices', $admin, 'gemini_legacy_key_notice');
         $this->loader->add_action('admin_notices', $admin, 'security_settings_notice');
         $this->loader->add_action('admin_notices', $admin, 'handoff_pending_notice');
+        $this->loader->add_action('admin_notices', $admin, 'review_request_notice');
+        $this->loader->add_action('admin_notices', $admin, 'cost_guard_notice');
         $this->loader->add_action('admin_init', $admin, 'register_settings');
         $this->loader->add_action('admin_init', $this, 'add_privacy_policy_content');
         $this->loader->add_action('admin_init', $this, 'maybe_upgrade_database');
@@ -175,6 +182,9 @@ class RAPLSAICH_Main {
         $this->loader->add_action('wp_ajax_raplsaich_crawler_exclude_post', $admin, 'ajax_crawler_exclude_post');
         $this->loader->add_action('wp_ajax_raplsaich_crawler_include_post', $admin, 'ajax_crawler_include_post');
         $this->loader->add_action('wp_ajax_raplsaich_test_api', $admin, 'ajax_test_api');
+        $this->loader->add_action('wp_ajax_raplsaich_apply_starter_template', $admin, 'ajax_apply_starter_template');
+        $this->loader->add_action('wp_ajax_raplsaich_clear_unanswered', $admin, 'ajax_clear_unanswered');
+        $this->loader->add_action('wp_ajax_raplsaich_generate_faq', $admin, 'ajax_generate_faq');
         $this->loader->add_action('wp_ajax_raplsaich_onboard_openrouter_test', $admin, 'ajax_onboard_openrouter_test');
         $this->loader->add_action('wp_ajax_raplsaich_onboard_gemini_test', $admin, 'ajax_onboard_gemini_test');
         $this->loader->add_action('wp_ajax_raplsaich_get_conversation_messages', $admin, 'ajax_get_conversation_messages');
@@ -303,8 +313,111 @@ class RAPLSAICH_Main {
         // Cleanup is always registered
         $this->loader->add_action('raplsaich_cleanup_old_conversations', $this, 'cleanup_old_conversations');
 
+        // Weekly admin summary email (opt-in; scheduling synced in admin)
+        $this->loader->add_action('raplsaich_weekly_summary', $this, 'send_weekly_summary');
+
         // Crawler hooks deferred to init so Pro singleton is available
         $this->loader->add_action('init', $this, 'maybe_register_crawler_hooks');
+    }
+
+    /**
+     * Send the weekly summary email to the site admin.
+     *
+     * Opt-in via the weekly_summary_enabled setting. Plain text on purpose:
+     * better deliverability and nothing to break in mail clients.
+     */
+    public function send_weekly_summary() {
+        $settings = get_option('raplsaich_settings', []);
+        if (empty($settings['weekly_summary_enabled'])) {
+            return;
+        }
+
+        global $wpdb;
+        $table_conversations = raplsaich_require_table('raplsaich_conversations', 'send_weekly_summary');
+        $table_messages = raplsaich_require_table('raplsaich_messages', 'send_weekly_summary');
+        if (!$table_conversations || !$table_messages) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $convo_count = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table_conversations} WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+        );
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $recent_questions = $wpdb->get_col(
+            "SELECT content FROM {$table_messages} WHERE role = 'user' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY created_at DESC LIMIT 5"
+        );
+
+        $usage = RAPLSAICH_Cost_Calculator::get_usage_stats(7);
+        $reply_count = (int) ($usage['totals']['message_count'] ?? 0);
+        $cost_formatted = (string) ($usage['totals']['cost_formatted'] ?? '$0.00');
+
+        $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+
+        /* translators: %s: site name */
+        $subject = sprintf(__('[%s] AI Chatbot weekly summary', 'rapls-ai-chatbot'), $site_name);
+
+        $lines = [];
+        /* translators: %s: site name */
+        $lines[] = sprintf(__('AI Chatbot on %s — the last 7 days:', 'rapls-ai-chatbot'), $site_name);
+        $lines[] = '';
+        /* translators: %d: number of conversations */
+        $lines[] = sprintf(__('Conversations: %d', 'rapls-ai-chatbot'), $convo_count);
+        /* translators: %d: number of AI replies */
+        $lines[] = sprintf(__('AI replies: %d', 'rapls-ai-chatbot'), $reply_count);
+        /* translators: %s: formatted estimated cost */
+        $lines[] = sprintf(__('Estimated API cost: %s', 'rapls-ai-chatbot'), $cost_formatted);
+
+        if (!empty($recent_questions)) {
+            $lines[] = '';
+            $lines[] = __('Recent visitor questions:', 'rapls-ai-chatbot');
+            foreach ($recent_questions as $q) {
+                $q = trim(wp_strip_all_tags((string) $q));
+                if (raplsaich_mb_strlen($q) > 80) {
+                    $q = raplsaich_mb_substr($q, 0, 80) . '…';
+                }
+                if ($q !== '') {
+                    $lines[] = '- ' . $q;
+                }
+            }
+        }
+
+        // Content-gap report: questions the bot could not answer from site
+        // content this period — the single most actionable item for admins.
+        $unanswered = get_option('raplsaich_unanswered_log', []);
+        if (is_array($unanswered) && !empty($unanswered)) {
+            $week_ago = time() - WEEK_IN_SECONDS;
+            $recent_unanswered = array_filter($unanswered, function ($entry) use ($week_ago) {
+                return (int) ($entry['t'] ?? 0) >= $week_ago;
+            });
+            if (!empty($recent_unanswered)) {
+                $lines[] = '';
+                $lines[] = __('Questions the bot could not answer (consider adding content):', 'rapls-ai-chatbot');
+                $shown = 0;
+                foreach ($recent_unanswered as $entry) {
+                    $q = trim((string) ($entry['q'] ?? ''));
+                    if ($q === '') {
+                        continue;
+                    }
+                    if (raplsaich_mb_strlen($q) > 80) {
+                        $q = raplsaich_mb_substr($q, 0, 80) . '…';
+                    }
+                    $n = (int) ($entry['n'] ?? 1);
+                    $lines[] = '- ' . $q . ($n > 1 ? ' (×' . $n . ')' : '');
+                    if (++$shown >= 3) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        $lines[] = '';
+        /* translators: %s: dashboard URL */
+        $lines[] = sprintf(__('Details: %s', 'rapls-ai-chatbot'), admin_url('admin.php?page=raplsaich-dashboard'));
+        $lines[] = __('To stop these emails: Settings > Data Management > Weekly Summary Email.', 'rapls-ai-chatbot');
+
+        wp_mail(get_option('admin_email'), $subject, implode("\n", $lines));
     }
 
     /**

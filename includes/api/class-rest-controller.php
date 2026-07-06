@@ -431,6 +431,22 @@ class RAPLSAICH_REST_Controller {
             ],
         ]);
 
+        // Visitor-initiated history deletion (privacy; opt-in via visitor_delete_enabled).
+        // Ownership is enforced by check_session_permission — a visitor can only
+        // delete the conversation tied to their own session token.
+        register_rest_route($this->namespace, '/history/delete', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'delete_visitor_history'],
+            'permission_callback' => [$this, 'check_session_permission'],
+            'args'                => [
+                'session_id' => [
+                    'required'          => true,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+        ]);
+
         // Pro-only routes are registered by the Pro plugin via rest_api_init hook.
         // See rapls-ai-chatbot-pro/includes/class-pro-rest.php for route definitions.
     }
@@ -1025,6 +1041,10 @@ class RAPLSAICH_REST_Controller {
             $related_content = $search_engine->search($message, $settings['crawler_max_results'] ?? 3);
             $context = $search_engine->build_context($related_content, $this->get_max_context_chars(), $message);
 
+            // Page-context awareness: prepend the page the visitor is currently
+            // viewing, so "this product / this article" questions resolve naturally.
+            $context = $this->prepend_page_context($context, $page_url, $settings);
+
             // Notify Pro features about knowledge hits (for auto-priority)
             do_action('raplsaich_knowledge_hits', $related_content);
 
@@ -1238,6 +1258,14 @@ class RAPLSAICH_REST_Controller {
              */
             $context = apply_filters('raplsaich_context', $context, $message, $settings);
 
+            // Content-gap signal: no site content matched this question at all.
+            // Recorded (capped option) so the dashboard can suggest what to add.
+            // Skipped for knowledge-less bots (by design) and when web search
+            // will likely cover the answer anyway.
+            if (trim((string) $context) === '' && !$bot_no_knowledge && !$web_search_enabled) {
+                $this->log_unanswered_question($message, 'no_context');
+            }
+
             if (!empty($context)) {
                 // Check if context contains Q&A format
                 $has_qa_format = preg_match('/Question\s*[:：]/ui', $context) && preg_match('/Answer\s*[:：]/ui', $context);
@@ -1303,6 +1331,7 @@ class RAPLSAICH_REST_Controller {
                 );
                 $embedding_enabled = !empty($settings['embedding_enabled']);
                 if (!$this->is_query_grounded($related_content, (string) $context, $embedding_enabled, $min_score)) {
+                    $this->log_unanswered_question($message, 'grounding');
                     $fallback = $settings['grounding_fallback_message'] ?? '';
                     if (trim($fallback) === '') {
                         $fallback = __('Sorry, I could not find information about that on this site.', 'rapls-ai-chatbot');
@@ -1364,6 +1393,42 @@ class RAPLSAICH_REST_Controller {
                             'is_auto'    => true,
                             'limited'    => true,
                             'reason'     => (string) ($usage_check['reason'] ?? 'daily_limit'),
+                            'sources'    => [],
+                            'session_id' => $session_id,
+                        ],
+                    ], 200));
+                }
+            }
+
+            // Cost guard: when the month-to-date estimated API cost reaches the
+            // configured budget, answer with a canned message instead of calling
+            // the AI. The bill stops at the budget, not at the visitor's mercy.
+            if (!empty($settings['cost_guard_enabled'])) {
+                $cg_budget = (float) ($settings['cost_guard_monthly_budget'] ?? 0);
+                if ($cg_budget > 0 && RAPLSAICH_Cost_Calculator::get_month_to_date_cost() >= $cg_budget) {
+                    $cg_msg = apply_filters(
+                        'raplsaich_cost_guard_message',
+                        __("The chat assistant has reached this month's usage budget and is taking a break. Please use the contact form — we're happy to help directly.", 'rapls-ai-chatbot')
+                    );
+                    $cg_msg_id = 0;
+                    if ($save_history) {
+                        $ai_message = RAPLSAICH_Message::create([
+                            'conversation_id' => $conversation_id,
+                            'role'            => 'assistant',
+                            'content'         => $cg_msg,
+                        ]);
+                        $cg_msg_id = $ai_message ? $ai_message['id'] : 0;
+                    } else {
+                        $this->append_transient_context($session_id, 'assistant', $cg_msg);
+                    }
+                    return $this->no_cache(new WP_REST_Response([
+                        'success' => true,
+                        'data'    => [
+                            'message_id' => $cg_msg_id,
+                            'content'    => $cg_msg,
+                            'is_auto'    => true,
+                            'limited'    => true,
+                            'reason'     => 'cost_budget',
                             'sources'    => [],
                             'session_id' => $session_id,
                         ],
@@ -1447,7 +1512,22 @@ class RAPLSAICH_REST_Controller {
             do_action('raplsaich_ai_request_start', $request_id);
 
             try {
-                $response = $ai_provider->send_message($messages, $send_options);
+                try {
+                    $response = $ai_provider->send_message($messages, $send_options);
+                } catch (RAPLSAICH_Quota_Exceeded_Exception $quota_e) {
+                    // Model fallback (opt-in): when the selected model hits its
+                    // quota / rate limit, retry once with the provider's
+                    // lightweight model instead of erroring at the visitor.
+                    $fallback_model = $this->get_fallback_model($settings);
+                    if (!$fallback_model) {
+                        throw $quota_e;
+                    }
+                    $provider_key = $settings['ai_provider'] ?? 'openai';
+                    $fb_settings = $settings;
+                    $fb_settings[$provider_key . '_model'] = $fallback_model;
+                    $fb_provider = raplsaich_create_ai_provider($fb_settings, $bot_config);
+                    $response = $fb_provider->send_message($messages, $send_options);
+                }
             } finally {
                 do_action('raplsaich_ai_request_end', $request_id);
             }
@@ -1946,12 +2026,92 @@ class RAPLSAICH_REST_Controller {
     }
 
     /**
+     * Pick the lightweight fallback model for the active provider, or null
+     * when fallback should not run (disabled, unsupported provider, or the
+     * active model already is the fallback).
+     *
+     * OpenRouter is excluded: its ":free" models already have their own
+     * throttle-and-switch handling. WPAI is excluded because Connectors
+     * routes models outside our control.
+     */
+    private function get_fallback_model(array $settings): ?string {
+        if (empty($settings['model_fallback_enabled'])) {
+            return null;
+        }
+
+        $provider = $settings['ai_provider'] ?? 'openai';
+        $map = [
+            'openai' => 'gpt-4o-mini',
+            'claude' => 'claude-haiku-4-5-20251001',
+            'gemini' => 'gemini-2.0-flash-lite',
+        ];
+        if (!isset($map[$provider])) {
+            return null;
+        }
+
+        $fallback = (string) apply_filters('raplsaich_fallback_model', $map[$provider], $provider, $settings[$provider . '_model'] ?? '');
+        if ($fallback === '' || $fallback === ($settings[$provider . '_model'] ?? '')) {
+            return null;
+        }
+
+        return $fallback;
+    }
+
+    /**
      * Get max context characters based on the configured model.
      * Thin wrapper over the helper so callers like Pro's LINE channel
      * can hit the same logic without depending on this controller.
      */
     public function get_max_context_chars(): int {
         return raplsaich_get_max_context_chars();
+    }
+
+    /**
+     * Prepend the page the visitor is currently viewing to the RAG context.
+     *
+     * Keeps "this page / this product" questions grounded even when hybrid
+     * search does not surface the current page. The snippet is capped so it
+     * cannot crowd out regular context, and only same-host, published,
+     * non-password posts are used.
+     */
+    private function prepend_page_context(string $context, string $page_url, array $settings): string {
+        if ($page_url === '' || !($settings['page_context_enabled'] ?? true)) {
+            return $context;
+        }
+
+        $site_host = wp_parse_url(home_url(), PHP_URL_HOST);
+        $page_host = wp_parse_url($page_url, PHP_URL_HOST);
+        if (!$site_host || !$page_host || strtolower($site_host) !== strtolower($page_host)) {
+            return $context;
+        }
+
+        $post_id = url_to_postid($page_url);
+        if (!$post_id) {
+            return $context;
+        }
+
+        $post = get_post($post_id);
+        if (!$post || $post->post_status !== 'publish' || !empty($post->post_password)) {
+            return $context;
+        }
+
+        $max_chars = (int) apply_filters('raplsaich_page_context_max_chars', 1500);
+        if ($max_chars <= 0) {
+            return $context;
+        }
+
+        $body = wp_strip_all_tags(strip_shortcodes((string) $post->post_content));
+        $body = preg_replace('/\s+/u', ' ', trim($body));
+        if (raplsaich_mb_strlen($body) > $max_chars) {
+            $body = raplsaich_mb_substr($body, 0, $max_chars) . '…';
+        }
+
+        $snippet = "[Current page the visitor is viewing]\n"
+            . 'Title: ' . get_the_title($post) . "\n"
+            . 'URL: ' . $page_url . "\n"
+            . 'Content: ' . $body;
+
+        return $snippet . ($context !== '' ? "\n\n" . $context : '');
     }
 
     /**
@@ -3439,6 +3599,91 @@ class RAPLSAICH_REST_Controller {
                 'feedback'   => $feedback,
             ],
         ], 200);
+    }
+
+    /**
+     * Delete the visitor's own conversation history (privacy feature, opt-in).
+     *
+     * Session ownership is already verified by check_session_permission(), so
+     * a visitor can only ever delete the conversation bound to their session.
+     */
+    public function delete_visitor_history(WP_REST_Request $request): WP_REST_Response {
+        $settings = get_option('raplsaich_settings', []);
+        if (empty($settings['visitor_delete_enabled'])) {
+            return new WP_REST_Response([
+                'success' => false,
+                'error'   => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
+            ], 403);
+        }
+
+        $rate_check = $this->check_public_rate_limit('hdel', 5, 60);
+        if ($rate_check !== true) {
+            return $rate_check;
+        }
+
+        $session_id = sanitize_text_field($request->get_param('session_id'));
+
+        $conversation = RAPLSAICH_Conversation::get_by_session($session_id);
+        if ($conversation) {
+            // Cascades to messages (see RAPLSAICH_Conversation::delete)
+            RAPLSAICH_Conversation::delete((int) $conversation['id']);
+        }
+
+        // Ephemeral context used when save_history is OFF
+        delete_transient($this->get_context_transient_key($session_id));
+
+        return $this->no_cache(new WP_REST_Response([
+            'success' => true,
+            'data'    => ['deleted' => true],
+        ], 200));
+    }
+
+    /**
+     * Record a visitor question the bot could not answer from site content.
+     *
+     * Stored in a small capped option (no schema change) and surfaced on the
+     * dashboard + weekly summary so admins learn what content to add.
+     */
+    private function log_unanswered_question(string $question, string $reason): void {
+        $question = trim(wp_strip_all_tags($question));
+        if ($question === '') {
+            return;
+        }
+        if (raplsaich_mb_strlen($question) > 200) {
+            $question = raplsaich_mb_substr($question, 0, 200);
+        }
+
+        /**
+         * Allow disabling the unanswered-question log.
+         *
+         * @param bool   $enabled  Whether to record. Default true.
+         * @param string $question The visitor question (trimmed, max 200 chars).
+         * @param string $reason   Why it counts as unanswered ('no_context'|'grounding').
+         */
+        if (!apply_filters('raplsaich_log_unanswered', true, $question, $reason)) {
+            return;
+        }
+
+        $log = get_option('raplsaich_unanswered_log', []);
+        if (!is_array($log)) {
+            $log = [];
+        }
+
+        $needle = raplsaich_mb_strtolower($question);
+        foreach ($log as $i => $entry) {
+            if (raplsaich_mb_strtolower((string) ($entry['q'] ?? '')) === $needle) {
+                $entry['n']      = (int) ($entry['n'] ?? 1) + 1;
+                $entry['t']      = time();
+                $entry['reason'] = $reason;
+                unset($log[$i]);
+                array_unshift($log, $entry);
+                update_option('raplsaich_unanswered_log', array_slice(array_values($log), 0, 50), false);
+                return;
+            }
+        }
+
+        array_unshift($log, ['q' => $question, 't' => time(), 'n' => 1, 'reason' => $reason]);
+        update_option('raplsaich_unanswered_log', array_slice($log, 0, 50), false);
     }
 
     /**

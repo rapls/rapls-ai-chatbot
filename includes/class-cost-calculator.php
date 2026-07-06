@@ -283,6 +283,55 @@ class RAPLSAICH_Cost_Calculator {
     }
 
     /**
+     * 今月（暦月・サイトのタイムゾーン基準ではなく DB の NOW() 基準）の推定コスト合計。
+     *
+     * コストガードの判定用。1 分間 transient にキャッシュしてチャット毎の
+     * 集計クエリを抑える。
+     */
+    public static function get_month_to_date_cost(): float {
+        $cached = get_transient('raplsaich_mtd_cost');
+        if ($cached !== false) {
+            return (float) $cached;
+        }
+
+        global $wpdb;
+        $table = raplsaich_require_table('raplsaich_messages', 'get_month_to_date_cost');
+        if (!$table) {
+            return 0.0;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $model_totals = $wpdb->get_results(
+            "SELECT
+                ai_model,
+                SUM(input_tokens) as input_tokens,
+                SUM(output_tokens) as output_tokens,
+                SUM(tokens_used) as total_tokens
+             FROM {$table}
+             WHERE role = 'assistant'
+               AND created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')
+             GROUP BY ai_model",
+            ARRAY_A
+        );
+
+        $total_cost = 0.0;
+        foreach ((array) $model_totals as $model) {
+            $input_tokens  = (int) ($model['input_tokens'] ?? 0);
+            $output_tokens = (int) ($model['output_tokens'] ?? 0);
+            if ($input_tokens === 0 && $output_tokens === 0 && !empty($model['total_tokens'])) {
+                $total         = (int) $model['total_tokens'];
+                $input_tokens  = (int) ($total * 0.7);
+                $output_tokens = (int) ($total * 0.3);
+            }
+            $total_cost += self::calculate_cost($model['ai_model'] ?? 'unknown', $input_tokens, $output_tokens);
+        }
+
+        set_transient('raplsaich_mtd_cost', $total_cost, MINUTE_IN_SECONDS);
+
+        return $total_cost;
+    }
+
+    /**
      * コストをフォーマット
      */
     public static function format_cost(float $cost): string {

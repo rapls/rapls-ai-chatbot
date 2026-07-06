@@ -4453,9 +4453,6 @@ msgstr "カスタム CSS"
 #~ msgid "Show message outside business hours"
 #~ msgstr "営業時間外にメッセージを表示"
 
-#~ msgid "Hours"
-#~ msgstr "営業時間設定"
-
 #~ msgid "Enable Holidays"
 #~ msgstr "休日を有効化"
 
@@ -8163,3 +8160,396 @@ msgstr "（残り %d 回）"
 #: templates/admin/settings.php
 msgid "Show the remaining allowance in the limit message (e.g. \"Remaining: 3\")"
 msgstr "上限メッセージに残量を表示する（例:「残り 3 回」）"
+
+msgid "Connect an AI provider"
+msgstr "AI プロバイダーに接続する"
+
+msgid "Set up API key"
+msgstr "API キーを設定"
+
+msgid "Let the AI learn your site"
+msgstr "AI にサイトを学習させる"
+
+msgid "Run site learning"
+msgstr "サイト学習を実行"
+
+msgid "Have your first conversation"
+msgstr "最初の会話をしてみる"
+
+msgid "Open your site and ask the bot"
+msgstr "サイトを開いてボットに質問"
+
+msgid "AI Chatbot — Cost Guard:"
+msgstr "AI Chatbot — コストガード:"
+
+msgid "The monthly budget has been reached (%1$s of %2$s). The chatbot now replies with a fixed message instead of calling the AI. It resumes automatically next month, or you can raise the budget in Security settings."
+msgstr "月間予算に達しました（%2$s 中 %1$s）。チャットボットは AI を呼ばず、固定メッセージで応答しています。来月自動的に再開します。セキュリティ設定で予算を引き上げることもできます。"
+
+msgid "This month's estimated API cost has reached %1$s of the %2$s budget (80%%+)."
+msgstr "今月の推定 API コストが %1$s に達しました（予算 %2$s の 80%% 以上）。"
+
+msgid "Base your answers on the reference information from this site. If the information does not cover a question, say honestly that you don't have it and suggest contacting us. Never invent prices, dates, or availability. Reply in the visitor's language, politely and concisely."
+msgstr "回答は、このサイトの参照情報に基づいてください。参照情報に該当がない場合は、正直に「分からない」と伝え、お問い合わせを案内してください。価格・日付・空き状況を推測で作らないでください。訪問者の言語で、丁寧かつ簡潔に答えてください。"
+
+msgid "Hotel / Tourism"
+msgstr "宿泊・観光"
+
+msgid "You are the front-desk assistant for this accommodation. Help guests with room types, rates, check-in/out times, access, meals, and nearby sights. For bookings or date-specific availability, guide the visitor to the reservation page or phone instead of guessing."
+msgstr "あなたはこの宿泊施設のフロント係アシスタントです。客室タイプ、料金、チェックイン / チェックアウト時刻、アクセス、食事、周辺の観光について案内してください。予約や特定日の空き状況は推測せず、予約ページまたはお電話へ誘導してください。"
+
+msgid "Check-in times"
+msgstr "チェックイン時刻"
+
+msgid "What are the check-in and check-out times?"
+msgstr "チェックインとチェックアウトの時刻を教えてください。"
+
+msgid "Access"
+msgstr "アクセス"
+
+msgid "How do I get there from the nearest station or airport?"
+msgstr "最寄り駅または空港からの行き方を教えてください。"
+
+msgid "Meals"
+msgstr "お食事"
+
+msgid "What are the meal options and times?"
+msgstr "食事の内容と時間を教えてください。"
+
+msgid "Cancellation"
+msgstr "キャンセル"
+
+msgid "What is the cancellation policy?"
+msgstr "キャンセルポリシーを教えてください。"
+
+msgid "Online Shop / Retail"
+msgstr "EC・小売"
+
+msgid "You are the customer support assistant for this shop. Help visitors with products, sizes, stock, shipping costs and times, payment methods, and returns. For order-specific questions, ask for no personal data in chat and guide them to the contact form."
+msgstr "あなたはこのショップのカスタマーサポートアシスタントです。商品、サイズ、在庫、送料と配送日数、支払い方法、返品について案内してください。個別の注文に関する質問では、チャットで個人情報を尋ねず、お問い合わせフォームへ誘導してください。"
+
+msgid "Shipping"
+msgstr "送料・配送"
+
+msgid "How much is shipping and how long does delivery take?"
+msgstr "送料はいくらですか？また、届くまで何日かかりますか？"
+
+msgid "Returns"
+msgstr "返品・交換"
+
+msgid "Can I return or exchange an item?"
+msgstr "商品の返品や交換はできますか？"
+
+msgid "Payment"
+msgstr "支払い方法"
+
+msgid "Which payment methods do you accept?"
+msgstr "利用できる支払い方法を教えてください。"
+
+msgid "Gift wrapping"
+msgstr "ギフト包装"
+
+msgid "Do you offer gift wrapping?"
+msgstr "ギフト包装はできますか？"
+
+msgid "Clinic / Salon"
+msgstr "クリニック・サロン"
+
+msgid "You are the reception assistant for this clinic or salon. Help visitors with services, prices, business hours, directions, and what to bring. Never give medical diagnoses or personal health advice; for symptoms or urgent issues, tell the visitor to call or see a professional directly."
+msgstr "あなたはこのクリニック / サロンの受付アシスタントです。メニュー、料金、営業時間、アクセス、持ち物について案内してください。診断や個別の健康アドバイスは決して行わず、症状や急ぎの相談には、お電話または専門家への直接相談を案内してください。"
+
+msgid "Hours"
+msgstr "営業時間"
+
+msgid "What are your business hours and closed days?"
+msgstr "営業時間と定休日を教えてください。"
+
+msgid "First visit"
+msgstr "初めての方へ"
+
+msgid "What should I bring for my first visit?"
+msgstr "初回は何を持っていけばよいですか？"
+
+msgid "Prices"
+msgstr "料金"
+
+msgid "How much do your main services cost?"
+msgstr "主なメニューの料金を教えてください。"
+
+msgid "Reservation"
+msgstr "ご予約"
+
+msgid "How do I make or change a reservation?"
+msgstr "予約の方法や変更の仕方を教えてください。"
+
+msgid "Professional Services / Consulting"
+msgstr "士業・コンサルティング"
+
+msgid "You are the intake assistant for this professional practice. Explain service areas, typical process, fees, and how consultations work. Do not give legal, tax, or case-specific advice in chat; encourage booking a consultation for anything specific."
+msgstr "あなたはこの事務所の受付アシスタントです。取扱分野、一般的な進め方、料金体系、ご相談の方法を説明してください。チャットでは法務・税務など個別案件のアドバイスは行わず、具体的なご相談には面談の予約をお勧めしてください。"
+
+msgid "Services"
+msgstr "サービス内容"
+
+msgid "What services do you provide?"
+msgstr "どのようなサービスを提供していますか？"
+
+msgid "Fees"
+msgstr "料金体系"
+
+msgid "How are your fees structured?"
+msgstr "料金体系について教えてください。"
+
+msgid "Consultation"
+msgstr "初回相談"
+
+msgid "How do I book an initial consultation?"
+msgstr "初回相談はどのように予約すればよいですか？"
+
+msgid "Online support"
+msgstr "オンライン対応"
+
+msgid "Do you support online meetings?"
+msgstr "オンラインでの打ち合わせには対応していますか？"
+
+msgid "Company Site"
+msgstr "企業サイト"
+
+msgid "You are the reception assistant for this company website. Help visitors with what the company does, products and services, company profile, recruitment, and how to get in touch. Route sales inquiries and partnership requests to the contact form."
+msgstr "あなたはこの企業サイトの受付アシスタントです。事業内容、製品・サービス、会社概要、採用、連絡方法について案内してください。営業のお問い合わせや協業のご相談は、お問い合わせフォームへ誘導してください。"
+
+msgid "About us"
+msgstr "会社について"
+
+msgid "What does your company do?"
+msgstr "どのような事業をしている会社ですか？"
+
+msgid "Can you tell me about your main products and services?"
+msgstr "主な製品・サービスについて教えてください。"
+
+msgid "Recruit"
+msgstr "採用情報"
+
+msgid "Are you currently hiring?"
+msgstr "現在、採用は行っていますか？"
+
+msgid "Contact"
+msgstr "お問い合わせ"
+
+msgid "How can I contact you?"
+msgstr "連絡方法を教えてください。"
+
+msgid "Unknown template."
+msgstr "不明なテンプレートです。"
+
+msgid "Template applied. Reloading…"
+msgstr "テンプレートを適用しました。再読み込みします…"
+
+msgid "The chat assistant has reached this month's usage budget and is taking a break. Please use the contact form — we're happy to help directly."
+msgstr "チャットアシスタントは今月の利用予算に達したため、お休みしています。お問い合わせフォームからご連絡ください。直接ご対応いたします。"
+
+msgid "[%s] AI Chatbot weekly summary"
+msgstr "[%s] AI チャットボット週次サマリー"
+
+msgid "AI Chatbot on %s — the last 7 days:"
+msgstr "%s の AI チャットボット — 直近 7 日間:"
+
+msgid "Conversations: %d"
+msgstr "会話数: %d"
+
+msgid "AI replies: %d"
+msgstr "AI の返信数: %d"
+
+msgid "Estimated API cost: %s"
+msgstr "推定 API コスト: %s"
+
+msgid "Recent visitor questions:"
+msgstr "最近の訪問者の質問:"
+
+msgid "Details: %s"
+msgstr "詳細: %s"
+
+msgid "To stop these emails: Settings > Data Management > Weekly Summary Email."
+msgstr "このメールを停止するには: 設定 > データ管理 > 週次サマリーメール"
+
+msgid "Setup: %1$d of %2$d steps complete"
+msgstr "セットアップ: %2$d ステップ中 %1$d 完了"
+
+msgid "Preview — this is how the chatbot will behave once connected:"
+msgstr "プレビュー — 接続後、チャットボットは次のように動作します:"
+
+msgid "AI Assistant"
+msgstr "AI アシスタント"
+
+msgid "Demo preview — connect a key above to go live"
+msgstr "デモ表示です — 上でキーを設定すると実際に動作します"
+
+msgid "Replay demo"
+msgstr "デモを再生し直す"
+
+msgid "Scripted sample. After setup, answers come from your own pages and knowledge base."
+msgstr "これは台本によるサンプルです。設定後は、サイトのページとナレッジベースから回答します。"
+
+msgid "We are open 10:00–18:00 on weekdays, closed on national holidays. You can also reach us through the contact form anytime."
+msgstr "平日 10:00〜18:00 に営業しています（祝日休み）。お問い合わせフォームはいつでもご利用いただけます。"
+
+msgid "Which plan should I choose?"
+msgstr "どのプランを選べばよいですか？"
+
+msgid "For most small sites the Standard plan is enough. It includes everything in Light plus priority support — see the Pricing page for details."
+msgstr "小規模サイトであれば、多くの場合スタンダードプランで十分です。ライトの全機能に優先サポートが付きます。詳しくは料金ページをご覧ください。"
+
+msgid "Answer Quality & Reliability"
+msgstr "回答品質と信頼性"
+
+msgid "Page Context"
+msgstr "ページ文脈"
+
+msgid "Include the page the visitor is viewing as context"
+msgstr "訪問者が見ているページをコンテキストに含める"
+
+msgid "Questions like \"does this product ship overseas?\" get grounded in the page the visitor is actually on. Adds a small amount of tokens per request."
+msgstr "「この商品は海外発送できますか？」のような質問が、訪問者が実際に見ているページに基づいて回答されるようになります。リクエストあたりのトークン消費がわずかに増えます。"
+
+msgid "Model Fallback"
+msgstr "モデルフォールバック"
+
+msgid "Retry once with a cheaper model when the main model hits its quota"
+msgstr "メインモデルがクォータ上限に達したとき、安価なモデルで 1 回だけ再試行する"
+
+msgid "When the selected model returns a quota / rate-limit error, the reply is retried once with the same provider's lightweight model instead of showing an error to the visitor."
+msgstr "選択中のモデルがクォータ / レート制限エラーを返した場合、訪問者にエラーを表示する代わりに、同じプロバイダーの軽量モデルで 1 回だけ再試行します。"
+
+msgid "Starter Template"
+msgstr "スタートテンプレート"
+
+msgid "— Choose your industry —"
+msgstr "— 業種を選択 —"
+
+msgid "Apply template"
+msgstr "テンプレートを適用"
+
+msgid "Sets a ready-made system prompt and preset questions for your industry. Your current system prompt and preset questions will be replaced (other settings are untouched)."
+msgstr "業種に合わせたシステムプロンプトとプリセット質問を設定します。現在のシステムプロンプトとプリセット質問は置き換えられます（他の設定は変更されません）。"
+
+msgid "Replace the current system prompt and preset questions with this template?"
+msgstr "現在のシステムプロンプトとプリセット質問を、このテンプレートで置き換えますか？"
+
+msgid "Monthly Cost Guard"
+msgstr "月間コストガード"
+
+msgid "Stop calling the AI when this month's estimated cost reaches a budget"
+msgstr "今月の推定コストが予算に達したら AI の呼び出しを停止する"
+
+msgid "Monthly budget (USD)"
+msgstr "月間予算 (USD)"
+
+msgid "This month so far: %s"
+msgstr "今月これまで: %s"
+
+msgid "When the estimated month-to-date API cost reaches the budget, the bot replies with a fixed message instead of calling the AI, and resumes automatically next month. Costs are estimates based on recorded token usage — set the budget below your provider's own hard limit."
+msgstr "月初からの推定 API コストが予算に達すると、ボットは AI を呼ばずに固定メッセージで応答し、翌月に自動で再開します。コストは記録されたトークン使用量に基づく推定値です。プロバイダー側のハードリミットより低めに設定してください。"
+
+msgid "Weekly Summary Email"
+msgstr "週次サマリーメール"
+
+msgid "Email a weekly summary to the site admin"
+msgstr "週次サマリーをサイト管理者にメールで送る"
+
+msgid "Once a week: conversation count, AI replies, estimated cost, and recent visitor questions. Sent to %s."
+msgstr "週に 1 回、会話数・AI の返信数・推定コスト・最近の訪問者の質問を %s に送信します。"
+
+msgid "Rapls AI Chatbot has already handled %1$d conversation on your site. If it has been useful, would you leave a %2$s review on WordPress.org? It genuinely helps a small plugin."
+msgid_plural "Rapls AI Chatbot has already handled %1$d conversations on your site. If it has been useful, would you leave a %2$s review on WordPress.org? It genuinely helps a small plugin."
+msgstr[0] "Rapls AI Chatbot は、このサイトで既に %1$d 件の会話に対応しました。お役に立っているようでしたら、WordPress.org に %2$s レビューを書いていただけませんか？小さなプラグインには、本当に大きな支えになります。"
+
+# --- 1.13.0 additions ---
+
+msgid "Delete my chat history"
+msgstr "チャット履歴を削除"
+
+msgid "Delete your chat history? This removes the conversation from this site permanently and cannot be undone."
+msgstr "チャット履歴を削除しますか？このサイトに保存された会話が完全に削除され、元に戻すことはできません。"
+
+msgid "Your chat history has been deleted."
+msgstr "チャット履歴を削除しました。"
+
+msgid "Deletion failed. Please try again later."
+msgstr "削除に失敗しました。しばらくしてからもう一度お試しください。"
+
+msgid "Questions the bot could not answer (consider adding content):"
+msgstr "ボットが回答できなかった質問（コンテンツの追加をご検討ください）:"
+
+msgid "Cleared."
+msgstr "クリアしました。"
+
+msgid "Not enough visitor questions yet. At least 3 questions from the last 30 days are needed."
+msgstr "訪問者からの質問がまだ足りません。過去30日間に3件以上の質問が必要です。"
+
+msgid "FAQ generation failed: %s"
+msgstr "FAQ の生成に失敗しました: %s"
+
+msgid "The AI returned an empty response. Please try again."
+msgstr "AI から空の応答が返されました。もう一度お試しください。"
+
+msgid "No matching site content"
+msgstr "一致するサイトコンテンツなし"
+
+msgid "Refused (Grounded Answers Only)"
+msgstr "回答を控えました（根拠のある回答のみ）"
+
+msgid "Unanswered Questions"
+msgstr "未回答の質問"
+
+msgid "Generate FAQ draft from questions"
+msgstr "質問から FAQ 下書きを生成"
+
+msgid "Clear list"
+msgstr "リストをクリア"
+
+msgid "Questions your visitors asked that the bot could not answer from site content. Adding pages or knowledge entries for these topics improves answer quality the most."
+msgstr "訪問者からの質問のうち、ボットがサイトコンテンツから回答できなかったものです。これらのトピックについてページやナレッジを追加することが、回答品質の向上に最も効果的です。"
+
+msgid "Nothing recorded yet — the bot has been able to answer from site content so far."
+msgstr "まだ記録はありません。これまでのところ、ボットはサイトコンテンツから回答できています。"
+
+msgid "Times"
+msgstr "回数"
+
+msgid "Reason"
+msgstr "理由"
+
+msgid "Last asked"
+msgstr "最終質問日時"
+
+msgid "…and %d more (latest 50 are kept)."
+msgstr "…ほか%d件（最新50件を保持）。"
+
+msgid "FAQ draft (review and edit before publishing)"
+msgstr "FAQ 下書き（公開前に確認・編集してください）"
+
+msgid "Copy to clipboard"
+msgstr "クリップボードにコピー"
+
+msgid "Generating… this may take up to a minute."
+msgstr "生成中… 最大1分ほどかかる場合があります。"
+
+msgid "Clear the unanswered-question list?"
+msgstr "未回答質問のリストをクリアしますか？"
+
+msgid "Visitor History Deletion"
+msgstr "訪問者による履歴削除"
+
+msgid "Show a \"Delete my chat history\" button to visitors"
+msgstr "訪問者に「チャット履歴を削除」ボタンを表示"
+
+msgid "Lets each visitor permanently delete their own stored conversation from this site (privacy / GDPR friendly). Only shown when Save History is enabled."
+msgstr "各訪問者が、自分の会話履歴をこのサイトから完全に削除できるようにします（プライバシー / GDPR に配慮）。「履歴を保存」が有効な場合のみ表示されます。"
+
+msgid "Google Analytics 4 Events"
+msgstr "Google Analytics 4 イベント"
+
+msgid "Send chatbot events to Google Analytics 4"
+msgstr "チャットボットのイベントを Google Analytics 4 に送信"
+
+msgid "Fires raplsaich_chat_open, raplsaich_message_sent, and raplsaich_response_received events via gtag.js. Requires GA4 (gtag.js) to already be installed on your site — the plugin never loads it by itself."
+msgstr "gtag.js 経由で raplsaich_chat_open・raplsaich_message_sent・raplsaich_response_received イベントを送信します。サイトに GA4（gtag.js）が導入済みである必要があります。プラグインが gtag.js を読み込むことはありません。"

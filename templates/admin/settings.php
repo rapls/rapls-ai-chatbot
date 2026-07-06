@@ -38,6 +38,94 @@ if (!defined('ABSPATH')) {
             <?php esc_html_e('No credit card needed. Choose a free provider, paste a key, and the chatbot starts answering in about a minute.', 'rapls-ai-chatbot'); ?>
         </p>
 
+        <!-- Scripted demo preview: shows the widget working before any API key exists.
+             Self-contained (no chatbot.css / no REST calls) — client-side animation only. -->
+        <div class="raplsaich-demo" id="raplsaich-demo">
+            <p class="raplsaich-demo__caption"><?php esc_html_e('Preview — this is how the chatbot will behave once connected:', 'rapls-ai-chatbot'); ?></p>
+            <div class="raplsaich-demo__window" aria-hidden="true">
+                <div class="raplsaich-demo__header" style="background: <?php echo esc_attr($settings['primary_color'] ?? '#667eea'); ?>;">
+                    <span class="raplsaich-demo__avatar">&#129302;</span>
+                    <span class="raplsaich-demo__name"><?php echo esc_html($settings['bot_name'] ?? __('AI Assistant', 'rapls-ai-chatbot')); ?></span>
+                </div>
+                <div class="raplsaich-demo__messages" id="raplsaich-demo-messages"></div>
+                <div class="raplsaich-demo__input">
+                    <input type="text" disabled placeholder="<?php esc_attr_e('Demo preview — connect a key above to go live', 'rapls-ai-chatbot'); ?>">
+                    <button type="button" class="button" id="raplsaich-demo-replay" title="<?php esc_attr_e('Replay demo', 'rapls-ai-chatbot'); ?>">&#8635;</button>
+                </div>
+            </div>
+            <p class="raplsaich-demo__note"><?php esc_html_e('Scripted sample. After setup, answers come from your own pages and knowledge base.', 'rapls-ai-chatbot'); ?></p>
+        </div>
+        <style>
+            .raplsaich-demo { max-width: 420px; margin: 0 0 24px; }
+            .raplsaich-demo__caption { font-weight: 600; margin: 0 0 8px; }
+            .raplsaich-demo__window { border: 1px solid #c3c4c7; border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+            .raplsaich-demo__header { color: #fff; padding: 10px 14px; display: flex; align-items: center; gap: 8px; font-weight: 600; }
+            .raplsaich-demo__messages { height: 190px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: #f6f7f7; }
+            .raplsaich-demo__msg { max-width: 80%; padding: 8px 12px; border-radius: 14px; font-size: 13px; line-height: 1.5; }
+            .raplsaich-demo__msg--user { align-self: flex-end; background: <?php echo esc_attr($settings['primary_color'] ?? '#667eea'); ?>; color: #fff; border-bottom-right-radius: 4px; }
+            .raplsaich-demo__msg--bot { align-self: flex-start; background: #fff; border: 1px solid #e0e0e0; border-bottom-left-radius: 4px; }
+            .raplsaich-demo__typing { align-self: flex-start; padding: 10px 14px; }
+            .raplsaich-demo__typing span { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: #a7aaad; animation: raplsaichDemoBlink 1.2s infinite; }
+            .raplsaich-demo__typing span:nth-child(2) { animation-delay: .2s; }
+            .raplsaich-demo__typing span:nth-child(3) { animation-delay: .4s; }
+            @keyframes raplsaichDemoBlink { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; } }
+            .raplsaich-demo__input { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #e0e0e0; }
+            .raplsaich-demo__input input { flex: 1; }
+            .raplsaich-demo__note { color: #646970; font-size: 12px; margin: 6px 0 0; }
+        </style>
+        <script>
+        (function () {
+            var box = document.getElementById('raplsaich-demo-messages');
+            if (!box) { return; }
+            var script = [
+                { role: 'user', text: <?php echo wp_json_encode(__('What are your business hours?', 'rapls-ai-chatbot')); ?> },
+                { role: 'bot',  text: <?php echo wp_json_encode(__('We are open 10:00–18:00 on weekdays, closed on national holidays. You can also reach us through the contact form anytime.', 'rapls-ai-chatbot')); ?> },
+                { role: 'user', text: <?php echo wp_json_encode(__('Which plan should I choose?', 'rapls-ai-chatbot')); ?> },
+                { role: 'bot',  text: <?php echo wp_json_encode(__('For most small sites the Standard plan is enough. It includes everything in Light plus priority support — see the Pricing page for details.', 'rapls-ai-chatbot')); ?> }
+            ];
+            var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var timers = [];
+            function el(cls, text) {
+                var d = document.createElement('div');
+                d.className = cls;
+                if (text) { d.textContent = text; }
+                return d;
+            }
+            function play() {
+                timers.forEach(clearTimeout);
+                timers = [];
+                box.innerHTML = '';
+                var t = 400;
+                script.forEach(function (m) {
+                    if (m.role === 'bot') {
+                        timers.push(setTimeout(function () {
+                            var typing = el('raplsaich-demo__typing');
+                            typing.innerHTML = '<span></span><span></span><span></span>';
+                            box.appendChild(typing);
+                            box.scrollTop = box.scrollHeight;
+                        }, reduced ? 0 : t));
+                        t += reduced ? 0 : 900;
+                        timers.push(setTimeout(function () {
+                            var typing = box.querySelector('.raplsaich-demo__typing');
+                            if (typing) { typing.remove(); }
+                            box.appendChild(el('raplsaich-demo__msg raplsaich-demo__msg--bot', m.text));
+                            box.scrollTop = box.scrollHeight;
+                        }, reduced ? 0 : t));
+                    } else {
+                        timers.push(setTimeout(function () {
+                            box.appendChild(el('raplsaich-demo__msg raplsaich-demo__msg--user', m.text));
+                            box.scrollTop = box.scrollHeight;
+                        }, reduced ? 0 : t));
+                    }
+                    t += reduced ? 0 : 1100;
+                });
+            }
+            var replay = document.getElementById('raplsaich-demo-replay');
+            if (replay) { replay.addEventListener('click', play); }
+            play();
+        })();
+        </script>
+
         <fieldset class="raplsaich-onboarding__providers" id="raplsaich-onboarding-providers">
             <legend class="raplsaich-onboarding__providers-legend">
                 <?php esc_html_e('Choose how to start for free', 'rapls-ai-chatbot'); ?>
@@ -586,6 +674,39 @@ if (!defined('ABSPATH')) {
                     <?php endif; ?>
                 </table>
 
+                <!-- Answer Quality & Reliability (1.12.0) -->
+                <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
+                    <?php esc_html_e('Answer Quality & Reliability', 'rapls-ai-chatbot'); ?>
+                </h3>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Page Context', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[page_context_enabled]" value="1"
+                                    <?php checked($settings['page_context_enabled'] ?? true); ?>>
+                                <?php esc_html_e('Include the page the visitor is viewing as context', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Questions like "does this product ship overseas?" get grounded in the page the visitor is actually on. Adds a small amount of tokens per request.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Model Fallback', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[model_fallback_enabled]" value="1"
+                                    <?php checked($settings['model_fallback_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Retry once with a cheaper model when the main model hits its quota', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('When the selected model returns a quota / rate-limit error, the reply is retried once with the same provider\'s lightweight model instead of showing an error to the visitor.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
                 <!-- MCP Settings -->
                 <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
                     <?php esc_html_e('MCP (Model Context Protocol)', 'rapls-ai-chatbot'); ?>
@@ -810,6 +931,47 @@ if (!defined('ABSPATH')) {
                                     </p>
                                 </details>
                             </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Starter Template', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <select id="raplsaich-starter-template">
+                                <option value=""><?php esc_html_e('— Choose your industry —', 'rapls-ai-chatbot'); ?></option>
+                                <?php foreach (RAPLSAICH_Admin::get_starter_templates() as $tpl_id => $tpl): ?>
+                                    <option value="<?php echo esc_attr($tpl_id); ?>"><?php echo esc_html($tpl['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <button type="button" class="button" id="raplsaich-apply-template"><?php esc_html_e('Apply template', 'rapls-ai-chatbot'); ?></button>
+                            <span id="raplsaich-template-status" role="status" aria-live="polite"></span>
+                            <p class="description"><?php esc_html_e('Sets a ready-made system prompt and preset questions for your industry. Your current system prompt and preset questions will be replaced (other settings are untouched).', 'rapls-ai-chatbot'); ?></p>
+                            <script>
+                            jQuery(function ($) {
+                                $('#raplsaich-apply-template').on('click', function () {
+                                    var tpl = $('#raplsaich-starter-template').val();
+                                    if (!tpl) { return; }
+                                    if (!window.confirm(<?php echo wp_json_encode(__('Replace the current system prompt and preset questions with this template?', 'rapls-ai-chatbot')); ?>)) { return; }
+                                    var $btn = $(this).prop('disabled', true);
+                                    $.post(ajaxurl, {
+                                        action: 'raplsaich_apply_starter_template',
+                                        template: tpl,
+                                        nonce: <?php echo wp_json_encode(wp_create_nonce('raplsaich_apply_template')); ?>
+                                    }).done(function (res) {
+                                        if (res && res.success) {
+                                            $('#raplsaich-template-status').text(res.data.message);
+                                            window.location.href = window.location.pathname + window.location.search + '#tab-chat';
+                                            window.location.reload();
+                                        } else {
+                                            $('#raplsaich-template-status').text((res && res.data && res.data.message) || 'Error');
+                                            $btn.prop('disabled', false);
+                                        }
+                                    }).fail(function () {
+                                        $('#raplsaich-template-status').text('Error');
+                                        $btn.prop('disabled', false);
+                                    });
+                                });
+                            });
+                            </script>
                         </td>
                     </tr>
                     <tr>
@@ -2072,6 +2234,34 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Monthly Cost Guard', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[cost_guard_enabled]" value="1"
+                                    <?php checked(!empty($settings['cost_guard_enabled'])); ?>>
+                                <?php esc_html_e('Stop calling the AI when this month\'s estimated cost reaches a budget', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <div style="margin-top:8px;">
+                                <label for="raplsaich_cost_guard_budget"><?php esc_html_e('Monthly budget (USD)', 'rapls-ai-chatbot'); ?></label>
+                                <input type="number" id="raplsaich_cost_guard_budget" min="0" step="0.5" class="small-text"
+                                       name="raplsaich_settings[cost_guard_monthly_budget]"
+                                       value="<?php echo esc_attr((string) ($settings['cost_guard_monthly_budget'] ?? 10)); ?>">
+                                <?php
+                                if (class_exists('RAPLSAICH_Cost_Calculator')) {
+                                    /* translators: %s: formatted month-to-date estimated cost */
+                                    printf(
+                                        '<span class="description" style="display:inline; margin-left:8px;">' . esc_html__('This month so far: %s', 'rapls-ai-chatbot') . '</span>',
+                                        esc_html(RAPLSAICH_Cost_Calculator::format_cost(RAPLSAICH_Cost_Calculator::get_month_to_date_cost()))
+                                    );
+                                }
+                                ?>
+                            </div>
+                            <p class="description">
+                                <?php esc_html_e('When the estimated month-to-date API cost reaches the budget, the bot replies with a fixed message instead of calling the AI, and resumes automatically next month. Costs are estimates based on recorded token usage — set the budget below your provider\'s own hard limit.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Cloudflare Integration', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <label>
@@ -2488,6 +2678,51 @@ if (!defined('ABSPATH')) {
                                    value="<?php echo esc_attr($settings['retention_days'] ?? 90); ?>"
                                    min="0" max="3650" class="small-text"> <?php esc_html_e('days', 'rapls-ai-chatbot'); ?>
                             <p class="description"><?php esc_html_e('0 for unlimited retention', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Weekly Summary Email', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[weekly_summary_enabled]" value="1"
+                                    <?php checked($settings['weekly_summary_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Email a weekly summary to the site admin', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php
+                                /* translators: %s: admin email address */
+                                printf(
+                                    esc_html__('Once a week: conversation count, AI replies, estimated cost, and recent visitor questions. Sent to %s.', 'rapls-ai-chatbot'),
+                                    esc_html(get_option('admin_email'))
+                                );
+                                ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Visitor History Deletion', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[visitor_delete_enabled]" value="1"
+                                    <?php checked($settings['visitor_delete_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Show a "Delete my chat history" button to visitors', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Lets each visitor permanently delete their own stored conversation from this site (privacy / GDPR friendly). Only shown when Save History is enabled.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Google Analytics 4 Events', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[ga4_events_enabled]" value="1"
+                                    <?php checked($settings['ga4_events_enabled'] ?? false); ?>>
+                                <?php esc_html_e('Send chatbot events to Google Analytics 4', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Fires raplsaich_chat_open, raplsaich_message_sent, and raplsaich_response_received events via gtag.js. Requires GA4 (gtag.js) to already be installed on your site — the plugin never loads it by itself.', 'rapls-ai-chatbot'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>
