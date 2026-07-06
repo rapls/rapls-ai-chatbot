@@ -1268,6 +1268,109 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * System health checks shown on the dashboard.
+     *
+     * Each row: ['label', 'status' ('ok'|'warn'|'err'), 'detail'].
+     * Cheap and read-only — no network calls here. REST reachability is
+     * probed client-side; API connectivity has its own test button in
+     * the settings screen.
+     */
+    public function get_health_checks(): array {
+        $settings = get_option('raplsaich_settings', []);
+        $checks = [];
+
+        // AI provider key (wpai gets credentials from WP Connectors, no key here)
+        $provider = $settings['ai_provider'] ?? 'openai';
+        $key_ok = ($provider === 'wpai') || !empty($settings[$provider . '_api_key']);
+        $checks[] = [
+            'label'  => __('AI provider API key', 'rapls-ai-chatbot'),
+            'status' => $key_ok ? 'ok' : 'err',
+            'detail' => $key_ok
+                ? strtoupper($provider)
+                : __('No API key set for the selected provider.', 'rapls-ai-chatbot'),
+        ];
+
+        // Daily cleanup cron event
+        $cleanup_next = wp_next_scheduled('raplsaich_cleanup_old_conversations');
+        $checks[] = [
+            'label'  => __('Daily cleanup schedule', 'rapls-ai-chatbot'),
+            'status' => $cleanup_next ? 'ok' : 'warn',
+            'detail' => $cleanup_next
+                /* translators: %s: date and time of the next scheduled run */
+                ? sprintf(__('Next run: %s', 'rapls-ai-chatbot'), wp_date(get_option('date_format') . ' ' . get_option('time_format'), $cleanup_next))
+                : __('Not scheduled — deactivate and reactivate the plugin to restore it.', 'rapls-ai-chatbot'),
+        ];
+
+        // Crawl schedule + freshness (only meaningful when Site Learning is on)
+        if (!empty($settings['crawler_enabled'])) {
+            $crawl_next = wp_next_scheduled('raplsaich_crawl_site');
+            $checks[] = [
+                'label'  => __('Site crawl schedule', 'rapls-ai-chatbot'),
+                'status' => $crawl_next ? 'ok' : 'warn',
+                'detail' => $crawl_next
+                    /* translators: %s: date and time of the next scheduled run */
+                    ? sprintf(__('Next run: %s', 'rapls-ai-chatbot'), wp_date(get_option('date_format') . ' ' . get_option('time_format'), $crawl_next))
+                    : __('Not scheduled — deactivate and reactivate the plugin to restore it.', 'rapls-ai-chatbot'),
+            ];
+
+            $last_crawl = (string) get_option('raplsaich_last_crawl', '');
+            if ($last_crawl === '') {
+                $checks[] = [
+                    'label'  => __('Last crawl', 'rapls-ai-chatbot'),
+                    'status' => 'warn',
+                    'detail' => __('Never run yet.', 'rapls-ai-chatbot'),
+                ];
+            } else {
+                // Stored via current_time('mysql') — compare in site-local time.
+                $last_ts = strtotime($last_crawl);
+                $stale = $last_ts && (current_time('timestamp') - $last_ts) > 7 * DAY_IN_SECONDS;
+                $checks[] = [
+                    'label'  => __('Last crawl', 'rapls-ai-chatbot'),
+                    'status' => $stale ? 'warn' : 'ok',
+                    'detail' => $stale
+                        /* translators: %s: date of the last crawl */
+                        ? sprintf(__('More than 7 days ago (%s). Check WP-Cron.', 'rapls-ai-chatbot'), $last_crawl)
+                        /* translators: %s: date and time of the last run */
+                        : sprintf(__('Last run: %s', 'rapls-ai-chatbot'), $last_crawl),
+                ];
+            }
+        }
+
+        // WP-Cron availability
+        $cron_disabled = defined('DISABLE_WP_CRON') && DISABLE_WP_CRON;
+        $checks[] = [
+            'label'  => 'WP-Cron',
+            'status' => $cron_disabled ? 'warn' : 'ok',
+            'detail' => $cron_disabled
+                ? __('WP-Cron is disabled (DISABLE_WP_CRON). Scheduled tasks require a server cron that requests wp-cron.php.', 'rapls-ai-chatbot')
+                : __('Enabled', 'rapls-ai-chatbot'),
+        ];
+
+        // Content index
+        $index_count = (int) RAPLSAICH_Content_Index::get_count();
+        $checks[] = [
+            'label'  => __('Content index', 'rapls-ai-chatbot'),
+            'status' => $index_count > 0 ? 'ok' : 'warn',
+            'detail' => $index_count > 0
+                /* translators: %s: number of indexed entries */
+                ? sprintf(__('%s entries', 'rapls-ai-chatbot'), number_format_i18n($index_count))
+                : __('No content indexed yet — run site learning.', 'rapls-ai-chatbot'),
+        ];
+
+        // mbstring (plugin has fallbacks, but native is preferred)
+        $mb = extension_loaded('mbstring');
+        $checks[] = [
+            'label'  => __('PHP mbstring extension', 'rapls-ai-chatbot'),
+            'status' => $mb ? 'ok' : 'warn',
+            'detail' => $mb
+                ? __('Enabled', 'rapls-ai-chatbot')
+                : __('Missing — multibyte-safe fallbacks are in use.', 'rapls-ai-chatbot'),
+        ];
+
+        return $checks;
+    }
+
+    /**
      * Warn on plugin screens when month-to-date cost approaches / exceeds the budget.
      */
     public function cost_guard_notice(): void {
@@ -1444,7 +1547,7 @@ class RAPLSAICH_Admin {
      * published automatically.
      */
     public function ajax_generate_faq(): void {
-        check_ajax_referer('raplsaich_generate_faq', 'nonce');
+        check_ajax_referer('raplsaich_generate_faq_draft', 'nonce');
         if (!current_user_can(self::get_manage_cap())) {
             wp_send_json_error(['message' => __('Permission denied.', 'rapls-ai-chatbot')], 403);
         }
@@ -1523,10 +1626,68 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * AJAX: save the generated FAQ draft as a WordPress page draft.
+     *
+     * Minimal Markdown → HTML (headings + paragraphs only); the admin
+     * reviews and edits the draft in the block editor before publishing.
+     */
+    public function ajax_save_faq_draft(): void {
+        check_ajax_referer('raplsaich_save_faq_draft', 'nonce');
+        if (!current_user_can(self::get_manage_cap()) || !current_user_can('edit_pages')) {
+            wp_send_json_error(['message' => __('Permission denied.', 'rapls-ai-chatbot')], 403);
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by check_ajax_referer above
+        $faq = isset($_POST['faq']) ? sanitize_textarea_field(wp_unslash($_POST['faq'])) : '';
+        $faq = trim($faq);
+        if ($faq === '') {
+            wp_send_json_error(['message' => __('Nothing to save — generate the FAQ draft first.', 'rapls-ai-chatbot')], 400);
+        }
+        if (raplsaich_mb_strlen($faq) > 40000) {
+            $faq = raplsaich_mb_substr($faq, 0, 40000);
+        }
+
+        $html_lines = [];
+        foreach (preg_split('/\r\n|\r|\n/', $faq) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            if (strpos($line, '### ') === 0) {
+                $html_lines[] = '<h3>' . esc_html(substr($line, 4)) . '</h3>';
+            } elseif (strpos($line, '## ') === 0) {
+                $html_lines[] = '<h2>' . esc_html(substr($line, 3)) . '</h2>';
+            } elseif (strpos($line, '# ') === 0) {
+                $html_lines[] = '<h2>' . esc_html(substr($line, 2)) . '</h2>';
+            } else {
+                $html_lines[] = '<p>' . esc_html($line) . '</p>';
+            }
+        }
+
+        $post_id = wp_insert_post([
+            'post_type'    => 'page',
+            'post_status'  => 'draft',
+            /* translators: %s: current date */
+            'post_title'   => sprintf(__('FAQ draft (%s)', 'rapls-ai-chatbot'), wp_date(get_option('date_format'))),
+            'post_content' => implode("\n", $html_lines),
+        ], true);
+
+        if (is_wp_error($post_id)) {
+            wp_send_json_error(['message' => $post_id->get_error_message()], 500);
+        }
+
+        wp_send_json_success([
+            'edit_url' => get_edit_post_link($post_id, 'raw'),
+            'message'  => __('Draft page created.', 'rapls-ai-chatbot'),
+        ]);
+    }
+
+    /**
      * Render dashboard page
      */
     public function render_dashboard_page(): void {
         $setup_progress = $this->get_setup_progress();
+        $health_checks = $this->get_health_checks();
         $stats = $this->get_dashboard_stats();
         $usage_stats = RAPLSAICH_Cost_Calculator::get_usage_stats(30);
         $chart_data = RAPLSAICH_Cost_Calculator::get_chart_data(30);

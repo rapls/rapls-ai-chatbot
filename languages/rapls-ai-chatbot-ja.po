@@ -8553,3 +8553,83 @@ msgstr "チャットボットのイベントを Google Analytics 4 に送信"
 
 msgid "Fires raplsaich_chat_open, raplsaich_message_sent, and raplsaich_response_received events via gtag.js. Requires GA4 (gtag.js) to already be installed on your site — the plugin never loads it by itself."
 msgstr "gtag.js 経由で raplsaich_chat_open・raplsaich_message_sent・raplsaich_response_received イベントを送信します。サイトに GA4（gtag.js）が導入済みである必要があります。プラグインが gtag.js を読み込むことはありません。"
+
+# --- 1.14.0 additions ---
+
+msgid "System Health"
+msgstr "システム診断"
+
+msgid "AI provider API key"
+msgstr "AI プロバイダーの API キー"
+
+msgid "No API key set for the selected provider."
+msgstr "選択中のプロバイダーの API キーが設定されていません。"
+
+msgid "Daily cleanup schedule"
+msgstr "日次クリーンアップのスケジュール"
+
+msgid "Next run: %s"
+msgstr "次回実行: %s"
+
+msgid "Not scheduled — deactivate and reactivate the plugin to restore it."
+msgstr "未スケジュールです。プラグインを無効化してから再度有効化すると復元されます。"
+
+msgid "Site crawl schedule"
+msgstr "サイトクロールのスケジュール"
+
+msgid "Last crawl"
+msgstr "最終クロール"
+
+msgid "Never run yet."
+msgstr "まだ実行されていません。"
+
+msgid "More than 7 days ago (%s). Check WP-Cron."
+msgstr "7日以上前（%s）です。WP-Cron を確認してください。"
+
+msgid "Last run: %s"
+msgstr "前回実行: %s"
+
+msgid "WP-Cron is disabled (DISABLE_WP_CRON). Scheduled tasks require a server cron that requests wp-cron.php."
+msgstr "WP-Cron が無効化されています（DISABLE_WP_CRON）。スケジュール処理には wp-cron.php を呼び出すサーバー側 cron が必要です。"
+
+msgid "Content index"
+msgstr "コンテンツインデックス"
+
+msgid "%s entries"
+msgstr "%s件"
+
+msgid "No content indexed yet — run site learning."
+msgstr "まだコンテンツがインデックスされていません。サイト学習を実行してください。"
+
+msgid "PHP mbstring extension"
+msgstr "PHP mbstring 拡張"
+
+msgid "Missing — multibyte-safe fallbacks are in use."
+msgstr "未導入です。マルチバイト対応のフォールバック処理を使用しています。"
+
+msgid "Checking…"
+msgstr "確認中…"
+
+msgid "Not reachable — the chat widget cannot contact the server. Check security plugins or REST API blockers."
+msgstr "到達できません。チャットウィジェットがサーバーと通信できません。セキュリティプラグインや REST API のブロックを確認してください。"
+
+msgid "Add to knowledge"
+msgstr "ナレッジに追加"
+
+msgid "Create draft page"
+msgstr "固定ページの下書きを作成"
+
+msgid "Open draft"
+msgstr "下書きを開く"
+
+msgid "Saving…"
+msgstr "保存中…"
+
+msgid "Nothing to save — generate the FAQ draft first."
+msgstr "保存する内容がありません。先に FAQ 下書きを生成してください。"
+
+msgid "FAQ draft (%s)"
+msgstr "FAQ 下書き（%s）"
+
+msgid "Draft page created."
+msgstr "下書きページを作成しました。"

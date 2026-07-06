@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai chatbot, customer support, lead generation, faq
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.13.0
+Stable tag: 1.14.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -229,6 +229,12 @@ You can disable these features in the plugin settings:
 * Web search
 
 == Changelog ==
+
+= 1.14.0 =
+* Added: "Add to knowledge" button on every Unanswered Questions row — opens the knowledge form with the question prefilled, closing the record → improve loop in one click.
+* Added: "Create draft page" button for the generated FAQ — saves the draft as a WordPress page (draft status) and links straight to the editor.
+* Added: System Health panel on the dashboard — API key, cron schedules, crawl freshness, WP-Cron availability, content index, PHP mbstring, and a live REST API reachability probe.
+* Fixed: The dashboard FAQ generator now uses its own AJAX action (raplsaich_generate_faq_draft) so it no longer collides with the Pro knowledge-gap FAQ generator.
 
 = 1.13.0 =
 * Added: Visitor history deletion (Settings → Data Management, off by default) — shows a "Delete my chat history" button in the widget so each visitor can permanently remove their own stored conversation (privacy / GDPR friendly).

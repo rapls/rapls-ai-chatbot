@@ -184,7 +184,10 @@ class RAPLSAICH_Main {
         $this->loader->add_action('wp_ajax_raplsaich_test_api', $admin, 'ajax_test_api');
         $this->loader->add_action('wp_ajax_raplsaich_apply_starter_template', $admin, 'ajax_apply_starter_template');
         $this->loader->add_action('wp_ajax_raplsaich_clear_unanswered', $admin, 'ajax_clear_unanswered');
-        $this->loader->add_action('wp_ajax_raplsaich_generate_faq', $admin, 'ajax_generate_faq');
+        // NOTE: action is *_draft — Pro registers wp_ajax_raplsaich_generate_faq
+        // for its own knowledge-gap FAQ generator; the names must not collide.
+        $this->loader->add_action('wp_ajax_raplsaich_generate_faq_draft', $admin, 'ajax_generate_faq');
+        $this->loader->add_action('wp_ajax_raplsaich_save_faq_draft', $admin, 'ajax_save_faq_draft');
         $this->loader->add_action('wp_ajax_raplsaich_onboard_openrouter_test', $admin, 'ajax_onboard_openrouter_test');
         $this->loader->add_action('wp_ajax_raplsaich_onboard_gemini_test', $admin, 'ajax_onboard_gemini_test');
         $this->loader->add_action('wp_ajax_raplsaich_get_conversation_messages', $admin, 'ajax_get_conversation_messages');

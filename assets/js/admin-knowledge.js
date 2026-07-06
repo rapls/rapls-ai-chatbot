@@ -1,6 +1,23 @@
 jQuery(document).ready(function($) {
     var i18n = raplsaichAdmin.i18n || {};
 
+    // Prefill the add-knowledge form from the dashboard's "Add to knowledge"
+    // link on the Unanswered Questions list (?raplsaich_prefill=<question>).
+    try {
+        var raplsPrefill = new URLSearchParams(window.location.search).get('raplsaich_prefill');
+        if (raplsPrefill) {
+            var $prefillTitle = $('#knowledge-title');
+            if ($prefillTitle.length && !$prefillTitle.val()) {
+                $prefillTitle.val(raplsPrefill);
+                var raplsAddForm = document.getElementById('raplsaich-add-knowledge-form');
+                if (raplsAddForm && raplsAddForm.scrollIntoView) {
+                    raplsAddForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+                $('#knowledge-content').trigger('focus');
+            }
+        }
+    } catch (e) { /* URLSearchParams unavailable — non-fatal */ }
+
     // Add text
     $('#raplsaich-add-knowledge-form').on('submit', function(e) {
         e.preventDefault();

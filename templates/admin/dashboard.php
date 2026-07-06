@@ -175,6 +175,29 @@ if (!defined('ABSPATH')) {
                     </td>
                 </tr>
             </table>
+
+            <!-- System health (1.14.0) -->
+            <h2 style="margin-top: 20px;"><?php esc_html_e('System Health', 'rapls-ai-chatbot'); ?></h2>
+            <table class="raplsaich-status-table">
+                <?php if (!empty($health_checks)) : foreach ($health_checks as $health_check) : ?>
+                <tr>
+                    <td><?php echo esc_html($health_check['label']); ?></td>
+                    <td>
+                        <span class="status-badge status-<?php echo esc_attr($health_check['status'] === 'ok' ? 'ok' : 'warning'); ?>">
+                            <?php echo esc_html($health_check['detail']); ?>
+                        </span>
+                    </td>
+                </tr>
+                <?php endforeach; endif; ?>
+                <tr>
+                    <td><?php esc_html_e('REST API', 'rapls-ai-chatbot'); ?></td>
+                    <td>
+                        <span id="raplsaich-health-rest" class="status-badge status-off">
+                            <?php esc_html_e('Checking…', 'rapls-ai-chatbot'); ?>
+                        </span>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <!-- API Usage Statistics -->
@@ -277,7 +300,7 @@ if (!defined('ABSPATH')) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                 <h2 style="margin: 0;"><?php esc_html_e('Unanswered Questions', 'rapls-ai-chatbot'); ?></h2>
                 <div>
-                    <button type="button" id="raplsaich-generate-faq" class="button button-secondary">
+                    <button type="button" id="raplsaich-generate-faq-draft" class="button button-secondary">
                         ✨ <?php esc_html_e('Generate FAQ draft from questions', 'rapls-ai-chatbot'); ?>
                     </button>
                     <?php if (!empty($unanswered_log)) : ?>
@@ -299,8 +322,9 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th><?php esc_html_e('Question', 'rapls-ai-chatbot'); ?></th>
                             <th style="width: 70px; text-align: right;"><?php esc_html_e('Times', 'rapls-ai-chatbot'); ?></th>
-                            <th style="width: 220px;"><?php esc_html_e('Reason', 'rapls-ai-chatbot'); ?></th>
+                            <th style="width: 200px;"><?php esc_html_e('Reason', 'rapls-ai-chatbot'); ?></th>
                             <th style="width: 140px;"><?php esc_html_e('Last asked', 'rapls-ai-chatbot'); ?></th>
+                            <th style="width: 130px;"><span class="screen-reader-text"><?php esc_html_e('Action', 'rapls-ai-chatbot'); ?></span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -314,6 +338,11 @@ if (!defined('ABSPATH')) {
                                 $unanswered_ts = (int) ($unanswered_entry['t'] ?? 0);
                                 echo $unanswered_ts ? esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), $unanswered_ts)) : '—';
                                 ?>
+                            </td>
+                            <td>
+                                <a class="button button-small" href="<?php echo esc_url(admin_url('admin.php?page=raplsaich-knowledge&raplsaich_prefill=' . rawurlencode((string) ($unanswered_entry['q'] ?? '')))); ?>">
+                                    <?php esc_html_e('Add to knowledge', 'rapls-ai-chatbot'); ?>
+                                </a>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -338,6 +367,8 @@ if (!defined('ABSPATH')) {
                 <textarea id="raplsaich-faq-textarea" readonly rows="14" style="width: 100%; font-family: monospace;"></textarea>
                 <p>
                     <button type="button" id="raplsaich-faq-copy" class="button button-secondary"><?php esc_html_e('Copy to clipboard', 'rapls-ai-chatbot'); ?></button>
+                    <button type="button" id="raplsaich-faq-save-draft" class="button button-secondary"><?php esc_html_e('Create draft page', 'rapls-ai-chatbot'); ?></button>
+                    <a id="raplsaich-faq-edit-link" href="#" target="_blank" rel="noopener noreferrer" class="button button-primary" hidden><?php esc_html_e('Open draft', 'rapls-ai-chatbot'); ?></a>
                     <span id="raplsaich-faq-copied" style="color: #00a32a; margin-left: 8px;" hidden><?php esc_html_e('Copied!', 'rapls-ai-chatbot'); ?></span>
                 </p>
             </div>
@@ -347,19 +378,67 @@ if (!defined('ABSPATH')) {
 
 <script>
 jQuery(function($) {
-    var faqNonce = <?php echo wp_json_encode(wp_create_nonce('raplsaich_generate_faq')); ?>;
+    var faqNonce = <?php echo wp_json_encode(wp_create_nonce('raplsaich_generate_faq_draft')); ?>;
     var clearNonce = <?php echo wp_json_encode(wp_create_nonce('raplsaich_clear_unanswered')); ?>;
+    var saveDraftNonce = <?php echo wp_json_encode(wp_create_nonce('raplsaich_save_faq_draft')); ?>;
+    var restProbeUrl = <?php echo wp_json_encode(esc_url_raw(rest_url('rapls-ai-chatbot/v1/message-limit'))); ?>;
     var i18n = {
         generating: <?php echo wp_json_encode(__('Generating… this may take up to a minute.', 'rapls-ai-chatbot')); ?>,
         generateLabel: <?php echo wp_json_encode('✨ ' . __('Generate FAQ draft from questions', 'rapls-ai-chatbot')); ?>,
         errorOccurred: <?php echo wp_json_encode(__('An error occurred.', 'rapls-ai-chatbot')); ?>,
-        confirmClear: <?php echo wp_json_encode(__('Clear the unanswered-question list?', 'rapls-ai-chatbot')); ?>
+        confirmClear: <?php echo wp_json_encode(__('Clear the unanswered-question list?', 'rapls-ai-chatbot')); ?>,
+        saving: <?php echo wp_json_encode(__('Saving…', 'rapls-ai-chatbot')); ?>,
+        saveDraftLabel: <?php echo wp_json_encode(__('Create draft page', 'rapls-ai-chatbot')); ?>,
+        restOk: <?php echo wp_json_encode(__('Reachable', 'rapls-ai-chatbot')); ?>,
+        restNg: <?php echo wp_json_encode(__('Not reachable — the chat widget cannot contact the server. Check security plugins or REST API blockers.', 'rapls-ai-chatbot')); ?>
     };
 
-    $('#raplsaich-generate-faq').on('click', function() {
+    // REST reachability probe (client-side, same origin as a real visitor)
+    (function() {
+        var $badge = $('#raplsaich-health-rest');
+        if (!$badge.length || typeof window.fetch !== 'function') return;
+        fetch(restProbeUrl, { credentials: 'same-origin' })
+            .then(function(r) {
+                var ok = r && r.ok;
+                $badge.text(ok ? i18n.restOk : i18n.restNg)
+                    .removeClass('status-off')
+                    .addClass(ok ? 'status-ok' : 'status-warning');
+            })
+            .catch(function() {
+                $badge.text(i18n.restNg).removeClass('status-off').addClass('status-warning');
+            });
+    })();
+
+    $('#raplsaich-faq-save-draft').on('click', function() {
+        var faqText = $('#raplsaich-faq-textarea').val();
+        if (!faqText) return;
+        var $btn = $(this).prop('disabled', true).text(i18n.saving);
+        $.post(ajaxurl, { action: 'raplsaich_save_faq_draft', nonce: saveDraftNonce, faq: faqText })
+            .done(function(resp) {
+                if (resp && resp.success && resp.data && resp.data.edit_url) {
+                    $('#raplsaich-faq-edit-link').attr('href', resp.data.edit_url).prop('hidden', false);
+                } else {
+                    alert((resp && resp.data && resp.data.message) || i18n.errorOccurred);
+                }
+            })
+            .fail(function(xhr) {
+                var msg = i18n.errorOccurred;
+                try {
+                    if (xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+                        msg = xhr.responseJSON.data.message;
+                    }
+                } catch (e) {}
+                alert(msg);
+            })
+            .always(function() {
+                $btn.prop('disabled', false).text(i18n.saveDraftLabel);
+            });
+    });
+
+    $('#raplsaich-generate-faq-draft').on('click', function() {
         var $btn = $(this);
         $btn.prop('disabled', true).text(i18n.generating);
-        $.post(ajaxurl, { action: 'raplsaich_generate_faq', nonce: faqNonce })
+        $.post(ajaxurl, { action: 'raplsaich_generate_faq_draft', nonce: faqNonce })
             .done(function(resp) {
                 if (resp && resp.success && resp.data && resp.data.faq) {
                     $('#raplsaich-faq-textarea').val(resp.data.faq);
