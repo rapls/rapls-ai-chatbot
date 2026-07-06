@@ -144,12 +144,14 @@ See [Plugin details](https://raplsworks.com/plugins/rapls-ai-chatbot/) or [WordP
 
 1. Chat widget — the front-end chatbot answering a visitor from your site content.
 2. Start for free — the onboarding panel connects a no-credit-card OpenRouter or Google Gemini free key in about a minute, with each option's data-handling trade-off shown up front.
-3. Dashboard — conversations, messages, indexed pages, and custom knowledge counts, the active AI provider status, and 30-day token usage with an estimated cost.
+3. Dashboard — setup checklist, conversation/index/knowledge stats, System Health panel (API key, cron, REST reachability), and 30-day token usage with an estimated cost.
 4. Knowledge base — add custom text/Q&A or import TXT, CSV, MD, PDF, or DOCX files.
 5. Conversations — review, filter, archive, and export visitor conversations with lead and status details.
 6. Analytics — conversation, message, cost, and quality metrics (Pro).
 7. Site Learning — auto-crawl posts, pages, and custom post types so the bot answers from your own content.
 8. AI Settings — choose your provider (OpenAI, Anthropic Claude, Google Gemini, or OpenRouter), enter your API key, pick a model, and enable Vector Embedding (RAG).
+9. Unanswered Questions — questions the bot could not answer from your content, with one-click "Add to knowledge" and an AI-generated FAQ draft you can save as a draft page.
+10. Cost controls — Monthly Cost Guard with budget warnings, per-visitor usage limits, and model fallback so API bills never run away.
 
 == External Services ==
 
