@@ -1342,11 +1342,11 @@ if (!defined('ABSPATH')) {
                         <td>
                             <input type="text" name="raplsaich_settings[quota_error_message]"
                                    id="raplsaich_quota_error_message"
-                                   value="<?php echo esc_attr($settings['quota_error_message'] ?? 'Currently recharging. Please try again later.'); ?>"
+                                   value="<?php echo esc_attr($settings['quota_error_message'] ?? 'The AI assistant has reached its usage limit for now. Please try again later, or contact us and we\'ll be happy to help.'); ?>"
                                    class="large-text">
                             <p class="description"><?php esc_html_e('Message displayed when the API quota is exceeded or billing issue occurs.', 'rapls-ai-chatbot'); ?></p>
                             <p>
-                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_quota_error_message" data-default="Currently recharging. Please try again later.">
+                                <button type="button" class="button button-small raplsaich-reset-field" data-target="raplsaich_quota_error_message" data-default="The AI assistant has reached its usage limit for now. Please try again later, or contact us and we&#039;ll be happy to help.">
                                     <?php esc_html_e('Reset to default', 'rapls-ai-chatbot'); ?>
                                 </button>
                             </p>

@@ -4350,8 +4350,8 @@ msgstr "%s 商品"
 #~ msgid "Server error"
 #~ msgstr "サーバーエラー"
 
-#~ msgid "Currently recharging. Please try again later."
-#~ msgstr "ただいま充電中です。しばらくしてからお試しください。"
+#~ msgid "The AI assistant has reached its usage limit for now. Please try again later, or contact us and we'll be happy to help."
+#~ msgstr "AI アシスタントが現在の利用上限に達しました。しばらくたってから再度お試しいただくか、お問い合わせください。"
 
 #~ msgid "Higher priority content is used first (0-100)"
 #~ msgstr "優先度が高いコンテンツが優先的に使用されます (0-100)"

@@ -750,7 +750,7 @@ class RAPLSAICH_Activator {
                 'vi' => 'Xin chào! Tôi có thể giúp gì cho bạn?',
             ],
             'system_prompt'   => "You are a knowledgeable assistant for this website. Follow these rules:\n\n1. ACCURACY: When reference information is provided, treat it as the primary and most reliable source. Base your answers on this information first.\n2. HONESTY: If the provided information does not cover the user's question, clearly state that you don't have specific information about it, then offer general guidance if appropriate.\n3. NO FABRICATION: Never invent facts, URLs, prices, dates, or specific details that are not in the provided reference information.\n4. CONCISENESS: Provide clear, focused answers. Avoid unnecessary repetition or filler.\n5. LANGUAGE: Always respond in the same language the user writes in.\n6. TONE: Be professional, friendly, and helpful.",
-            'quota_error_message' => 'Currently recharging. Please try again later.',
+            'quota_error_message' => 'The AI assistant has reached its usage limit for now. Please try again later, or contact us and we\'ll be happy to help.',
             'max_tokens'      => 1000,
             'temperature'     => 0.7,
 

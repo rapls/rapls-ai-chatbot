@@ -1290,6 +1290,9 @@
                     var errorMessage;
                     if ((ec === 'rate_limited' || ecMapValue === '__use_server_message__') && error.message) {
                         errorMessage = error.message;
+                    } else if (ecMapValue === '__use_server_message__') {
+                        // Sentinel with no server message — fall through to status fallback
+                        errorMessage = '';
                     } else {
                         errorMessage = ecMapValue;
                     } // raplsaich-i18n-ok

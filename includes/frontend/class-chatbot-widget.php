@@ -345,6 +345,16 @@ class RAPLSAICH_Chatbot_Widget {
                     'origin_mismatch'        => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'honeypot_triggered'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'invalid_message'        => __('Please enter a valid message.', 'rapls-ai-chatbot'),
+                    // 5xx chat errors: pass the server's cause-specific message
+                    // through instead of masking it with the generic error_server
+                    // text. The server message is a curated, localized string
+                    // (never a raw provider error), so it is safe to display.
+                    'quota_exceeded'         => '__use_server_message__',
+                    'ai_auth_error'          => '__use_server_message__',
+                    'ai_model_unavailable'   => '__use_server_message__',
+                    'ai_unreachable'         => '__use_server_message__',
+                    'ai_provider_error'      => '__use_server_message__',
+                    'chat_failed'            => '__use_server_message__',
                     // Pro error codes (queue_full, country_blocked, ip_blocked, etc.)
                     // are added by Pro via raplsaich_frontend_config filter.
                 ],

@@ -1794,10 +1794,11 @@ class RAPLSAICH_REST_Controller {
 
         } catch (RAPLSAICH_Quota_Exceeded_Exception $e) {
             // Return custom quota error message from settings
-            $quota_message = $settings['quota_error_message'] ?? 'Currently recharging. Please try again later.';
+            $quota_message = $settings['quota_error_message'] ?? 'The AI assistant has reached its usage limit for now. Please try again later, or contact us and we\'ll be happy to help.';
             $quota_body = [
-                'success' => false,
-                'error'   => $quota_message,
+                'success'    => false,
+                'error'      => $quota_message,
+                'error_code' => 'quota_exceeded',
             ];
             $retry_after = $e->get_retry_after();
             if ($retry_after > 0) {
@@ -1827,12 +1828,14 @@ class RAPLSAICH_REST_Controller {
             // 401/403: Authentication / API key errors
             if ($code === 401 || $code === 403 || strpos($error_message, 'API key') !== false) {
                 $body['error'] = __('The AI service is not configured correctly. Please contact the site administrator.', 'rapls-ai-chatbot');
+                $body['error_code'] = 'ai_auth_error';
                 return new WP_REST_Response($body, 500);
             }
 
             // 404: Model not found / deprecated
             if ($code === 404 || stripos($error_message, 'not found') !== false || stripos($error_message, 'deprecated') !== false) {
                 $body['error'] = __('The AI model is currently unavailable. Please contact the site administrator.', 'rapls-ai-chatbot');
+                $body['error_code'] = 'ai_model_unavailable';
                 return new WP_REST_Response($body, 500);
             }
 
@@ -1846,6 +1849,7 @@ class RAPLSAICH_REST_Controller {
             // Timeout / network errors (RAPLSAICH_Communication_Exception)
             if ($e instanceof RAPLSAICH_Communication_Exception) {
                 $body['error'] = __('Could not reach the AI service. Please check your connection and try again.', 'rapls-ai-chatbot');
+                $body['error_code'] = 'ai_unreachable';
                 $body['retryable'] = true;
                 return new WP_REST_Response($body, 504);
             }
@@ -1853,11 +1857,13 @@ class RAPLSAICH_REST_Controller {
             // 5xx: Server-side errors from the AI provider
             if ($code >= 500 && $code < 600) {
                 $body['error'] = __('The AI service is temporarily unavailable. Please try again later.', 'rapls-ai-chatbot');
+                $body['error_code'] = 'ai_provider_error';
                 $body['retryable'] = true;
                 return new WP_REST_Response($body, 503);
             }
 
             // Generic fallback — unknown or unclassified error
+            $body['error_code'] = 'chat_failed';
             $body['error'] = __('Sorry, an error occurred while processing your request. Please try again later.', 'rapls-ai-chatbot');
             if (current_user_can(RAPLSAICH_Admin::get_manage_cap())) {
                 $body['error'] .= ' ' . sprintf(

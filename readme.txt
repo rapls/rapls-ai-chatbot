@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai chatbot, customer support, lead generation, faq
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.14.0
+Stable tag: 1.14.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -17,7 +17,7 @@ AI chatbot that answers from your own content, admits when it doesn't know, and 
 
 **You can be live in about five minutes, for free, with no credit card.** On first setup a guided "Start for free" panel hands you a free key from OpenRouter or the Google Gemini free tier, tests it, auto-selects a working model, and switches the chatbot on — no AI or API experience needed.
 
-**No monthly SaaS fee — and no runaway bill.** It runs on your own API key with no markup, and built-in Usage Control caps daily usage per visitor, so you can open the bot to the public without worrying about your API spend. Conversations and keys stay on your own server.
+**No monthly SaaS fee — and no runaway bill.** It runs on your own API key with no markup, and built-in Usage Control caps daily usage per visitor, so you can open the bot to the public without worrying about your API spend. A Monthly Cost Guard lets you set a hard budget, and Model Fallback keeps the bot answering on a lightweight model when your main model hits its quota. Conversations and keys stay on your own server.
 
 Built for site owners, agencies, and developers who want control over the model, the data, and the cost. Connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, and switch anytime.
 
@@ -41,12 +41,18 @@ Built for site owners, agencies, and developers who want control over the model,
 * MCP tools: exposes 5 Model Context Protocol tools, so agents such as Claude or ChatGPT can read and act on your site through conversation.
 * Usage dashboard: tracks conversations, messages, and API cost.
 * Usage Control: optional per-visitor daily caps so public traffic can't run up your API bill.
+* Unanswered Questions: records what the bot could not answer, with one-click "Add to knowledge" and an AI-drafted FAQ page.
 * AI-smell score: an optional read-only score that flags machine-sounding wording in Japanese replies (detection only — replies are never altered).
+* Industry starter templates: one click applies a ready-made system prompt and preset questions for hotels, shops, clinics, professional services, or company sites.
 * Gutenberg block: drop the chatbot into any page or post.
+
+= Turns visitor questions into content =
+
+The bot doesn't just answer — it tells you what your site is missing. Questions it could not answer from your content are recorded on the dashboard, one click turns them into a knowledge entry, and another click drafts an FAQ page from the last 30 days of real visitor questions. Answer gaps become content, content improves the bot, and the same pages work for SEO and AI search (LLMO).
 
 = Self-hosted and private =
 
-Conversations and keys stay on your own WordPress install. You are billed by your AI provider directly, so cost is transparent and there is no markup.
+Conversations and keys stay on your own WordPress install. You are billed by your AI provider directly, so cost is transparent and there is no markup. Visitors can delete their own chat history from the widget (optional), and retention is configurable — GDPR-friendly by design.
 
 = Free and Pro =
 
@@ -232,6 +238,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.14.1 =
+* Fixed: Server-side chat errors (invalid API key, unavailable model, provider outage, quota exceeded) were all shown to visitors as the same generic "A temporary error occurred" message. Each cause now shows its own specific message, so site owners can tell immediately whether the API key, the model, or the provider is the problem.
+* Fixed: The custom quota error message (Settings → Messages) was never displayed in the chat widget — the generic server error masked it. It now reaches visitors as intended.
+* Improved: The default quota error message no longer says "Currently recharging" (which read like a service outage) — it now explains that the AI has reached its usage limit and suggests trying again later or contacting the site.
+
 = 1.14.0 =
 * Added: "Add to knowledge" button on every Unanswered Questions row — opens the knowledge form with the question prefilled, closing the record → improve loop in one click.
 * Added: "Create draft page" button for the generated FAQ — saves the draft as a WordPress page (draft status) and links straight to the editor.
@@ -323,6 +334,18 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.14.1 =
+Chat errors now show their real cause (API key, model, provider, or quota) instead of one generic message, and the custom quota message setting works again. Recommended for all users.
+
+= 1.14.0 =
+Adds an "Add to knowledge" button on unanswered questions, a "Create draft page" button for generated FAQs, and a dashboard System Health panel. Recommended for all users.
+
+= 1.13.0 =
+Adds visitor-initiated chat history deletion (privacy), an Unanswered Questions report, a one-click FAQ draft generator, optional GA4 events, and WP-CLI commands. All new data features are off by default. Recommended for all users.
+
+= 1.12.0 =
+Adds a setup checklist, a demo preview, industry starter templates, page context, a monthly Cost Guard, model fallback, and an optional weekly summary email. Recommended for all users.
 
 = 1.11.1 =
 Blocked messages now say which limit was reached (quota, credits, token, daily, or rate limit). Recommended for sites using Usage Control.
