@@ -96,6 +96,11 @@
     background: #dff0d8;
     color: #3c763d;
 }
+.raplsaich-ai-error-badge {
+    background: #fcf0f1;
+    color: #b32d2e;
+    cursor: help;
+}
 .raplsaich-modal-header {
     display: flex;
     align-items: center;

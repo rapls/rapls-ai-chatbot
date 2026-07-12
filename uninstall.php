@@ -50,6 +50,10 @@ function raplsaich_uninstall_site() {
     // Always clear rate-limit fallback option (single array, no LIKE needed)
     delete_option('raplsaich_rl_fallback');
 
+    // Always clear provider-error diagnostics (rolling 24h window, no user data)
+    delete_option('raplsaich_provider_errors');
+    delete_option('raplsaich_g3_notice_dismissed');
+
     // Always clear diagnostic counters (raplsaich_diag_*).
     // These are lightweight, auto-regenerated runtime metrics — not user data.
     // Cleared regardless of delete_data_on_uninstall setting.

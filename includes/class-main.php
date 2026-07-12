@@ -227,6 +227,9 @@ class RAPLSAICH_Main {
         // Dismiss security notice
         $this->loader->add_action('wp_ajax_raplsaich_dismiss_security_notice', $admin, 'ajax_dismiss_security_notice');
 
+        // Dismiss Gemini 3 preview rate-limit notice (System Health)
+        $this->loader->add_action('wp_ajax_raplsaich_dismiss_g3_notice', $admin, 'ajax_dismiss_g3_notice');
+
         // MCP API key generation
         $this->loader->add_action('wp_ajax_raplsaich_generate_mcp_key', $admin, 'ajax_generate_mcp_key');
     }

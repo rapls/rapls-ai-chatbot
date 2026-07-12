@@ -178,6 +178,18 @@ if (!defined('ABSPATH')) {
 
             <!-- System health (1.14.0) -->
             <h2 style="margin-top: 20px;"><?php esc_html_e('System Health', 'rapls-ai-chatbot'); ?></h2>
+            <?php if (!empty($gemini3_notice_model)) : ?>
+            <div class="notice notice-warning inline is-dismissible" id="raplsaich-g3-notice" style="margin: 10px 0;">
+                <p><?php
+                printf(
+                    /* translators: %s: the Gemini preview model currently selected */
+                    esc_html__('Rate-limit errors occurred in the last 24 hours while using %s. Gemini 3 preview models have strict usage limits — consider switching to a stable model such as Gemini 2.5 Flash, or enabling Model Fallback (Settings → AI Settings).', 'rapls-ai-chatbot'),
+                    '<code>' . esc_html($gemini3_notice_model) . '</code>'
+                );
+                ?></p>
+            </div>
+            <script>jQuery(function($){$('#raplsaich-g3-notice').on('click','.notice-dismiss',function(){$.post(ajaxurl,{action:'raplsaich_dismiss_g3_notice',_wpnonce:'<?php echo esc_js(wp_create_nonce('raplsaich_dismiss_g3_notice')); ?>'});});});</script>
+            <?php endif; ?>
             <table class="raplsaich-status-table">
                 <?php if (!empty($health_checks)) : foreach ($health_checks as $health_check) : ?>
                 <tr>

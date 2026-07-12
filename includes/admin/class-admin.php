@@ -1268,6 +1268,83 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * Human-readable labels for provider error types recorded by the REST
+     * controller (see RAPLSAICH_REST_Controller::record_provider_error()).
+     *
+     * @return array<string,string> type => translated label
+     */
+    public static function provider_error_type_labels(): array {
+        return [
+            'rate_limit'    => __('Rate limit', 'rapls-ai-chatbot'),
+            'timeout'       => __('Timeout', 'rapls-ai-chatbot'),
+            'auth'          => __('Authentication', 'rapls-ai-chatbot'),
+            'quota_billing' => __('Quota / billing', 'rapls-ai-chatbot'),
+            'server'        => __('Server error', 'rapls-ai-chatbot'),
+            'unknown'       => __('Unknown', 'rapls-ai-chatbot'),
+        ];
+    }
+
+    /**
+     * Provider errors recorded in the last 24 hours (read-only prune).
+     *
+     * @return array[] entries: type, time, provider, model, status
+     */
+    private function get_recent_provider_errors(): array {
+        $events = get_option('raplsaich_provider_errors', []);
+        if (!is_array($events)) {
+            return [];
+        }
+        $cutoff = time() - DAY_IN_SECONDS;
+        return array_values(array_filter($events, static function ($ev) use ($cutoff) {
+            return is_array($ev) && (int) ($ev['time'] ?? 0) >= $cutoff;
+        }));
+    }
+
+    /**
+     * When the site runs a Gemini 3 preview model AND rate-limit errors were
+     * recorded in the last 24 hours, suggest switching to a stable model or
+     * enabling Model Fallback. Returns the model name to mention in the
+     * notice, or '' when the notice should not be shown.
+     *
+     * Dismissal is stored per model name, so switching to another Gemini 3
+     * preview model re-arms the notice.
+     */
+    private function get_gemini3_ratelimit_notice_model(): string {
+        $settings = get_option('raplsaich_settings', []);
+        if (($settings['ai_provider'] ?? '') !== 'gemini') {
+            return '';
+        }
+        $model = (string) ($settings['gemini_model'] ?? '');
+        if (!preg_match('/^gemini-3\b.*preview/', $model)) {
+            return '';
+        }
+        if (get_option('raplsaich_g3_notice_dismissed', '') === $model) {
+            return '';
+        }
+        foreach ($this->get_recent_provider_errors() as $ev) {
+            if (($ev['type'] ?? '') === 'rate_limit') {
+                return $model;
+            }
+        }
+        return '';
+    }
+
+    /**
+     * AJAX: dismiss the Gemini 3 preview rate-limit notice (per model).
+     */
+    public function ajax_dismiss_g3_notice(): void {
+        check_ajax_referer('raplsaich_dismiss_g3_notice', '_wpnonce');
+
+        if (!current_user_can(self::get_manage_cap())) {
+            wp_send_json_error(__('Permission denied.', 'rapls-ai-chatbot'));
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        update_option('raplsaich_g3_notice_dismissed', (string) ($settings['gemini_model'] ?? ''), false);
+        wp_send_json_success();
+    }
+
+    /**
      * System health checks shown on the dashboard.
      *
      * Each row: ['label', 'status' ('ok'|'warn'|'err'), 'detail'].
@@ -1366,6 +1443,40 @@ class RAPLSAICH_Admin {
                 ? __('Enabled', 'rapls-ai-chatbot')
                 : __('Missing — multibyte-safe fallbacks are in use.', 'rapls-ai-chatbot'),
         ];
+
+        // Provider errors in the last 24 hours (recorded by the REST controller)
+        $provider_errors = $this->get_recent_provider_errors();
+        if (empty($provider_errors)) {
+            $checks[] = [
+                'label'  => __('AI provider errors (24h)', 'rapls-ai-chatbot'),
+                'status' => 'ok',
+                'detail' => __('None in the last 24 hours.', 'rapls-ai-chatbot'),
+            ];
+        } else {
+            $labels = self::provider_error_type_labels();
+            $counts = [];
+            foreach ($provider_errors as $ev) {
+                $t = (string) ($ev['type'] ?? 'unknown');
+                $counts[$t] = ($counts[$t] ?? 0) + 1;
+            }
+            arsort($counts);
+            $parts = [];
+            foreach ($counts as $t => $n) {
+                $parts[] = sprintf('%s ×%d', $labels[$t] ?? $t, $n);
+            }
+            $last = end($provider_errors);
+            $checks[] = [
+                'label'  => __('AI provider errors (24h)', 'rapls-ai-chatbot'),
+                'status' => 'warn',
+                'detail' => implode(', ', $parts) . ' — ' . sprintf(
+                    /* translators: 1: date/time of the last error, 2: model (or provider) in use, 3: HTTP status code */
+                    __('last: %1$s (%2$s, HTTP %3$d)', 'rapls-ai-chatbot'),
+                    wp_date(get_option('date_format') . ' ' . get_option('time_format'), (int) ($last['time'] ?? 0)),
+                    ($last['model'] ?? '') !== '' ? $last['model'] : ($last['provider'] ?? '-'),
+                    (int) ($last['status'] ?? 0)
+                ),
+            ];
+        }
 
         return $checks;
     }
@@ -1688,6 +1799,7 @@ class RAPLSAICH_Admin {
     public function render_dashboard_page(): void {
         $setup_progress = $this->get_setup_progress();
         $health_checks = $this->get_health_checks();
+        $gemini3_notice_model = $this->get_gemini3_ratelimit_notice_model();
         $stats = $this->get_dashboard_stats();
         $usage_stats = RAPLSAICH_Cost_Calculator::get_usage_stats(30);
         $chart_data = RAPLSAICH_Cost_Calculator::get_chart_data(30);
@@ -3087,6 +3199,25 @@ class RAPLSAICH_Admin {
                 'content'    => $msg['content'],
                 'created_at' => mysql2date('Y/m/d H:i:s', $msg['created_at']),
             ];
+            // Provider error recorded on the triggering user message —
+            // rendered as a badge in the conversation view. Labels/format
+            // are resolved here so the JS stays i18n-free.
+            if ($msg['role'] === 'user' && !empty($msg['metadata'])) {
+                $meta = json_decode((string) $msg['metadata'], true);
+                if (is_array($meta) && !empty($meta['ai_error']) && is_array($meta['ai_error'])) {
+                    $err = $meta['ai_error'];
+                    $labels = self::provider_error_type_labels();
+                    $data['ai_error'] = [
+                        'label'    => $labels[$err['type'] ?? ''] ?? (string) ($err['type'] ?? 'unknown'),
+                        'time'     => !empty($err['time'])
+                            ? wp_date(get_option('date_format') . ' ' . get_option('time_format'), (int) $err['time'])
+                            : '',
+                        'provider' => (string) ($err['provider'] ?? ''),
+                        'model'    => (string) ($err['model'] ?? ''),
+                        'status'   => (int) ($err['status'] ?? 0),
+                    ];
+                }
+            }
             // Add metadata for assistant messages
             if ($msg['role'] === 'assistant') {
                 if (isset($msg['feedback'])) {

@@ -4152,6 +4152,50 @@ msgstr "検出済み"
 msgid "%s products"
 msgstr "%s 商品"
 
+#: includes/admin/class-admin.php
+msgid "Rate limit"
+msgstr "レート制限"
+
+#: includes/admin/class-admin.php
+msgid "Timeout"
+msgstr "タイムアウト"
+
+#: includes/admin/class-admin.php
+msgid "Authentication"
+msgstr "認証"
+
+#: includes/admin/class-admin.php
+msgid "Quota / billing"
+msgstr "クォータ / 課金"
+
+#: includes/admin/class-admin.php
+msgid "Server error"
+msgstr "サーバーエラー"
+
+#: includes/admin/class-admin.php
+msgid "Unknown"
+msgstr "不明"
+
+#: includes/admin/class-admin.php
+msgid "AI provider errors (24h)"
+msgstr "AI プロバイダーエラー (直近 24 時間)"
+
+#: includes/admin/class-admin.php
+msgid "None in the last 24 hours."
+msgstr "直近 24 時間の発生はありません。"
+
+#. translators: 1: date/time of the last error, 2: model (or provider) in use, 3: HTTP status code
+#: includes/admin/class-admin.php
+#, php-format
+msgid "last: %1$s (%2$s, HTTP %3$d)"
+msgstr "最終発生: %1$s (%2$s, HTTP %3$d)"
+
+#. translators: %s: the Gemini preview model currently selected
+#: templates/admin/dashboard.php
+#, php-format
+msgid "Rate-limit errors occurred in the last 24 hours while using %s. Gemini 3 preview models have strict usage limits — consider switching to a stable model such as Gemini 2.5 Flash, or enabling Model Fallback (Settings → AI Settings)."
+msgstr "直近 24 時間に、%s の使用中にレート制限エラーが発生しました。Gemini 3 系のプレビューモデルは利用回数の制限が厳しいため、Gemini 2.5 Flash などの安定版モデルへの切り替えか、モデルフォールバックの有効化 (設定 → AI 設定) をご検討ください。"
+
 #~ msgid ""
 #~ "To add trusted proxy IPs or CIDR ranges, use the "
 #~ "<code>raplsaich_trusted_proxies</code> filter in your theme or a custom "
@@ -4346,9 +4390,6 @@ msgstr "%s 商品"
 
 #~ msgid "Access denied"
 #~ msgstr "アクセスが拒否されました"
-
-#~ msgid "Server error"
-#~ msgstr "サーバーエラー"
 
 #~ msgid "The AI assistant has reached its usage limit for now. Please try again later, or contact us and we'll be happy to help."
 #~ msgstr "AI アシスタントが現在の利用上限に達しました。しばらくたってから再度お試しいただくか、お問い合わせください。"

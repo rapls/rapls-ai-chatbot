@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: chatbot, ai chatbot, customer support, lead generation, faq
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.14.1
+Stable tag: 1.15.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -238,6 +238,12 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.15.0 =
+* Added: Provider error visibility for admins — failed AI calls are classified (rate limit, timeout, authentication, quota/billing, server, unknown) and recorded with type, time, provider, model, and HTTP status only. The response body and API keys are never stored.
+* Added: In the admin conversation view, the message that triggered a failed AI call now carries an error badge; hovering shows the time, provider, model, and HTTP status.
+* Added: System Health now includes an "AI provider errors (24h)" row — counts by type plus the last occurrence and the model in use, so recurring provider problems surface without waiting for visitor reports.
+* Added: When rate-limit errors occur while a Gemini 3 preview model is selected, System Health shows a dismissible suggestion to switch to a stable model (such as Gemini 2.5 Flash) or enable Model Fallback.
+
 = 1.14.1 =
 * Fixed: Server-side chat errors (invalid API key, unavailable model, provider outage, quota exceeded) were all shown to visitors as the same generic "A temporary error occurred" message. Each cause now shows its own specific message, so site owners can tell immediately whether the API key, the model, or the provider is the problem.
 * Fixed: The custom quota error message (Settings → Messages) was never displayed in the chat widget — the generic server error masked it. It now reaches visitors as intended.
@@ -334,6 +340,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.15.0 =
+Failed AI calls are now classified and visible to admins — an error badge in the conversation view and a 24-hour provider-error summary in System Health. Recommended for all users.
 
 = 1.14.1 =
 Chat errors now show their real cause (API key, model, provider, or quota) instead of one generic message, and the custom quota message setting works again. Recommended for all users.

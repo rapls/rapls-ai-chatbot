@@ -895,6 +895,8 @@ class RAPLSAICH_REST_Controller {
             $save_history = !empty($settings['save_history']);
             $conversation = null;
             $conversation_id = 0;
+            $user_msg_id = 0;
+            $user_msg_metadata = [];
 
             if ($save_history) {
                 // Get or create conversation
@@ -935,7 +937,9 @@ class RAPLSAICH_REST_Controller {
                 if ($preset_index !== null && $preset_index !== '') {
                     $user_msg_data['metadata'] = ['preset_index' => (int) $preset_index];
                 }
-                RAPLSAICH_Message::create($user_msg_data);
+                $user_msg = RAPLSAICH_Message::create($user_msg_data);
+                $user_msg_id = (int) ($user_msg['id'] ?? 0);
+                $user_msg_metadata = $user_msg_data['metadata'] ?? [];
             } else {
                 // save_history OFF — store context in transient only
                 $this->append_transient_context($session_id, 'user', $message);
@@ -1804,6 +1808,18 @@ class RAPLSAICH_REST_Controller {
             if ($retry_after > 0) {
                 $quota_body['retry_after'] = $retry_after;
             }
+
+            // Record for admin diagnostics: 429 / Retry-After hint = rate limit,
+            // anything else the provider flagged as quota = billing/quota stop.
+            $this->record_provider_error(
+                ((int) $e->getCode() === 429 || $retry_after > 0) ? 'rate_limit' : 'quota_billing',
+                (int) $e->getCode(),
+                $settings,
+                $bot_config ?? null,
+                $user_msg_id ?? 0,
+                $user_msg_metadata ?? []
+            );
+
             return new WP_REST_Response($quota_body, 503);
 
         } catch (Exception $e) {
@@ -1818,6 +1834,29 @@ class RAPLSAICH_REST_Controller {
             );
 
             do_action('raplsaich_ai_error', $code, $error_message);
+
+            // Classify for admin diagnostics (System Health / conversation badge).
+            // Only the type, timestamp, provider, model, and HTTP status are
+            // recorded — never the response body or key material.
+            if ($e instanceof RAPLSAICH_Communication_Exception || $code === 408 || $code === 504) {
+                $provider_error_type = 'timeout';
+            } elseif ($code === 401 || $code === 403 || strpos($error_message, 'API key') !== false) {
+                $provider_error_type = 'auth';
+            } elseif ($code === 429) {
+                $provider_error_type = 'rate_limit';
+            } elseif ($code >= 500 && $code < 600) {
+                $provider_error_type = 'server';
+            } else {
+                $provider_error_type = 'unknown';
+            }
+            $this->record_provider_error(
+                $provider_error_type,
+                (int) $code,
+                $settings,
+                $bot_config ?? null,
+                $user_msg_id ?? 0,
+                $user_msg_metadata ?? []
+            );
 
             // Build response body — include request_id for admin debugging
             $body = ['success' => false];
@@ -2061,6 +2100,59 @@ class RAPLSAICH_REST_Controller {
         }
 
         return $fallback;
+    }
+
+    /**
+     * Record a provider error for admin diagnostics.
+     *
+     * Feeds the "AI provider errors (24h)" row in System Health and the
+     * error badge on the triggering user message in the conversation view.
+     * Persists ONLY the classification, timestamp, provider, model, and
+     * HTTP status — never the response body or any key material (PII /
+     * key-fragment safety).
+     *
+     * @param string     $type              One of rate_limit|timeout|auth|quota_billing|server|unknown.
+     * @param int        $status            HTTP status / exception code (0 if unknown).
+     * @param array      $settings          Plugin settings.
+     * @param array|null $bot_config        Bot config (may override provider/model).
+     * @param int        $user_msg_id       Triggering user message ID (0 when history is off).
+     * @param array      $user_msg_metadata Metadata already stored on that message (merged, not overwritten).
+     */
+    private function record_provider_error(string $type, int $status, array $settings, ?array $bot_config, int $user_msg_id = 0, array $user_msg_metadata = []): void {
+        // Resolve provider/model the same way raplsaich_create_ai_provider() does.
+        $provider = (is_array($bot_config) && !empty($bot_config['ai_provider']))
+            ? (string) $bot_config['ai_provider']
+            : (string) ($settings['ai_provider'] ?? 'openai');
+        $model = (is_array($bot_config) && !empty($bot_config['model']))
+            ? (string) $bot_config['model']
+            : (string) ($settings[$provider . '_model'] ?? '');
+
+        $entry = [
+            'type'     => $type,
+            'time'     => time(),
+            'provider' => $provider,
+            'model'    => $model,
+            'status'   => $status,
+        ];
+
+        // Rolling 24h window, hard-capped so the option can never grow unbounded.
+        $events = get_option('raplsaich_provider_errors', []);
+        if (!is_array($events)) {
+            $events = [];
+        }
+        $cutoff = time() - DAY_IN_SECONDS;
+        $events = array_values(array_filter($events, static function ($ev) use ($cutoff) {
+            return is_array($ev) && (int) ($ev['time'] ?? 0) >= $cutoff;
+        }));
+        $events[] = $entry;
+        if (count($events) > 100) {
+            $events = array_slice($events, -100);
+        }
+        update_option('raplsaich_provider_errors', $events, false);
+
+        if ($user_msg_id > 0) {
+            RAPLSAICH_Message::update_metadata($user_msg_id, $user_msg_metadata + ['ai_error' => $entry]);
+        }
     }
 
     /**

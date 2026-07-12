@@ -60,6 +60,22 @@ jQuery(document).ready(function($) {
             }
         }
 
+        // Provider error badge: this user message triggered an AI call that
+        // failed. Label/time come pre-localized from PHP.
+        if (msg.role === 'user' && msg.ai_error) {
+            var errBadge = document.createElement('span');
+            errBadge.className = 'raplsaich-msg-meta-badge raplsaich-ai-error-badge';
+            errBadge.textContent = '⚠ ' + msg.ai_error.label;
+            var errParts = [];
+            if (msg.ai_error.time) errParts.push(msg.ai_error.time);
+            if (msg.ai_error.provider) errParts.push(msg.ai_error.provider);
+            if (msg.ai_error.model) errParts.push(msg.ai_error.model);
+            if (msg.ai_error.status) errParts.push('HTTP ' + msg.ai_error.status);
+            errBadge.title = errParts.join(' / ');
+            header.appendChild(document.createTextNode(' '));
+            header.appendChild(errBadge);
+        }
+
         // Extract [image:URL] markers
         var textContent = msg.content || '';
         var imageMatch = textContent.match(/\[image:(https?:\/\/[^\]]+)\]/);
