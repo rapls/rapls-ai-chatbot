@@ -1,7 +1,7 @@
 === Rapls AI Chatbot – Self-Hosted RAG Chatbot & MCP Server (OpenAI, Claude, Gemini, OpenRouter) ===
 
 Contributors: rapls
-Tags: ai chatbot, rag, chatbot, chatgpt, mcp, claude, gemini, openai, openrouter, self-hosted, customer support, faq
+Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.0
 Stable tag: 1.15.0
