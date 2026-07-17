@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Plugin Name:       Rapls AI Chatbot
+ * Plugin Name:       Rapls AI Chatbot – Self-Hosted RAG Chatbot & MCP Server (OpenAI, Claude, Gemini, OpenRouter)
  * Plugin URI:        https://raplsworks.com/plugins/rapls-ai-chatbot/
  * Description:       AI Chatbot plugin with OpenAI/Claude/Google support and automatic site content learning.
  * Version:           1.15.0

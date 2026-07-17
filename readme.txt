@@ -1,7 +1,7 @@
-=== Rapls AI Chatbot ===
+=== Rapls AI Chatbot – Self-Hosted RAG Chatbot & MCP Server (OpenAI, Claude, Gemini, OpenRouter) ===
 
 Contributors: rapls
-Tags: chatbot, ai chatbot, customer support, lead generation, faq
+Tags: ai chatbot, rag, chatbot, chatgpt, mcp, claude, gemini, openai, openrouter, self-hosted, customer support, faq
 Requires at least: 6.3
 Tested up to: 7.0
 Stable tag: 1.15.0
@@ -9,7 +9,7 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI chatbot that answers from your own content, admits when it doesn't know, and can't run up your API bill. Start free in 5 minutes, no credit card.
+Self-hosted AI chatbot that answers from your own content (RAG), admits when it doesn't know, and can't run up your API bill. Free, no credit card.
 
 == Description ==
 
@@ -85,6 +85,10 @@ Watch the full setup — from install to first reply — in about 5 minutes, no 
 
 https://www.youtube.com/watch?v=KWEeYuZ0uEg
 
+See it answer from your own content, and how that differs from plain ChatGPT:
+
+https://www.youtube.com/watch?v=HgbYr6c_QlI
+
 == Installation ==
 
 1. Upload `rapls-ai-chatbot` folder to `/wp-content/plugins/`
@@ -116,6 +120,9 @@ Not if you don't want it to. Turn on Grounded Answers Only and the bot replies "
 
 = Can visitors run up my API bill? =
 No. Usage Control caps daily usage per guest and per logged-in user on the server side, separate from rate limiting. Pro adds role-based limits and per-user credits.
+
+= Does it work with AI agents (MCP)? =
+Yes. The free version ships an MCP (Model Context Protocol) server with 5 tools, so AI agents such as Claude or ChatGPT can search your posts, read knowledge entries, and act on your site through conversation. Pro adds product-search and analytics tools on top.
 
 = Is my data private on the free options? =
 It depends on the provider you choose, and the plugin tells you before you pick. OpenRouter free models are served by various upstream providers, each with its own data-handling policy. The Google Gemini free tier may use your submitted content to improve Google's models — if you do not want that, use a paid Gemini tier or another provider. Either way, your conversations and keys are stored on your own WordPress install, not on Rapls servers.
