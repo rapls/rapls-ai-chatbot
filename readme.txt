@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.15.0
+Stable tag: 1.15.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -244,6 +244,9 @@ You can disable these features in the plugin settings:
 * Web search
 
 == Changelog ==
+
+= 1.15.1 =
+* Changed: The Gemini fallback model (used by Model Fallback when the selected model hits its quota) is now `gemini-2.5-flash-lite` instead of the older `gemini-2.0-flash-lite`, so fallback stays on a current model generation. Override with the `raplsaich_fallback_model` filter.
 
 = 1.15.0 =
 * Added: Provider error visibility for admins — failed AI calls are classified (rate limit, timeout, authentication, quota/billing, server, unknown) and recorded with type, time, provider, model, and HTTP status only. The response body and API keys are never stored.

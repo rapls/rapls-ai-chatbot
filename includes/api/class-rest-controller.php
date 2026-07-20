@@ -2088,7 +2088,7 @@ class RAPLSAICH_REST_Controller {
         $map = [
             'openai' => 'gpt-4o-mini',
             'claude' => 'claude-haiku-4-5-20251001',
-            'gemini' => 'gemini-2.0-flash-lite',
+            'gemini' => 'gemini-2.5-flash-lite',
         ];
         if (!isset($map[$provider])) {
             return null;
