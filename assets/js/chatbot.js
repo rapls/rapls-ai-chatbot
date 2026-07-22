@@ -2831,7 +2831,18 @@
             if (!hooks || !hooks.length) return false;
             var args = Array.prototype.slice.call(arguments, 1);
             var self = this;
-            hooks.forEach(function(fn) { fn.apply(self, args); });
+            hooks.forEach(function(fn) {
+                // Isolate each hook. A throwing Pro extension used to bubble up
+                // into the send flow, where the catch rendered the raw JS error
+                // as a bot message in the conversation.
+                try {
+                    fn.apply(self, args);
+                } catch (e) {
+                    if (window.console && console.error) {
+                        console.error('RAPLSAICH: Pro hook "' + name + '" failed', e);
+                    }
+                }
+            });
             return true;
         },
 
@@ -2840,6 +2851,18 @@
             return re.test(email);
         }
     };
+
+    // Consent-gated storage helpers, exposed for the Pro bundle.
+    // chatbot-pro.js runs in its own IIFE and cannot see the module-scoped
+    // functions above; routing through here keeps WP Consent API gating in
+    // one place instead of letting Pro duplicate (and drift from) the rules.
+    RaplsaichChatbot.hasConsent = raplsaichHasConsent;
+    RaplsaichChatbot.lsGet = raplsaichLsGet;
+    RaplsaichChatbot.lsSet = raplsaichLsSet;
+    RaplsaichChatbot.lsRemove = raplsaichLsRemove;
+    RaplsaichChatbot.ssGet = raplsaichSsGet;
+    RaplsaichChatbot.ssSet = raplsaichSsSet;
+    RaplsaichChatbot.ssRemove = raplsaichSsRemove;
 
     // Expose globally so Pro plugin can register hooks before init
     window.RaplsaichChatbot = RaplsaichChatbot;

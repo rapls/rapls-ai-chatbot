@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.15.1
+Stable tag: 1.15.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -245,6 +245,10 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.15.2 =
+* Fixed: With the Pro add-on active, a JavaScript error ("raplsaichLsGet is not defined") could appear as a chat message right after the bot replied. The consent-gated storage helpers live inside the free plugin's script scope and were not reachable from the Pro script; they are now shared through the public `RaplsaichChatbot` object. Affected Pro features included chat bookmarks, lead forms, offline messages, and conversion tracking.
+* Fixed: An error thrown by a Pro extension hook is no longer rendered as a bot message in the conversation. Hooks now run in isolation and failures are logged to the browser console instead.
+
 = 1.15.1 =
 * Changed: The Gemini fallback model (used by Model Fallback when the selected model hits its quota) is now `gemini-2.5-flash-lite` instead of the older `gemini-2.0-flash-lite`, so fallback stays on a current model generation. Override with the `raplsaich_fallback_model` filter.
 
@@ -350,6 +354,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.15.2 =
+Fixes a JavaScript error that could appear as a chat message after the bot replied on sites running the Pro add-on. Recommended for all Pro users.
 
 = 1.15.0 =
 Failed AI calls are now classified and visible to admins — an error badge in the conversation view and a 24-hour provider-error summary in System Health. Recommended for all users.
