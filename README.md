@@ -108,6 +108,10 @@ English walkthrough:
 
 [![Set up a free AI chatbot on WordPress in about five minutes](https://img.youtube.com/vi/6mFve1lxvuw/maxresdefault.jpg)](https://www.youtube.com/watch?v=6mFve1lxvuw)
 
+サイトのコンテンツから回答する様子と、素の ChatGPT との違いはこちらの動画で。
+
+[![サイトのコンテンツから回答する様子と、素の ChatGPT との違い](https://img.youtube.com/vi/HgbYr6c_QlI/maxresdefault.jpg)](https://www.youtube.com/watch?v=HgbYr6c_QlI)
+
 ### 解説・レビュー記事（日本語）
 
 導入の流れや、実装で迷った設計判断を記事に書いています。
