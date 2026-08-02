@@ -104,6 +104,10 @@ For full setup instructions (enabling the server, generating an API key, client 
 
 [![WordPress に5分で無料 AI チャットボットを設置する](https://img.youtube.com/vi/KWEeYuZ0uEg/maxresdefault.jpg)](https://www.youtube.com/watch?v=KWEeYuZ0uEg)
 
+English walkthrough:
+
+[![Set up a free AI chatbot on WordPress in about five minutes](https://img.youtube.com/vi/6mFve1lxvuw/maxresdefault.jpg)](https://www.youtube.com/watch?v=6mFve1lxvuw)
+
 ### 解説・レビュー記事（日本語）
 
 導入の流れや、実装で迷った設計判断を記事に書いています。

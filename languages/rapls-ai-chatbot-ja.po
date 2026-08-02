@@ -8674,3 +8674,10 @@ msgstr "FAQ 下書き（%s）"
 
 msgid "Draft page created."
 msgstr "下書きページを作成しました。"
+
+msgctxt "Onboarding setup video URL — translators may point this to a localized walkthrough"
+msgid "https://www.youtube.com/watch?v=6mFve1lxvuw"
+msgstr "https://www.youtube.com/watch?v=KWEeYuZ0uEg"
+
+msgid "▶ Watch the setup video (about 5 minutes)"
+msgstr "▶ 設置手順の動画を見る（約 5 分）"

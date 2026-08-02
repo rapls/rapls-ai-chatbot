@@ -37,6 +37,11 @@ if (!defined('ABSPATH')) {
         <p class="raplsaich-onboarding__lead">
             <?php esc_html_e('No credit card needed. Choose a free provider, paste a key, and the chatbot starts answering in about a minute.', 'rapls-ai-chatbot'); ?>
         </p>
+        <p class="raplsaich-onboarding__video">
+            <a href="<?php echo esc_url(_x('https://www.youtube.com/watch?v=6mFve1lxvuw', 'Onboarding setup video URL — translators may point this to a localized walkthrough', 'rapls-ai-chatbot')); ?>" target="_blank" rel="noopener noreferrer">
+                <?php esc_html_e('▶ Watch the setup video (about 5 minutes)', 'rapls-ai-chatbot'); ?>
+            </a>
+        </p>
 
         <!-- Scripted demo preview: shows the widget working before any API key exists.
              Self-contained (no chatbot.css / no REST calls) — client-side animation only. -->

@@ -17,6 +17,10 @@ Self-hosted AI chatbot that answers from your own content (RAG), admits when it 
 
 **You can be live in about five minutes, for free, with no credit card.** On first setup a guided "Start for free" panel hands you a free key from OpenRouter or the Google Gemini free tier, tests it, auto-selects a working model, and switches the chatbot on — no AI or API experience needed.
 
+**Watch the setup, start to finish:**
+
+https://www.youtube.com/watch?v=6mFve1lxvuw
+
 **No monthly SaaS fee — and no runaway bill.** It runs on your own API key with no markup, and built-in Usage Control caps daily usage per visitor, so you can open the bot to the public without worrying about your API spend. A Monthly Cost Guard lets you set a hard budget, and Model Fallback keeps the bot answering on a lightweight model when your main model hits its quota. Conversations and keys stay on your own server.
 
 Built for site owners, agencies, and developers who want control over the model, the data, and the cost. Connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, and switch anytime.
