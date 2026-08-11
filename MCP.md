@@ -4,7 +4,7 @@
 
 Rapls AI Chatbot ships with a built-in **MCP (Model Context Protocol) server**. Once enabled, any MCP-compatible client can read your knowledge base, search your indexed site content, browse stored conversations, and send messages to your chatbot — over a single authenticated HTTP endpoint hosted on your own WordPress install.
 
-This manual documents the exact behavior of the server as implemented in plugin **version 1.9.1**: the transport, the endpoint, authentication, every tool with its input schema **and response shape**, the full JSON-RPC protocol, developer extension points, security, and troubleshooting.
+This manual documents the exact behavior of the server as implemented in plugin **version 1.15.3**: the transport, the endpoint, authentication, every tool with its input schema **and response shape**, the full JSON-RPC protocol, developer extension points, security, and troubleshooting.
 
 ---
 
@@ -184,7 +184,7 @@ Response:
 { "jsonrpc": "2.0", "id": 1,
   "result": {
     "protocolVersion": "2024-11-05",
-    "serverInfo": { "name": "rapls-ai-chatbot", "version": "1.9.1" },
+    "serverInfo": { "name": "rapls-ai-chatbot", "version": "1.15.3" },
     "capabilities": { "tools": {} }
   } }
 ```
@@ -610,4 +610,4 @@ Conversations only exist when history saving is enabled. With it off, `list_conv
 
 ---
 
-*Rapls AI Chatbot — MCP Server Manual. Endpoint, tool names, return shapes, and protocol version reflect plugin version 1.9.1. Tool availability depends on your edition (Free/Pro) and configuration; query `tools/list` for the authoritative list on your site.*
+*Rapls AI Chatbot — MCP Server Manual. Endpoint, tool names, return shapes, and protocol version reflect plugin version 1.15.3. Tool availability depends on your edition (Free/Pro) and configuration; query `tools/list` for the authoritative list on your site.*

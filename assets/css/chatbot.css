@@ -1052,6 +1052,7 @@
 /* ============================================
    画像アップロード（Pro: マルチモーダル）
 ============================================ */
+.chatbot-image-input[hidden],
 .chatbot-image-btn[hidden],
 .chatbot-mic-btn[hidden],
 .chatbot-screenshot-btn[hidden] {

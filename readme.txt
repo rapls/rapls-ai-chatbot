@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.15.2
+Stable tag: 1.15.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -249,6 +249,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.15.3 =
+* Fixed: On some themes a "Choose file / No file selected" upload control could appear at the bottom of the public chat widget. That control is a hidden image-upload input used only by the Pro add-on; it was kept out of sight by the HTML `hidden` attribute alone, which a theme's own CSS could override. It is now hidden with an explicit rule, matching the neighboring buttons, so it stays out of the visitor-facing chat regardless of theme.
+
 = 1.15.2 =
 * Fixed: With the Pro add-on active, a JavaScript error ("raplsaichLsGet is not defined") could appear as a chat message right after the bot replied. The consent-gated storage helpers live inside the free plugin's script scope and were not reachable from the Pro script; they are now shared through the public `RaplsaichChatbot` object. Affected Pro features included chat bookmarks, lead forms, offline messages, and conversion tracking.
 * Fixed: An error thrown by a Pro extension hook is no longer rendered as a bot message in the conversation. Hooks now run in isolation and failures are logged to the browser console instead.
@@ -358,6 +361,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.15.3 =
+Fixes a stray "Choose file" upload control that could appear in the public chat widget on some themes. Recommended for all users.
 
 = 1.15.2 =
 Fixes a JavaScript error that could appear as a chat message after the bot replied on sites running the Pro add-on. Recommended for all Pro users.
