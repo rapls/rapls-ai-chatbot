@@ -48,7 +48,7 @@ class RAPLSAICH_Usage_Store {
         $window_start = self::window_start($window_type);
 
         global $wpdb;
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query($wpdb->prepare(
             "INSERT INTO {$table} (actor_type, actor_key, window_type, window_start, requests, tokens, credits_used, updated_at)
              VALUES (%s, %s, %s, %s, %d, %d, %d, %s)
@@ -83,7 +83,7 @@ class RAPLSAICH_Usage_Store {
         $window_start = self::window_start($window_type);
 
         global $wpdb;
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT requests, tokens, credits_used FROM {$table}
              WHERE actor_type = %s AND actor_key = %s AND window_type = %s AND window_start = %s",
@@ -116,7 +116,7 @@ class RAPLSAICH_Usage_Store {
             return 0;
         }
         global $wpdb;
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $deleted = $wpdb->query($wpdb->prepare(
             "DELETE FROM {$table} WHERE updated_at < DATE_SUB(NOW(), INTERVAL %d DAY)",
             $days

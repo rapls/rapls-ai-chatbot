@@ -130,7 +130,7 @@ class RAPLSAICH_WPAI_Provider implements RAPLSAICH_AI_Provider_Interface {
             if (is_array($data) && isset($data['status'])) {
                 $status = (int) $data['status'];
             }
-            throw new Exception(esc_html($text->get_error_message()), $status);
+            throw new Exception(esc_html($text->get_error_message()), (int) $status);
         }
 
         $content = (string) $text;

@@ -2253,8 +2253,8 @@ if (!defined('ABSPATH')) {
                                        value="<?php echo esc_attr((string) ($settings['cost_guard_monthly_budget'] ?? 10)); ?>">
                                 <?php
                                 if (class_exists('RAPLSAICH_Cost_Calculator')) {
-                                    /* translators: %s: formatted month-to-date estimated cost */
                                     printf(
+                                        /* translators: %s: formatted month-to-date estimated cost */
                                         '<span class="description" style="display:inline; margin-left:8px;">' . esc_html__('This month so far: %s', 'rapls-ai-chatbot') . '</span>',
                                         esc_html(RAPLSAICH_Cost_Calculator::format_cost(RAPLSAICH_Cost_Calculator::get_month_to_date_cost()))
                                     );
@@ -2695,8 +2695,8 @@ if (!defined('ABSPATH')) {
                             </label>
                             <p class="description">
                                 <?php
-                                /* translators: %s: admin email address */
                                 printf(
+                                    /* translators: %s: admin email address */
                                     esc_html__('Once a week: conversation count, AI replies, estimated cost, and recent visitor questions. Sent to %s.', 'rapls-ai-chatbot'),
                                     esc_html(get_option('admin_email'))
                                 );

@@ -506,7 +506,7 @@ class RAPLSAICH_Conversation {
         // Phase 1: cheap SQL LIKE on raw content. Matches plaintext rows
         // and any cipher rows that happen to contain the literal keyword
         // bytes (rare but harmless).
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $rows = $wpdb->get_col($wpdb->prepare(
             "SELECT DISTINCT conversation_id FROM `{$msg_table}` WHERE content LIKE %s LIMIT 500",
             '%' . $wpdb->esc_like($keyword) . '%'
@@ -518,8 +518,9 @@ class RAPLSAICH_Conversation {
 
         // Phase 2: scan recent rows in PHP after decryption. Only worth doing
         // if encryption is in play (otherwise phase 1 already saw everything).
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $any_encrypted = (bool) $wpdb->get_var(
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             "SELECT 1 FROM `{$msg_table}` WHERE content LIKE 'encg:%' LIMIT 1"
         );
 
@@ -528,7 +529,7 @@ class RAPLSAICH_Conversation {
             if ($limit < 100)   { $limit = 100; }
             if ($limit > 20000) { $limit = 20000; }
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $recent = $wpdb->get_results($wpdb->prepare(
                 "SELECT conversation_id, content FROM `{$msg_table}` WHERE content LIKE 'encg:%' ORDER BY id DESC LIMIT %d",
                 $limit
