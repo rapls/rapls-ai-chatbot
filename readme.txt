@@ -1,15 +1,15 @@
-=== Rapls AI Chatbot – Self-Hosted RAG Chatbot & MCP Server (OpenAI, Claude, Gemini, OpenRouter) ===
+=== Rapls AI Chatbot – Self-Hosted RAG & MCP Server ===
 
 Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.15.3
+Stable tag: 1.15.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Self-hosted AI chatbot that answers from your own content (RAG), admits when it doesn't know, and can't run up your API bill. Free, no credit card.
+Answers from your own posts and pages, says so when it doesn't know, and stops at the spending limit you set. Works with OpenAI, Claude or Gemini.
 
 == Description ==
 
@@ -249,6 +249,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.15.4 =
+* Fixed: the plugin header still read 1.15.2 while every other file said 1.15.3, so an installed 1.15.3 reported itself as 1.15.2 and WordPress kept offering the same update over and over. The header is the version WordPress compares, and it is now correct. The release check now compares all three places a version is written, so this cannot recur.
+* Display name shortened to "Rapls AI Chatbot – Self-Hosted RAG & MCP Server". The previous title ran to 92 characters, said "Chatbot" twice and listed four AI vendors — past the 80 the directory allows and into what the guidelines call readme spam. The vendor names have moved to the description, where they are still indexed.
+* The description in the plugin header no longer differs from the one in this readme; the Plugins screen and the directory now say the same thing.
+
 = 1.15.3 =
 * Fixed: On some themes a "Choose file / No file selected" upload control could appear at the bottom of the public chat widget. That control is a hidden image-upload input used only by the Pro add-on; it was kept out of sight by the HTML `hidden` attribute alone, which a theme's own CSS could override. It is now hidden with an explicit rule, matching the neighboring buttons, so it stays out of the visitor-facing chat regardless of theme.
 
@@ -361,6 +366,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.15.4 =
+Stops WordPress repeatedly offering an update you have already installed. Also a shorter plugin name. No behaviour changes.
 
 = 1.15.3 =
 Fixes a stray "Choose file" upload control that could appear in the public chat widget on some themes. Recommended for all users.
