@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.16.0
+Stable tag: 1.16.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.16.1 =
+* Fixed: With the OpenAI-compatible provider selected (e.g. Alibaba Qwen/DashScope), the chat widget returned "AI API key is not configured" even though the key was saved and Test Connection succeeded. The pre-send key check did not recognize the new provider and looked for an OpenAI key instead of the OpenAI-compatible one. Chat now reads the correct key. No settings changes are needed.
+
 = 1.16.0 =
 * Added: OpenAI-compatible provider. Connect any service that speaks the OpenAI Chat Completions API — including Chinese providers such as Alibaba Tongyi Qwen (DashScope), DeepSeek, and Zhipu GLM — by entering a base URL, a model name, and an API key. Vector embeddings (RAG) are supported as well, so sites that cannot reach OpenAI or Gemini (for example inside mainland China) can run both chat and RAG on a domestic provider such as Qwen. When the embedding provider is set to Auto and chat runs on the OpenAI-compatible provider, embeddings use that same vendor. Changing the embedding provider now warns you to clear and regenerate embeddings.
 * Added: Deep-link auto-send. A URL such as `?raplsaich_q=your+question` (a plain `?q=` also works) opens the chatbot and sends that question automatically, with no typing or copy-paste — ideal for turning end-of-article "suggested questions" into one-click conversations. The question is shown as a normal visitor message, and the parameter is removed from the URL after sending so a refresh does not resend it.
@@ -379,6 +382,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.16.1 =
+Fixes the OpenAI-compatible provider (Qwen/DashScope, DeepSeek, Zhipu): chat no longer reports "AI API key is not configured" when the key is set. Recommended for anyone using that provider.
 
 = 1.16.0 =
 Adds an OpenAI-compatible provider (use Alibaba Qwen/DashScope, DeepSeek, or Zhipu for both chat and RAG) and deep-link auto-send (a ?raplsaich_q= URL opens the chat and sends the question). New features only; existing setups are unchanged.

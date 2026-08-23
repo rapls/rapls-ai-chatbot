@@ -877,6 +877,9 @@ class RAPLSAICH_REST_Controller {
                 case 'openrouter':
                     $api_key = $this->decrypt_api_key($settings['openrouter_api_key'] ?? '');
                     break;
+                case 'compat':
+                    $api_key = $this->decrypt_api_key($settings['compat_api_key'] ?? '');
+                    break;
                 default:
                     $api_key = $this->decrypt_api_key($settings['openai_api_key'] ?? '');
                     break;
