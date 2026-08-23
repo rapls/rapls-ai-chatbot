@@ -8681,3 +8681,57 @@ msgstr "https://www.youtube.com/watch?v=KWEeYuZ0uEg"
 
 msgid "▶ Watch the setup video (about 5 minutes)"
 msgstr "▶ 設置手順の動画を見る（約 5 分）"
+
+msgid "OpenAI-compatible (Qwen / DashScope, DeepSeek, Zhipu…)"
+msgstr "OpenAI 互換（Qwen / DashScope、DeepSeek、智譜…）"
+
+msgid "OpenAI-compatible (Qwen/DashScope, Zhipu, …)"
+msgstr "OpenAI 互換（Qwen/DashScope、智譜 …）"
+
+msgid "OpenAI-compatible Settings"
+msgstr "OpenAI 互換の設定"
+
+msgid "Connect any AI service that supports the OpenAI Chat Completions format. This is how you use Chinese providers such as Alibaba Tongyi Qwen (DashScope), DeepSeek, or Zhipu GLM. Fill in the three fields below exactly as your provider gives them: the base URL, your API key, and the model name."
+msgstr "OpenAI の Chat Completions 形式に対応した AI サービスを接続できます。Alibaba 通義千問（Qwen / DashScope）、DeepSeek、智譜 GLM などの中国系プロバイダーを使う場合はこちらを利用します。以下の 3 項目（ベース URL・API キー・モデル名）を、プロバイダーから提供された値のとおりに入力してください。"
+
+msgid "Example for Alibaba Qwen (DashScope): Base URL https://dashscope.aliyuncs.com/compatible-mode/v1 (use dashscope-intl outside China), Model qwen-plus, and your DashScope API key."
+msgstr "Alibaba Qwen（DashScope）の設定例：ベース URL は https://dashscope.aliyuncs.com/compatible-mode/v1 （中国以外では dashscope-intl を使用）、モデルは qwen-plus 、API キーは DashScope のキーです。"
+
+msgid "Base URL"
+msgstr "ベース URL"
+
+msgid "Paste the base URL from your provider. It should end in /v1 (do not add /chat/completions yourself; the plugin adds it). For Alibaba Qwen (DashScope): use https://dashscope.aliyuncs.com/compatible-mode/v1 inside China, or https://dashscope-intl.aliyuncs.com/compatible-mode/v1 outside China. Some DashScope accounts are given a workspace-specific endpoint that looks like https://ws-xxxxxxxx.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1. In that case, paste exactly the URL shown in your DashScope console."
+msgstr "プロバイダーのベース URL を貼り付けてください。末尾が /v1 で終わる形にします（/chat/completions は付けないでください。プラグインが自動で付加します）。Alibaba Qwen（DashScope）の場合、中国国内では https://dashscope.aliyuncs.com/compatible-mode/v1 、中国以外では https://dashscope-intl.aliyuncs.com/compatible-mode/v1 を使用します。アカウントによっては https://ws-xxxxxxxx.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1 のようなワークスペース専用のエンドポイントが割り当てられます。その場合は、DashScope コンソールに表示されている URL をそのまま貼り付けてください。"
+
+msgid "Paste the API key issued by your provider. For Qwen, this is your DashScope API key (it starts with sk-)."
+msgstr "プロバイダーが発行した API キーを貼り付けてください。Qwen の場合は DashScope の API キー（ sk- で始まります）です。"
+
+msgid "Enter the chat model name exactly as your provider lists it. For Qwen: qwen-plus (recommended), qwen-turbo, or qwen-max. Other providers: deepseek-chat, glm-4-plus."
+msgstr "チャットモデル名を、プロバイダーの表記どおりに入力してください。Qwen の場合は qwen-plus （推奨）、qwen-turbo 、qwen-max など。その他のプロバイダーは deepseek-chat 、glm-4-plus などです。"
+
+msgid "OpenAI-compatible Embedding"
+msgstr "OpenAI 互換の埋め込み"
+
+msgid "Embedding base URL (optional)"
+msgstr "埋め込み用ベース URL（任意）"
+
+msgid "Usually leave this empty; it then reuses the Base URL and API key from the chat settings above (for Qwen this is the same DashScope endpoint). Only fill it in if your embeddings run on a different URL."
+msgstr "通常は空のままにしてください。空の場合、上のチャット設定のベース URL と API キーを再利用します（Qwen では同じ DashScope エンドポイントです）。埋め込みだけ別の URL で動かす場合のみ入力してください。"
+
+msgid "Embedding model"
+msgstr "埋め込みモデル"
+
+msgid "The embedding model name. For Qwen (DashScope) use text-embedding-v3 (recommended) or text-embedding-v4. Leave empty to use text-embedding-v3."
+msgstr "埋め込みモデル名です。Qwen（DashScope）では text-embedding-v3 （推奨）または text-embedding-v4 を使用します。空の場合は text-embedding-v3 を使用します。"
+
+msgid "Dimensions"
+msgstr "次元数"
+
+msgid "The vector size. For Qwen text-embedding-v3 use 1024 (recommended); it also supports 768 or 512. text-embedding-v4 goes up to 2048. If you change this, rebuild the embeddings afterwards."
+msgstr "ベクトルのサイズです。Qwen の text-embedding-v3 では 1024 （推奨）を使用します。768 や 512 も指定できます。text-embedding-v4 は最大 2048 まで対応します。変更した場合は、埋め込みを作り直してください。"
+
+msgid "You changed the embedding provider. After saving, open Site Learning and clear + regenerate the embeddings. Existing vectors were built with the previous provider and are ignored by search until rebuilt."
+msgstr "埋め込みプロバイダーを変更しました。保存後、「サイト学習」を開いて埋め込みをクリア＋再生成してください。既存のベクトルは以前のプロバイダーで作成されているため、作り直すまで検索では無視されます。"
+
+msgid "After switching the embedding provider or changing the dimensions, clear and regenerate embeddings so every chunk is re-embedded with the new model (old vectors of a different size are ignored by search)."
+msgstr "埋め込みプロバイダーや次元数を変更した後は、埋め込みをクリアして再生成し、すべてのチャンクを新しいモデルで埋め込み直してください（サイズが異なる古いベクトルは検索で無視されます）。"

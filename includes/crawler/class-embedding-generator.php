@@ -30,6 +30,12 @@ class RAPLSAICH_Embedding_Generator {
     private int $dimensions = 0;
 
     /**
+     * Base URL for the generic OpenAI-compatible embedding endpoint
+     * (only used when $provider === 'compat').
+     */
+    private string $base_url = '';
+
+    /**
      * Constructor - auto-detects provider from settings
      *
      * @param array|null $settings Override settings (null = read from DB)
@@ -64,13 +70,48 @@ class RAPLSAICH_Embedding_Generator {
                 $this->model = 'gemini-embedding-001';
                 $this->dimensions = 768;
             }
+        } elseif ($embedding_provider === 'compat') {
+            $this->configure_compat($settings);
         }
+    }
+
+    /**
+     * Configure this generator for the generic OpenAI-compatible embedding
+     * endpoint (Qwen/DashScope, Zhipu, …). Falls back to the chat compat base
+     * URL / key when no dedicated embedding endpoint is set.
+     *
+     * @return bool True if compat embeddings were configured (key + base URL present).
+     */
+    private function configure_compat(array $settings): bool {
+        $key = $this->decrypt_key($settings['compat_api_key'] ?? '');
+        $base = trim($settings['compat_embedding_base_url'] ?? '');
+        if ($base === '') {
+            $base = trim($settings['compat_base_url'] ?? '');
+        }
+        if (!$key || $base === '') {
+            return false;
+        }
+        $this->provider   = 'compat';
+        $this->api_key    = $key;
+        $this->base_url   = function_exists('raplsaich_normalize_compat_base_url')
+            ? raplsaich_normalize_compat_base_url($base)
+            : rtrim($base, '/');
+        $this->model      = trim($settings['compat_embedding_model'] ?? '') ?: 'text-embedding-v3';
+        $this->dimensions = max(1, (int) ($settings['compat_embedding_dimensions'] ?? 1024)) ?: 1024;
+        return true;
     }
 
     /**
      * Auto-detect provider from chat provider settings
      */
     private function auto_detect_provider(array $settings, string $chat_provider): void {
+        // When chatting through the OpenAI-compatible provider (Qwen/DashScope, …),
+        // use that same vendor for embeddings — DeepSeek/Moonshot have no embedding
+        // API, but Qwen/Zhipu do, and it keeps everything on one account.
+        if ($chat_provider === 'compat' && $this->configure_compat($settings)) {
+            return;
+        }
+
         // Preferred order: match chat provider first, then try all available keys
         $providers_to_try = ['openai', 'gemini'];
         if ($chat_provider === 'gemini') {
@@ -154,6 +195,10 @@ class RAPLSAICH_Embedding_Generator {
             return $this->gemini_batch($texts, $valid);
         }
 
+        if ($this->provider === 'compat') {
+            return $this->compat_batch($texts, $valid);
+        }
+
         return array_fill(0, count($texts), null);
     }
 
@@ -186,6 +231,7 @@ class RAPLSAICH_Embedding_Generator {
             'auto'   => __('Auto (use chat provider API key)', 'rapls-ai-chatbot'),
             'openai' => 'OpenAI (text-embedding-3-small)',
             'gemini' => 'Gemini (gemini-embedding-001)',
+            'compat' => __('OpenAI-compatible (Qwen/DashScope, Zhipu, …)', 'rapls-ai-chatbot'),
         ];
     }
 
@@ -317,6 +363,82 @@ class RAPLSAICH_Embedding_Generator {
             foreach ($resp_body['embeddings'] as $idx => $item) {
                 if (isset($item['values'], $index_chunks[$ci][$idx])) {
                     $results[$index_chunks[$ci][$idx]] = $item['values'];
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Generic OpenAI-compatible batch embedding (Qwen/DashScope, Zhipu, …).
+     *
+     * Same request/response shape as OpenAI's /embeddings ($data[].embedding),
+     * but the endpoint is user-supplied and the batch size is capped at 10 —
+     * DashScope's text-embedding-v3/v4 reject larger batches. The `dimensions`
+     * parameter is passed through so v3/v4 return the requested vector width.
+     */
+    private function compat_batch(array $all_texts, array $valid): array {
+        $results = array_fill(0, count($all_texts), null);
+        if ($this->base_url === '') {
+            return $results;
+        }
+        $valid_texts = array_values($valid);
+        $valid_indices = array_keys($valid);
+
+        // DashScope caps embedding batches at 10 inputs per request.
+        $chunk_size = 10;
+        $chunks = array_chunk($valid_texts, $chunk_size);
+        $index_chunks = array_chunk($valid_indices, $chunk_size);
+
+        $url = $this->base_url . '/embeddings';
+
+        foreach ($chunks as $ci => $chunk) {
+            $payload = [
+                'input' => $chunk,
+                'model' => $this->model,
+            ];
+            if ($this->dimensions > 0) {
+                $payload['dimensions'] = $this->dimensions;
+            }
+            $body = wp_json_encode($payload);
+
+            /** This filter is documented in includes/ai-providers/class-openai-provider.php */
+            $timeout = (int) apply_filters('raplsaich_api_timeout', 30);
+
+            $response = wp_remote_post($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->api_key,
+                    'Content-Type'  => 'application/json',
+                ],
+                'body'    => $body,
+                'timeout' => $timeout,
+            ]);
+
+            if (is_wp_error($response)) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log('RAPLSAICH Compatible Embedding API error: ' . $response->get_error_message());
+                }
+                continue;
+            }
+
+            $status = wp_remote_retrieve_response_code($response);
+            $resp_body = json_decode(wp_remote_retrieve_body($response), true);
+
+            if ($status !== 200 || empty($resp_body['data'])) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    $err_msg = $resp_body['error']['message'] ?? 'Unknown error';
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                    error_log("RAPLSAICH Compatible Embedding API error (HTTP {$status}): {$err_msg}");
+                }
+                continue;
+            }
+
+            foreach ($resp_body['data'] as $item) {
+                $idx = $item['index'] ?? null;
+                if ($idx !== null && isset($index_chunks[$ci][$idx])) {
+                    $results[$index_chunks[$ci][$idx]] = $item['embedding'];
                 }
             }
         }

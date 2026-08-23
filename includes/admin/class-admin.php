@@ -326,7 +326,7 @@ class RAPLSAICH_Admin {
 
         // AI provider allowlist
         if (isset($settings['ai_provider'])) {
-            $valid_providers = ['openai', 'claude', 'gemini', 'openrouter', 'wpai'];
+            $valid_providers = ['openai', 'claude', 'gemini', 'openrouter', 'wpai', 'compat'];
             if (!in_array($settings['ai_provider'], $valid_providers, true)) {
                 $settings['ai_provider'] = $existing['ai_provider'] ?? 'openai';
             }
@@ -334,7 +334,7 @@ class RAPLSAICH_Admin {
 
         // Embedding provider allowlist
         if (isset($settings['embedding_provider'])) {
-            $valid_emb_providers = ['auto', 'openai', 'gemini'];
+            $valid_emb_providers = ['auto', 'openai', 'gemini', 'compat'];
             if (!in_array($settings['embedding_provider'], $valid_emb_providers, true)) {
                 $settings['embedding_provider'] = $existing['embedding_provider'] ?? 'auto';
             }
@@ -391,7 +391,7 @@ class RAPLSAICH_Admin {
         //  - New value submitted → encrypt and save
         //  - Empty value → keep existing (value is never output to HTML)
         //  - Explicit delete flag → clear the key
-        foreach (['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key'] as $key_field) {
+        foreach (['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'compat_api_key'] as $key_field) {
             $delete_flag = 'delete_' . $key_field;
             if (!empty($input[$delete_flag])) {
                 // Explicit deletion requested via hidden field
@@ -440,6 +440,16 @@ class RAPLSAICH_Admin {
         $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash'));
         $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model'] ?? ($existing['openrouter_model'] ?? 'openrouter/auto'));
         $sanitized['wpai_model']       = sanitize_text_field($input['wpai_model'] ?? ($existing['wpai_model'] ?? ''));
+
+        // Generic OpenAI-compatible endpoint (Qwen/DashScope, DeepSeek, Zhipu, …).
+        // Base URL + model are free-text; the API key is encrypted in the loop above.
+        $sanitized['compat_base_url'] = raplsaich_normalize_compat_base_url(esc_url_raw(trim($input['compat_base_url'] ?? ($existing['compat_base_url'] ?? ''))));
+        $sanitized['compat_model']    = sanitize_text_field($input['compat_model'] ?? ($existing['compat_model'] ?? ''));
+        // Separate embedding endpoint (a user may chat on one vendor, embed on another).
+        $sanitized['compat_embedding_base_url'] = raplsaich_normalize_compat_base_url(esc_url_raw(trim($input['compat_embedding_base_url'] ?? ($existing['compat_embedding_base_url'] ?? ''))));
+        $sanitized['compat_embedding_model']    = sanitize_text_field($input['compat_embedding_model'] ?? ($existing['compat_embedding_model'] ?? ''));
+        $compat_dims = absint($input['compat_embedding_dimensions'] ?? ($existing['compat_embedding_dimensions'] ?? 1024));
+        $sanitized['compat_embedding_dimensions'] = max(1, min(4096, $compat_dims ?: 1024));
 
         // Chatbot settings
         $sanitized['bot_name'] = sanitize_text_field($input['bot_name'] ?? ($existing['bot_name'] ?? 'Assistant'));
@@ -684,7 +694,7 @@ class RAPLSAICH_Admin {
         } else {
             $sanitized['embedding_enabled'] = $existing['embedding_enabled'] ?? false;
         }
-        $valid_emb_providers = ['auto', 'openai', 'gemini'];
+        $valid_emb_providers = ['auto', 'openai', 'gemini', 'compat'];
         $sanitized['embedding_provider'] = in_array($input['embedding_provider'] ?? '', $valid_emb_providers, true)
             ? $input['embedding_provider']
             : ($existing['embedding_provider'] ?? 'auto');
@@ -2324,6 +2334,18 @@ class RAPLSAICH_Admin {
                 $ai = new RAPLSAICH_Gemini_Provider();
             } elseif ($provider === 'openrouter') {
                 $ai = new RAPLSAICH_OpenRouter_Provider();
+            } elseif ($provider === 'compat') {
+                // Generic OpenAI-compatible endpoint — needs the base URL to validate.
+                $base_url = esc_url_raw(trim(wp_unslash($_POST['base_url'] ?? '')));
+                if ($base_url === '') {
+                    $settings = get_option('raplsaich_settings', []);
+                    $base_url = $settings['compat_base_url'] ?? '';
+                }
+                if ($base_url === '') {
+                    wp_send_json_error(__('Please enter the base URL first.', 'rapls-ai-chatbot'));
+                }
+                $ai = new RAPLSAICH_OpenAI_Compatible_Provider();
+                $ai->set_base_url($base_url);
             } else {
                 $ai = new RAPLSAICH_OpenAI_Provider();
             }
@@ -2334,6 +2356,11 @@ class RAPLSAICH_Admin {
                 if (!$use_saved) {
                     $settings = get_option('raplsaich_settings', []);
                     $settings[$provider . '_api_key'] = $this->maybe_encrypt_api_key($api_key);
+                    // Persist the base URL entered in the test so it isn't lost if the
+                    // admin tests before saving the form.
+                    if ($provider === 'compat' && !empty($base_url)) {
+                        $settings['compat_base_url'] = $base_url;
+                    }
                     update_option('raplsaich_settings', $settings);
                 }
                 wp_send_json_success(__('Connection successful! API key saved.', 'rapls-ai-chatbot'));

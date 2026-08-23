@@ -120,6 +120,69 @@
 
             // Pro features initialize here (registered by chatbot-pro.js)
             this.runProHook('init');
+
+            // Deep-link: a ?raplsaich_q= (or ?q=) URL opens the chat and sends
+            // that question automatically. Lets sites link "suggested questions"
+            // straight into a live conversation.
+            this.handleDeepLinkQuestion();
+        },
+
+        /**
+         * Deep-link auto-send.
+         *
+         * Reads a question from the page URL and, if present, opens the chatbot
+         * and sends it automatically — no typing or copy-paste. Supports both a
+         * namespaced ?raplsaich_q= (recommended, avoids clashing with other
+         * ?q= uses on the site) and the plain ?q= for convenience.
+         *
+         * The value is rendered as a normal user message (textContent, never
+         * innerHTML) and sanitized server-side, so a crafted URL cannot inject
+         * markup. Runs once, then strips the param so a refresh does not resend.
+         */
+        handleDeepLinkQuestion: function() {
+            if (this._deepLinkHandled) return;
+
+            var question = '';
+            try {
+                var params = new URLSearchParams(window.location.search);
+                question = params.get('raplsaich_q') || params.get('q') || '';
+            } catch (e) {
+                return; // URLSearchParams unavailable — nothing to do
+            }
+            question = (question || '').trim();
+            if (!question) return;
+
+            this._deepLinkHandled = true;
+
+            // Cap to a sane length (matches the server-side message limit intent).
+            if (question.length > 1000) {
+                question = question.slice(0, 1000);
+            }
+
+            // Remove the param so reloading the page does not resend the question.
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('raplsaich_q');
+                url.searchParams.delete('q');
+                window.history.replaceState({}, document.title, url.toString());
+            } catch (e) {
+                // history/URL unavailable — non-fatal, the message still sends
+            }
+
+            var self = this;
+            // Defer briefly so the widget is fully ready (session, welcome screen,
+            // Pro hooks) before we open and send.
+            setTimeout(function() {
+                if (self._welcomeScreenActive) {
+                    self._dismissWelcomeScreen();
+                }
+                // Inline (shortcode) chatbots are always visible; only the badge
+                // widget needs opening.
+                if (!self.config.inlineMode && !self.isOpen) {
+                    self.open();
+                }
+                self.sendMessage(question);
+            }, 50);
         },
 
         /**

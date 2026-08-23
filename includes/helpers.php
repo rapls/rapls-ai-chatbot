@@ -265,6 +265,27 @@ function raplsaich_inject_current_date($system_prompt) {
 }
 
 /**
+ * Normalize a user-supplied OpenAI-compatible base URL to its root.
+ *
+ * Users often paste the full endpoint (e.g. .../compatible-mode/v1/embeddings)
+ * instead of the base (.../compatible-mode/v1). We append /chat/completions,
+ * /embeddings, or /models ourselves, so strip any of those suffixes (and a
+ * trailing slash) to avoid a doubled path like /embeddings/embeddings.
+ *
+ * @param string $url Raw base URL.
+ * @return string Normalized base URL (no trailing slash), or '' if empty.
+ */
+function raplsaich_normalize_compat_base_url(string $url): string {
+    $url = trim($url);
+    if ($url === '') {
+        return '';
+    }
+    $url = rtrim($url, '/');
+    $url = preg_replace('#/(chat/completions|embeddings|models)$#', '', $url);
+    return rtrim($url, '/');
+}
+
+/**
  * Create an AI provider instance with the correct API key and model.
  *
  * Centralises provider construction so that LINE, MCP, REST, etc.
@@ -297,6 +318,15 @@ function raplsaich_create_ai_provider(array $settings, ?array $bot_config = null
             $provider = new RAPLSAICH_OpenRouter_Provider();
             $provider->set_api_key(raplsaich_decrypt_api_key($settings['openrouter_api_key'] ?? ''));
             $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['openrouter_model'] ?? 'openrouter/auto'));
+            break;
+
+        case 'compat':
+            // Generic OpenAI-compatible endpoint (Qwen/DashScope, DeepSeek, Zhipu, …).
+            // Base URL, model, and key are all user-supplied.
+            $provider = new RAPLSAICH_OpenAI_Compatible_Provider();
+            $provider->set_base_url($settings['compat_base_url'] ?? '');
+            $provider->set_api_key(raplsaich_decrypt_api_key($settings['compat_api_key'] ?? ''));
+            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['compat_model'] ?? ''));
             break;
 
         case 'wpai':

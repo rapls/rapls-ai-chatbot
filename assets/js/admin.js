@@ -156,16 +156,22 @@
 
             $button.prop('disabled', true).text(raplsaichAdmin.i18n.testing || 'Testing...');
 
+            var testData = {
+                action: 'raplsaich_test_api',
+                nonce: raplsaichAdmin.nonce,
+                provider: provider,
+                api_key: apiKey,
+                use_saved: useSaved ? '1' : ''
+            };
+            // The generic OpenAI-compatible provider needs its base URL to validate.
+            if (provider === 'compat') {
+                testData.base_url = $('#compat_base_url').val() || '';
+            }
+
             $.ajax({
                 url: raplsaichAdmin.ajaxUrl,
                 method: 'POST',
-                data: {
-                    action: 'raplsaich_test_api',
-                    nonce: raplsaichAdmin.nonce,
-                    provider: provider,
-                    api_key: apiKey,
-                    use_saved: useSaved ? '1' : ''
-                },
+                data: testData,
                 success: function(response) {
                     if (response.success) {
                         alert('✓ ' + response.data);
@@ -175,7 +181,10 @@
                             .removeClass('raplsaich-key-empty')
                             .addClass('raplsaich-key-set')
                             .text(raplsaichAdmin.i18n.keyConfigured || 'Configured');
-                        fetchModels(provider, apiKey, false, false);
+                        // Compat uses a free-text model field, not a fetched dropdown.
+                        if (provider !== 'compat') {
+                            fetchModels(provider, apiKey, false, false);
+                        }
                     } else {
                         alert('✗ ' + response.data);
                     }

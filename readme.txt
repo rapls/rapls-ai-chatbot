@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.15.4
+Stable tag: 1.16.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,7 +23,7 @@ https://www.youtube.com/watch?v=6mFve1lxvuw
 
 **No monthly SaaS fee — and no runaway bill.** It runs on your own API key with no markup, and built-in Usage Control caps daily usage per visitor, so you can open the bot to the public without worrying about your API spend. A Monthly Cost Guard lets you set a hard budget, and Model Fallback keeps the bot answering on a lightweight model when your main model hits its quota. Conversations and keys stay on your own server.
 
-Built for site owners, agencies, and developers who want control over the model, the data, and the cost. Connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, and switch anytime.
+Built for site owners, agencies, and developers who want control over the model, the data, and the cost. Connect OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, or any OpenAI-compatible endpoint such as Alibaba Tongyi Qwen (DashScope) — useful where OpenAI and Gemini are hard to reach — and switch anytime.
 
 = Why site owners pick Rapls =
 
@@ -36,7 +36,7 @@ Built for site owners, agencies, and developers who want control over the model,
 
 = What it does =
 
-* Bring your own key: OpenAI, Anthropic Claude, Google Gemini, or OpenRouter, switchable per site.
+* Bring your own key: OpenAI, Anthropic Claude, Google Gemini, OpenRouter, or any OpenAI-compatible endpoint (Alibaba Qwen/DashScope, DeepSeek, Zhipu), switchable per site.
 * Site learning: indexes your posts and pages so the bot answers from your content.
 * Knowledge base: add Q&A or upload PDF/DOCX files, with priority over general answers.
 * RAG hybrid search: combines keyword and semantic retrieval for grounded replies.
@@ -49,6 +49,7 @@ Built for site owners, agencies, and developers who want control over the model,
 * AI-smell score: an optional read-only score that flags machine-sounding wording in Japanese replies (detection only — replies are never altered).
 * Industry starter templates: one click applies a ready-made system prompt and preset questions for hotels, shops, clinics, professional services, or company sites.
 * Gutenberg block: drop the chatbot into any page or post.
+* Deep-link auto-send: a `?raplsaich_q=` URL opens the chatbot and sends the question automatically, so end-of-article "suggested questions" become one-click conversations.
 
 = Turns visitor questions into content =
 
@@ -206,7 +207,15 @@ Used when you select OpenRouter as your AI provider. OpenRouter is a unified API
 * Terms of Use: [https://openrouter.ai/terms](https://openrouter.ai/terms)
 * Privacy Policy: [https://openrouter.ai/privacy](https://openrouter.ai/privacy)
 
-= 5. Google reCAPTCHA v3 (Optional) =
+= 5. OpenAI-compatible endpoints (e.g. Alibaba Qwen/DashScope, DeepSeek, Zhipu): AI Provider =
+
+Used only if you select the "OpenAI-compatible" provider and enter a base URL. User messages, and optionally your site content (including indexed content for RAG embeddings), are sent to the endpoint you configure to generate responses or embeddings. Because the endpoint is chosen by you, please review the terms and privacy policy of the specific provider you connect to. For example, Alibaba Cloud Model Studio (DashScope), which powers Tongyi Qwen:
+
+* Service URL: [https://www.alibabacloud.com/help/en/model-studio/](https://www.alibabacloud.com/help/en/model-studio/)
+* Terms of Use: [https://www.alibabacloud.com/help/en/legal/](https://www.alibabacloud.com/help/en/legal/)
+* Privacy Policy: [https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-privacy-policy/](https://www.alibabacloud.com/help/en/legal/latest/alibaba-cloud-privacy-policy/)
+
+= 6. Google reCAPTCHA v3 (Optional) =
 
 Used only if you enable reCAPTCHA in the plugin settings for spam protection. The visitor's IP address and interaction data are sent to Google for verification.
 
@@ -214,7 +223,7 @@ Used only if you enable reCAPTCHA in the plugin settings for spam protection. Th
 * Terms of Use: [https://policies.google.com/terms](https://policies.google.com/terms)
 * Privacy Policy: [https://policies.google.com/privacy](https://policies.google.com/privacy)
 
-= 6. LINE Messaging API (Pro Add-on, Optional) =
+= 7. LINE Messaging API (Pro Add-on, Optional) =
 
 Used only if you enable the LINE integration via the Pro add-on. Connects to the LINE Messaging API for chatbot-to-LINE messaging.
 
@@ -248,6 +257,10 @@ You can disable these features in the plugin settings:
 * Web search
 
 == Changelog ==
+
+= 1.16.0 =
+* Added: OpenAI-compatible provider. Connect any service that speaks the OpenAI Chat Completions API — including Chinese providers such as Alibaba Tongyi Qwen (DashScope), DeepSeek, and Zhipu GLM — by entering a base URL, a model name, and an API key. Vector embeddings (RAG) are supported as well, so sites that cannot reach OpenAI or Gemini (for example inside mainland China) can run both chat and RAG on a domestic provider such as Qwen. When the embedding provider is set to Auto and chat runs on the OpenAI-compatible provider, embeddings use that same vendor. Changing the embedding provider now warns you to clear and regenerate embeddings.
+* Added: Deep-link auto-send. A URL such as `?raplsaich_q=your+question` (a plain `?q=` also works) opens the chatbot and sends that question automatically, with no typing or copy-paste — ideal for turning end-of-article "suggested questions" into one-click conversations. The question is shown as a normal visitor message, and the parameter is removed from the URL after sending so a refresh does not resend it.
 
 = 1.15.4 =
 * Fixed: the plugin header still read 1.15.2 while every other file said 1.15.3, so an installed 1.15.3 reported itself as 1.15.2 and WordPress kept offering the same update over and over. The header is the version WordPress compares, and it is now correct. The release check now compares all three places a version is written, so this cannot recur.
@@ -366,6 +379,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.16.0 =
+Adds an OpenAI-compatible provider (use Alibaba Qwen/DashScope, DeepSeek, or Zhipu for both chat and RAG) and deep-link auto-send (a ?raplsaich_q= URL opens the chat and sends the question). New features only; existing setups are unchanged.
 
 = 1.15.4 =
 Stops WordPress repeatedly offering an update you have already installed. Also a shorter plugin name. No behaviour changes.

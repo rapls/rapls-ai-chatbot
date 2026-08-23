@@ -113,6 +113,7 @@ class RAPLSAICH_Main {
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-claude-provider.php';
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-gemini-provider.php';
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-openrouter-provider.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-openai-compatible-provider.php';
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/ai-providers/class-wpai-provider.php';
 
         // Crawler

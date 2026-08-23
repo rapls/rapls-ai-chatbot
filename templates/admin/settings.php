@@ -287,6 +287,7 @@ if (!defined('ABSPATH')) {
                                 <option value="claude" <?php selected($settings['ai_provider'] ?? '', 'claude'); ?>>Anthropic (Claude)</option>
                                 <option value="gemini" <?php selected($settings['ai_provider'] ?? '', 'gemini'); ?>>Google (Gemini)</option>
                                 <option value="openrouter" <?php selected($settings['ai_provider'] ?? '', 'openrouter'); ?>>OpenRouter</option>
+                                <option value="compat" <?php selected($settings['ai_provider'] ?? '', 'compat'); ?>><?php esc_html_e('OpenAI-compatible (Qwen / DashScope, DeepSeek, Zhipu…)', 'rapls-ai-chatbot'); ?></option>
                                 <?php if (RAPLSAICH_WPAI_Provider::is_available()) : ?>
                                     <option value="wpai" <?php selected($settings['ai_provider'] ?? '', 'wpai'); ?>><?php esc_html_e('WordPress AI Client (Connectors)', 'rapls-ai-chatbot'); ?></option>
                                 <?php endif; ?>
@@ -607,6 +608,62 @@ if (!defined('ABSPATH')) {
                     </table>
                 </div>
 
+                <!-- OpenAI-compatible Settings -->
+                <div id="compat-settings" class="provider-settings">
+                    <h3><?php esc_html_e('OpenAI-compatible Settings', 'rapls-ai-chatbot'); ?></h3>
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Connect any AI service that supports the OpenAI Chat Completions format. This is how you use Chinese providers such as Alibaba Tongyi Qwen (DashScope), DeepSeek, or Zhipu GLM. Fill in the three fields below exactly as your provider gives them: the base URL, your API key, and the model name.', 'rapls-ai-chatbot'); ?>
+                    </p>
+                    <p class="description" style="margin-bottom: 12px;">
+                        <?php esc_html_e('Example for Alibaba Qwen (DashScope): Base URL https://dashscope.aliyuncs.com/compatible-mode/v1 (use dashscope-intl outside China), Model qwen-plus, and your DashScope API key.', 'rapls-ai-chatbot'); ?>
+                    </p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Base URL', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <input type="url" name="raplsaich_settings[compat_base_url]" id="compat_base_url"
+                                       value="<?php echo esc_attr($settings['compat_base_url'] ?? ''); ?>"
+                                       class="regular-text" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1">
+                                <p class="description">
+                                    <?php esc_html_e('Paste the base URL from your provider. It should end in /v1 (do not add /chat/completions yourself; the plugin adds it). For Alibaba Qwen (DashScope): use https://dashscope.aliyuncs.com/compatible-mode/v1 inside China, or https://dashscope-intl.aliyuncs.com/compatible-mode/v1 outside China. Some DashScope accounts are given a workspace-specific endpoint that looks like https://ws-xxxxxxxx.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1. In that case, paste exactly the URL shown in your DashScope console.', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('API Key', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <div class="raplsaich-api-key-wrapper">
+                                    <input type="password" name="raplsaich_settings[compat_api_key]"
+                                           id="compat_api_key"
+                                           value=""
+                                           class="regular-text" autocomplete="off"
+                                           placeholder="<?php echo !empty($settings['compat_api_key']) ? esc_attr__('••••••••(configured)', 'rapls-ai-chatbot') : ''; ?>">
+                                    <input type="hidden" name="raplsaich_settings[delete_compat_api_key]" id="delete_compat_api_key" value="0">
+                                    <button type="button" class="button raplsaich-test-api" data-provider="compat"><?php esc_html_e('Test Connection', 'rapls-ai-chatbot'); ?></button>
+                                    <?php if (!empty($settings['compat_api_key'])): ?>
+                                        <button type="button" class="button raplsaich-clear-api-key" data-target="compat_api_key"><?php esc_html_e('Remove', 'rapls-ai-chatbot'); ?></button>
+                                        <span class="raplsaich-key-status raplsaich-key-set"><?php esc_html_e('Configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php else: ?>
+                                        <span class="raplsaich-key-status raplsaich-key-empty"><?php esc_html_e('Not configured', 'rapls-ai-chatbot'); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <p class="description"><?php esc_html_e('Paste the API key issued by your provider. For Qwen, this is your DashScope API key (it starts with sk-).', 'rapls-ai-chatbot'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
+                            <td>
+                                <input type="text" name="raplsaich_settings[compat_model]" id="compat_model"
+                                       value="<?php echo esc_attr($settings['compat_model'] ?? ''); ?>"
+                                       class="regular-text" placeholder="qwen-plus">
+                                <p class="description">
+                                    <?php esc_html_e('Enter the chat model name exactly as your provider lists it. For Qwen: qwen-plus (recommended), qwen-turbo, or qwen-max. Other providers: deepseek-chat, glm-4-plus.', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
                 <!-- Embedding Settings -->
                 <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
                     <?php esc_html_e('Vector Embedding (RAG)', 'rapls-ai-chatbot'); ?>
@@ -628,13 +685,17 @@ if (!defined('ABSPATH')) {
                     <tr>
                         <th scope="row"><?php esc_html_e('Embedding Provider', 'rapls-ai-chatbot'); ?></th>
                         <td>
-                            <select name="raplsaich_settings[embedding_provider]" id="embedding_provider">
+                            <select name="raplsaich_settings[embedding_provider]" id="embedding_provider"
+                                data-initial-value="<?php echo esc_attr($settings['embedding_provider'] ?? 'auto'); ?>">
                                 <?php foreach (RAPLSAICH_Embedding_Generator::get_available_providers() as $value => $label) : ?>
                                     <option value="<?php echo esc_attr($value); ?>" <?php selected($settings['embedding_provider'] ?? 'auto', $value); ?>>
                                         <?php echo esc_html($label); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <p id="embedding-provider-change-warning" class="notice notice-warning" style="display:none;padding:8px 12px;margin:10px 0 0;">
+                                <?php esc_html_e('You changed the embedding provider. After saving, open Site Learning and clear + regenerate the embeddings. Existing vectors were built with the previous provider and are ignored by search until rebuilt.', 'rapls-ai-chatbot'); ?>
+                            </p>
                             <?php
                             $current_provider = $settings['ai_provider'] ?? 'openai';
                             if (in_array($current_provider, ['claude', 'openrouter', 'wpai'], true)) :
@@ -643,6 +704,35 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Note: Claude, OpenRouter, and the WordPress AI Client do not expose embedding APIs. An OpenAI or Gemini API key is required for embeddings.', 'rapls-ai-chatbot'); ?>
                             </p>
                             <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr id="compat-embedding-fields" style="<?php echo (($settings['embedding_provider'] ?? '') === 'compat') ? '' : 'display:none;'; ?>">
+                        <th scope="row"><?php esc_html_e('OpenAI-compatible Embedding', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <p style="margin:0 0 10px;">
+                                <label style="display:block;margin-bottom:4px;font-weight:600;"><?php esc_html_e('Embedding base URL (optional)', 'rapls-ai-chatbot'); ?></label>
+                                <input type="url" name="raplsaich_settings[compat_embedding_base_url]" id="compat_embedding_base_url"
+                                       value="<?php echo esc_attr($settings['compat_embedding_base_url'] ?? ''); ?>"
+                                       class="regular-text" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1">
+                                <span class="description" style="display:block;"><?php esc_html_e('Usually leave this empty; it then reuses the Base URL and API key from the chat settings above (for Qwen this is the same DashScope endpoint). Only fill it in if your embeddings run on a different URL.', 'rapls-ai-chatbot'); ?></span>
+                            </p>
+                            <p style="margin:0 0 10px;">
+                                <label style="display:block;margin-bottom:4px;font-weight:600;"><?php esc_html_e('Embedding model', 'rapls-ai-chatbot'); ?></label>
+                                <input type="text" name="raplsaich_settings[compat_embedding_model]" id="compat_embedding_model"
+                                       value="<?php echo esc_attr($settings['compat_embedding_model'] ?? ''); ?>"
+                                       class="regular-text" placeholder="text-embedding-v3">
+                                <span class="description" style="display:block;"><?php esc_html_e('The embedding model name. For Qwen (DashScope) use text-embedding-v3 (recommended) or text-embedding-v4. Leave empty to use text-embedding-v3.', 'rapls-ai-chatbot'); ?></span>
+                            </p>
+                            <p style="margin:0 0 10px;">
+                                <label style="display:block;margin-bottom:4px;font-weight:600;"><?php esc_html_e('Dimensions', 'rapls-ai-chatbot'); ?></label>
+                                <input type="number" name="raplsaich_settings[compat_embedding_dimensions]" id="compat_embedding_dimensions"
+                                       value="<?php echo esc_attr($settings['compat_embedding_dimensions'] ?? 1024); ?>"
+                                       min="1" max="4096" step="1" style="width:120px;">
+                                <span class="description" style="display:block;"><?php esc_html_e('The vector size. For Qwen text-embedding-v3 use 1024 (recommended); it also supports 768 or 512. text-embedding-v4 goes up to 2048. If you change this, rebuild the embeddings afterwards.', 'rapls-ai-chatbot'); ?></span>
+                            </p>
+                            <p class="description" style="color:#d63638;">
+                                <?php esc_html_e('After switching the embedding provider or changing the dimensions, clear and regenerate embeddings so every chunk is re-embedded with the new model (old vectors of a different size are ignored by search).', 'rapls-ai-chatbot'); ?>
+                            </p>
                         </td>
                     </tr>
                     <?php
@@ -678,6 +768,21 @@ if (!defined('ABSPATH')) {
                     </tr>
                     <?php endif; ?>
                 </table>
+                <script>
+                (function () {
+                    var sel = document.getElementById('embedding_provider');
+                    if (!sel) { return; }
+                    var row = document.getElementById('compat-embedding-fields');
+                    var warn = document.getElementById('embedding-provider-change-warning');
+                    var initial = sel.getAttribute('data-initial-value');
+                    sel.addEventListener('change', function () {
+                        if (row) { row.style.display = (this.value === 'compat') ? '' : 'none'; }
+                        // Warn when the provider differs from the saved one — embeddings
+                        // must be rebuilt after switching providers.
+                        if (warn) { warn.style.display = (this.value !== initial) ? '' : 'none'; }
+                    });
+                })();
+                </script>
 
                 <!-- Answer Quality & Reliability (1.12.0) -->
                 <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
