@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) {
 <div id="wp-ai-chatbot" class="wp-ai-chatbot raplsaich-chatbot <?php echo esc_attr($theme_class); ?>" data-state="closed" data-position="<?php echo esc_attr($badge_position ?? 'bottom-right'); ?>">
 
     <!-- バッジ（閉じた状態） -->
-    <button class="chatbot-badge" aria-label="<?php esc_attr_e('Open chat', 'rapls-ai-chatbot'); ?>">
+    <button class="chatbot-badge<?php echo (isset($badge_label) && $badge_label !== '') ? ' has-label' : ''; ?>" aria-label="<?php esc_attr_e('Open chat', 'rapls-ai-chatbot'); ?>">
         <?php if ($badge_icon_type === 'preset' && !empty($badge_icon_preset)) : ?>
             <?php echo wp_kses(raplsaich_get_badge_preset_svg($badge_icon_preset), raplsaich_get_svg_allowed_tags()); ?>
         <?php elseif ($badge_icon_type === 'image' && !empty($badge_icon_image)) : ?>
@@ -25,6 +25,9 @@ if (!defined('ABSPATH')) {
                 <circle cx="12" cy="10" r="1.5"/>
                 <circle cx="16" cy="10" r="1.5"/>
             </svg>
+        <?php endif; ?>
+        <?php if (isset($badge_label) && $badge_label !== '') : ?>
+            <span class="badge-label"><?php echo esc_html($badge_label); ?></span>
         <?php endif; ?>
         <span class="badge-notification" hidden></span>
     </button>

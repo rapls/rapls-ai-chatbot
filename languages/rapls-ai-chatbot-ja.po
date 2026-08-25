@@ -8753,3 +8753,15 @@ msgstr "OpenAI 互換の API キーが設定されていません。"
 #: includes/admin/class-admin.php:2345
 msgid "Please enter the base URL first."
 msgstr "先にベース URL を入力してください。"
+
+#: templates/admin/settings.php:1894
+msgid "Badge Label"
+msgstr "バッジラベル"
+
+#: templates/admin/settings.php:1899
+msgid "e.g. Contact us here"
+msgstr "例: お問い合わせはこちら"
+
+#: templates/admin/settings.php:1901
+msgid "Optional text shown beside the badge icon, so first-time visitors know what the button does. Leave empty to show only the icon. Hidden on mobile to save space."
+msgstr "バッジアイコンの横に表示する任意のテキストです。初めての訪問者にもボタンの役割が伝わります。空欄にするとアイコンのみになります。省スペースのためモバイルでは非表示になります。"

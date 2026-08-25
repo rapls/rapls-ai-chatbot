@@ -76,6 +76,7 @@ class RAPLSAICH_Chatbot_Widget {
         $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
         $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
         $badge_icon_emoji = $ext_settings['badge_icon_emoji'] ?? '';
+        $badge_label = isset($settings['badge_label']) ? (string) $settings['badge_label'] : '';
 
         // Multi-bot: shortcode bot attribute overrides widget settings (Pro)
         $primary_color = '';
@@ -448,6 +449,7 @@ class RAPLSAICH_Chatbot_Widget {
         $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
         $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
         $badge_icon_emoji = $ext_settings['badge_icon_emoji'] ?? '';
+        $badge_label = isset($settings['badge_label']) ? (string) $settings['badge_label'] : '';
 
         // Multi-bot: check page rules for bot assignment (Pro)
         $primary_color = '';
@@ -558,6 +560,7 @@ class RAPLSAICH_Chatbot_Widget {
         $badge_icon_preset = $ext_settings['badge_icon_preset'] ?? '';
         $badge_icon_image = $ext_settings['badge_icon_image'] ?? '';
         $badge_icon_emoji = $ext_settings['badge_icon_emoji'] ?? '';
+        $badge_label = isset($settings['badge_label']) ? (string) $settings['badge_label'] : '';
 
         // Enqueue styles/scripts (needed for wp_head output)
         $this->is_inline = true;

@@ -467,3 +467,15 @@ msgstr ""
 #: templates/admin/crawler.php
 msgid "Monthly"
 msgstr ""
+
+#: templates/admin/settings.php
+msgid "Badge Label"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "e.g. Contact us here"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Optional text shown beside the badge icon, so first-time visitors know what the button does. Leave empty to show only the icon. Hidden on mobile to save space."
+msgstr ""

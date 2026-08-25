@@ -1891,6 +1891,18 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Badge Label', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <input type="text" name="raplsaich_settings[badge_label]" id="raplsaich_badge_label"
+                                   value="<?php echo esc_attr($settings['badge_label'] ?? ''); ?>"
+                                   maxlength="40" class="regular-text"
+                                   placeholder="<?php esc_attr_e('e.g. Contact us here', 'rapls-ai-chatbot'); ?>">
+                            <p class="description">
+                                <?php esc_html_e('Optional text shown beside the badge icon, so first-time visitors know what the button does. Leave empty to show only the icon. Hidden on mobile to save space.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row">
                             <?php esc_html_e('Badge Icon', 'rapls-ai-chatbot'); ?>
                             <?php if (!$is_pro_active): ?><span class="raplsaich-pro-badge-small">PRO</span><?php endif; ?>

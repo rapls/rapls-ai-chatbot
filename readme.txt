@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.16.1
+Stable tag: 1.16.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.16.2 =
+* Added: Badge label. You can now show a short line of text next to the launcher icon — for example "Contact us here" — so first-time visitors understand what the button does instead of seeing an icon alone. Set it under Settings, Badge Label; leave it empty to keep the icon-only circle. The label is hidden on phones to save space.
+
 = 1.16.1 =
 * Fixed: With the OpenAI-compatible provider selected (e.g. Alibaba Qwen/DashScope), the chat widget returned "AI API key is not configured" even though the key was saved and Test Connection succeeded. The pre-send key check did not recognize the new provider and looked for an OpenAI key instead of the OpenAI-compatible one. Chat now reads the correct key. No settings changes are needed.
 
@@ -382,6 +385,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.16.2 =
+Adds an optional text label beside the launcher icon (for example "Contact us here") so visitors know what the button does. Leave it empty to keep the icon-only button. New option only; existing setups are unchanged.
 
 = 1.16.1 =
 Fixes the OpenAI-compatible provider (Qwen/DashScope, DeepSeek, Zhipu): chat no longer reports "AI API key is not configured" when the key is set. Recommended for anyone using that provider.

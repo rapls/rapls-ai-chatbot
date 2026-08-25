@@ -528,6 +528,8 @@ class RAPLSAICH_Admin {
         $sanitized['badge_size'] = max(30, min(120, $raw_badge_size));
         $raw_badge_size_m = array_key_exists('badge_size_mobile', $input) ? absint($input['badge_size_mobile']) : ($existing['badge_size_mobile'] ?? $sanitized['badge_size']);
         $sanitized['badge_size_mobile'] = max(30, min(120, $raw_badge_size_m));
+        $badge_label_raw = array_key_exists('badge_label', $input) ? $input['badge_label'] : ($existing['badge_label'] ?? '');
+        $sanitized['badge_label'] = raplsaich_mb_substr(sanitize_text_field((string) $badge_label_raw), 0, 40);
         $sanitized['primary_color'] = sanitize_hex_color($input['primary_color'] ?? ($existing['primary_color'] ?? '#007bff')) ?: '#007bff';
 
         // Widget theme
@@ -3884,6 +3886,7 @@ class RAPLSAICH_Admin {
             'badge_margin_bottom_mobile' => 20,
             'badge_size'            => 60,
             'badge_size_mobile'     => 60,
+            'badge_label'           => '',
             'primary_color'         => '#007bff',
             'show_on_mobile'        => true,
             'ios_keyboard_fix'      => false,

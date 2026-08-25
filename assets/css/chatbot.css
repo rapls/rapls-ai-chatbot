@@ -105,6 +105,52 @@
     border: 2px solid #ffffff;
 }
 
+/* ラベル付きバッジ（アイコン横に文字を出す横長ピル） */
+.chatbot-badge.has-label {
+    width: auto;
+    min-width: var(--raplsaich-badge-size);
+    max-width: min(280px, 70vw);
+    border-radius: calc(var(--raplsaich-badge-size) / 2);
+    padding: 0 20px 0 16px;
+    gap: 8px;
+}
+
+.chatbot-badge.has-label .badge-icon,
+.chatbot-badge.has-label .badge-icon-emoji {
+    flex-shrink: 0;
+}
+
+.chatbot-badge.has-label .badge-icon-image {
+    width: calc(var(--raplsaich-badge-size) - 16px);
+    height: calc(var(--raplsaich-badge-size) - 16px);
+    flex-shrink: 0;
+}
+
+.chatbot-badge .badge-label {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* スマホでは横幅を専有しないよう、ラベルを隠して円アイコンに戻す */
+@media (max-width: 480px) {
+    .chatbot-badge.has-label {
+        width: var(--raplsaich-badge-size);
+        min-width: 0;
+        border-radius: 50%;
+        padding: 0;
+        gap: 0;
+    }
+
+    .chatbot-badge.has-label .badge-label {
+        display: none;
+    }
+}
+
 /* 開いている時はバッジを非表示 */
 .wp-ai-chatbot[data-state="open"] .chatbot-badge {
     display: none;
