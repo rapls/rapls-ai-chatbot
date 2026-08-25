@@ -924,7 +924,8 @@
                                 msg.action || null,
                                 msg.content_cards || null,
                                 msg.scenario || null,
-                                msg.related_knowledge || null
+                                msg.related_knowledge || null,
+                                msg.allow_html || false
                             );
                         });
 
@@ -1463,7 +1464,7 @@
                                     : '';
                                 self.addMessage('bot', (self.config.strings.dedup_stale || 'A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.') + staleRef);
                             } else {
-                                self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario, response.data.related_knowledge);
+                                self.addMessage('bot', response.data.content, response.data.sources, response.data.message_id, response.data.sentiment, response.data.product_cards, response.data.web_sources, response.data.action, response.data.content_cards, response.data.scenario, response.data.related_knowledge, response.data.allow_html);
                                 typeof self.fetchSuggestions === "function" && self.fetchSuggestions();
                                 self.saveContext();
                                 // conversion tracking handled by Pro
@@ -1685,7 +1686,7 @@
         /**
          * Add message to UI
          */
-        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards, scenarioData, relatedKnowledge) {
+        addMessage: function(role, content, sources, messageId, sentiment, productCards, webSources, actionData, contentCards, scenarioData, relatedKnowledge, allowHtml) {
             var self = this;
             // Track that the visitor has interacted; used to gate the
             // "persistent presets after every bot reply" feature so the
@@ -1753,9 +1754,14 @@
             // Bot/operator messages: safe HTML formatting (line breaks + auto-links, or markdown)
             // User messages: plain text only (no formatting needed)
             if (role === 'bot' || role === 'operator') {
-                var formatted = this.formatBotMessage(content);
+                // allowHtml: owner-authored, server-side wp_kses-filtered message
+                // (the usage "Limit reached" notice). Rendered via a safe DOM
+                // rebuild that keeps only links + basic emphasis.
+                var formatted = allowHtml
+                    ? this.formatBotMessageSafeHtml(content)
+                    : this.formatBotMessage(content);
                 var textSpan = document.createElement('span');
-                if (this.config.markdown_enabled && role === 'bot') {
+                if (this.config.markdown_enabled && role === 'bot' && !allowHtml) {
                     textSpan.className = 'raplsaich-markdown';
                 }
                 textSpan.appendChild(formatted);
@@ -2577,6 +2583,61 @@
                     fragment.appendChild(a);
                 }
             }
+            return fragment;
+        },
+
+        /**
+         * Safe-HTML formatter for owner-authored messages (the usage "Limit
+         * reached" notice with the HTML subset enabled). The string is already
+         * wp_kses-filtered server-side; this re-scrubs it as defense in depth:
+         * it parses the markup, then rebuilds only an allowlist of elements
+         * (<a>, <br>, <strong>, <em>, <b>, <i>) with a sanitized href. Any other
+         * tag is dropped and only its text is kept. Nothing is ever inserted
+         * into the live document via innerHTML, so no script/handler can run.
+         * Returns a DocumentFragment.
+         */
+        formatBotMessageSafeHtml: function(html) {
+            var self = this;
+            var allowed = { A: true, BR: true, STRONG: true, EM: true, B: true, I: true };
+            // Parse in a detached element; it is never attached to the page.
+            var parsed = document.createElement('div');
+            parsed.innerHTML = String(html == null ? '' : html);
+
+            function isSafeHref(href) {
+                var h = (href || '').trim();
+                // Allow http(s), mailto, tel, site-relative paths, and fragments.
+                return /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(h);
+            }
+
+            function rebuild(source, dest) {
+                var nodes = source.childNodes;
+                for (var i = 0; i < nodes.length; i++) {
+                    var node = nodes[i];
+                    if (node.nodeType === 3) { // text
+                        dest.appendChild(document.createTextNode(node.nodeValue));
+                    } else if (node.nodeType === 1) { // element
+                        var tag = node.tagName;
+                        if (allowed[tag]) {
+                            var el = document.createElement(tag);
+                            if (tag === 'A') {
+                                var href = node.getAttribute('href');
+                                if (isSafeHref(href)) {
+                                    el.setAttribute('href', href.trim());
+                                    el.target = self.config.link_target || '_blank';
+                                    el.rel = 'noopener noreferrer';
+                                }
+                            }
+                            rebuild(node, el); // recurse: keep inner text/emphasis
+                            dest.appendChild(el);
+                        } else {
+                            rebuild(node, dest); // drop tag, keep its text
+                        }
+                    }
+                }
+            }
+
+            var fragment = document.createDocumentFragment();
+            rebuild(parsed, fragment);
             return fragment;
         },
 

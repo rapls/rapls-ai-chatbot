@@ -479,3 +479,11 @@ msgstr ""
 #: templates/admin/settings.php
 msgid "Optional text shown beside the badge icon, so first-time visitors know what the button does. Leave empty to show only the icon. Hidden on mobile to save space."
 msgstr ""
+
+#: templates/admin/settings.php:2359
+msgid "Allow a safe HTML subset in this message (links and basic emphasis)"
+msgstr ""
+
+#: templates/admin/settings.php:2365
+msgid "When enabled, you can use %s in this message. Example: Please <a href=\"/login\">log in</a> or go <a href=\"/vip\">VIP</a>. Everything else is removed."
+msgstr ""

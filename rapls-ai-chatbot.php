@@ -4,7 +4,7 @@
  * Plugin Name:       Rapls AI Chatbot – Self-Hosted RAG & MCP Server
  * Plugin URI:        https://raplsworks.com/plugins/rapls-ai-chatbot/
  * Description:       Answers from your own posts and pages, says so when it doesn't know, and stops at the spending limit you set. Works with OpenAI, Claude or Gemini.
- * Version:           1.16.2
+ * Version:           1.17.0
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Rapls

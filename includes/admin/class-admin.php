@@ -778,8 +778,13 @@ class RAPLSAICH_Admin {
             $sanitized['usage_guest_daily_limit'] = max(0, (int) ($input['usage_guest_daily_limit'] ?? 0));
             $sanitized['usage_user_daily_limit']  = max(0, (int) ($input['usage_user_daily_limit'] ?? 0));
             $sanitized['usage_retention_days']    = max(1, (int) ($input['usage_retention_days'] ?? 30));
+            // Optional: allow a safe HTML subset (links + basic emphasis) in the
+            // "Limit reached" message so owners can point visitors to /login etc.
+            $sanitized['usage_block_message_allow_html'] = !empty($input['usage_block_message_allow_html']);
             $sanitized['usage_block_message']     = isset($input['usage_block_message'])
-                ? sanitize_textarea_field($input['usage_block_message'])
+                ? ($sanitized['usage_block_message_allow_html']
+                    ? raplsaich_kses_usage_message($input['usage_block_message'])
+                    : sanitize_textarea_field($input['usage_block_message']))
                 : '';
         } else {
             $sanitized['usage_enabled']           = $existing['usage_enabled'] ?? false;
@@ -788,6 +793,7 @@ class RAPLSAICH_Admin {
             $sanitized['usage_guest_daily_limit'] = max(0, (int) ($existing['usage_guest_daily_limit'] ?? 0));
             $sanitized['usage_user_daily_limit']  = max(0, (int) ($existing['usage_user_daily_limit'] ?? 0));
             $sanitized['usage_retention_days']    = max(1, (int) ($existing['usage_retention_days'] ?? 30));
+            $sanitized['usage_block_message_allow_html'] = $existing['usage_block_message_allow_html'] ?? false;
             $sanitized['usage_block_message']     = $existing['usage_block_message'] ?? '';
         }
 
@@ -3923,6 +3929,7 @@ class RAPLSAICH_Admin {
             'usage_guest_ip_identify'   => true,
             'usage_retention_days'      => 30,
             'usage_block_message'       => '',
+            'usage_block_message_allow_html' => false,
             'usage_show_remaining'      => false,
 
             // Page Visibility

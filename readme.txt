@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.16.2
+Stable tag: 1.17.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.17.0 =
+* Added: Optional HTML in the "Limit reached" message (Security, Usage Control). Turn on "Allow a safe HTML subset" to use links and basic emphasis in that message — for example, point a blocked visitor to a login or upgrade page: Please <a href="/login">log in</a> or go <a href="/vip">VIP</a>. Only a small allowlist is permitted (<a href>, <br>, <strong>, <em>); everything else is stripped on save, and the widget scrubs the message again before rendering. Off by default, so existing setups are unchanged.
+
 = 1.16.2 =
 * Added: Badge label. You can now show a short line of text next to the launcher icon — for example "Contact us here" — so first-time visitors understand what the button does instead of seeing an icon alone. Set it under Settings, Badge Label; leave it empty to keep the icon-only circle. The label is hidden on phones to save space.
 
@@ -385,6 +388,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.17.0 =
+The "Limit reached" usage message can now include a safe subset of HTML (links and basic emphasis) when you enable it, so you can send blocked visitors to a login or upgrade page. Off by default; existing setups are unchanged.
 
 = 1.16.2 =
 Adds an optional text label beside the launcher icon (for example "Contact us here") so visitors know what the button does. Leave it empty to keep the icon-only button. New option only; existing setups are unchanged.

@@ -8765,3 +8765,11 @@ msgstr "例: お問い合わせはこちら"
 #: templates/admin/settings.php:1901
 msgid "Optional text shown beside the badge icon, so first-time visitors know what the button does. Leave empty to show only the icon. Hidden on mobile to save space."
 msgstr "バッジアイコンの横に表示する任意のテキストです。初めての訪問者にもボタンの役割が伝わります。空欄にするとアイコンのみになります。省スペースのためモバイルでは非表示になります。"
+
+#: templates/admin/settings.php:2359
+msgid "Allow a safe HTML subset in this message (links and basic emphasis)"
+msgstr "このメッセージで安全な HTML の一部 (リンクと基本的な強調) を許可する"
+
+#: templates/admin/settings.php:2365
+msgid "When enabled, you can use %s in this message. Example: Please <a href=\"/login\">log in</a> or go <a href=\"/vip\">VIP</a>. Everything else is removed."
+msgstr "有効にすると、このメッセージ内で %s を使えます。例: 「<a href=\"/login\">ログイン</a>はこちら」「<a href=\"/vip\">VIP</a> はこちら」のように書けます。それ以外のタグはすべて削除されます。"

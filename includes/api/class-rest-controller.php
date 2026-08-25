@@ -1381,6 +1381,10 @@ class RAPLSAICH_REST_Controller {
                 $usage_check = RAPLSAICH_Usage_Limiter::check($usage_actor);
                 if (empty($usage_check['allowed'])) {
                     $block_msg = RAPLSAICH_Usage_Limiter::block_message($usage_check);
+                    // Owner opted into a safe HTML subset (links + emphasis) for
+                    // this message; the value was wp_kses-filtered on save and the
+                    // frontend re-scrubs it before rendering.
+                    $blk_allow_html = !empty($settings['usage_block_message_allow_html']);
                     $blk_msg_id = 0;
                     if ($save_history) {
                         $ai_message = RAPLSAICH_Message::create([
@@ -1389,6 +1393,10 @@ class RAPLSAICH_REST_Controller {
                             'content'         => $block_msg,
                         ]);
                         $blk_msg_id = $ai_message ? $ai_message['id'] : 0;
+                        // Persist the flag so links still render after a reload.
+                        if ($blk_msg_id && $blk_allow_html) {
+                            RAPLSAICH_Message::update_metadata((int) $blk_msg_id, ['allow_html' => true]);
+                        }
                     } else {
                         $this->append_transient_context($session_id, 'assistant', $block_msg);
                     }
@@ -1399,6 +1407,7 @@ class RAPLSAICH_REST_Controller {
                             'content'    => $block_msg,
                             'is_auto'    => true,
                             'limited'    => true,
+                            'allow_html' => $blk_allow_html,
                             'reason'     => (string) ($usage_check['reason'] ?? 'daily_limit'),
                             'sources'    => [],
                             'session_id' => $session_id,
@@ -2049,7 +2058,7 @@ class RAPLSAICH_REST_Controller {
             if (!empty($msg['metadata'])) {
                 $meta = json_decode($msg['metadata'], true);
                 if (is_array($meta)) {
-                    foreach (['sources', 'web_sources', 'content_cards', 'product_cards', 'related_knowledge', 'action', 'scenario'] as $k) {
+                    foreach (['sources', 'web_sources', 'content_cards', 'product_cards', 'related_knowledge', 'action', 'scenario', 'allow_html'] as $k) {
                         if (!empty($meta[$k])) {
                             $out[$k] = $meta[$k];
                         }

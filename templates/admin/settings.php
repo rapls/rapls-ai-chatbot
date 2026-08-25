@@ -2352,6 +2352,22 @@ if (!defined('ABSPATH')) {
                                           rows="2" class="large-text"
                                           placeholder="<?php esc_attr_e('The daily limit has been reached. Please try again later, or sign in.', 'rapls-ai-chatbot'); ?>"><?php echo esc_textarea($settings['usage_block_message'] ?? ''); ?></textarea>
                             </p>
+                            <p style="margin-top:8px;">
+                                <label>
+                                    <input type="checkbox" name="raplsaich_settings[usage_block_message_allow_html]" value="1"
+                                        <?php checked(!empty($settings['usage_block_message_allow_html'])); ?>>
+                                    <?php esc_html_e('Allow a safe HTML subset in this message (links and basic emphasis)', 'rapls-ai-chatbot'); ?>
+                                </label>
+                                <span class="description" style="display:block;margin-top:4px;">
+                                    <?php
+                                    printf(
+                                        /* translators: %s: list of allowed HTML tags */
+                                        esc_html__('When enabled, you can use %s in this message. Example: Please <a href="/login">log in</a> or go <a href="/vip">VIP</a>. Everything else is removed.', 'rapls-ai-chatbot'),
+                                        '<code>&lt;a href&gt;</code>, <code>&lt;br&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;em&gt;</code>'
+                                    );
+                                    ?>
+                                </span>
+                            </p>
                             <p class="description"><?php esc_html_e('Role-based limits, per-user credits, and a usage dashboard are available in Pro.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>

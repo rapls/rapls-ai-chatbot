@@ -384,3 +384,33 @@ function raplsaich_get_ext_settings(?array $settings = null): array {
     // New key first, fall back to legacy key
     return $settings['extensions'] ?? $settings['pro_features'] ?? [];
 }
+
+/**
+ * Sanitize the "Limit reached" usage message when the safe-HTML subset is on.
+ *
+ * Allows only links and basic emphasis so an owner can point blocked visitors
+ * to /login, /vip, etc. Everything else (scripts, event handlers, images, other
+ * tags/attributes) is stripped by wp_kses. The frontend re-scrubs this subset
+ * before rendering, so this is one layer of two.
+ *
+ * @param string $message Raw message from the settings form.
+ * @return string Message containing only the allowed subset.
+ */
+function raplsaich_kses_usage_message($message): string {
+    $allowed = [
+        'a'      => [
+            'href'   => true,
+            'title'  => true,
+            'target' => true,
+            'rel'    => true,
+        ],
+        'br'     => [],
+        'strong' => [],
+        'em'     => [],
+        'b'      => [],
+        'i'      => [],
+    ];
+    // wp_kses already restricts href protocols to the WP allowlist
+    // (http, https, mailto, tel, and site-relative paths).
+    return wp_kses((string) $message, $allowed);
+}
