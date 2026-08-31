@@ -458,16 +458,28 @@
 }
 
 .chatbot-message__avatar {
+    /* Fixed box on the always-present wrapper. If an aggressive CSS optimizer
+       (combine/minify/cache plugin) ever drops the avatar-img rule below, this
+       + overflow:hidden still bounds the image to 28px instead of letting a
+       large custom avatar render at its natural size. */
     flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 50%;
     font-size: 20px;
     line-height: 1;
 }
 
 .chatbot-message__avatar-img {
-    width: 28px;
-    height: 28px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
+    display: block;
 }
 
 .chatbot-message__content {
