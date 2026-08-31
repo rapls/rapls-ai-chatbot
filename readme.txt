@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.18.0
+Stable tag: 1.18.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -256,18 +256,15 @@ You can disable these features in the plugin settings:
 * Google reCAPTCHA verification
 * Web search
 
-== Upgrade Notice ==
-
-= 1.18.0 =
-Fixes a bug where embedding could keep sending requests to your AI provider without end — and, on a metered API key, keep incurring charges — when a document could not be embedded (too large, or a PDF with no extractable text). If you have uploaded large documents, update.
-
 == Changelog ==
+
+= 1.18.1 =
+* Fixed: The bot avatar beside a message could occasionally render at full size (very large) on sites where a caching or CSS-optimization plugin combined and minified stylesheets. The avatar wrapper is now sized directly, so the icon stays at its intended size even if that one rule is dropped. If you see it oversized after updating, clear your caching plugin's cache once.
 
 = 1.18.0 =
 * **Fixed: embedding could loop indefinitely, sending requests to your provider without end.** The client kept asking for more as long as documents remained unembedded, so a single document that could never embed — one over the model's token limit, or a PDF with no extractable text — put the loop in a state it could not leave. On a metered API key that meant requests, and charges, with nothing to show for them. Permanent failures are now excluded from the next pass and the loop ends when it stops making progress. If you have uploaded a large document and left the Knowledge Base screen open, update.
 * Fixed: Knowledge Base entries that failed to embed used to index silently — you saw 0 chunks with no reason. Each entry that cannot be embedded now shows why on the Knowledge Base list (for example, "Too large to embed — split this entry into smaller documents", or an API-key/rate-limit note). Thanks to @publiastel for the clear report.
 * Improved: When you embed several documents at once and one is too large for the embedding model's single-request limit, the oversized document no longer sinks the whole batch. The rest embed normally, and only the oversized one is flagged. Split it into smaller entries and it will embed on the next run.
-* Fixed: The bot avatar beside a message could occasionally render at full size (very large) on sites where a caching or CSS-optimization plugin combined and minified stylesheets. The avatar wrapper is now sized directly, so the icon stays at its intended size even if that one rule is dropped. If you see it oversized after updating, clear your caching plugin's cache once.
 
 = 1.17.0 =
 * Added: Optional HTML in the "Limit reached" message (Security, Usage Control). Turn on "Allow a safe HTML subset" to use links and basic emphasis in that message — for example, point a blocked visitor to a login or upgrade page: Please <a href="/login">log in</a> or go <a href="/vip">VIP</a>. Only a small allowlist is permitted (<a href>, <br>, <strong>, <em>); everything else is stripped on save, and the widget scrubs the message again before rendering. Off by default, so existing setups are unchanged.
@@ -399,6 +396,12 @@ Fixes a bug where embedding could keep sending requests to your AI provider with
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.18.1 =
+Recommended bug-fix release. Fixes embedding that could keep sending requests to your AI provider without end — and, on a metered API key, keep incurring charges — when a document could not be embedded (too large, or a PDF with no extractable text). Also stops an oversized document from blocking the rest of a batch, shows why an entry failed to embed, and keeps the message avatar at its intended size. If you have uploaded large documents, update.
+
+= 1.18.0 =
+Fixes a bug where embedding could keep sending requests to your AI provider without end — and, on a metered API key, keep incurring charges — when a document could not be embedded (too large, or a PDF with no extractable text). If you have uploaded large documents, update.
 
 = 1.17.0 =
 The "Limit reached" usage message can now include a safe subset of HTML (links and basic emphasis) when you enable it, so you can send blocked visitors to a login or upgrade page. Off by default; existing setups are unchanged.
