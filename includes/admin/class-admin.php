@@ -2142,6 +2142,10 @@ class RAPLSAICH_Admin {
             'categories' => count($categories),
         ];
 
+        // Per-entry embedding failures, shown inline so an entry that could not
+        // be embedded says why instead of silently indexing nothing.
+        $embed_errors = RAPLSAICH_Knowledge::get_embed_errors();
+
         $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/knowledge.php';
         if (file_exists($path)) {
             include $path;
@@ -4063,8 +4067,13 @@ class RAPLSAICH_Admin {
 
         $source = sanitize_text_field(wp_unslash($_POST['source'] ?? 'index'));
 
+        // Entries whose failure is permanent for the current content (too large,
+        // no text) are skipped so they cannot stall the batch loop; they return
+        // to the queue only when edited or cleared.
+        $skip_ids = $source === 'knowledge' ? RAPLSAICH_Knowledge::get_permanent_embed_failure_ids() : [];
+
         if ($source === 'knowledge') {
-            $pending = RAPLSAICH_Knowledge::get_unembedded_entries(50);
+            $pending = RAPLSAICH_Knowledge::get_unembedded_entries(50, $skip_ids);
         } else {
             $pending = RAPLSAICH_Content_Index::get_unembedded_chunks(50);
         }
@@ -4073,6 +4082,7 @@ class RAPLSAICH_Admin {
             wp_send_json_success([
                 'processed' => 0,
                 'remaining' => 0,
+                'failed'    => $source === 'knowledge' ? count(RAPLSAICH_Knowledge::get_embed_errors()) : 0,
                 /* translators: embedding generation complete */
                 'message'   => __('All embeddings are up to date.', 'rapls-ai-chatbot'),
             ]);
@@ -4086,30 +4096,40 @@ class RAPLSAICH_Admin {
         }
 
         $embeddings = $generator->generate_batch($texts);
+        $errors     = $generator->get_last_errors();
 
         $processed = 0;
         foreach ($embeddings as $i => $emb) {
-            if ($emb && isset($ids[$i])) {
+            $id = $ids[$i] ?? 0;
+            if ($emb && $id) {
                 $packed = RAPLSAICH_Vector_Search::pack_embedding($emb);
                 if ($source === 'knowledge') {
-                    RAPLSAICH_Knowledge::update_embedding($ids[$i], $packed, $generator->get_model());
+                    RAPLSAICH_Knowledge::update_embedding($id, $packed, $generator->get_model());
+                    RAPLSAICH_Knowledge::clear_embed_error($id);
                 } else {
-                    RAPLSAICH_Content_Index::update_embedding($ids[$i], $packed, $generator->get_model());
+                    RAPLSAICH_Content_Index::update_embedding($id, $packed, $generator->get_model());
                 }
                 $processed++;
+            } elseif ($source === 'knowledge' && $id) {
+                // Record why this entry did not embed, so the Knowledge Base
+                // screen can show a reason instead of silently indexing nothing.
+                RAPLSAICH_Knowledge::set_embed_error($id, $errors[$i] ?? 'api_error');
             }
         }
 
-        // Count remaining
+        // Count remaining (excluding the permanently-failed entries we skip).
         if ($source === 'knowledge') {
-            $remaining = count(RAPLSAICH_Knowledge::get_unembedded_entries(1));
+            $remaining   = count(RAPLSAICH_Knowledge::get_unembedded_entries(1, RAPLSAICH_Knowledge::get_permanent_embed_failure_ids()));
+            $total_failed = count(RAPLSAICH_Knowledge::get_embed_errors());
         } else {
-            $remaining = count(RAPLSAICH_Content_Index::get_unembedded_chunks(1));
+            $remaining    = count(RAPLSAICH_Content_Index::get_unembedded_chunks(1));
+            $total_failed = 0;
         }
 
         wp_send_json_success([
             'processed' => $processed,
             'remaining' => $remaining,
+            'failed'    => $total_failed,
             /* translators: 1: number processed, 2: number remaining */
             'message'   => sprintf(__('Processed %1$d embeddings. %2$d remaining.', 'rapls-ai-chatbot'), $processed, $remaining),
         ]);
@@ -4154,6 +4174,7 @@ class RAPLSAICH_Admin {
             'index_embedded'   => $index_stats['embedded_chunks'],
             'knowledge_total'  => $knowledge_stats['total'],
             'knowledge_embedded' => $knowledge_stats['embedded'],
+            'knowledge_failed' => count(RAPLSAICH_Knowledge::get_embed_errors()),
         ]);
     }
 

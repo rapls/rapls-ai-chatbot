@@ -429,5 +429,7 @@ wp_localize_script("raplsaich-admin-crawler", "raplsaichCrawler", [
     "deleteFailed" => __("Failed to delete.", "rapls-ai-chatbot"),
     "processing" => __("Processing...", "rapls-ai-chatbot"),
     "removeExcl" => __("Remove exclusion", "rapls-ai-chatbot"),
+    /* translators: %d: number of knowledge entries that could not be embedded */
+    "embedFailedNotice" => __("Done, but %d entry could not be embedded. See the Knowledge Base list for the reason.", "rapls-ai-chatbot"),
 ]);
 ?>

@@ -261,6 +261,18 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
                                 <?php if ($item_type === 'template'): ?>
                                     <span class="raplsaich-template-badge" style="background: #e8f5e9; color: #2e7d32; font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-left: 4px;"><?php esc_html_e('Template', 'rapls-ai-chatbot'); ?></span>
                                 <?php endif; ?>
+                                <?php
+                                $embed_error = isset($embed_errors[$item['id']]) && is_array($embed_errors[$item['id']])
+                                    ? ($embed_errors[$item['id']]['code'] ?? '')
+                                    : '';
+                                if ($embed_error !== ''):
+                                    $embed_error_label = RAPLSAICH_Knowledge::embed_error_label($embed_error);
+                                ?>
+                                    <div class="raplsaich-embed-error" style="display: flex; align-items: flex-start; gap: 5px; margin-top: 6px; padding: 6px 8px; background: #fcf0f1; border-left: 3px solid #d63638; border-radius: 2px; color: #8a1f21; font-size: 12px; line-height: 1.4;">
+                                        <span class="dashicons dashicons-warning" style="font-size: 14px; width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px;" aria-hidden="true"></span>
+                                        <span><strong><?php esc_html_e('Not embedded:', 'rapls-ai-chatbot'); ?></strong> <?php echo esc_html($embed_error_label); ?></span>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <?php if (!empty($item['category'])): ?>

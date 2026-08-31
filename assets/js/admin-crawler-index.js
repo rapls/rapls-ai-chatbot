@@ -158,12 +158,20 @@ jQuery(document).ready(function($) {
             }, function(response) {
                 if (response.success) {
                     $status.text(response.data.message);
-                    if (response.data.remaining > 0) {
+                    // Continue only while the pass is still making forward
+                    // progress. A pass that embeds nothing but still reports
+                    // items remaining means those items keep failing — stop
+                    // instead of looping on them (and hammering the API).
+                    var madeProgress = (response.data.processed || 0) > 0;
+                    if (response.data.remaining > 0 && madeProgress) {
                         processBatch(source);
                     } else if (source === 'index') {
                         // After index, process knowledge
                         processBatch('knowledge');
                     } else {
+                        if ((response.data.failed || 0) > 0 && raplsaichCrawler.embedFailedNotice) {
+                            $status.text(raplsaichCrawler.embedFailedNotice.replace('%d', response.data.failed));
+                        }
                         $btn.prop('disabled', false);
                         setTimeout(function() { location.reload(); }, 1500);
                     }

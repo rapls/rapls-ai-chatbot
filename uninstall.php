@@ -88,6 +88,7 @@ function raplsaich_uninstall_site() {
         delete_option('raplsaich_pro_license_revoked');
         delete_option('raplsaich_crawl_progress');
         delete_option('raplsaich_knowledge_schema_version');
+        delete_option('raplsaich_knowledge_embed_errors');
         delete_option('raplsaich_nohist_msg_counts');
         delete_option('raplsaich_unanswered_log');
 

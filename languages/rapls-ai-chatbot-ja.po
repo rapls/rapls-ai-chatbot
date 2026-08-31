@@ -5378,6 +5378,28 @@ msgstr "%1$d件の埋め込みを処理しました。残り%2$d件。"
 #:#: includes/admin/class-admin.php
 msgid "All embeddings have been cleared."
 msgstr "すべての埋め込みがクリアされました。"
+#:#: includes/models/class-knowledge.php
+msgid "Too large to embed. Split this entry into smaller documents and generate embeddings again."
+msgstr "埋め込むには大きすぎます。この項目を小さめの文書に分割してから、埋め込みを再生成してください。"
+#:#: includes/models/class-knowledge.php
+msgid "Embedding failed: the embedding provider rejected the API key. Check your key in Settings, then generate embeddings again."
+msgstr "埋め込みに失敗しました。埋め込みプロバイダーが API キーを拒否しました。設定で API キーを確認してから、埋め込みを再生成してください。"
+#:#: includes/models/class-knowledge.php
+msgid "Embedding failed: the provider hit a rate limit or quota. Try generating embeddings again later."
+msgstr "埋め込みに失敗しました。プロバイダーのレート制限または利用上限に達しました。しばらくしてから、埋め込みを再生成してください。"
+#:#: includes/models/class-knowledge.php
+msgid "No embeddable text was found in this entry."
+msgstr "この項目に埋め込み可能なテキストが見つかりませんでした。"
+#:#: includes/models/class-knowledge.php
+msgid "Embedding failed. Enable WP_DEBUG to see the provider error in the log."
+msgstr "埋め込みに失敗しました。WP_DEBUG を有効にすると、プロバイダーのエラーがログに記録されます。"
+#:#: templates/admin/knowledge.php
+msgid "Not embedded:"
+msgstr "未埋め込み："
+#:#: templates/admin/crawler.php
+#, php-format
+msgid "Done, but %d entry could not be embedded. See the Knowledge Base list for the reason."
+msgstr "完了しました。ただし%d件の項目を埋め込めませんでした。理由はナレッジベースの一覧をご確認ください。"
 
 # Cross-Site Embed feature#:#: templates/admin/settings.php
 msgid "Cross-Site Embed"

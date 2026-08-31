@@ -328,13 +328,21 @@ class RAPLSAICH_Knowledge {
         do_action('raplsaich_knowledge_before_update', (int) $id, $data);
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        return $wpdb->update(
+        $result = $wpdb->update(
             $table,
             $update_data,
             ['id' => $id],
             $format,
             ['%d']
         );
+
+        // Editing the content invalidates any recorded embedding failure — the
+        // entry may now be small enough to embed, so let the next run retry it.
+        if ($result !== false && isset($data['content'])) {
+            self::clear_embed_error((int) $id);
+        }
+
+        return $result;
     }
 
     /**
@@ -352,6 +360,7 @@ class RAPLSAICH_Knowledge {
         );
 
         if ($result !== false) {
+            self::clear_embed_error((int) $id);
             do_action('raplsaich_knowledge_deleted', (int) $id);
         }
 
@@ -375,6 +384,7 @@ class RAPLSAICH_Knowledge {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $result = $wpdb->query("DELETE FROM `{$table}`");
         }
+        self::clear_all_embed_errors();
         return $result;
     }
 
@@ -389,6 +399,107 @@ class RAPLSAICH_Knowledge {
         return $wpdb->get_col(
             "SELECT DISTINCT category FROM `{$table}` WHERE category != '' ORDER BY category ASC"
         );
+    }
+
+    /**
+     * Option key for per-entry embedding failure reasons.
+     * Map of knowledge id => ['code' => reason, 'time' => unix_ts].
+     */
+    const EMBED_ERRORS_OPTION = 'raplsaich_knowledge_embed_errors';
+
+    /**
+     * Cap on stored embed-error rows, so a large failed import cannot grow the
+     * option without bound. Oldest rows are dropped first.
+     */
+    const EMBED_ERRORS_MAX = 200;
+
+    /**
+     * Get all recorded embedding failures.
+     *
+     * @return array<int,array{code:string,time:int}>
+     */
+    public static function get_embed_errors(): array {
+        $errors = get_option(self::EMBED_ERRORS_OPTION, []);
+        return is_array($errors) ? $errors : [];
+    }
+
+    /**
+     * Record why a knowledge entry failed to embed.
+     *
+     * @param int    $id   Knowledge row ID.
+     * @param string $code Reason code from RAPLSAICH_Embedding_Generator::get_last_errors().
+     */
+    public static function set_embed_error(int $id, string $code): void {
+        if ($id <= 0) {
+            return;
+        }
+        $errors = self::get_embed_errors();
+        $errors[$id] = ['code' => $code, 'time' => time()];
+
+        if (count($errors) > self::EMBED_ERRORS_MAX) {
+            // Drop the oldest rows by timestamp.
+            uasort($errors, static function ($a, $b) {
+                return ((int) ($a['time'] ?? 0)) <=> ((int) ($b['time'] ?? 0));
+            });
+            $errors = array_slice($errors, -self::EMBED_ERRORS_MAX, null, true);
+        }
+
+        update_option(self::EMBED_ERRORS_OPTION, $errors, false);
+    }
+
+    /**
+     * Clear the recorded embedding failure for one entry (it embedded, was
+     * edited, or was removed).
+     */
+    public static function clear_embed_error(int $id): void {
+        $errors = self::get_embed_errors();
+        if (isset($errors[$id])) {
+            unset($errors[$id]);
+            update_option(self::EMBED_ERRORS_OPTION, $errors, false);
+        }
+    }
+
+    /**
+     * Clear every recorded embedding failure.
+     */
+    public static function clear_all_embed_errors(): void {
+        delete_option(self::EMBED_ERRORS_OPTION);
+    }
+
+    /**
+     * IDs whose embedding failure is permanent for the current content, so the
+     * batch generator should skip re-attempting them until the entry changes.
+     * Transient reasons (auth, rate limit, generic API errors) are retried.
+     *
+     * @return int[]
+     */
+    public static function get_permanent_embed_failure_ids(): array {
+        $ids = [];
+        foreach (self::get_embed_errors() as $id => $info) {
+            $code = is_array($info) ? ($info['code'] ?? '') : '';
+            if ($code === 'too_large' || $code === 'no_text') {
+                $ids[] = (int) $id;
+            }
+        }
+        return $ids;
+    }
+
+    /**
+     * Human-readable label for an embedding failure reason code.
+     */
+    public static function embed_error_label(string $code): string {
+        switch ($code) {
+            case 'too_large':
+                return __('Too large to embed. Split this entry into smaller documents and generate embeddings again.', 'rapls-ai-chatbot');
+            case 'auth':
+                return __('Embedding failed: the embedding provider rejected the API key. Check your key in Settings, then generate embeddings again.', 'rapls-ai-chatbot');
+            case 'rate_limit':
+                return __('Embedding failed: the provider hit a rate limit or quota. Try generating embeddings again later.', 'rapls-ai-chatbot');
+            case 'no_text':
+                return __('No embeddable text was found in this entry.', 'rapls-ai-chatbot');
+            default:
+                return __('Embedding failed. Enable WP_DEBUG to see the provider error in the log.', 'rapls-ai-chatbot');
+        }
     }
 
     /**
@@ -448,10 +559,11 @@ class RAPLSAICH_Knowledge {
     /**
      * Get knowledge entries without embeddings
      *
-     * @param int $limit Max entries to return
+     * @param int   $limit       Max entries to return
+     * @param int[] $exclude_ids IDs to skip (e.g. entries that permanently failed to embed).
      * @return array Array of rows with id, title, content
      */
-    public static function get_unembedded_entries(int $limit = 100): array {
+    public static function get_unembedded_entries(int $limit = 100, array $exclude_ids = []): array {
         global $wpdb;
         $table = self::get_table_name();
 
@@ -461,9 +573,16 @@ class RAPLSAICH_Knowledge {
             return [];
         }
 
+        $exclude_sql = '';
+        $exclude_ids = array_values(array_unique(array_map('intval', $exclude_ids)));
+        if (!empty($exclude_ids)) {
+            // Integer-cast list — safe to interpolate directly.
+            $exclude_sql = ' AND id NOT IN (' . implode(',', $exclude_ids) . ')';
+        }
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT id, title, content FROM `{$table}` WHERE embedding IS NULL AND is_active = 1 ORDER BY id ASC LIMIT %d",
+            "SELECT id, title, content FROM `{$table}` WHERE embedding IS NULL AND is_active = 1{$exclude_sql} ORDER BY id ASC LIMIT %d",
             $limit
         ), ARRAY_A);
     }
@@ -483,6 +602,10 @@ class RAPLSAICH_Knowledge {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $result = $wpdb->query("UPDATE `{$table}` SET embedding = NULL, embedding_model = NULL");
+
+        // Clearing embeddings also clears their recorded failures — everything
+        // is unembedded now, and the next run re-attempts from scratch.
+        self::clear_all_embed_errors();
 
         return $result !== false;
     }
