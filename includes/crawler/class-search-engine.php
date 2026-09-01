@@ -84,6 +84,8 @@ class RAPLSAICH_Search_Engine {
         $has_priority  = $table_exists && $schema_version >= 2;
         $has_is_active = $table_exists && $schema_version >= 2;
         $has_status    = $table_exists && $schema_version >= 2;
+        // Document-chunk grouping arrived in schema version 3 (1.19.0).
+        $has_group     = $table_exists && $schema_version >= 3;
 
         // Fallback: check columns directly if migration hasn't run yet.
         // $table is whitelist-validated via get_knowledge_table() → raplsaich_validated_table().
@@ -98,12 +100,17 @@ class RAPLSAICH_Search_Engine {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
             $has_status = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'status'"));
         }
+        if ($table_exists && !$has_group) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $has_group = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'group_id'"));
+        }
 
         self::$schema_cache[$table] = [
             'exists'        => $table_exists,
             'has_priority'  => $has_priority,
             'has_is_active' => $has_is_active,
             'has_status'    => $has_status,
+            'has_group'     => $has_group,
         ];
 
         return self::$schema_cache[$table];
@@ -388,6 +395,13 @@ class RAPLSAICH_Search_Engine {
         if (!empty($this->knowledge_categories)) {
             $placeholders = implode(',', array_fill(0, count($this->knowledge_categories), '%s'));
             $where_parts[] = $wpdb->prepare("category IN ({$placeholders})", ...$this->knowledge_categories); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        }
+        // The always-included set references documents, not chunks: inject only
+        // one representative row per chunked document so a large split file
+        // cannot fill this quota with arbitrary chunks and crowd out the
+        // keyword/vector-matched chunk. The specific chunk is added by search().
+        if (!empty($schema['has_group'])) {
+            $where_parts[] = '(group_id IS NULL OR chunk_index = 0)';
         }
         $where_clause = !empty($where_parts) ? 'WHERE ' . implode(' AND ', $where_parts) : '';
         $priority_column = $has_priority ? 'priority' : '0 as priority';
