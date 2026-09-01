@@ -254,7 +254,21 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
                         <tr data-id="<?php echo esc_attr($item['id']); ?>" class="<?php echo esc_attr($item_status === 'draft' ? 'raplsaich-draft-row' : ''); ?>">
                             <td><?php echo esc_html($item['id']); ?></td>
                             <td>
-                                <strong><?php echo esc_html($item['title']); ?></strong>
+                                <?php
+                                // A chunked document shows one representative row; $grp carries
+                                // the rolled-up part / embedded counts and any group embed error.
+                                $grp = isset($group_stats) && isset($group_stats[$item['id']]) ? $group_stats[$item['id']] : null;
+                                $display_title = $grp ? RAPLSAICH_Knowledge::strip_chunk_suffix($item['title']) : $item['title'];
+                                ?>
+                                <strong><?php echo esc_html($display_title); ?></strong>
+                                <?php if ($grp): ?>
+                                    <span class="raplsaich-chunk-badge" style="background: #e7f0fb; color: #1a4d8f; font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-left: 4px;" title="<?php esc_attr_e('This document was split into parts, each embedded separately.', 'rapls-ai-chatbot'); ?>">
+                                        <?php
+                                        /* translators: 1: number of embedded parts, 2: total parts */
+                                        echo esc_html(sprintf(__('%1$d/%2$d parts embedded', 'rapls-ai-chatbot'), (int) $grp['embedded'], (int) $grp['parts']));
+                                        ?>
+                                    </span>
+                                <?php endif; ?>
                                 <?php if ($item_status === 'draft'): ?>
                                     <span class="raplsaich-draft-badge"><?php esc_html_e('Draft', 'rapls-ai-chatbot'); ?></span>
                                 <?php endif; ?>
@@ -262,9 +276,15 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
                                     <span class="raplsaich-template-badge" style="background: #e8f5e9; color: #2e7d32; font-size: 11px; padding: 1px 6px; border-radius: 3px; margin-left: 4px;"><?php esc_html_e('Template', 'rapls-ai-chatbot'); ?></span>
                                 <?php endif; ?>
                                 <?php
-                                $embed_error = isset($embed_errors[$item['id']]) && is_array($embed_errors[$item['id']])
-                                    ? ($embed_errors[$item['id']]['code'] ?? '')
-                                    : '';
+                                // Grouped documents report the reason from whichever chunk failed;
+                                // single entries use their own per-row record.
+                                if ($grp) {
+                                    $embed_error = (string) $grp['error_code'];
+                                } else {
+                                    $embed_error = isset($embed_errors[$item['id']]) && is_array($embed_errors[$item['id']])
+                                        ? ($embed_errors[$item['id']]['code'] ?? '')
+                                        : '';
+                                }
                                 if ($embed_error !== ''):
                                     $embed_error_label = RAPLSAICH_Knowledge::embed_error_label($embed_error);
                                 ?>

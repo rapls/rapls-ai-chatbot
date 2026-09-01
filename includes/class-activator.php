@@ -165,11 +165,15 @@ class RAPLSAICH_Activator {
             content LONGTEXT NOT NULL,
             category VARCHAR(100) DEFAULT NULL,
             is_active TINYINT(1) DEFAULT 1,
+            group_id VARCHAR(32) DEFAULT NULL,
+            chunk_index INT UNSIGNED DEFAULT 0,
+            chunk_total INT UNSIGNED DEFAULT 1,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY category (category),
             KEY is_active (is_active),
+            KEY group_id (group_id),
             FULLTEXT KEY knowledge_fulltext (title, content)
         ) {$charset_collate};";
 
@@ -456,6 +460,19 @@ class RAPLSAICH_Activator {
         if (!self::has_column('raplsaich_knowledge', 'type')) {
             self::safe_alter('raplsaich_knowledge', "ADD COLUMN type VARCHAR(20) DEFAULT 'qa' AFTER status", 'add column type');
             self::safe_alter('raplsaich_knowledge', 'ADD KEY type (type)', 'add index type');
+        }
+
+        // Document chunking (1.19.0): a large uploaded document is split into
+        // several knowledge rows sharing a group_id, each embedded on its own.
+        if (!self::has_column('raplsaich_knowledge', 'group_id')) {
+            self::safe_alter('raplsaich_knowledge', 'ADD COLUMN group_id VARCHAR(32) DEFAULT NULL', 'add column group_id');
+            self::safe_alter('raplsaich_knowledge', 'ADD KEY group_id (group_id)', 'add index group_id');
+        }
+        if (!self::has_column('raplsaich_knowledge', 'chunk_index')) {
+            self::safe_alter('raplsaich_knowledge', 'ADD COLUMN chunk_index INT UNSIGNED DEFAULT 0', 'add column chunk_index');
+        }
+        if (!self::has_column('raplsaich_knowledge', 'chunk_total')) {
+            self::safe_alter('raplsaich_knowledge', 'ADD COLUMN chunk_total INT UNSIGNED DEFAULT 1', 'add column chunk_total');
         }
 
         self::maybe_add_feedback_column();

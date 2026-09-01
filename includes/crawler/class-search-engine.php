@@ -170,7 +170,26 @@ class RAPLSAICH_Search_Engine {
         // Sort by score and return top results
         usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
 
-        $final_results = array_slice($results, 0, max($limit, 5));
+        // Cap how many chunks from the same document can appear, so one large
+        // split file cannot crowd out other sources. Chunks of a document share
+        // a base title with a " (k/N)" suffix; two per document is enough context.
+        $cap           = max($limit, 5);
+        $per_document   = [];
+        $final_results = [];
+        foreach ($results as $r) {
+            if (($r['type'] ?? '') === 'knowledge' && class_exists('RAPLSAICH_Knowledge')) {
+                $doc_key = RAPLSAICH_Knowledge::strip_chunk_suffix((string) ($r['title'] ?? ''));
+                $seen    = $per_document[$doc_key] ?? 0;
+                if ($seen >= 2) {
+                    continue;
+                }
+                $per_document[$doc_key] = $seen + 1;
+            }
+            $final_results[] = $r;
+            if (count($final_results) >= $cap) {
+                break;
+            }
+        }
 
         // Force add knowledge if not included in results
         $has_knowledge = false;

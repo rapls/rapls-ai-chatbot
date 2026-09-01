@@ -2119,32 +2119,59 @@ class RAPLSAICH_Admin {
         $order = isset($_GET['order']) && strtoupper(sanitize_text_field(wp_unslash($_GET['order']))) === 'ASC' ? 'ASC' : 'DESC';
 
         $list_args = [
-            'page'     => $page,
-            'per_page' => 20,
-            'category' => $category,
-            'orderby'  => $orderby,
-            'order'    => $order,
+            'page'            => $page,
+            'per_page'        => 20,
+            'category'        => $category,
+            'orderby'         => $orderby,
+            'order'           => $order,
+            'collapse_groups' => true,
         ];
         if (!empty($status_filter)) {
             $list_args['status'] = $status_filter;
         }
 
         $knowledge_list = RAPLSAICH_Knowledge::get_list($list_args);
-        $total = RAPLSAICH_Knowledge::get_count($category, null, $status_filter);
+        $total = RAPLSAICH_Knowledge::get_count($category, null, $status_filter, '', true);
         $categories = RAPLSAICH_Knowledge::get_categories();
         $draft_count = RAPLSAICH_Knowledge::get_draft_count();
 
-        // Statistics
+        // Statistics — count documents (one per group), not individual chunks.
         $knowledge_stats = [
-            'total'      => RAPLSAICH_Knowledge::get_count(),
-            'active'     => RAPLSAICH_Knowledge::get_count('', 1),
-            'inactive'   => RAPLSAICH_Knowledge::get_count('', 0),
+            'total'      => RAPLSAICH_Knowledge::get_count('', null, '', '', true),
+            'active'     => RAPLSAICH_Knowledge::get_count('', 1, '', '', true),
+            'inactive'   => RAPLSAICH_Knowledge::get_count('', 0, '', '', true),
             'categories' => count($categories),
         ];
 
         // Per-entry embedding failures, shown inline so an entry that could not
         // be embedded says why instead of silently indexing nothing.
         $embed_errors = RAPLSAICH_Knowledge::get_embed_errors();
+
+        // For chunked documents (chunk_total > 1) the list shows the first chunk
+        // as the representative row; roll up part/embedded counts and any embed
+        // failure across the whole group so the one visible row tells the truth.
+        $group_stats = [];
+        foreach ($knowledge_list as $__item) {
+            if (!empty($__item['group_id']) && (int) ($__item['chunk_total'] ?? 1) > 1) {
+                $gid        = (string) $__item['group_id'];
+                $member_ids = RAPLSAICH_Knowledge::group_member_ids($gid);
+                $error_code = '';
+                foreach ($member_ids as $mid) {
+                    if (isset($embed_errors[$mid]) && is_array($embed_errors[$mid])) {
+                        $error_code = (string) ($embed_errors[$mid]['code'] ?? '');
+                        if ($error_code !== '') {
+                            break;
+                        }
+                    }
+                }
+                $group_stats[(int) $__item['id']] = [
+                    'parts'      => (int) $__item['chunk_total'],
+                    'embedded'   => RAPLSAICH_Knowledge::count_group_embedded($gid),
+                    'error_code' => $error_code,
+                ];
+            }
+        }
+        unset($__item);
 
         $path = RAPLSAICH_PLUGIN_DIR . 'templates/admin/knowledge.php';
         if (file_exists($path)) {
@@ -3548,10 +3575,16 @@ class RAPLSAICH_Admin {
                 wp_send_json_error(__('Failed to save data.', 'rapls-ai-chatbot'));
             }
 
+            $parts = (int) ($result['parts'] ?? 1);
+            $message = $parts > 1
+                /* translators: %d: number of parts a large document was split into */
+                ? sprintf(__('File imported and split into %d parts so each embeds on its own.', 'rapls-ai-chatbot'), $parts)
+                : __('File imported.', 'rapls-ai-chatbot');
             wp_send_json_success([
-                'message' => __('File imported.', 'rapls-ai-chatbot'),
+                'message' => $message,
                 'id'      => $result['id'] ?? 0,
                 'title'   => $result['title'] ?? '',
+                'parts'   => $parts,
             ]);
         } catch (Exception $e) {
             self::log_diagnostic_event('import_exception');

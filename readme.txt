@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.18.1
+Stable tag: 1.19.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -38,7 +38,7 @@ Built for site owners, agencies, and developers who want control over the model,
 
 * Bring your own key: OpenAI, Anthropic Claude, Google Gemini, OpenRouter, or any OpenAI-compatible endpoint (Alibaba Qwen/DashScope, DeepSeek, Zhipu), switchable per site.
 * Site learning: indexes your posts and pages so the bot answers from your content.
-* Knowledge base: add Q&A or upload PDF/DOCX files, with priority over general answers.
+* Knowledge base: add Q&A or upload TXT/MD/PDF/DOCX files (large documents are split into parts automatically so they embed reliably), with priority over general answers.
 * RAG hybrid search: combines keyword and semantic retrieval for grounded replies.
 * Grounded Answers Only: an optional mode that makes the bot reply "I couldn't find that" instead of inventing an answer your content doesn't support.
 * Web search: lets the bot pull current information when configured.
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.0 =
+* Added: Large uploaded documents are now split into parts automatically. Until now a document had to fit the embedding model's single-request token limit or it would not embed; now the Knowledge Base splits a big TXT, MD, PDF, or DOCX into smaller parts on upload, and each part embeds on its own. You no longer need to cut a file up by hand before uploading. The Knowledge Base list shows the document as one item with a "parts embedded" badge, and deleting it removes every part. This also improves answers: the bot retrieves the most relevant passage of a long document instead of one blurred embedding of the whole thing. Existing entries are untouched — re-upload a document to split it.
+
 = 1.18.1 =
 * Fixed: The bot avatar beside a message could occasionally render at full size (very large) on sites where a caching or CSS-optimization plugin combined and minified stylesheets. The avatar wrapper is now sized directly, so the icon stays at its intended size even if that one rule is dropped. If you see it oversized after updating, clear your caching plugin's cache once.
 
@@ -396,6 +399,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.0 =
+Large uploaded documents (TXT, MD, PDF, DOCX) are now split into parts automatically so each embeds on its own — no more cutting big files up by hand, and better answers from long documents. Existing entries are unchanged.
 
 = 1.18.1 =
 Recommended bug-fix release. Fixes embedding that could keep sending requests to your AI provider without end — and, on a metered API key, keep incurring charges — when a document could not be embedded (too large, or a PDF with no extractable text). Also stops an oversized document from blocking the rest of a batch, shows why an entry failed to embed, and keeps the message avatar at its intended size. If you have uploaded large documents, update.

@@ -334,6 +334,23 @@ msgstr "データの保存に失敗しました。"
 #:#: includes/admin/class-admin.php:1876
 msgid "File imported."
 msgstr "ファイルをインポートしました。"
+#:#: includes/admin/class-admin.php
+#, php-format
+msgid "File imported and split into %d parts so each embeds on its own."
+msgstr "ファイルを取り込み、%d個のパートに分割しました。各パートを個別に埋め込みます。"
+#:#: includes/models/class-knowledge.php
+msgid "Document"
+msgstr "ドキュメント"
+#:#: includes/models/class-knowledge.php
+msgid "Failed to save the document."
+msgstr "ドキュメントの保存に失敗しました。"
+#:#: templates/admin/knowledge.php
+msgid "This document was split into parts, each embedded separately."
+msgstr "このドキュメントは複数のパートに分割され、それぞれ個別に埋め込まれます。"
+#:#: templates/admin/knowledge.php
+#, php-format
+msgid "%1$d/%2$d parts embedded"
+msgstr "%1$d/%2$dパート埋め込み済み"
 #:#: includes/admin/class-admin.php:1882 includes/admin/class-admin.php:1885#:#: includes/frontend/class-chatbot-widget.php:151#:#: templates/admin/conversations.php:324 templates/admin/conversations.php:367#:#: templates/admin/conversations.php:397 templates/admin/conversations.php:429#:#: templates/admin/crawler.php:318 templates/admin/crawler.php:354#:#: templates/admin/dashboard.php:332
 msgid "An error occurred."
 msgstr "エラーが発生しました。"

@@ -50,7 +50,7 @@ class RAPLSAICH_Knowledge {
      * Guarded by option flag so it runs at most once per schema version.
      */
     private static function maybe_migrate_schema($table) {
-        $schema_version = 2; // Increment when adding new migrations
+        $schema_version = 3; // Increment when adding new migrations
         $option_key = 'raplsaich_knowledge_schema_version';
 
         if ((int) get_option($option_key, 0) >= $schema_version) {
@@ -112,9 +112,23 @@ class RAPLSAICH_Knowledge {
             'status'    => isset($data['status']) && in_array($data['status'], ['published', 'draft'], true) ? $data['status'] : 'published',
             'type'      => $type,
         ];
+        $insert_format = ['%s', '%s', '%s', '%d', '%d', '%s', '%s'];
+
+        // Document-chunk grouping (1.19.0): a large uploaded document is stored
+        // as several rows sharing a group_id. Only set these when present so the
+        // columns keep their defaults (group_id NULL, chunk_index 0, total 1)
+        // on installs where the migration has not added them yet.
+        if (!empty($data['group_id'])) {
+            $insert_data['group_id']    = substr(sanitize_text_field($data['group_id']), 0, 32);
+            $insert_data['chunk_index'] = isset($data['chunk_index']) ? max(0, (int) $data['chunk_index']) : 0;
+            $insert_data['chunk_total'] = isset($data['chunk_total']) ? max(1, (int) $data['chunk_total']) : 1;
+            $insert_format[] = '%s';
+            $insert_format[] = '%d';
+            $insert_format[] = '%d';
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-        $result = $wpdb->insert($table, $insert_data, ['%s', '%s', '%s', '%d', '%d', '%s', '%s']);
+        $result = $wpdb->insert($table, $insert_data, $insert_format);
         raplsaich_log_db_error('Knowledge::create');
 
         if ($result === false) {
@@ -149,14 +163,15 @@ class RAPLSAICH_Knowledge {
         self::maybe_add_columns($table);
 
         $defaults = [
-            'per_page'  => 20,
-            'page'      => 1,
-            'category'  => '',
-            'is_active' => null,
-            'status'    => '',
-            'type'      => '',
-            'orderby'   => 'priority',
-            'order'     => 'DESC',
+            'per_page'        => 20,
+            'page'            => 1,
+            'category'        => '',
+            'is_active'       => null,
+            'status'          => '',
+            'type'            => '',
+            'orderby'         => 'priority',
+            'order'           => 'DESC',
+            'collapse_groups' => false,
         ];
 
         $args = wp_parse_args($args, $defaults);
@@ -164,6 +179,12 @@ class RAPLSAICH_Knowledge {
 
         $where = '1=1';
         $params = [];
+
+        // Collapse a chunked document to its first row so the admin list shows
+        // one item per document instead of one per chunk.
+        if (!empty($args['collapse_groups']) && self::has_group_columns()) {
+            $where .= ' AND (group_id IS NULL OR chunk_index = 0)';
+        }
 
         if (!empty($args['category'])) {
             $where .= ' AND category = %s';
@@ -208,12 +229,17 @@ class RAPLSAICH_Knowledge {
     /**
      * Get total knowledge count
      */
-    public static function get_count($category = '', $is_active = null, $status = '', $type = '') {
+    public static function get_count($category = '', $is_active = null, $status = '', $type = '', $collapse_groups = false) {
         global $wpdb;
         $table = self::get_table_name();
 
         $where = '1=1';
         $params = [];
+
+        // Count one row per document (not per chunk) when collapsing groups.
+        if ($collapse_groups && self::has_group_columns()) {
+            $where .= ' AND (group_id IS NULL OR chunk_index = 0)';
+        }
 
         if (!empty($category)) {
             $where .= ' AND category = %s';
@@ -241,6 +267,13 @@ class RAPLSAICH_Knowledge {
                 "SELECT COUNT(*) FROM `{$table}` WHERE {$where}",
                 ...$params
             ));
+        }
+
+        // No bound params, but a param-less WHERE (e.g. the group-collapse
+        // clause) must still be applied.
+        if ($where !== '1=1') {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE {$where}");
         }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
@@ -351,6 +384,15 @@ class RAPLSAICH_Knowledge {
     public static function delete($id) {
         global $wpdb;
         $table = self::get_table_name();
+
+        // A chunked document is one logical unit: deleting any part removes the
+        // whole group so no orphan chunks are left behind.
+        if (self::has_group_columns()) {
+            $row = self::get_by_id($id);
+            if (is_array($row) && !empty($row['group_id'])) {
+                return self::delete_group((string) $row['group_id']);
+            }
+        }
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $result = $wpdb->delete(
@@ -611,6 +653,187 @@ class RAPLSAICH_Knowledge {
     }
 
     /**
+     * Threshold (characters) above which an uploaded document is split into
+     * chunks. Documents at or below this are stored as a single entry.
+     */
+    const CHUNK_THRESHOLD = 1500;
+
+    /**
+     * Target chunk size (characters) when splitting a large document.
+     */
+    const CHUNK_SIZE = 1000;
+
+    /**
+     * Create a knowledge entry from a document, splitting a large document into
+     * several chunk rows that share a group_id so each part embeds on its own
+     * (each chunk stays well under the embedding model's token limit). A small
+     * document is stored as a single plain entry, exactly as before.
+     *
+     * @param array $data title, content, category, priority.
+     * @return array|WP_Error On success: ['id','group_id','parts','title'] (group_id '' when unsplit). WP_Error on failure.
+     */
+    public static function create_document(array $data) {
+        $content = (string) ($data['content'] ?? '');
+        $title   = (string) ($data['title'] ?? '');
+
+        $threshold = (int) apply_filters('raplsaich_kb_chunk_threshold', self::CHUNK_THRESHOLD);
+        $chunks    = [];
+        if (raplsaich_mb_strlen($content) > max(1, $threshold) && class_exists('RAPLSAICH_Content_Chunker')) {
+            $chunk_size = (int) apply_filters('raplsaich_kb_chunk_size', self::CHUNK_SIZE);
+            $chunker    = new RAPLSAICH_Content_Chunker();
+            $chunks     = $chunker->split($content, max(200, $chunk_size));
+        }
+
+        // One chunk (or chunking disabled) — store as a single plain entry.
+        if (count($chunks) <= 1) {
+            $row = self::create([
+                'title'    => $title,
+                'content'  => $content,
+                'category' => $data['category'] ?? '',
+                'priority' => $data['priority'] ?? 0,
+            ]);
+            if (is_wp_error($row)) {
+                return $row;
+            }
+            return [
+                'id'       => (int) ($row['id'] ?? 0),
+                'group_id' => '',
+                'parts'    => 1,
+                'title'    => $title,
+            ];
+        }
+
+        $group_id = substr(md5(uniqid((string) $title, true)), 0, 32);
+        $total    = count($chunks);
+        $first    = null;
+        $created  = 0;
+
+        foreach (array_values($chunks) as $i => $chunk_text) {
+            $row = self::create([
+                'title'       => self::chunk_title($title, $i + 1, $total),
+                'content'     => $chunk_text,
+                'category'    => $data['category'] ?? '',
+                'priority'    => $data['priority'] ?? 0,
+                'group_id'    => $group_id,
+                'chunk_index' => $i,
+                'chunk_total' => $total,
+            ]);
+            if (is_array($row) && !empty($row['id'])) {
+                $created++;
+                if ($first === null) {
+                    $first = (int) $row['id'];
+                }
+            }
+        }
+
+        if ($first === null) {
+            return new WP_Error('db_error', __('Failed to save the document.', 'rapls-ai-chatbot'));
+        }
+
+        return [
+            'id'       => $first,
+            'group_id' => $group_id,
+            'parts'    => $created,
+            'title'    => $title,
+        ];
+    }
+
+    /**
+     * Build a chunk row title: "<base> (k/N)". Distinct per chunk so the
+     * search layer (which de-duplicates knowledge by title) keeps every chunk.
+     */
+    public static function chunk_title(string $base, int $part, int $total): string {
+        $base = trim($base);
+        if ($base === '') {
+            $base = __('Document', 'rapls-ai-chatbot');
+        }
+        return sprintf('%s (%d/%d)', $base, $part, $total);
+    }
+
+    /**
+     * Strip a trailing " (k/N)" chunk suffix to recover the base document title.
+     */
+    public static function strip_chunk_suffix(string $title): string {
+        return (string) preg_replace('/\s*\(\d+\/\d+\)\s*$/u', '', $title);
+    }
+
+    /**
+     * Whether the group/chunk columns exist yet (cached per request).
+     */
+    private static function has_group_columns(): bool {
+        static $has = null;
+        if ($has !== null) {
+            return $has;
+        }
+        global $wpdb;
+        $table = self::get_table_name();
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has = $table !== '' && !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'group_id'"));
+        return $has;
+    }
+
+    /**
+     * Row IDs that belong to a document group.
+     *
+     * @return int[]
+     */
+    public static function group_member_ids(string $group_id): array {
+        global $wpdb;
+        $table = self::get_table_name();
+        if ($table === '' || $group_id === '' || !self::has_group_columns()) {
+            return [];
+        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return array_map('intval', $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM `{$table}` WHERE group_id = %s ORDER BY chunk_index ASC",
+            $group_id
+        )));
+    }
+
+    /**
+     * Number of embedded rows in a document group.
+     */
+    public static function count_group_embedded(string $group_id): int {
+        global $wpdb;
+        $table = self::get_table_name();
+        if ($table === '' || $group_id === '' || !self::has_group_columns()) {
+            return 0;
+        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has_emb = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'embedding'"));
+        if (!$has_emb) {
+            return 0;
+        }
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM `{$table}` WHERE group_id = %s AND embedding IS NOT NULL",
+            $group_id
+        ));
+    }
+
+    /**
+     * Delete every row in a document group, clearing embed-error records and
+     * firing the per-row deleted action so Pro cleanup runs.
+     *
+     * @return int Rows deleted.
+     */
+    public static function delete_group(string $group_id): int {
+        global $wpdb;
+        $table = self::get_table_name();
+        if ($table === '' || $group_id === '' || !self::has_group_columns()) {
+            return 0;
+        }
+        $ids = self::group_member_ids($group_id);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $deleted = $wpdb->query($wpdb->prepare("DELETE FROM `{$table}` WHERE group_id = %s", $group_id));
+        foreach ($ids as $id) {
+            self::clear_embed_error($id);
+            do_action('raplsaich_knowledge_deleted', (int) $id);
+        }
+        return (int) $deleted;
+    }
+
+    /**
      * Import knowledge from file
      */
     /**
@@ -728,7 +951,9 @@ class RAPLSAICH_Knowledge {
             }
         }
 
-        return self::create([
+        // Large documents are split into grouped chunk rows so each part embeds
+        // on its own; small documents fall through to a single entry.
+        return self::create_document([
             'title'    => $title,
             'content'  => $content,
             'category' => $category,
