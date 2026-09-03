@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.0
+Stable tag: 1.19.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.1 =
+* Fixed: In the cross-site script embed, the Google reCAPTCHA v3 badge (shown when reCAPTCHA is enabled) could sit on top of the send button. Google pins the badge to the bottom-right corner, and the embedded chat window is narrow, so the badge landed right where the send button is. The badge is now lifted above the input bar so it no longer covers the send button. No change if you do not use reCAPTCHA.
+
 = 1.19.0 =
 * Added: Large uploaded documents are now split into parts automatically. Until now a document had to fit the embedding model's single-request token limit or it would not embed; now the Knowledge Base splits a big TXT, MD, PDF, or DOCX into smaller parts on upload, and each part embeds on its own. You no longer need to cut a file up by hand before uploading. The Knowledge Base list shows the document as one item with a "parts embedded" badge, and deleting it removes every part. This also improves answers: the bot retrieves the most relevant passage of a long document instead of one blurred embedding of the whole thing. Existing entries are untouched — re-upload a document to split it.
 
@@ -399,6 +402,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.1 =
+Minor fix for the cross-site embed: the Google reCAPTCHA badge no longer covers the send button. Only relevant if you use reCAPTCHA and embed the chat on another site via the script.
 
 = 1.19.0 =
 Large uploaded documents (TXT, MD, PDF, DOCX) are now split into parts automatically so each embeds on its own — no more cutting big files up by hand, and better answers from long documents. Existing entries are unchanged.

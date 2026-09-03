@@ -581,6 +581,8 @@ class RAPLSAICH_Chatbot_Widget {
             .raplsaich-inline .chatbot-badge { display: none !important; }
             .raplsaich-inline .chatbot-window { display: flex !important; position: relative; width: 100%; height: 100%;
                 border-radius: 0; box-shadow: none; max-height: none; }
+            /* Lift the Google reCAPTCHA v3 badge above the input bar so it does not cover the send button in the compact embed iframe. */
+            .grecaptcha-badge { bottom: 96px !important; }
         ');
 
         // Output minimal HTML
