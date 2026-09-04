@@ -567,9 +567,20 @@ class RAPLSAICH_Chatbot_Widget {
         $this->enqueue_styles();
         $this->enqueue_scripts();
 
+        // Origin of the page that embedded this iframe. embed-loader.js passes
+        // it as raplsaich_parent so the iframe can postMessage back to the real
+        // parent origin. When the parent site differs from this site (cross-site
+        // embed) the browser drops a message whose targetOrigin does not match
+        // the parent, so posting to this iframe's own origin would silently fail
+        // and the close button would not work. Validate as a bare http(s) origin;
+        // fall back to '*' (the close/ready signals carry no sensitive data and
+        // the parent still validates the sender origin before acting).
+        $embed_parent = isset($_GET['raplsaich_parent']) ? sanitize_text_field(wp_unslash($_GET['raplsaich_parent'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only origin hint for postMessage, not a state change
+        $embed_origin = preg_match('#^https?://[A-Za-z0-9.\-]+(:\d{1,5})?$#', $embed_parent) ? $embed_parent : '*';
+
         // Add embed-specific inline config
         wp_add_inline_script('raplsaich-chatbot',
-            'if(window.raplsaichConfig){raplsaichConfig.inlineMode=true;raplsaichConfig.embedMode=true;}',
+            'if(window.raplsaichConfig){raplsaichConfig.inlineMode=true;raplsaichConfig.embedMode=true;raplsaichConfig.embed_origin=' . wp_json_encode($embed_origin) . ';}',
             'before'
         );
 
@@ -600,7 +611,9 @@ class RAPLSAICH_Chatbot_Widget {
 </div>
 <?php
 wp_add_inline_script('raplsaich-chatbot', '(function(){' .
-    'var o=window.location.origin;' .
+    // Post to the parent page's origin (passed via raplsaich_parent), not this
+    // iframe's own origin — otherwise cross-site embeds silently drop the message.
+    'var o=' . wp_json_encode($embed_origin) . ';' .
     'if(window.parent!==window){window.parent.postMessage({type:"raplsaich:ready"},o);}' .
     'document.addEventListener("click",function(e){' .
     'if(e.target.closest(".chatbot-close")){e.preventDefault();' .

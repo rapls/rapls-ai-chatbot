@@ -695,7 +695,13 @@
             if (this.config.embedMode) {
                 typeof this.stopHandoffPolling === "function" && this.stopHandoffPolling();
                 if (window.parent !== window) {
-                    var targetOrigin = this.config.embed_origin || window.location.origin;
+                    // Post to the parent page's origin, not this iframe's own
+                    // origin. On a cross-site embed the two differ, and a message
+                    // whose targetOrigin does not match the parent is dropped by
+                    // the browser — which is why the close button did nothing on
+                    // other domains. Fall back to '*' when the origin is unknown
+                    // (the parent still validates the sender before acting).
+                    var targetOrigin = this.config.embed_origin || '*';
                     window.parent.postMessage({type: 'raplsaich:close'}, targetOrigin);
                 }
                 return;

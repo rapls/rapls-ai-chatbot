@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.1
+Stable tag: 1.19.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.2 =
+* Fixed: In the cross-site script embed, the close (×) button did nothing on other domains, so visitors could not close the chat. The chat window notified the host page to close via a browser message addressed to the wrong origin (this plugin's own site instead of the page it was embedded on), so the browser dropped it. The embed now sends the message to the host page's own origin, and the close button works on any site. Embedding the chat on its own site was unaffected.
+
 = 1.19.1 =
 * Fixed: In the cross-site script embed, the Google reCAPTCHA v3 badge (shown when reCAPTCHA is enabled) could sit on top of the send button. Google pins the badge to the bottom-right corner, and the embedded chat window is narrow, so the badge landed right where the send button is. The badge is now lifted above the input bar so it no longer covers the send button. No change if you do not use reCAPTCHA.
 
@@ -402,6 +405,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.2 =
+Fixes the close (×) button not working when the chat is embedded on another site via the script. Recommended if you use the cross-site embed.
 
 = 1.19.1 =
 Minor fix for the cross-site embed: the Google reCAPTCHA badge no longer covers the send button. Only relevant if you use reCAPTCHA and embed the chat on another site via the script.

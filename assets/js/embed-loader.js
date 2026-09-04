@@ -94,7 +94,11 @@
     function createIframe() {
         if (iframe) return;
         iframe = document.createElement('iframe');
-        iframe.src = siteUrl + '/?raplsaich_embed=1';
+        // Pass this page's origin so the iframe can postMessage back to the
+        // correct parent origin on a cross-site embed (otherwise the browser
+        // drops the close/ready messages and the close button does nothing).
+        iframe.src = siteUrl + '/?raplsaich_embed=1&raplsaich_parent=' +
+            encodeURIComponent(window.location.origin);
         iframe.style.cssText = 'width:100%;height:100%;border:none;';
         iframe.setAttribute('allow', 'clipboard-write');
         iframe.setAttribute('title', label || 'Chat');
