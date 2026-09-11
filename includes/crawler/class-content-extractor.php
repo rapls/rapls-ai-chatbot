@@ -593,13 +593,27 @@ class RAPLSAICH_Content_Extractor {
             }
         }
 
-        // Get custom fields
-        $custom_fields = get_post_meta($post->ID);
-        if (!empty($custom_fields)) {
+        // Custom fields.
+        //
+        // We do NOT index arbitrary post meta. Third-party plugins (SEO,
+        // page builders, etc.) store their own data in public meta keys
+        // that are not visitor-facing content — e.g. Rank Math's
+        // rank_math_focus_keyword / rank_math_seo_score, or Themify's
+        // section_* layout flags — and dumping all of it into the knowledge
+        // base leaks it into chatbot answers and reference cards.
+        //
+        // Only meta keys explicitly opted in via this filter are indexed.
+        // The default is an empty list, so nothing is included unless a site
+        // deliberately adds keys it wants treated as content.
+        $indexed_keys = apply_filters('raplsaich_crawl_indexed_meta_keys', [], $post);
+        if (!empty($indexed_keys) && is_array($indexed_keys)) {
             $cf_parts = [];
-            foreach ($custom_fields as $key => $values) {
-                // Skip internal fields (starting with _)
-                if (strpos($key, '_') === 0) {
+            foreach ($indexed_keys as $key) {
+                if (!is_string($key) || $key === '') {
+                    continue;
+                }
+                $values = get_post_meta($post->ID, $key, false);
+                if (empty($values)) {
                     continue;
                 }
 

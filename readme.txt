@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.2
+Stable tag: 1.19.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.3 =
+* Fixed: Site Learning (the site crawler) was adding third-party plugin metadata to the indexed content of a page, and it could surface in chatbot answers and reference cards. It walked every public custom field on a post and appended it under "Additional Info", filtering out only keys that start with an underscore. Plugins such as Rank Math SEO and page-builder themes store their data under plain keys (for example rank_math_focus_keyword or a theme's section layout flags), so that data slipped through and ended up in the knowledge base even though it never appeared in the page's visible content. The crawler no longer indexes arbitrary post meta; it indexes the title, excerpt, taxonomy terms, and page body. If you deliberately keep content in a custom field, you can opt specific keys back in with the new raplsaich_crawl_indexed_meta_keys filter. Run Site Learning again after updating to overwrite already-indexed pages. Thanks to @slafever for the detailed report.
+
 = 1.19.2 =
 * Fixed: In the cross-site script embed, the close (×) button did nothing on other domains, so visitors could not close the chat. The chat window notified the host page to close via a browser message addressed to the wrong origin (this plugin's own site instead of the page it was embedded on), so the browser dropped it. The embed now sends the message to the host page's own origin, and the close button works on any site. Embedding the chat on its own site was unaffected.
 
@@ -405,6 +408,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.3 =
+Stops Site Learning from indexing third-party plugin metadata (e.g. Rank Math SEO fields) that could surface in chatbot answers. Re-run Site Learning after updating to clean already-indexed pages.
 
 = 1.19.2 =
 Fixes the close (×) button not working when the chat is embedded on another site via the script. Recommended if you use the cross-site embed.
