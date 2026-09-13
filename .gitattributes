@@ -35,3 +35,4 @@ scripts/ export-ignore
 scripts/** export-ignore
 docs/ export-ignore
 docs/** export-ignore
+languages/ export-ignore

@@ -488,21 +488,16 @@ raplsaich_run();
 $raplsaich_plugin_basename = plugin_basename(__FILE__);
 add_filter("wp_consent_api_registered_{$raplsaich_plugin_basename}", '__return_true');
 
-/**
- * Overlay bundled translations on top of WordPress's just-in-time loader.
+/*
+ * No translation loading here. The catalogue is not shipped: WordPress.org
+ * builds it from translate.wordpress.org and serves it into
+ * WP_LANG_DIR/plugins, where core's just-in-time loader finds it unasked.
  *
- * When WP auto-loads a stale `WP_LANG_DIR/plugins/rapls-ai-chatbot-{locale}.mo`
- * (e.g., auto-downloaded from translate.wordpress.org before new strings were
- * translated), it skips the plugin's bundled .mo entirely. This hook merges
- * the bundled file after auto-load so newly added strings resolve in-locale.
+ * This used to overlay the bundled .mo on top of the pack, so that strings
+ * added since the pack was built still resolved. With nothing bundled there is
+ * nothing to overlay, and those strings read English until GlotPress catches
+ * up. That is the trade, made deliberately.
  */
-add_action('init', function () {
-    $locale = determine_locale();
-    $bundled = RAPLSAICH_PLUGIN_DIR . 'languages/rapls-ai-chatbot-' . $locale . '.mo';
-    if (is_readable($bundled)) {
-        load_textdomain('rapls-ai-chatbot', $bundled);
-    }
-}, 20);
 
 /**
  * Modify plugin action links

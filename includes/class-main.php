@@ -252,10 +252,12 @@ class RAPLSAICH_Main {
         // Gutenberg block (server-side rendered, wraps the shortcode)
         add_action('init', function () {
             register_block_type(RAPLSAICH_PLUGIN_DIR . 'includes/block');
+            // No path: the JSON comes from the WordPress.org language pack,
+            // like the .mo. Pointing at languages/ would look for a file the
+            // package no longer carries.
             wp_set_script_translations(
                 'rapls-ai-chatbot-chatbot-editor-script',
-                'rapls-ai-chatbot',
-                RAPLSAICH_PLUGIN_DIR . 'languages'
+                'rapls-ai-chatbot'
             );
         });
 
