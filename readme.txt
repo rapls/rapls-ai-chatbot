@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.3
+Stable tag: 1.19.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.4 =
+* Fixed: System Health showed "Last crawl: Never run yet" even though Site Learning was crawling on schedule and the content index was growing. The scheduled crawler runs incrementally — one batch per run, resuming across runs — but the "Last crawl" time was only recorded when an entire sweep finished (every post type, every batch). On sites where a sweep spans several runs (many post types, or a type with more than 100 posts) the field could sit at "Never run yet" for days while crawls were in fact running. Each crawl run now records its own timestamp, so the status reflects the most recent run. Thanks to @slafever for the detailed report.
+
 = 1.19.3 =
 * Fixed: Site Learning (the site crawler) was adding third-party plugin metadata to the indexed content of a page, and it could surface in chatbot answers and reference cards. It walked every public custom field on a post and appended it under "Additional Info", filtering out only keys that start with an underscore. Plugins such as Rank Math SEO and page-builder themes store their data under plain keys (for example rank_math_focus_keyword or a theme's section layout flags), so that data slipped through and ended up in the knowledge base even though it never appeared in the page's visible content. The crawler no longer indexes arbitrary post meta; it indexes the title, excerpt, taxonomy terms, and page body. If you deliberately keep content in a custom field, you can opt specific keys back in with the new raplsaich_crawl_indexed_meta_keys filter. Run Site Learning again after updating to overwrite already-indexed pages. Thanks to @slafever for the detailed report.
 
@@ -408,6 +411,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.4 =
+Fixes System Health showing "Last crawl: Never run yet" while Site Learning was actually crawling. Each crawl run now records its own timestamp.
 
 = 1.19.3 =
 Stops Site Learning from indexing third-party plugin metadata (e.g. Rank Math SEO fields) that could surface in chatbot answers. Re-run Site Learning after updating to clean already-indexed pages.

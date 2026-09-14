@@ -60,7 +60,15 @@ class RAPLSAICH_Site_Crawler {
         set_transient(self::LOCK_KEY, time(), self::LOCK_TIMEOUT);
 
         try {
-            return $this->run_incremental_crawl($settings);
+            $results = $this->run_incremental_crawl($settings);
+            // Record that a crawl ran now, even when this run only processed one
+            // batch and the full sweep is not finished. The full-cycle marker
+            // (raplsaich_last_crawl) is written separately by finish_crawl_cycle();
+            // this per-run stamp is what "Last crawl" in System Health reads, so
+            // the status reflects each run instead of staying "Never run yet"
+            // until an entire multi-run sweep completes.
+            update_option('raplsaich_last_crawl_run', current_time('mysql'), false);
+            return $results;
         } finally {
             delete_transient(self::LOCK_KEY);
         }
@@ -260,7 +268,9 @@ class RAPLSAICH_Site_Crawler {
      */
     private function finish_crawl_cycle(array $results): void {
         delete_option(self::PROGRESS_KEY);
-        update_option('raplsaich_last_crawl', current_time('mysql'));
+        $now = current_time('mysql');
+        update_option('raplsaich_last_crawl', $now);
+        update_option('raplsaich_last_crawl_run', $now, false);
         update_option('raplsaich_last_crawl_results', $results);
 
         /**
@@ -433,15 +443,17 @@ class RAPLSAICH_Site_Crawler {
     public function get_status(): array {
         $settings = get_option('raplsaich_settings', []);
         $last_crawl = get_option('raplsaich_last_crawl', '');
+        $last_crawl_run = get_option('raplsaich_last_crawl_run', '');
         $last_results = get_option('raplsaich_last_crawl_results', []);
 
         return [
-            'enabled'       => !empty($settings['crawler_enabled']),
-            'post_types'    => $settings['crawler_post_types'] ?? ['post', 'page'],
-            'interval'      => $settings['crawler_interval'] ?? 'daily',
-            'indexed_count' => RAPLSAICH_Content_Index::get_count(),
-            'last_crawl'    => $last_crawl,
-            'last_results'  => $last_results,
+            'enabled'        => !empty($settings['crawler_enabled']),
+            'post_types'     => $settings['crawler_post_types'] ?? ['post', 'page'],
+            'interval'       => $settings['crawler_interval'] ?? 'daily',
+            'indexed_count'  => RAPLSAICH_Content_Index::get_count(),
+            'last_crawl'     => $last_crawl,      // last completed full sweep
+            'last_crawl_run' => $last_crawl_run,  // most recent run (any batch)
+            'last_results'   => $last_results,
         ];
     }
 }

@@ -1408,7 +1408,13 @@ class RAPLSAICH_Admin {
                     : __('Not scheduled — deactivate and reactivate the plugin to restore it.', 'rapls-ai-chatbot'),
             ];
 
-            $last_crawl = (string) get_option('raplsaich_last_crawl', '');
+            // The scheduled crawler runs incrementally (one batch per run), so
+            // the full-sweep marker (raplsaich_last_crawl) can lag for days on a
+            // large site. Read the per-run activity stamp so the status reflects
+            // that crawls are actually running; fall back to the full-sweep marker
+            // for sites last crawled before this stamp existed.
+            $last_run  = (string) get_option('raplsaich_last_crawl_run', '');
+            $last_crawl = $last_run !== '' ? $last_run : (string) get_option('raplsaich_last_crawl', '');
             if ($last_crawl === '') {
                 $checks[] = [
                     'label'  => __('Last crawl', 'rapls-ai-chatbot'),
@@ -2268,6 +2274,7 @@ class RAPLSAICH_Admin {
 
         // Clear last crawl status
         delete_option('raplsaich_last_crawl');
+        delete_option('raplsaich_last_crawl_run');
         delete_option('raplsaich_last_crawl_results');
 
         wp_send_json_success([
