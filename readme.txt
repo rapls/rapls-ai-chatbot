@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.5
+Stable tag: 1.19.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.6 =
+* Fixed: with the optional "iOS keyboard fix" enabled, opening the chat on desktop locked the background page at the top — the page could not be scrolled until the chat was closed. The scroll-cancel that keeps the mobile full-screen chat pinned was running on desktop too, where the widget is only a small floating panel. It is now limited to the mobile view, matching the body lock it belongs to. No effect unless "iOS keyboard fix" is turned on. Thanks to @slafever for the detailed report.
+
 = 1.19.5 =
 * Fixed: a reference card below an answer could point to an unrelated page when the answer was actually grounded in a different page found by vector search. Reference cards and the sources list only showed pages that keyword search matched, so a page found only by semantic (vector) search — often the very page the answer came from — could never appear, and a weaker keyword hit was shown in its place. Vector matches that clear the grounding score are now eligible for reference cards and sources, so the card reflects the page the answer is based on. Only affects sites with Vector Search enabled. Thanks to @slafever for the detailed report.
 
@@ -414,6 +417,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.6 =
+Fixes the background page being locked at the top on desktop when the chat is open, on sites with the optional "iOS keyboard fix" enabled.
 
 = 1.19.5 =
 Fixes reference cards showing an unrelated page when the answer was grounded by vector search. Only affects sites with Vector Search enabled.

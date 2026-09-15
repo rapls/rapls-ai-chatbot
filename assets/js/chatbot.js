@@ -293,6 +293,12 @@
             // Window scroll を強制的に 0 に戻す
             this._iosKbdWinScroll = function() {
                 if (!self.isOpen) return;
+                // Only cancel background scroll in the mobile full-screen view.
+                // On desktop the widget is a small floating panel, so forcing the
+                // page back to the top would lock scrolling for no reason — the
+                // body lock in applyIosKeyboardFix() is mobile-only for the same
+                // reason, and this cancel must match it.
+                if (window.innerWidth > 480) return;
                 if ((window.scrollY || window.pageYOffset) !== 0) {
                     window.scrollTo(0, 0);
                     self._iosKbdApply();
