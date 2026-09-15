@@ -286,18 +286,37 @@ class RAPLSAICH_Search_Engine {
             $merged[$key]['_vector_score'] = 0.0;
         }
 
+        // A page found only by vector search is often the very page the answer
+        // is grounded on, but that keyword search missed. Reference cards and the
+        // sources list only show items flagged keyword_matched, so before this a
+        // vector-only page could never appear as a card even though the answer
+        // came from it — an unrelated keyword hit was shown instead. Flag such a
+        // hit as matched when its vector score clears the same bar used for
+        // grounding (grounding_min_score), so the card reflects the real source.
+        // We only touch vector-only hits here; keyword hits already carry the
+        // flag, and priority knowledge is intentionally left keyword_matched=false.
+        $vs_settings = get_option('raplsaich_settings', []);
+        $vector_card_min = (float) apply_filters(
+            'raplsaich_reference_card_vector_min_score',
+            (float) ($vs_settings['grounding_min_score'] ?? 0.2)
+        );
+
         foreach ($vector_results as $vr) {
             $key = $vr['type'] . ':' . $vr['title'];
             $vs = $vr['vector_score'] ?? 0.0;
 
             if (isset($merged[$key])) {
-                // Both keyword + vector: hybrid score
+                // Both keyword + vector: hybrid score. keyword_matched is already
+                // set by the keyword pass; leave it as-is.
                 $merged[$key]['_vector_score'] = $vs;
             } else {
                 // Vector only
                 $merged[$key] = $vr;
                 $merged[$key]['_keyword_norm'] = 0.0;
                 $merged[$key]['_vector_score'] = $vs;
+                if (empty($merged[$key]['keyword_matched'])) {
+                    $merged[$key]['keyword_matched'] = ($vs >= $vector_card_min);
+                }
             }
         }
 
