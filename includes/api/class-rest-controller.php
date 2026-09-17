@@ -618,6 +618,12 @@ class RAPLSAICH_REST_Controller {
             return $origin_check;
         }
 
+        // Crawlers that execute JS (e.g. Baiduspider-render following a
+        // ?raplsaich_q= deep link) must not reach the AI or create a conversation.
+        if (raplsaich_is_bot_request()) {
+            return new WP_REST_Response(['success' => false, 'error_code' => 'bot_request'], 403);
+        }
+
         // Route args apply sanitize_callback automatically;
         // re-sanitize here for defense-in-depth.
         $session_id        = sanitize_text_field($request->get_param('session_id'));
@@ -1938,6 +1944,10 @@ class RAPLSAICH_REST_Controller {
      * preset_index in metadata so analytics can attribute it.
      */
     public function log_preset_canned_reply(WP_REST_Request $request): WP_REST_Response {
+        if (raplsaich_is_bot_request()) {
+            return new WP_REST_Response(['success' => true, 'persisted' => false], 200);
+        }
+
         $session_id   = $this->get_session_id($request);
         $preset_index = (int) $request->get_param('preset_index');
         $question     = (string) $request->get_param('question');

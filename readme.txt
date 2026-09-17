@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.6
+Stable tag: 1.19.7
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -258,6 +258,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.19.7 =
+* Fixed: search-engine crawlers that run JavaScript (for example Baiduspider-render) could create fake conversations. When a crawler followed a deep link such as `?raplsaich_q=…`, the question was sent automatically, so every crawl showed up under Conversations as a new visitor and triggered a real AI request. Each crawl gets a new session, so per-visitor limits did not stop it. Known crawlers and automated browsers no longer auto-send deep-link questions, and the server refuses chat requests from crawler User-Agents before the AI is called or anything is saved. Developers can adjust detection with the new raplsaich_is_bot_request filter. Thanks to xyp for the detailed report.
+
 = 1.19.6 =
 * Fixed: with the optional "iOS keyboard fix" enabled, opening the chat on desktop locked the background page at the top — the page could not be scrolled until the chat was closed. The scroll-cancel that keeps the mobile full-screen chat pinned was running on desktop too, where the widget is only a small floating panel. It is now limited to the mobile view, matching the body lock it belongs to. No effect unless "iOS keyboard fix" is turned on. Thanks to @slafever for the detailed report.
 
@@ -417,6 +420,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.19.7 =
+Stops search-engine crawlers from creating fake conversations (and AI requests) by following deep-link question URLs.
 
 = 1.19.6 =
 Fixes the background page being locked at the top on desktop when the chat is open, on sites with the optional "iOS keyboard fix" enabled.

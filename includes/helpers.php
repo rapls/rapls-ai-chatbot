@@ -414,3 +414,41 @@ function raplsaich_kses_usage_message($message): string {
     // (http, https, mailto, tel, and site-relative paths).
     return wp_kses((string) $message, $allowed);
 }
+
+/**
+ * Whether the current request comes from a search-engine crawler or other bot.
+ *
+ * Rendering crawlers (Baiduspider-render, Googlebot, Bingbot, …) execute page
+ * JavaScript, so without this check they open sessions, follow deep-link
+ * ?raplsaich_q= URLs and create fake conversations that also cost API tokens.
+ * UA matching is best-effort — well-behaved crawlers identify themselves,
+ * which is the case this guards against.
+ *
+ * @param string|null $user_agent UA to test, or null to read the current request.
+ * @return bool True when the request should be treated as a bot.
+ */
+function raplsaich_is_bot_request(?string $user_agent = null): bool {
+    if ($user_agent === null) {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])) : '';
+    }
+
+    // Vendor names (baidu, yandex, sogou) are deliberately absent: their
+    // mobile browsers carry them too. Their crawlers match "spider"/"bot".
+    $is_bot = $user_agent !== ''
+        && (bool) preg_match(
+            '/bot\b|bot\/|spider|crawl|slurp|bingpreview|bytespider|facebookexternalhit|embedly|headlesschrome|lighthouse|pagespeed|gtmetrix|python-requests|curl\/|wget\//i',
+            $user_agent
+        )
+        && !preg_match('/cubot/i', $user_agent); // Cubot phones: "CUBOT X30 Build/…"
+
+    /**
+     * Filter whether the current request is treated as a bot.
+     *
+     * Bot requests are not sent to the AI and no conversation is recorded.
+     *
+     * @param bool   $is_bot     Detection result.
+     * @param string $user_agent The User-Agent that was tested.
+     */
+    return (bool) apply_filters('raplsaich_is_bot_request', $is_bot, $user_agent);
+}

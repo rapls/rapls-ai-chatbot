@@ -141,6 +141,9 @@
          */
         handleDeepLinkQuestion: function() {
             if (this._deepLinkHandled) return;
+            // Rendering crawlers run this JS too — never auto-send for them,
+            // or every crawl becomes a fake (and billed) conversation.
+            if (this.isLikelyBot()) return;
 
             var question = '';
             try {
@@ -183,6 +186,20 @@
                 }
                 self.sendMessage(question);
             }, 50);
+        },
+
+        /**
+         * Best-effort crawler/automation detection (mirrors raplsaich_is_bot_request()).
+         */
+        isLikelyBot: function() {
+            try {
+                if (navigator.webdriver) return true;
+                var ua = navigator.userAgent || '';
+                return /bot\b|bot\/|spider|crawl|slurp|bingpreview|bytespider|headlesschrome|lighthouse|pagespeed|gtmetrix/i.test(ua)
+                    && !/cubot/i.test(ua);
+            } catch (e) {
+                return false;
+            }
         },
 
         /**
