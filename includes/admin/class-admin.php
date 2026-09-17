@@ -1018,6 +1018,8 @@ class RAPLSAICH_Admin {
             return $key;
         }
 
+        raplsaich_record_encryption_state();
+
         // Format: encg: + base64(iv[12] + tag[16] + ciphertext)
         return 'encg:' . base64_encode($iv . $tag . $encrypted);
     }
@@ -1027,7 +1029,7 @@ class RAPLSAICH_Admin {
      * Normalizes the key material to avoid OpenSSL truncation/padding issues.
      */
     private static function get_encryption_key(): string {
-        return hash('sha256', wp_salt('auth'), true);
+        return raplsaich_encryption_key();
     }
 
     /**
@@ -1035,7 +1037,7 @@ class RAPLSAICH_Admin {
      * Prevents ciphertext reuse across different sites or contexts.
      */
     private static function get_encryption_aad(): string {
-        return 'raplsaich_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
+        return raplsaich_encryption_aad();
     }
 
     /**
@@ -1959,6 +1961,9 @@ class RAPLSAICH_Admin {
      * Skips quickly if all keys are already encrypted (transient check).
      */
     public function maybe_encrypt_plaintext_keys_on_init(): void {
+        // Cheap option read; returns immediately unless the key material changed.
+        $this->maybe_rekey_secrets();
+
         // Quick skip: if we encrypted recently, don't re-check every request
         if (get_transient('raplsaich_keys_encrypted')) {
             return;
@@ -1967,6 +1972,83 @@ class RAPLSAICH_Admin {
         $this->maybe_encrypt_plaintext_keys($settings);
         // Cache for 1 hour — re-check after that in case keys were changed externally
         set_transient('raplsaich_keys_encrypted', 1, HOUR_IN_SECONDS);
+    }
+
+    /**
+     * Re-encrypt stored secrets when the encryption key itself changed.
+     *
+     * Runs when RAPLSAICH_ENCRYPTION_KEY is added (or changed) in wp-config.php:
+     * values are read with the old key via raplsaich_encryption_keys() and
+     * written back under the current one. Nothing is touched while the key is
+     * unchanged, and a value that no key can read is left alone so the salt
+     * diagnosis in api_key_decryption_notice() still has something to report.
+     */
+    public function maybe_rekey_secrets(): void {
+        // A key nothing can read leaves the state unrecorded, so throttle the
+        // retry — otherwise every admin request would rewrite the readable ones.
+        if (get_transient('raplsaich_rekey_retry')) {
+            return;
+        }
+
+        $diagnosis = raplsaich_encryption_diagnosis();
+        if ($diagnosis['known'] && !$diagnosis['key_changed']) {
+            return;
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings) || empty($settings)) {
+            return;
+        }
+
+        $key_fields = ['openai_api_key', 'claude_api_key', 'gemini_api_key', 'openrouter_api_key', 'compat_api_key', 'recaptcha_secret_key'];
+        $changed = false;
+        $failed  = false;
+
+        foreach ($key_fields as $field) {
+            $value = $settings[$field] ?? '';
+            if (!is_string($value) || $value === '') {
+                continue;
+            }
+            if (strpos($value, 'encg:') !== 0 && strpos($value, 'enc:') !== 0) {
+                continue;
+            }
+
+            $plain = ($field === 'recaptcha_secret_key')
+                ? self::decrypt_secret_static($value)
+                : raplsaich_decrypt_api_key($value);
+
+            if ($plain === '' || $plain === $value) {
+                $failed = true; // Unreadable with every candidate key — leave it.
+                continue;
+            }
+
+            $re_encrypted = ($field === 'recaptcha_secret_key')
+                ? $this->encrypt_secret($plain)
+                : $this->maybe_encrypt_api_key($plain);
+
+            if (strpos($re_encrypted, 'encg:') === 0 && $re_encrypted !== $value) {
+                $settings[$field] = $re_encrypted;
+                $changed = true;
+            }
+        }
+
+        if ($changed) {
+            // Bypass sanitize filter to avoid re-processing
+            global $wp_filter;
+            $saved = isset($wp_filter['sanitize_option_raplsaich_settings']) ? $wp_filter['sanitize_option_raplsaich_settings'] : null;
+            remove_all_filters('sanitize_option_raplsaich_settings');
+            update_option('raplsaich_settings', $settings);
+            if ($saved !== null) {
+                $wp_filter['sanitize_option_raplsaich_settings'] = $saved;
+            }
+        }
+
+        // Only claim the current key once nothing is left behind under an old one.
+        if ($failed) {
+            set_transient('raplsaich_rekey_retry', 1, HOUR_IN_SECONDS);
+        } else {
+            raplsaich_record_encryption_state();
+        }
     }
 
     /**
@@ -2838,6 +2920,10 @@ class RAPLSAICH_Admin {
         if ($decrypted === '' && !empty($encrypted) && strpos($encrypted, 'sk-') !== 0 && strpos($encrypted, 'AIza') !== 0 && strpos($encrypted, 'AQ.') !== 0) {
             if (!get_transient('raplsaich_api_key_decryption_failed')) {
                 set_transient('raplsaich_api_key_decryption_failed', true, HOUR_IN_SECONDS);
+                // Snapshot now: a later re-save would overwrite the recorded
+                // fingerprints and the notice could no longer tell the user
+                // whether the salts are what changed.
+                update_option('raplsaich_encryption_failure', raplsaich_encryption_diagnosis(), false);
             }
         }
 
@@ -2872,12 +2958,14 @@ class RAPLSAICH_Admin {
         if ($encrypted === '') {
             // No key set on the active provider — nothing to warn about.
             delete_transient('raplsaich_api_key_decryption_failed');
+            delete_option('raplsaich_encryption_failure');
             return;
         }
         if (raplsaich_decrypt_api_key($encrypted) !== '') {
             // Active provider's key decrypts fine — the failure that set the
             // transient came from another (unused) provider's stored key.
             delete_transient('raplsaich_api_key_decryption_failed');
+            delete_option('raplsaich_encryption_failure');
             return;
         }
 
@@ -2885,6 +2973,31 @@ class RAPLSAICH_Admin {
             return;
         }
         $settings_url = admin_url('admin.php?page=raplsaich-settings');
+
+        // Snapshot taken when decryption first failed; falls back to a live
+        // reading if the option is missing (e.g. upgraded mid-failure).
+        $failure = get_option('raplsaich_encryption_failure', []);
+        if (!is_array($failure) || !array_key_exists('salt_changed', $failure)) {
+            $failure = raplsaich_encryption_diagnosis();
+        }
+
+        $cause = '';
+        if (!empty($failure['known']) && $failure['salt_changed'] === true) {
+            $saved_at = !empty($failure['saved_at'])
+                ? wp_date(get_option('date_format'), (int) $failure['saved_at'])
+                : '';
+            $cause = $saved_at !== ''
+                /* translators: %s: date the key was last saved */
+                ? sprintf(__('Your WordPress security salts have changed since the key was saved on %s. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this.', 'rapls-ai-chatbot'), $saved_at)
+                : __('Your WordPress security salts have changed since the key was saved. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this.', 'rapls-ai-chatbot');
+        } elseif (!empty($failure['known']) && $failure['salt_changed'] === false) {
+            $cause = __('Your WordPress security salts have not changed, so the stored key was most likely encrypted on another site — for example by a database copied from staging or a restored backup.', 'rapls-ai-chatbot');
+        }
+
+        $advice = '';
+        if (raplsaich_encryption_key_source() === 'salt') {
+            $advice = __('To keep the key working even when the salts change, define RAPLSAICH_ENCRYPTION_KEY (a long random string) in wp-config.php.', 'rapls-ai-chatbot');
+        }
         ?>
         <div class="notice notice-error">
             <p>
@@ -2892,11 +3005,17 @@ class RAPLSAICH_Admin {
                 <?php
                 printf(
                     /* translators: %s: link to settings page */
-                    esc_html__('API key decryption failed. This may happen after a site migration or when WordPress security salts are changed. Please re-enter your API key in %s.', 'rapls-ai-chatbot'),
+                    esc_html__('API key decryption failed. Please re-enter your API key in %s.', 'rapls-ai-chatbot'),
                     '<a href="' . esc_url($settings_url) . '">' . esc_html__('Settings', 'rapls-ai-chatbot') . '</a>'
                 );
                 ?>
             </p>
+            <?php if ($cause !== '') : ?>
+                <p><?php echo esc_html($cause); ?></p>
+            <?php endif; ?>
+            <?php if ($advice !== '') : ?>
+                <p><?php echo esc_html($advice); ?></p>
+            <?php endif; ?>
         </div>
         <?php
         // Clear the transient once shown
@@ -3147,6 +3266,8 @@ class RAPLSAICH_Admin {
             return $value;
         }
 
+        raplsaich_record_encryption_state();
+
         // Format: encg: + base64(iv[12] + tag[16] + ciphertext)
         return 'encg:' . base64_encode($iv . $tag . $encrypted);
     }
@@ -3171,9 +3292,8 @@ class RAPLSAICH_Admin {
             return '';
         }
 
-        $new_key = self::get_encryption_key();
-        $aad = self::get_encryption_aad();
-        $old_key = wp_salt('auth');
+        $keys = raplsaich_encryption_keys();
+        $aad  = self::get_encryption_aad();
 
         // AES-256-GCM (new format with tamper detection)
         if ($is_gcm) {
@@ -3187,13 +3307,16 @@ class RAPLSAICH_Admin {
             $tag = substr($data, 12, 16);
             $encrypted_data = substr($data, 28);
 
-            // Try normalized key + AAD → normalized key → legacy key
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
-            if ($decrypted === false) {
-                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag);
-            }
-            if ($decrypted === false) {
-                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $old_key, OPENSSL_RAW_DATA, $iv, $tag);
+            // Each candidate key, with AAD first (the site host may have changed).
+            $decrypted = false;
+            foreach ($keys as $key) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
+                if ($decrypted === false) {
+                    $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+                }
+                if ($decrypted !== false) {
+                    break;
+                }
             }
 
             if ($decrypted === false) {
@@ -3220,10 +3343,12 @@ class RAPLSAICH_Admin {
         $iv = substr($data, 0, $iv_length);
         $encrypted_data = substr($data, $iv_length);
 
-        // Try hash-normalized key first, then legacy raw salt
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
-        if ($decrypted === false) {
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
+        $decrypted = false;
+        foreach ($keys as $key) {
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+            if ($decrypted !== false) {
+                break;
+            }
         }
 
         if ($decrypted === false) {

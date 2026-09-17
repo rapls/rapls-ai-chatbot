@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.19.7
+Stable tag: 1.20.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -113,6 +113,15 @@ https://www.youtube.com/watch?v=HgbYr6c_QlI
 👉 **Plugin details:** [Rapls AI Chatbot](https://raplsworks.com/plugins/rapls-ai-chatbot/)
 
 == Frequently Asked Questions ==
+
+= My API key stops working every few days and I have to re-enter it =
+The API key (and the Pro license) is encrypted with a key derived from your WordPress security salts (AUTH_KEY / AUTH_SALT). If something changes those salts, the stored key can no longer be read. WordPress uses salt values kept in the database whenever the wp-config.php constants are missing, still set to "put your unique phrase here", or reused across constants — and those database values can be regenerated without wp-config.php changing. Security plugins that rotate salts, a failing object cache, and restored database backups are the usual causes; you will normally be logged out of WordPress at the same time.
+
+To make the stored keys independent of the salts, add a long random string to wp-config.php, above the "That's all, stop editing!" line:
+
+`define('RAPLSAICH_ENCRYPTION_KEY', 'a-long-random-string-of-at-least-32-characters');`
+
+Existing keys are re-encrypted with it automatically the next time you open wp-admin, and they then survive any salt change. Keep the value backed up: losing it means re-entering your API key and license once.
 
 = Can I use it for free? =
 Yes — the plugin is free, and the onboarding panel connects a no-credit-card OpenRouter or Google Gemini free-tier key in about a minute. Free tiers have rate limits, so for production traffic you may want your own provider key.
@@ -257,6 +266,10 @@ You can disable these features in the plugin settings:
 * Web search
 
 == Changelog ==
+
+= 1.20.0 =
+* Added: `RAPLSAICH_ENCRYPTION_KEY` — an optional wp-config.php constant that decouples the stored API key and Pro license from the WordPress security salts. Sites whose salts are rotated (by a security plugin, a failing object cache, or a restored database) lost both every few days and had to re-enter them. Define the constant and existing keys are re-encrypted with it on the next wp-admin request; they then survive any salt change. Nothing changes for sites that do not define it. See the FAQ for details.
+* Improved: the "API key decryption failed" notice now names the likely cause. It compares the current salts against a fingerprint recorded when the key was saved, so it can tell "your salts changed on <date>" apart from "your salts are unchanged, so this key was encrypted on another site" instead of listing both possibilities. Thanks to Sander Rombout for the detailed report.
 
 = 1.19.7 =
 * Fixed: search-engine crawlers that run JavaScript (for example Baiduspider-render) could create fake conversations. When a crawler followed a deep link such as `?raplsaich_q=…`, the question was sent automatically, so every crawl showed up under Conversations as a new visitor and triggered a real AI request. Each crawl gets a new session, so per-visitor limits did not stop it. Known crawlers and automated browsers no longer auto-send deep-link questions, and the server refuses chat requests from crawler User-Agents before the AI is called or anything is saved. Developers can adjust detection with the new raplsaich_is_bot_request filter. Thanks to xyp for the detailed report.
@@ -420,6 +433,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.20.0 =
+Adds an optional wp-config.php key so your API key and Pro license survive WordPress salt changes, and explains the cause when decryption does fail.
 
 = 1.19.7 =
 Stops search-engine crawlers from creating fake conversations (and AI requests) by following deep-link question URLs.

@@ -40,9 +40,8 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
         return '';
     }
 
-    $new_key = hash('sha256', wp_salt('auth'), true);
-    $aad     = 'raplsaich_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
-    $old_key = wp_salt('auth'); // Legacy fallback
+    $keys = raplsaich_encryption_keys();
+    $aad  = raplsaich_encryption_aad();
 
     // --- AES-256-GCM (new format, tamper-resistant) ---
     if (strpos($encrypted, 'encg:') === 0) {
@@ -59,13 +58,16 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
         $tag            = substr($data, 12, 16);
         $encrypted_data = substr($data, 28);
 
-        // Try: normalized key + AAD → normalized key only → legacy key
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
-        if ($decrypted === false) {
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $new_key, OPENSSL_RAW_DATA, $iv, $tag);
-        }
-        if ($decrypted === false) {
-            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $old_key, OPENSSL_RAW_DATA, $iv, $tag);
+        // Each candidate key, with AAD first (the site host may have changed).
+        $decrypted = false;
+        foreach ($keys as $key) {
+            $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, $aad);
+            if ($decrypted === false) {
+                $decrypted = openssl_decrypt($encrypted_data, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
+            }
+            if ($decrypted !== false) {
+                break;
+            }
         }
 
         if ($decrypted === false) {
@@ -105,9 +107,12 @@ function raplsaich_decrypt_api_key(string $encrypted): string {
     $iv             = substr($data, 0, $iv_length);
     $encrypted_data = substr($data, $iv_length);
 
-    $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $new_key, OPENSSL_RAW_DATA, $iv);
-    if ($decrypted === false) {
-        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $old_key, OPENSSL_RAW_DATA, $iv);
+    $decrypted = false;
+    foreach ($keys as $key) {
+        $decrypted = openssl_decrypt($encrypted_data, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
+        if ($decrypted !== false) {
+            break;
+        }
     }
 
     if ($decrypted === false) {
@@ -451,4 +456,121 @@ function raplsaich_is_bot_request(?string $user_agent = null): bool {
      * @param string $user_agent The User-Agent that was tested.
      */
     return (bool) apply_filters('raplsaich_is_bot_request', $is_bot, $user_agent);
+}
+
+/**
+ * Where the encryption key comes from: 'constant' or 'salt'.
+ *
+ * Defining RAPLSAICH_ENCRYPTION_KEY in wp-config.php detaches stored secrets
+ * from wp_salt('auth'). Sites whose salts are rotated (security plugins, a
+ * broken object cache regenerating the DB-stored salt options, a restored
+ * database) otherwise lose their API key and Pro license every time.
+ *
+ * @return string 'constant' when a usable constant is defined, else 'salt'.
+ */
+function raplsaich_encryption_key_source(): string {
+    if (defined('RAPLSAICH_ENCRYPTION_KEY')) {
+        $configured = (string) constant('RAPLSAICH_ENCRYPTION_KEY');
+        // Reject too-short values so a placeholder cannot weaken the key.
+        if (strlen($configured) >= 32) {
+            return 'constant';
+        }
+    }
+    return 'salt';
+}
+
+/**
+ * The 32-byte key new secrets are encrypted with.
+ *
+ * @return string Raw 32-byte key.
+ */
+function raplsaich_encryption_key(): string {
+    if (raplsaich_encryption_key_source() === 'constant') {
+        // Namespaced so the constant can be shared with other purposes safely.
+        return hash('sha256', 'raplsaich-enc:' . (string) constant('RAPLSAICH_ENCRYPTION_KEY'), true);
+    }
+    return hash('sha256', wp_salt('auth'), true);
+}
+
+/**
+ * Keys to try when decrypting, newest scheme first.
+ *
+ * Order: the current key, the salt-derived key (everything stored before
+ * RAPLSAICH_ENCRYPTION_KEY was added), then the raw salt (pre-1.x format).
+ * Values encrypted under an older scheme keep working and are rewritten with
+ * the current key by RAPLSAICH_Admin::maybe_rekey_secrets().
+ *
+ * @return array List of raw key strings.
+ */
+function raplsaich_encryption_keys(): array {
+    $keys = [raplsaich_encryption_key()];
+
+    foreach ([hash('sha256', wp_salt('auth'), true), wp_salt('auth')] as $fallback) {
+        if (!in_array($fallback, $keys, true)) {
+            $keys[] = $fallback;
+        }
+    }
+
+    return $keys;
+}
+
+/**
+ * Additional Authenticated Data for GCM — binds ciphertext to this site.
+ *
+ * @return string AAD string.
+ */
+function raplsaich_encryption_aad(): string {
+    return 'raplsaich_' . wp_parse_url(get_site_url(), PHP_URL_HOST);
+}
+
+/**
+ * Remember which key secrets were last encrypted with.
+ *
+ * Stores fingerprints only (truncated SHA-256), never key material, so a later
+ * failure can say whether the salts changed or the key is unchanged and the
+ * stored value came from somewhere else.
+ */
+function raplsaich_record_encryption_state(): void {
+    update_option('raplsaich_encryption_state', [
+        'key_fp'  => substr(hash('sha256', raplsaich_encryption_key()), 0, 16),
+        'salt_fp' => substr(hash('sha256', wp_salt('auth')), 0, 16),
+        'source'  => raplsaich_encryption_key_source(),
+        'time'    => time(),
+    ], false);
+}
+
+/**
+ * Compare the current key material against what secrets were encrypted with.
+ *
+ * @return array {
+ *     @type bool      $known        Whether a previous state was recorded.
+ *     @type string    $source       Current key source ('constant'|'salt').
+ *     @type string    $saved_source Key source when the secret was saved.
+ *     @type int       $saved_at     Timestamp of that save (0 when unknown).
+ *     @type bool|null $salt_changed Whether wp_salt('auth') differs since then.
+ *     @type bool|null $key_changed  Whether the encryption key differs since then.
+ * }
+ */
+function raplsaich_encryption_diagnosis(): array {
+    $result = [
+        'known'        => false,
+        'source'       => raplsaich_encryption_key_source(),
+        'saved_source' => '',
+        'saved_at'     => 0,
+        'salt_changed' => null,
+        'key_changed'  => null,
+    ];
+
+    $state = get_option('raplsaich_encryption_state', []);
+    if (!is_array($state) || empty($state['salt_fp']) || empty($state['key_fp'])) {
+        return $result;
+    }
+
+    $result['known']        = true;
+    $result['saved_source'] = isset($state['source']) ? (string) $state['source'] : '';
+    $result['saved_at']     = isset($state['time']) ? (int) $state['time'] : 0;
+    $result['salt_changed'] = $state['salt_fp'] !== substr(hash('sha256', wp_salt('auth')), 0, 16);
+    $result['key_changed']  = $state['key_fp'] !== substr(hash('sha256', raplsaich_encryption_key()), 0, 16);
+
+    return $result;
 }
