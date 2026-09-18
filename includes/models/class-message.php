@@ -395,7 +395,23 @@ class RAPLSAICH_Message {
             $ttl_days
         ), ARRAY_A);
 
-        return $result ?: null;
+        if (!$result) {
+            return null;
+        }
+
+        // Decrypt like every other reader does. Without this, sites running
+        // Pro's message encryption served the stored ciphertext ("encg:…") to
+        // the visitor on every cache hit.
+        $result['content'] = apply_filters('raplsaich_message_content_load', (string) ($result['content'] ?? ''), $result);
+
+        // Still encrypted means no key could read it (e.g. saved under salts
+        // that have since changed). Treat as a miss so a fresh answer is
+        // generated — ciphertext must never reach the chat.
+        if (strpos($result['content'], 'encg:') === 0 || strpos($result['content'], 'enc:') === 0 || $result['content'] === '') {
+            return null;
+        }
+
+        return $result;
     }
 
     /**

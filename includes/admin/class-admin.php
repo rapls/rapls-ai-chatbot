@@ -2981,23 +2981,7 @@ class RAPLSAICH_Admin {
             $failure = raplsaich_encryption_diagnosis();
         }
 
-        $cause = '';
-        if (!empty($failure['known']) && $failure['salt_changed'] === true) {
-            $saved_at = !empty($failure['saved_at'])
-                ? wp_date(get_option('date_format'), (int) $failure['saved_at'])
-                : '';
-            $cause = $saved_at !== ''
-                /* translators: %s: date the key was last saved */
-                ? sprintf(__('Your WordPress security salts have changed since the key was saved on %s. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this.', 'rapls-ai-chatbot'), $saved_at)
-                : __('Your WordPress security salts have changed since the key was saved. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this.', 'rapls-ai-chatbot');
-        } elseif (!empty($failure['known']) && $failure['salt_changed'] === false) {
-            $cause = __('Your WordPress security salts have not changed, so the stored key was most likely encrypted on another site — for example by a database copied from staging or a restored backup.', 'rapls-ai-chatbot');
-        }
-
-        $advice = '';
-        if (raplsaich_encryption_key_source() === 'salt') {
-            $advice = __('To keep the key working even when the salts change, define RAPLSAICH_ENCRYPTION_KEY (a long random string) in wp-config.php.', 'rapls-ai-chatbot');
-        }
+        list($cause, $advice) = self::decryption_failure_explanation($failure);
         ?>
         <div class="notice notice-error">
             <p>
@@ -3020,6 +3004,96 @@ class RAPLSAICH_Admin {
         <?php
         // Clear the transient once shown
         delete_transient('raplsaich_api_key_decryption_failed');
+    }
+
+    /**
+     * Explain a decryption failure in plain words.
+     *
+     * Shared by the API-key and reCAPTCHA notices so both name the same cause.
+     *
+     * @param array $failure Result of raplsaich_encryption_diagnosis() (or its snapshot).
+     * @return array [string $cause, string $advice] — either may be ''.
+     */
+    private static function decryption_failure_explanation(array $failure): array {
+        $cause = '';
+        if (!empty($failure['known']) && $failure['salt_changed'] === true) {
+            $saved_at = !empty($failure['saved_at'])
+                ? wp_date(get_option('date_format'), (int) $failure['saved_at'])
+                : '';
+            $cause = $saved_at !== ''
+                /* translators: %s: date the key was last saved */
+                ? sprintf(__('Your WordPress security salts have changed since the key was saved on %s. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this.', 'rapls-ai-chatbot'), $saved_at)
+                : __('Your WordPress security salts have changed since the key was saved. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this.', 'rapls-ai-chatbot');
+        } elseif (!empty($failure['known']) && $failure['salt_changed'] === false) {
+            // The recorded fingerprint belongs to whichever secret was saved
+            // last, not to this one — so "unchanged" cannot prove where this
+            // value came from. List every way it can be left under an old key.
+            $cause = __('Your WordPress security salts have not changed since a key was last saved, so this value was most likely saved under an earlier key: before the salts last changed, before RAPLSAICH_ENCRYPTION_KEY was added, or on another site (for example a database copied from staging or a restored backup).', 'rapls-ai-chatbot');
+        }
+
+        $advice = '';
+        if (raplsaich_encryption_key_source() === 'salt') {
+            $advice = __('To keep the key working even when the salts change, define RAPLSAICH_ENCRYPTION_KEY (a long random string) in wp-config.php.', 'rapls-ai-chatbot');
+        }
+
+        return [$cause, $advice];
+    }
+
+    /**
+     * Warn when reCAPTCHA is on but its secret key can no longer be decrypted.
+     *
+     * The secret is encrypted with the same key as the API keys, so a salt
+     * change breaks it too. The chat then refuses every message with
+     * recaptcha_misconfigured, which visitors see only as the generic
+     * "currently unavailable" text — and api_key_decryption_notice() never
+     * looked at this field, so nothing told the site owner why.
+     */
+    public function recaptcha_secret_decryption_notice(): void {
+        if (!current_user_can(self::get_manage_cap())) {
+            return;
+        }
+
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings) || empty($settings['recaptcha_enabled'])) {
+            return;
+        }
+
+        $secret = (string) ($settings['recaptcha_secret_key'] ?? '');
+        if ($secret === '' || (strpos($secret, 'encg:') !== 0 && strpos($secret, 'enc:') !== 0)) {
+            return; // Not set (a separate setup problem) or not encrypted.
+        }
+
+        // Same peel-off loop as verify_recaptcha(): older versions could
+        // double-encrypt, so decrypt up to three layers.
+        for ($i = 0; $i < 3 && (strpos($secret, 'encg:') === 0 || strpos($secret, 'enc:') === 0); $i++) {
+            $secret = self::decrypt_secret_static($secret);
+        }
+        if ($secret !== '') {
+            return;
+        }
+
+        list($cause, $advice) = self::decryption_failure_explanation(raplsaich_encryption_diagnosis());
+        $settings_url = admin_url('admin.php?page=raplsaich-settings');
+        ?>
+        <div class="notice notice-error">
+            <p>
+                <strong><?php esc_html_e('Rapls AI Chatbot:', 'rapls-ai-chatbot'); ?></strong>
+                <?php
+                printf(
+                    /* translators: %s: link to settings page */
+                    esc_html__('The reCAPTCHA secret key could not be decrypted, so every chat message is being refused. Please re-enter the secret key in %s.', 'rapls-ai-chatbot'),
+                    '<a href="' . esc_url($settings_url) . '">' . esc_html__('Settings', 'rapls-ai-chatbot') . '</a>'
+                );
+                ?>
+            </p>
+            <?php if ($cause !== '') : ?>
+                <p><?php echo esc_html($cause); ?></p>
+            <?php endif; ?>
+            <?php if ($advice !== '') : ?>
+                <p><?php echo esc_html($advice); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     /**

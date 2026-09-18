@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.20.1
+Stable tag: 1.20.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.20.2 =
+* Fixed: with the Pro response cache and Pro message encryption both on, a repeated question could be answered with a long encrypted string (starting "encg:") instead of the reply. Every other place that reads stored messages decrypts them first; the cache lookup returned the stored row as-is. It now decrypts too, and an entry that cannot be decrypted is treated as a cache miss so a fresh answer is generated — encrypted text is never shown in the chat.
+* Fixed: when the reCAPTCHA secret key could no longer be decrypted (for example after the WordPress security salts changed), every chat message was refused and visitors only saw "This feature is currently unavailable." with no warning in wp-admin, because the decryption notice only checked the AI provider's API key. A separate notice now tells administrators to re-enter the reCAPTCHA secret key.
+* Improved: the decryption notice no longer claims a key "was most likely encrypted on another site" when the salts are unchanged. The recorded fingerprint belongs to whichever key was saved last, so it now lists every way a value can be left under an old key. Thanks to Sander Rombout for the detailed report.
+
 = 1.20.1 =
 * Fixed: a request rejected as automated (added in 1.19.7) showed the vague "This feature is currently unavailable." message, because the `bot_request` error code had no entry in the message map. It now says the request looked automated and who to contact, which matters for the rare visitor whose browser is misidentified.
 
@@ -436,6 +441,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.20.2 =
+Stops encrypted text appearing as a chat reply when Pro's response cache and message encryption are both on, and warns when the reCAPTCHA secret key can no longer be decrypted.
 
 = 1.20.1 =
 Gives a clear message to a visitor whose browser is mistaken for a crawler, instead of the generic "currently unavailable" text.

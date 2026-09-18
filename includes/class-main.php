@@ -163,6 +163,7 @@ class RAPLSAICH_Main {
         $this->loader->add_action('admin_menu', $admin, 'add_admin_menu');
         $this->loader->add_action('admin_notices', $admin, 'message_limit_notice');
         $this->loader->add_action('admin_notices', $admin, 'api_key_decryption_notice');
+        $this->loader->add_action('admin_notices', $admin, 'recaptcha_secret_decryption_notice');
         $this->loader->add_action('admin_notices', $admin, 'gemini_legacy_key_notice');
         $this->loader->add_action('admin_notices', $admin, 'security_settings_notice');
         $this->loader->add_action('admin_notices', $admin, 'handoff_pending_notice');
