@@ -184,7 +184,7 @@ class RAPLSAICH_REST_Controller {
      * Known error_code values (kept as a reference for support docs):
      *   rate_limited, origin_mismatch, recaptcha_required, recaptcha_failed,
      *   recaptcha_misconfigured, session_expired, session_missing,
-     *   honeypot_triggered, timing_failed,
+     *   honeypot_triggered, timing_failed, bot_request,
      *   raplsaich_table_error, unknown
      *
      * @param mixed            $result  Response object.

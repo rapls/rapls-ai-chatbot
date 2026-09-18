@@ -346,6 +346,10 @@ class RAPLSAICH_Chatbot_Widget {
                     'origin_mismatch'        => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'honeypot_triggered'     => __('This feature is currently unavailable.', 'rapls-ai-chatbot'),
                     'invalid_message'        => __('Please enter a valid message.', 'rapls-ai-chatbot'),
+                    // Returned when the request's User-Agent looks like a crawler.
+                    // A real visitor should never see this, so name the cause
+                    // rather than falling through to the generic message.
+                    'bot_request'            => __('This request was blocked because it looked automated. If you are using a normal browser, please contact the site administrator.', 'rapls-ai-chatbot'),
                     // 5xx chat errors: pass the server's cause-specific message
                     // through instead of masking it with the generic error_server
                     // text. The server message is a curated, localized string

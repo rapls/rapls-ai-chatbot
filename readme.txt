@@ -269,6 +269,7 @@ You can disable these features in the plugin settings:
 
 = 1.20.0 =
 * Added: `RAPLSAICH_ENCRYPTION_KEY` — an optional wp-config.php constant that decouples the stored API key and Pro license from the WordPress security salts. Sites whose salts are rotated (by a security plugin, a failing object cache, or a restored database) lost both every few days and had to re-enter them. Define the constant and existing keys are re-encrypted with it on the next wp-admin request; they then survive any salt change. Nothing changes for sites that do not define it. See the FAQ for details.
+* Fixed: a request rejected as automated (added in 1.19.7) showed the vague "This feature is currently unavailable." message, because the `bot_request` error code had no entry in the message map. It now says the request looked automated and who to contact, which matters for the rare visitor whose browser is misidentified.
 * Improved: the "API key decryption failed" notice now names the likely cause. It compares the current salts against a fingerprint recorded when the key was saved, so it can tell "your salts changed on <date>" apart from "your salts are unchanged, so this key was encrypted on another site" instead of listing both possibilities. Thanks to Sander Rombout for the detailed report.
 
 = 1.19.7 =
