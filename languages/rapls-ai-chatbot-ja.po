@@ -8812,3 +8812,34 @@ msgstr "このメッセージで安全な HTML の一部 (リンクと基本的�
 #: templates/admin/settings.php:2365
 msgid "When enabled, you can use %s in this message. Example: Please <a href=\"/login\">log in</a> or go <a href=\"/vip\">VIP</a>. Everything else is removed."
 msgstr "有効にすると、このメッセージ内で %s を使えます。例: 「<a href=\"/login\">ログイン</a>はこちら」「<a href=\"/vip\">VIP</a> はこちら」のように書けます。それ以外のタグはすべて削除されます。"
+
+#. translators: %s: link to settings page
+#: includes/admin/class-admin.php:3084
+msgid "The reCAPTCHA secret key could not be decrypted, so every chat message is being refused. Please re-enter the secret key in %s."
+msgstr "reCAPTCHA のシークレットキーを復号できないため、すべてのチャットメッセージが拒否されています。%s でシークレットキーを入力し直してください。"
+
+#: includes/admin/class-admin.php:3031
+msgid "Your WordPress security salts have not changed since a key was last saved, so this value was most likely saved under an earlier key: before the salts last changed, before RAPLSAICH_ENCRYPTION_KEY was added, or on another site (for example a database copied from staging or a restored backup)."
+msgstr "最後にキーを保存したときから、WordPress のセキュリティソルトは変わっていません。この値は、それより前のキーで保存された可能性が高いです。前回ソルトが変わる前、RAPLSAICH_ENCRYPTION_KEY を追加する前、または別のサイト (ステージングからコピーしたデータベースや、復元したバックアップなど) で保存された場合が考えられます。"
+
+#: includes/frontend/class-chatbot-widget.php:352
+msgid "This request was blocked because it looked automated. If you are using a normal browser, please contact the site administrator."
+msgstr "自動アクセスと判断されたため、このリクエストをブロックしました。通常のブラウザーをお使いの場合は、サイト管理者にお問い合わせください。"
+
+#. translators: %s: link to settings page
+#: includes/admin/class-admin.php:2992
+msgid "API key decryption failed. Please re-enter your API key in %s."
+msgstr "API キーを復号できませんでした。%s で API キーを入力し直してください。"
+
+#: includes/admin/class-admin.php:3036
+msgid "To keep the key working even when the salts change, define RAPLSAICH_ENCRYPTION_KEY (a long random string) in wp-config.php."
+msgstr "ソルトが変わってもキーを使い続けられるようにするには、wp-config.php に RAPLSAICH_ENCRYPTION_KEY (長いランダムな文字列) を定義してください。"
+
+#: includes/admin/class-admin.php:3026
+msgid "Your WordPress security salts have changed since the key was saved. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this."
+msgstr "キーを保存したときから、WordPress のセキュリティソルトが変わっています。ソルトを自動で更新するセキュリティプラグイン、オブジェクトキャッシュの不具合、データベースの復元などが原因になります。"
+
+#. translators: %s: date the key was last saved
+#: includes/admin/class-admin.php:3025
+msgid "Your WordPress security salts have changed since the key was saved on %s. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this."
+msgstr "%s にキーを保存したときから、WordPress のセキュリティソルトが変わっています。ソルトを自動で更新するセキュリティプラグイン、オブジェクトキャッシュの不具合、データベースの復元などが原因になります。"
