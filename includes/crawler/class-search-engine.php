@@ -751,8 +751,31 @@ class RAPLSAICH_Search_Engine {
         // Japanese particles/auxiliaries (remove at word boundary)
         $jp_particles = ['の', 'は', 'が', 'を', 'に', 'で', 'と', 'も', 'や', 'へ', 'から', 'まで', 'より', 'など', 'って', 'だと', 'では', 'には', 'とか', 'けど', 'でも'];
 
-        // English stopwords
-        $en_stopwords = ['what', 'is', 'the', 'a', 'an', 'and', 'or', 'how', 'do', 'does', 'can', 'will', 'would', 'should', 'could', 'please', 'tell', 'me', 'about', 'know'];
+        // English stopwords. The list used to hold 20 words, so an everyday
+        // question like "I need a stairlift" still searched for "need" — a word
+        // that appears on most pages — and the keyword index returned whichever
+        // page happened to use it. Function words and the verbs people open a
+        // question with are removed; anything that can carry meaning on a real
+        // site (help, support, cost, price, service…) is deliberately kept.
+        $en_stopwords = [
+            // Articles, conjunctions, prepositions
+            'a', 'an', 'the', 'and', 'or', 'but', 'if', 'of', 'in', 'on', 'at',
+            'to', 'for', 'with', 'from', 'by', 'as', 'than', 'then', 'so',
+            // Pronouns and determiners
+            'i', 'me', 'my', 'we', 'our', 'us', 'you', 'your', 'it', 'its',
+            'this', 'that', 'these', 'those', 'there', 'here', 'any', 'some',
+            'each', 'both', 'all',
+            // Question words
+            'what', 'whats', 'which', 'who', 'whom', 'whose', 'when', 'where',
+            'why', 'how',
+            // Auxiliaries and common verbs
+            'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being', 'do',
+            'does', 'did', 'done', 'have', 'has', 'had', 'can', 'could',
+            'will', 'would', 'shall', 'should', 'may', 'might', 'must',
+            // Openers: the intent, not the subject
+            'please', 'tell', 'know', 'about', 'need', 'needs', 'want',
+            'wants', 'looking', 'thanks', 'thank', 'hello', 'hi', 'hey',
+        ];
 
         $keywords = [];
 
@@ -817,11 +840,16 @@ class RAPLSAICH_Search_Engine {
         }
         $keywords = array_merge($keywords, $sub_keywords);
 
-        // If no keywords found, clean up and use original text
+        // Nothing left to search for. Japanese is written without spaces, so
+        // joining what remains reconstructs a phrase worth matching. Doing the
+        // same to English glues the words together ("how do I know" →
+        // "howdoIknow"), which matches nothing and only invites a LIKE scan —
+        // better to return nothing and let vector search answer the question.
         if (empty($keywords)) {
-            $cleaned = trim(preg_replace('/\s+/u', '', $cleaned));
-            if (raplsaich_mb_strlen($cleaned) >= 2) {
-                $keywords[] = $cleaned;
+            $joined = trim(preg_replace('/\s+/u', '', $cleaned));
+            if (raplsaich_mb_strlen($joined) >= 2
+                && preg_match('/[\p{Hiragana}\p{Katakana}\p{Han}]/u', $joined)) {
+                $keywords[] = $joined;
             }
         }
 

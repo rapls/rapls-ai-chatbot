@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.20.2
+Stable tag: 1.20.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,10 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.20.3 =
+* Fixed: an English question could pull in an unrelated page because an everyday word in it was enough for the keyword index to match. "I need a stairlift" searched for "need" as well, and "need" appears on most pages, so whichever page used it could come back as a result — and as a reference card. The English stopword list had 20 words and kept pronouns, prepositions, auxiliaries and opening verbs; it now covers them. Words that carry meaning on a real site (help, support, cost, price, service and the like) are deliberately still searched for. Japanese questions are unaffected.
+* Fixed: when every word of an English question was a stopword ("how do I know?"), the remaining text was glued together into one keyword ("howdoIknow") that matches nothing. The plugin now searches for nothing in that case and leaves the answer to vector search. Japanese, which is written without spaces, still joins the remaining text as before. Thanks to @slafever for the report that led to both.
+
 = 1.20.2 =
 * Fixed: with the Pro response cache and Pro message encryption both on, a repeated question could be answered with a long encrypted string (starting "encg:") instead of the reply. Every other place that reads stored messages decrypts them first; the cache lookup returned the stored row as-is. It now decrypts too, and an entry that cannot be decrypted is treated as a cache miss so a fresh answer is generated — encrypted text is never shown in the chat.
 * Fixed: when the reCAPTCHA secret key could no longer be decrypted (for example after the WordPress security salts changed), every chat message was refused and visitors only saw "This feature is currently unavailable." with no warning in wp-admin, because the decryption notice only checked the AI provider's API key. A separate notice now tells administrators to re-enter the reCAPTCHA secret key.
@@ -441,6 +445,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.20.3 =
+Stops an unrelated page being matched (and shown as a reference card) because of an everyday English word such as "need" in the question.
 
 = 1.20.2 =
 Stops encrypted text appearing as a chat reply when Pro's response cache and message encryption are both on, and warns when the reCAPTCHA secret key can no longer be decrypted.
