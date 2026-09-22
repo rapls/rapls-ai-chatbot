@@ -181,7 +181,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                                     <?php checked(in_array('all', $settings['crawler_post_types'] ?? [])); ?>>
                                 <strong>✅ <?php esc_html_e('All Public Content (Recommended)', 'rapls-ai-chatbot'); ?></strong>
                                 <p class="description" style="margin-left: 24px; margin-top: 4px;">
-                                    <?php esc_html_e('Learn all posts, pages, custom post types, and custom fields.', 'rapls-ai-chatbot'); ?>
+                                    <?php esc_html_e('Learn all posts, pages, and custom post types.', 'rapls-ai-chatbot'); ?>
                                 </p>
                             </label>
 

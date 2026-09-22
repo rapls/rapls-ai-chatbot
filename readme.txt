@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.20.3
+Stable tag: 1.20.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.20.4 =
+* Fixed: the Site Learning screen said it learns custom fields. Since 1.19.3 custom fields are not indexed unless a site names them with the raplsaich_crawl_indexed_meta_keys filter, so the description now lists posts, pages and custom post types only. The Japanese translation of the same sentence, which repeated itself, is corrected too.
+
 = 1.20.3 =
 * Fixed: an English question could pull in an unrelated page because an everyday word in it was enough for the keyword index to match. "I need a stairlift" searched for "need" as well, and "need" appears on most pages, so whichever page used it could come back as a result — and as a reference card. The English stopword list had 20 words and kept pronouns, prepositions, auxiliaries and opening verbs; it now covers them. Words that carry meaning on a real site (help, support, cost, price, service and the like) are deliberately still searched for. Japanese questions are unaffected.
 * Fixed: when every word of an English question was a stopword ("how do I know?"), the remaining text was glued together into one keyword ("howdoIknow") that matches nothing. The plugin now searches for nothing in that case and leaves the answer to vector search. Japanese, which is written without spaces, still joins the remaining text as before. Thanks to @slafever for the report that led to both.
@@ -445,6 +448,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.20.4 =
+The Site Learning screen no longer says it learns custom fields, which it has not done since 1.19.3.
 
 = 1.20.3 =
 Stops an unrelated page being matched (and shown as a reference card) because of an everyday English word such as "need" in the question.

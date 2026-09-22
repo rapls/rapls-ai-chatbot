@@ -2717,9 +2717,8 @@ msgstr "学習設定"
 msgid "Auto-learn site content"
 msgstr "サイトコンテンツを自動学習する"
 #:#: templates/admin/crawler.php:93
-msgid "Learn all posts, pages, custom post types, and custom fields."
-msgstr "すべての投稿、固定ページ、カスタム投稿タイプ、カスタムフィールドを学習します。"
-"投稿、固定ページ、カスタム投稿タイプ、カスタムフィールドをすべて学習します。"
+msgid "Learn all posts, pages, and custom post types."
+msgstr "すべての投稿、固定ページ、カスタム投稿タイプを学習します。"
 #:#: templates/admin/crawler.php:98
 msgid "Or select individually:"
 msgstr "または、個別に選択:"
