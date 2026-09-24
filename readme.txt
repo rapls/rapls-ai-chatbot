@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.20.4
+Stable tag: 1.20.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,13 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.20.5 =
+* Fixed: Claude Sonnet 4 and Claude Opus 4.1 were retired by Anthropic (June 15 and August 5, 2026) and stopped answering. Visitors saw "The AI model is currently unavailable. Please contact the site administrator.", and nothing in wp-admin said why. A site still set to a retired Claude model now sends its chats to the successor (Sonnet 4 to Sonnet 4.6, Opus 4 and 4.1 to Opus 4.6, Claude 3 Haiku models to Haiku 4.5), and wp-admin shows a notice until a model is chosen again. The saved setting is not changed for you. The same applies to a model typed in for a Pro bot.
+* Added: Claude Sonnet 4.6, now the recommended Sonnet model. Claude Sonnet 4 and Claude Opus 4.1 are removed from the model list.
+* Fixed: when the saved model was no longer in the list, the settings screen showed the first model instead, so saving the page for any other reason quietly switched the site to Claude Opus 4.6. It now shows the model that is actually answering.
+* Fixed: usage costs for Claude Haiku 4.5, the default model, were counted at three times the real price, and Claude Opus 4.5 and 4.6 were also priced wrongly, so the Pro monthly budget limit could stop the chat early. Prices now follow Anthropic's pricing page.
+* Changed: temperature is sent only to Claude models that accept it. Claude Opus 4.7 and later and Claude Sonnet 5 reject it, which matters for a model typed in for a Pro bot.
+
 = 1.20.4 =
 * Fixed: the Site Learning screen said it learns custom fields. Since 1.19.3 custom fields are not indexed unless a site names them with the raplsaich_crawl_indexed_meta_keys filter, so the description now lists posts, pages and custom post types only. The Japanese translation of the same sentence, which repeated itself, is corrected too.
 
@@ -448,6 +455,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.20.5 =
+If your site uses Claude Sonnet 4 or Claude Opus 4.1, which Anthropic has retired, chats resume on their successors after this update. Also corrects Claude usage costs, which were overcounted for Haiku 4.5.
 
 = 1.20.4 =
 The Site Learning screen no longer says it learns custom fields, which it has not done since 1.19.3.

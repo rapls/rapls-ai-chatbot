@@ -382,13 +382,21 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <?php $claude_vision_models = $claude_provider->get_vision_models(); ?>
+                                <?php
+                                $claude_vision_models = $claude_provider->get_vision_models();
+                                $claude_saved_model   = $settings['claude_model'] ?? 'claude-haiku-4-5-20251001';
+                                // A retired model has no option in the list, so the browser would
+                                // show (and a save would store) the first option instead. Select
+                                // the model that is actually answering, and say so below.
+                                $claude_retirement    = RAPLSAICH_Claude_Provider::retirement($claude_saved_model);
+                                $claude_shown_model   = $claude_retirement ? $claude_retirement['to'] : $claude_saved_model;
+                                ?>
                                 <select name="raplsaich_settings[claude_model]" id="raplsaich-claude-model"
-                                    data-initial-value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'); ?>">
+                                    data-initial-value="<?php echo esc_attr($claude_shown_model); ?>">
                                     <?php foreach ($claude_provider->get_available_models() as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
                                             data-vision="<?php echo esc_attr(in_array($value, $claude_vision_models, true) ? '1' : '0'); ?>"
-                                            <?php selected($settings['claude_model'] ?? 'claude-haiku-4-5-20251001', $value); ?>>
+                                            <?php selected($claude_shown_model, $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -396,6 +404,11 @@ if (!defined('ABSPATH')) {
                                 <button type="button" class="button raplsaich-refresh-models" data-provider="claude" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
+                                <?php if ($claude_retirement) : ?>
+                                    <p class="description" style="color: #d63638;">
+                                        <?php echo esc_html(RAPLSAICH_Admin::retired_claude_model_message($claude_saved_model, $claude_retirement)); ?>
+                                    </p>
+                                <?php endif; ?>
                                 <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
                                     <?php esc_html_e('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot'); ?>
                                 </p>

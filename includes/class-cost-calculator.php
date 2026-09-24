@@ -70,8 +70,36 @@ class RAPLSAICH_Cost_Calculator {
                 'output' => 4.40,
             ],
 
-            // Claude Models
+            // Claude Models (USD per 1M tokens, Anthropic's pricing page, 2026-09-24).
+            // A model missing here falls back to $3 / $15 below, which made Haiku 4.5
+            // - the default model - read three times its real cost, so Pro's budget
+            // limit was reached three times too early.
+            'claude-opus-4-6' => [
+                'input'  => 5.00,
+                'output' => 25.00,
+            ],
             'claude-opus-4-5-20251101' => [
+                'input'  => 5.00,   // was listed at the Opus 4.1 price ($15 / $75)
+                'output' => 25.00,
+            ],
+            'claude-sonnet-4-6' => [
+                'input'  => 3.00,
+                'output' => 15.00,
+            ],
+            'claude-sonnet-4-5-20250929' => [
+                'input'  => 3.00,
+                'output' => 15.00,
+            ],
+            'claude-haiku-4-5-20251001' => [
+                'input'  => 1.00,
+                'output' => 5.00,
+            ],
+            // Retired, kept so past usage is still costed correctly.
+            'claude-opus-4-1-20250805' => [
+                'input'  => 15.00,
+                'output' => 75.00,
+            ],
+            'claude-opus-4-20250514' => [
                 'input'  => 15.00,
                 'output' => 75.00,
             ],

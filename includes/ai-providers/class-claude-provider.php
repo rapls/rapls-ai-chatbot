@@ -38,9 +38,105 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * Set Model
+     *
+     * A model Anthropic has retired is swapped for its successor here, the one
+     * place every Claude request passes through (chat, FAQ generation, the
+     * fallback model, per-bot models, and the Pro calls that go through this
+     * provider). The saved setting is left as it is; the settings screen and an
+     * admin notice say which model is actually answering.
      */
     public function set_model(string $model): void {
-        $this->model = $model;
+        $resolved = self::resolve_model($model);
+        if ($resolved !== $model) {
+            raplsaich_rate_limited_log(
+                'claude_retired_model_' . md5($model),
+                sprintf('RAPLSAICH Claude: model %s has been retired by Anthropic; sending %s instead.', $model, $resolved)
+            );
+        }
+        $this->model = $resolved;
+    }
+
+    /**
+     * Claude models Anthropic has retired, with the model to send instead and
+     * the retirement date. Source: the Claude model deprecations page.
+     *
+     * Successors follow Anthropic's recommendation where that model is in this
+     * plugin's list; Opus goes to Opus 4.6 (Anthropic names Opus 4.8) so the
+     * admin can see and re-select it in Settings.
+     *
+     * @return array<string, array{to: string, retired: string}>
+     */
+    public static function retired_models(): array {
+        return [
+            'claude-sonnet-4-20250514'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-06-15'],
+            'claude-sonnet-4-0'          => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-06-15'],
+            'claude-opus-4-20250514'     => ['to' => 'claude-opus-4-6', 'retired' => '2026-06-15'],
+            'claude-opus-4-0'            => ['to' => 'claude-opus-4-6', 'retired' => '2026-06-15'],
+            'claude-opus-4-1-20250805'   => ['to' => 'claude-opus-4-6', 'retired' => '2026-08-05'],
+            'claude-opus-4-1'            => ['to' => 'claude-opus-4-6', 'retired' => '2026-08-05'],
+            'claude-3-7-sonnet-20250219' => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-02-19'],
+            'claude-3-7-sonnet-latest'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-02-19'],
+            'claude-3-5-haiku-20241022'  => ['to' => 'claude-haiku-4-5-20251001', 'retired' => '2026-02-19'],
+            'claude-3-5-haiku-latest'    => ['to' => 'claude-haiku-4-5-20251001', 'retired' => '2026-02-19'],
+            'claude-3-haiku-20240307'    => ['to' => 'claude-haiku-4-5-20251001', 'retired' => '2026-04-20'],
+            'claude-3-opus-20240229'     => ['to' => 'claude-opus-4-6', 'retired' => '2026-01-05'],
+            'claude-3-opus-latest'       => ['to' => 'claude-opus-4-6', 'retired' => '2026-01-05'],
+            'claude-3-5-sonnet-20240620' => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-10-28'],
+            'claude-3-5-sonnet-20241022' => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-10-28'],
+            'claude-3-5-sonnet-latest'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-10-28'],
+            'claude-3-sonnet-20240229'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-07-21'],
+        ];
+    }
+
+    /**
+     * Retirement details for a model, or null if it is not retired.
+     *
+     * Every Claude 3.x model is retired, so an ID not in the table but starting
+     * "claude-3-" (a typed per-bot model, another alias) still gets a successor
+     * from its family rather than failing.
+     *
+     * @return array{to: string, retired: string}|null
+     */
+    public static function retirement(string $model): ?array {
+        /**
+         * Filter the retired Claude models and their successors.
+         *
+         * @param array $retired Model ID => ['to' => successor ID, 'retired' => 'Y-m-d'].
+         */
+        $retired = (array) apply_filters('raplsaich_claude_retired_models', self::retired_models());
+        if (isset($retired[$model]['to'])) {
+            return $retired[$model];
+        }
+        if (strpos($model, 'claude-3-') === 0) {
+            if (strpos($model, 'haiku') !== false) {
+                return ['to' => 'claude-haiku-4-5-20251001', 'retired' => ''];
+            }
+            if (strpos($model, 'opus') !== false) {
+                return ['to' => 'claude-opus-4-6', 'retired' => ''];
+            }
+            return ['to' => 'claude-sonnet-4-6', 'retired' => ''];
+        }
+        return null;
+    }
+
+    /**
+     * The model to actually send: the successor if $model is retired.
+     */
+    public static function resolve_model(string $model): string {
+        $info = self::retirement($model);
+        return $info ? $info['to'] : $model;
+    }
+
+    /**
+     * Whether the model accepts temperature / top_p / top_k.
+     *
+     * An allow-list of the generations that do. Opus 4.7 and later, Sonnet 5,
+     * Opus 5 / 5.5 and Fable reject them with a 400, and a model this plugin
+     * has not seen yet is more likely to follow them than to go back. Matters
+     * here because a Pro bot's model is typed in freely.
+     */
+    public static function accepts_sampling_params(string $model): bool {
+        return (bool) preg_match('/^claude-(?:3-|haiku-4|sonnet-4|opus-4(?:-[0-6])?(?:-\d{8})?$)/', $model);
     }
 
     /**
@@ -107,11 +203,16 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
         }
 
         $body = [
-            'model'       => $this->model,
-            'max_tokens'  => $options['max_tokens'] ?? 1000,
-            'messages'    => $chat_messages,
-            'temperature' => (float) ($options['temperature'] ?? 0.7),
+            'model'      => $this->model,
+            'max_tokens' => $options['max_tokens'] ?? 1000,
+            'messages'   => $chat_messages,
         ];
+
+        // Claude Opus 4.7 and later and Sonnet 5 reject any temperature with a
+        // 400; send it only to the generations that take it.
+        if (self::accepts_sampling_params($this->model)) {
+            $body['temperature'] = (float) ($options['temperature'] ?? 0.7);
+        }
 
         if (!empty($system_message)) {
             $body['system'] = trim($system_message);
@@ -292,12 +393,13 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
         return [
             // Latest generation
             'claude-opus-4-6'             => 'Claude Opus 4.6 (' . __('Most powerful', 'rapls-ai-chatbot') . ')',
-            'claude-sonnet-4-5-20250929'  => 'Claude Sonnet 4.5 (' . __('★ Recommended — fast and powerful', 'rapls-ai-chatbot') . ')',
+            'claude-sonnet-4-6'           => 'Claude Sonnet 4.6 (' . __('★ Recommended — fast and powerful', 'rapls-ai-chatbot') . ')',
             'claude-haiku-4-5-20251001'   => 'Claude Haiku 4.5 (' . __('★ Recommended — fastest, cheapest', 'rapls-ai-chatbot') . ')',
             // Previous generation
+            'claude-sonnet-4-5-20250929'  => 'Claude Sonnet 4.5',
             'claude-opus-4-5-20251101'    => 'Claude Opus 4.5 (' . __('Previous flagship', 'rapls-ai-chatbot') . ')',
-            'claude-opus-4-1-20250805'    => 'Claude Opus 4.1 (' . __('Coding focused', 'rapls-ai-chatbot') . ')',
-            'claude-sonnet-4-20250514'    => 'Claude Sonnet 4 (' . __('Reliable all-purpose', 'rapls-ai-chatbot') . ')',
+            // Claude Opus 4.1 and Sonnet 4 were retired by Anthropic (2026-08-05 /
+            // 2026-06-15); set_model() sends their successors instead.
         ];
     }
 
@@ -307,11 +409,10 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
     public function get_vision_models(): array {
         return [
             'claude-opus-4-6',
-            'claude-sonnet-4-5-20250929',
+            'claude-sonnet-4-6',
             'claude-haiku-4-5-20251001',
+            'claude-sonnet-4-5-20250929',
             'claude-opus-4-5-20251101',
-            'claude-opus-4-1-20250805',
-            'claude-sonnet-4-20250514',
         ];
     }
 

@@ -2931,6 +2931,73 @@ class RAPLSAICH_Admin {
     }
 
     /**
+     * The sentence shown when the saved Claude model has been retired.
+     *
+     * @param string $saved Saved model ID.
+     * @param array  $info  RAPLSAICH_Claude_Provider::retirement() result.
+     */
+    public static function retired_claude_model_message(string $saved, array $info): string {
+        $models = (new RAPLSAICH_Claude_Provider())->get_available_models();
+        // "Claude Sonnet 4.6 (★ Recommended — …)" → "Claude Sonnet 4.6"
+        $new_name = isset($models[$info['to']])
+            ? trim(preg_replace('/\s*\(.*$/u', '', $models[$info['to']]))
+            : $info['to'];
+
+        if (!empty($info['retired'])) {
+            return sprintf(
+                /* translators: 1: retired model ID, 2: retirement date, 3: model now used */
+                __('The Claude model "%1$s" was retired by Anthropic on %2$s, so chats are being sent to %3$s instead. Choose a model from the list and save to confirm.', 'rapls-ai-chatbot'),
+                $saved,
+                wp_date(get_option('date_format'), strtotime($info['retired'] . ' 12:00:00 UTC')),
+                $new_name
+            );
+        }
+        return sprintf(
+            /* translators: 1: retired model ID, 2: model now used */
+            __('The Claude model "%1$s" has been retired by Anthropic, so chats are being sent to %2$s instead. Choose a model from the list and save to confirm.', 'rapls-ai-chatbot'),
+            $saved,
+            $new_name
+        );
+    }
+
+    /**
+     * Admin notice when the selected Claude model has been retired.
+     *
+     * Once the model stopped answering, visitors were told the AI model was
+     * unavailable and to contact the administrator - who had nothing in
+     * wp-admin saying why. Shown on every admin screen until a model
+     * is saved again, except the settings page, which says it next to the list.
+     */
+    public function retired_claude_model_notice(): void {
+        if (!current_user_can(self::get_manage_cap())) {
+            return;
+        }
+        $settings = get_option('raplsaich_settings', []);
+        if (!is_array($settings) || ($settings['ai_provider'] ?? '') !== 'claude') {
+            return;
+        }
+        $saved = (string) ($settings['claude_model'] ?? '');
+        $info  = RAPLSAICH_Claude_Provider::retirement($saved);
+        if (!$info) {
+            return;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check
+        if (isset($_GET['page']) && sanitize_key(wp_unslash($_GET['page'])) === 'raplsaich-settings') {
+            return;
+        }
+        $settings_url = admin_url('admin.php?page=raplsaich-settings');
+        ?>
+        <div class="notice notice-warning">
+            <p>
+                <strong><?php esc_html_e('Rapls AI Chatbot:', 'rapls-ai-chatbot'); ?></strong>
+                <?php echo esc_html(self::retired_claude_model_message($saved, $info)); ?>
+                <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Settings', 'rapls-ai-chatbot'); ?></a>
+            </p>
+        </div>
+        <?php
+    }
+
+    /**
      * Show admin notice when API key decryption fails
      */
     public function api_key_decryption_notice(): void {
