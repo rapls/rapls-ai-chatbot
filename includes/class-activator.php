@@ -745,7 +745,7 @@ class RAPLSAICH_Activator {
             'claude_api_key'  => '',
             'claude_model'    => 'claude-haiku-4-5-20251001',
             'gemini_api_key'  => '',
-            'gemini_model'    => 'gemini-2.0-flash',
+            'gemini_model'    => 'gemini-3.5-flash-lite',
 
             // Chatbot settings
             'bot_name'        => 'Assistant',

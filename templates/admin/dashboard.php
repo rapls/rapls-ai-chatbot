@@ -183,7 +183,7 @@ if (!defined('ABSPATH')) {
                 <p><?php
                 printf(
                     /* translators: %s: the Gemini preview model currently selected */
-                    esc_html__('Rate-limit errors occurred in the last 24 hours while using %s. Gemini 3 preview models have strict usage limits — consider switching to a stable model such as Gemini 2.5 Flash, or enabling Model Fallback (Settings → AI Settings).', 'rapls-ai-chatbot'),
+                    esc_html__('Rate-limit errors occurred in the last 24 hours while using %s. Gemini 3 preview models have strict usage limits — consider switching to a stable model such as Gemini 3.8 Flash, or enabling Model Fallback (Settings → AI Settings).', 'rapls-ai-chatbot'),
                     '<code>' . esc_html($gemini3_notice_model) . '</code>'
                 );
                 ?></p>

@@ -332,13 +332,26 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <?php $openai_vision_models = $openai_provider->get_vision_models(); ?>
+                                <?php
+                                $openai_vision_models = $openai_provider->get_vision_models();
+                                $openai_saved_model   = $settings['openai_model'] ?? 'gpt-4o-mini';
+                                // A shut-down model is shown as the model actually answering
+                                // (and said so below); one taken off the list but still served
+                                // keeps its own option. Either way a save never quietly switches
+                                // the site to the first option.
+                                $openai_retirement    = RAPLSAICH_OpenAI_Provider::retirement($openai_saved_model);
+                                $openai_shown_model   = $openai_retirement ? $openai_retirement['to'] : $openai_saved_model;
+                                $openai_model_options = $openai_provider->get_available_models();
+                                if ($openai_shown_model !== '' && !isset($openai_model_options[$openai_shown_model])) {
+                                    $openai_model_options[$openai_shown_model] = $openai_shown_model;
+                                }
+                                ?>
                                 <select name="raplsaich_settings[openai_model]" id="raplsaich-openai-model"
-                                    data-initial-value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o-mini'); ?>">
-                                    <?php foreach ($openai_provider->get_available_models() as $value => $label): ?>
+                                    data-initial-value="<?php echo esc_attr($openai_shown_model); ?>">
+                                    <?php foreach ($openai_model_options as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
-                                            data-vision="<?php echo esc_attr(in_array($value, $openai_vision_models, true) ? '1' : '0'); ?>"
-                                            <?php selected($settings['openai_model'] ?? 'gpt-4o-mini', $value); ?>>
+                                            data-vision="<?php echo esc_attr($openai_provider->is_vision_model((string) $value) ? '1' : '0'); ?>"
+                                            <?php selected($openai_shown_model, $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -346,6 +359,17 @@ if (!defined('ABSPATH')) {
                                 <button type="button" class="button raplsaich-refresh-models" data-provider="openai" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
+                                <?php if ($openai_retirement) : ?>
+                                    <p class="description" style="color: #d63638;">
+                                        <?php echo esc_html(RAPLSAICH_Admin::retired_model_message('openai', $openai_saved_model, $openai_retirement)); ?>
+                                    </p>
+                                <?php endif; ?>
+                                <?php $raplsaich_scheduled = $openai_retirement ? null : RAPLSAICH_OpenAI_Provider::scheduled_retirement($openai_saved_model); ?>
+                                <?php if ($raplsaich_scheduled) : ?>
+                                    <p class="description" style="color: #b26200;">
+                                        <?php echo esc_html(RAPLSAICH_Admin::scheduled_retirement_message('openai', $openai_saved_model, $raplsaich_scheduled)); ?>
+                                    </p>
+                                <?php endif; ?>
                                 <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
                                     <?php esc_html_e('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot'); ?>
                                 </p>
@@ -390,10 +414,16 @@ if (!defined('ABSPATH')) {
                                 // the model that is actually answering, and say so below.
                                 $claude_retirement    = RAPLSAICH_Claude_Provider::retirement($claude_saved_model);
                                 $claude_shown_model   = $claude_retirement ? $claude_retirement['to'] : $claude_saved_model;
+                                // A model taken off the list but still served (Sonnet 4.5
+                                // until its retirement date) keeps its own option.
+                                $claude_model_options = $claude_provider->get_available_models();
+                                if ($claude_shown_model !== '' && !isset($claude_model_options[$claude_shown_model])) {
+                                    $claude_model_options[$claude_shown_model] = $claude_shown_model;
+                                }
                                 ?>
                                 <select name="raplsaich_settings[claude_model]" id="raplsaich-claude-model"
                                     data-initial-value="<?php echo esc_attr($claude_shown_model); ?>">
-                                    <?php foreach ($claude_provider->get_available_models() as $value => $label): ?>
+                                    <?php foreach ($claude_model_options as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
                                             data-vision="<?php echo esc_attr(in_array($value, $claude_vision_models, true) ? '1' : '0'); ?>"
                                             <?php selected($claude_shown_model, $value); ?>>
@@ -407,6 +437,12 @@ if (!defined('ABSPATH')) {
                                 <?php if ($claude_retirement) : ?>
                                     <p class="description" style="color: #d63638;">
                                         <?php echo esc_html(RAPLSAICH_Admin::retired_claude_model_message($claude_saved_model, $claude_retirement)); ?>
+                                    </p>
+                                <?php endif; ?>
+                                <?php $raplsaich_scheduled = $claude_retirement ? null : RAPLSAICH_Claude_Provider::scheduled_retirement($claude_saved_model); ?>
+                                <?php if ($raplsaich_scheduled) : ?>
+                                    <p class="description" style="color: #b26200;">
+                                        <?php echo esc_html(RAPLSAICH_Admin::scheduled_retirement_message('claude', $claude_saved_model, $raplsaich_scheduled)); ?>
                                     </p>
                                 <?php endif; ?>
                                 <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
@@ -445,13 +481,23 @@ if (!defined('ABSPATH')) {
                         <tr>
                             <th scope="row"><?php esc_html_e('Model', 'rapls-ai-chatbot'); ?></th>
                             <td>
-                                <?php $gemini_vision_models = $gemini_provider->get_vision_models(); ?>
+                                <?php
+                                $gemini_vision_models = $gemini_provider->get_vision_models();
+                                $gemini_saved_model   = $settings['gemini_model'] ?? 'gemini-3.5-flash-lite';
+                                // Same handling as OpenAI above.
+                                $gemini_retirement    = RAPLSAICH_Gemini_Provider::retirement($gemini_saved_model);
+                                $gemini_shown_model   = $gemini_retirement ? $gemini_retirement['to'] : $gemini_saved_model;
+                                $gemini_model_options = $gemini_provider->get_available_models();
+                                if ($gemini_shown_model !== '' && !isset($gemini_model_options[$gemini_shown_model])) {
+                                    $gemini_model_options[$gemini_shown_model] = $gemini_shown_model;
+                                }
+                                ?>
                                 <select name="raplsaich_settings[gemini_model]" id="raplsaich-gemini-model"
-                                    data-initial-value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash'); ?>">
-                                    <?php foreach ($gemini_provider->get_available_models() as $value => $label): ?>
+                                    data-initial-value="<?php echo esc_attr($gemini_shown_model); ?>">
+                                    <?php foreach ($gemini_model_options as $value => $label): ?>
                                         <option value="<?php echo esc_attr($value); ?>"
-                                            data-vision="<?php echo esc_attr(in_array($value, $gemini_vision_models, true) ? '1' : '0'); ?>"
-                                            <?php selected($settings['gemini_model'] ?? 'gemini-2.0-flash', $value); ?>>
+                                            data-vision="<?php echo esc_attr(in_array($value, $gemini_vision_models, true) || strpos((string) $value, 'gemini-') === 0 ? '1' : '0'); ?>"
+                                            <?php selected($gemini_shown_model, $value); ?>>
                                             <?php echo esc_html($label); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -459,6 +505,17 @@ if (!defined('ABSPATH')) {
                                 <button type="button" class="button raplsaich-refresh-models" data-provider="gemini" title="<?php esc_attr_e('Refresh model list', 'rapls-ai-chatbot'); ?>">
                                     <span class="dashicons dashicons-update" style="vertical-align: middle;"></span>
                                 </button>
+                                <?php if ($gemini_retirement) : ?>
+                                    <p class="description" style="color: #d63638;">
+                                        <?php echo esc_html(RAPLSAICH_Admin::retired_model_message('gemini', $gemini_saved_model, $gemini_retirement)); ?>
+                                    </p>
+                                <?php endif; ?>
+                                <?php $raplsaich_scheduled = $gemini_retirement ? null : RAPLSAICH_Gemini_Provider::scheduled_retirement($gemini_saved_model); ?>
+                                <?php if ($raplsaich_scheduled) : ?>
+                                    <p class="description" style="color: #b26200;">
+                                        <?php echo esc_html(RAPLSAICH_Admin::scheduled_retirement_message('gemini', $gemini_saved_model, $raplsaich_scheduled)); ?>
+                                    </p>
+                                <?php endif; ?>
                                 <p class="description raplsaich-vision-warning" style="display: none; color: #d63638;">
                                     <?php esc_html_e('Multimodal is enabled. Please select a vision-capable model.', 'rapls-ai-chatbot'); ?>
                                 </p>
@@ -670,7 +727,7 @@ if (!defined('ABSPATH')) {
                                        value="<?php echo esc_attr($settings['compat_model'] ?? ''); ?>"
                                        class="regular-text" placeholder="qwen-plus">
                                 <p class="description">
-                                    <?php esc_html_e('Enter the chat model name exactly as your provider lists it. For Qwen: qwen-plus (recommended), qwen-turbo, or qwen-max. Other providers: deepseek-chat, glm-4-plus.', 'rapls-ai-chatbot'); ?>
+                                    <?php esc_html_e('Enter the chat model name exactly as your provider lists it. For Qwen: qwen-plus (recommended), qwen-turbo, or qwen-max. For other providers (DeepSeek, Zhipu GLM, and others), use the model name from the provider\'s model list.', 'rapls-ai-chatbot'); ?>
                                 </p>
                             </td>
                         </tr>

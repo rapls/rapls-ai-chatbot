@@ -93,7 +93,7 @@ class RAPLSAICH_MCP_Tool_Get_Site_Info {
             case 'claude':
                 return $settings['claude_model'] ?? 'claude-haiku-4-5-20251001';
             case 'gemini':
-                return $settings['gemini_model'] ?? 'gemini-2.0-flash';
+                return $settings['gemini_model'] ?? 'gemini-3.5-flash-lite';
             case 'openrouter':
                 return $settings['openrouter_model'] ?? 'openrouter/auto';
             default:

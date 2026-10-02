@@ -12,11 +12,99 @@ class RAPLSAICH_Cost_Calculator {
 
     /**
      * モデル別の料金（1Mトークンあたりのドル）
-     * 2024年12月時点の料金
+     * 各社の料金ページによる（新しいモデルは 2026-10-02 時点）
      */
     private static function get_pricing(): array {
         return [
-            // OpenAI Models
+            // OpenAI Models (USD per 1M tokens, OpenAI's pricing page, 2026-10-02).
+            'gpt-6-astra' => [
+                'input'  => 10.00,
+                'output' => 50.00,
+            ],
+            'gpt-6.1-sol' => [
+                'input'  => 2.00,
+                'output' => 10.00,
+            ],
+            'gpt-6-luna' => [
+                'input'  => 0.10,
+                'output' => 0.50,
+            ],
+            'gpt-6-sol' => [
+                'input'  => 2.00,
+                'output' => 10.00,
+            ],
+            'gpt-5.6-sol' => [
+                'input'  => 4.00,
+                'output' => 20.00,
+            ],
+            'gpt-5.6-terra' => [
+                'input'  => 2.00,
+                'output' => 12.00,
+            ],
+            'gpt-5.6-luna' => [
+                'input'  => 0.20,
+                'output' => 1.20,
+            ],
+            'gpt-5.5' => [
+                'input'  => 5.00,
+                'output' => 30.00,
+            ],
+            'gpt-5.4' => [
+                'input'  => 2.50,
+                'output' => 15.00,
+            ],
+            'gpt-5.4-mini' => [
+                'input'  => 0.75,
+                'output' => 4.50,
+            ],
+            'gpt-5.2' => [
+                'input'  => 1.75,
+                'output' => 14.00,
+            ],
+            'gpt-5.2-pro' => [
+                'input'  => 21.00,
+                'output' => 168.00,
+            ],
+            'gpt-5.1' => [
+                'input'  => 1.25,
+                'output' => 10.00,
+            ],
+            'gpt-5' => [
+                'input'  => 1.25,
+                'output' => 10.00,
+            ],
+            'gpt-5-mini' => [
+                'input'  => 0.25,
+                'output' => 2.00,
+            ],
+            'gpt-5-nano' => [
+                'input'  => 0.05,
+                'output' => 0.40,
+            ],
+            'gpt-5-pro' => [
+                'input'  => 15.00,
+                'output' => 120.00,
+            ],
+            'gpt-4.1' => [
+                'input'  => 2.00,
+                'output' => 8.00,
+            ],
+            'gpt-4.1-mini' => [
+                'input'  => 0.40,
+                'output' => 1.60,
+            ],
+            'gpt-4.1-nano' => [
+                'input'  => 0.10,
+                'output' => 0.40,
+            ],
+            'o3' => [
+                'input'  => 2.00,
+                'output' => 8.00,
+            ],
+            'o4-mini' => [
+                'input'  => 1.10,
+                'output' => 4.40,
+            ],
             'gpt-4o' => [
                 'input'  => 2.50,
                 'output' => 10.00,
@@ -74,6 +162,39 @@ class RAPLSAICH_Cost_Calculator {
             // A model missing here falls back to $3 / $15 below, which made Haiku 4.5
             // - the default model - read three times its real cost, so Pro's budget
             // limit was reached three times too early.
+            // Current models (2026-10-02).
+            'claude-fable-5-1' => [
+                'input'  => 10.00,
+                'output' => 50.00,
+            ],
+            'claude-opus-5-5' => [
+                'input'  => 4.00,
+                'output' => 20.00,
+            ],
+            'claude-sonnet-5-5' => [
+                'input'  => 2.00,
+                'output' => 10.00,
+            ],
+            'claude-fable-5' => [
+                'input'  => 10.00,
+                'output' => 50.00,
+            ],
+            'claude-opus-5' => [
+                'input'  => 5.00,
+                'output' => 25.00,
+            ],
+            'claude-sonnet-5' => [
+                'input'  => 2.00,
+                'output' => 10.00,
+            ],
+            'claude-opus-4-8' => [
+                'input'  => 5.00,
+                'output' => 25.00,
+            ],
+            'claude-opus-4-7' => [
+                'input'  => 5.00,
+                'output' => 25.00,
+            ],
             'claude-opus-4-6' => [
                 'input'  => 5.00,
                 'output' => 25.00,
@@ -128,7 +249,52 @@ class RAPLSAICH_Cost_Calculator {
                 'output' => 1.25,
             ],
 
-            // Gemini Models (Free tier available, but paid tier pricing)
+            // Gemini Models (paid-tier price; the free tier costs nothing). Gemini API
+            // pricing page, 2026-10-02, text prompts up to 200k tokens.
+            'gemini-3.8-flash' => [
+                'input'  => 0.75,
+                'output' => 3.75,
+            ],
+            'gemini-3.7-flash' => [
+                'input'  => 0.75,
+                'output' => 3.75,
+            ],
+            'gemini-3.6-flash' => [
+                'input'  => 0.75,
+                'output' => 3.75,
+            ],
+            'gemini-3.5-flash-lite' => [
+                'input'  => 0.30,
+                'output' => 2.50,
+            ],
+            'gemini-3.5-flash' => [
+                'input'  => 1.50,
+                'output' => 9.00,
+            ],
+            'gemini-3.1-flash-lite' => [
+                'input'  => 0.25,
+                'output' => 1.50,
+            ],
+            'gemini-3.1-pro-preview' => [
+                'input'  => 2.00,
+                'output' => 12.00,
+            ],
+            'gemini-3-flash-preview' => [
+                'input'  => 0.50,
+                'output' => 3.00,
+            ],
+            'gemini-2.5-pro' => [
+                'input'  => 1.25,
+                'output' => 10.00,
+            ],
+            'gemini-2.5-flash-lite' => [
+                'input'  => 0.10,
+                'output' => 0.40,
+            ],
+            'gemini-2.5-flash' => [
+                'input'  => 0.30,
+                'output' => 2.50,
+            ],
             'gemini-2.0-flash-exp' => [
                 'input'  => 0.00,  // Free during experimental
                 'output' => 0.00,
@@ -201,9 +367,22 @@ class RAPLSAICH_Cost_Calculator {
             return $model;
         }
 
-        // 部分一致（プレフィックスマッチ）
+        // A dated or suffixed ID (gpt-5.2-2025-12-11) belongs to the longest
+        // listed model it starts with. Taking the first match instead priced
+        // gpt-4.1 as gpt-4 ($30 / $60) and gpt-5.2-pro snapshots as gpt-5.2.
+        $best = null;
         foreach (array_keys($pricing) as $key) {
-            if (strpos($model, $key) === 0 || strpos($key, $model) === 0) {
+            if (strpos($model, $key) === 0 && ($best === null || strlen($key) > strlen($best))) {
+                $best = $key;
+            }
+        }
+        if ($best !== null) {
+            return $best;
+        }
+
+        // An alias without a date (claude-haiku-4-5) matches its dated entry.
+        foreach (array_keys($pricing) as $key) {
+            if (strpos($key, $model) === 0) {
                 return $key;
             }
         }

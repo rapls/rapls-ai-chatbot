@@ -48,7 +48,7 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
      * Models using max_completion_tokens instead of max_tokens.
      * All models from GPT-4.1 onwards and reasoning models use this parameter.
      */
-    private array $new_api_models = ['gpt-5', 'gpt-4.1', 'o1', 'o3', 'o4'];
+    private array $new_api_models = ['gpt-5', 'gpt-6', 'gpt-4.1', 'o1', 'o3', 'o4'];
 
     /**
      * Set API Key
@@ -59,9 +59,85 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * Set Model
+     *
+     * A model OpenAI has shut down is swapped for its replacement here, the
+     * one place every OpenAI request passes through. The saved setting is left
+     * as it is; the settings screen and an admin notice say which model is
+     * actually answering.
      */
     public function set_model(string $model): void {
-        $this->model = $model;
+        $resolved = self::resolve_model($model);
+        if ($resolved !== $model) {
+            raplsaich_rate_limited_log(
+                'openai_retired_model_' . md5($model),
+                sprintf('RAPLSAICH OpenAI: model %s has been shut down by OpenAI; sending %s instead.', $model, $resolved)
+            );
+        }
+        $this->model = $resolved;
+    }
+
+    /**
+     * OpenAI models that are shut down or scheduled to be, with the model to
+     * send instead and the shutdown date. Source: OpenAI's deprecations page;
+     * replacements are the ones it recommends. A row whose date is still ahead
+     * is ignored until that day (see raplsaich_retirement_in_effect()).
+     *
+     * @return array<string, array{to: string, retired: string}>
+     */
+    public static function retired_models(): array {
+        return [
+            'o3-mini'      => ['to' => 'gpt-5.6-terra', 'retired' => '2026-10-01'],
+            'gpt-4.1-nano' => ['to' => 'gpt-5.6-luna', 'retired' => '2026-10-23'],
+            'o4-mini'      => ['to' => 'gpt-5.6-terra', 'retired' => '2026-10-23'],
+            'gpt-5'        => ['to' => 'gpt-5.6-sol', 'retired' => '2026-12-11'],
+            'gpt-5-mini'   => ['to' => 'gpt-5.6-terra', 'retired' => '2026-12-11'],
+            'gpt-5-nano'   => ['to' => 'gpt-5.6-luna', 'retired' => '2026-12-11'],
+            'gpt-5-pro'    => ['to' => 'gpt-5.6-sol', 'retired' => '2026-12-11'],
+            'o3'           => ['to' => 'gpt-5.6-sol', 'retired' => '2026-12-11'],
+            'o3-pro'       => ['to' => 'gpt-5.6-sol', 'retired' => '2026-12-11'],
+            'gpt-5.1'      => ['to' => 'gpt-5.6-sol', 'retired' => '2027-04-01'],
+            'o1'           => ['to' => 'gpt-5.6-sol', 'retired' => ''],
+            'o1-mini'      => ['to' => 'gpt-5.6-terra', 'retired' => ''],
+            'o1-preview'   => ['to' => 'gpt-5.6-sol', 'retired' => ''],
+        ];
+    }
+
+    /**
+     * Shutdown details for a model, or null if it is still served.
+     *
+     * @return array{to: string, retired: string}|null
+     */
+    public static function retirement(string $model): ?array {
+        /**
+         * Filter the shut-down OpenAI models and their replacements.
+         *
+         * @param array $retired Model ID => ['to' => replacement ID, 'retired' => 'Y-m-d'].
+         */
+        $retired = (array) apply_filters('raplsaich_openai_retired_models', self::retired_models());
+        if (isset($retired[$model]['to']) && raplsaich_retirement_in_effect((string) ($retired[$model]['retired'] ?? ''))) {
+            return $retired[$model];
+        }
+        return null;
+    }
+
+    /**
+     * Details of an announced retirement that has not happened yet, or null.
+     * The model still answers until the date; the admin is warned meanwhile.
+     *
+     * @return array{to: string, retired: string}|null
+     */
+    public static function scheduled_retirement(string $model): ?array {
+        /** This filter is documented in retirement(). */
+        $retired = (array) apply_filters('raplsaich_openai_retired_models', self::retired_models());
+        return raplsaich_scheduled_retirement($retired, $model);
+    }
+
+    /**
+     * The model to actually send: the replacement if $model is shut down.
+     */
+    public static function resolve_model(string $model): string {
+        $info = self::retirement($model);
+        return $info ? $info['to'] : $model;
     }
 
     /**
@@ -90,11 +166,12 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
     }
 
     /**
-     * Check if GPT-5 series model
-     * (temperature not supported)
+     * Check if GPT-5 or later (GPT-6, ...)
+     * (reasoning by default: temperature not supported, and reasoning tokens
+     * share the output budget)
      */
     private function is_gpt5_model(): bool {
-        return strpos($this->model, 'gpt-5') === 0;
+        return (bool) preg_match('/^gpt-(?:[5-9]|\d{2,})(?:[.\-]|$)/', $this->model);
     }
 
     /**
@@ -812,24 +889,22 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
      */
     public function get_available_models(): array {
         return [
-            // Versioned GPT — highest version first, base > -mini > -nano > others
-            'gpt-5.2'       => 'GPT-5.2 (' . __('Most powerful', 'rapls-ai-chatbot') . ')',
+            // Current generation
+            'gpt-6-astra'   => 'GPT-6 Astra (' . __('Most powerful', 'rapls-ai-chatbot') . ')',
+            'gpt-6.1-sol'   => 'GPT-6.1 Sol (' . __('★ Recommended — fast and powerful', 'rapls-ai-chatbot') . ')',
+            'gpt-6-luna'    => 'GPT-6 Luna (' . __('★ Recommended — affordable', 'rapls-ai-chatbot') . ')',
+            // Previous generation (still served by OpenAI)
+            'gpt-5.6-sol'   => 'GPT-5.6 Sol',
+            'gpt-5.6-terra' => 'GPT-5.6 Terra',
+            'gpt-5.6-luna'  => 'GPT-5.6 Luna',
+            'gpt-5.2'       => 'GPT-5.2',
             'gpt-5.2-pro'   => 'GPT-5.2 Pro (' . __('Complex problem solving', 'rapls-ai-chatbot') . ')',
-            'gpt-5.1'       => 'GPT-5.1 (' . __('Powerful and stable', 'rapls-ai-chatbot') . ')',
-            'gpt-5'         => 'GPT-5 (' . __('Coding and analysis', 'rapls-ai-chatbot') . ')',
-            'gpt-5-mini'    => 'GPT-5 mini (' . __('Fast and affordable', 'rapls-ai-chatbot') . ')',
-            'gpt-5-nano'    => 'GPT-5 nano (' . __('Fastest and cheapest', 'rapls-ai-chatbot') . ')',
-            'gpt-5-pro'     => 'GPT-5 Pro (' . __('Deep analysis', 'rapls-ai-chatbot') . ')',
             'gpt-4.1'       => 'GPT-4.1 (' . __('Long context (1M tokens)', 'rapls-ai-chatbot') . ')',
             'gpt-4.1-mini'  => 'GPT-4.1 mini (' . __('Fast, long context', 'rapls-ai-chatbot') . ')',
-            'gpt-4.1-nano'  => 'GPT-4.1 nano (' . __('Fastest, long context', 'rapls-ai-chatbot') . ')',
-            // Non-versioned GPT (gpt-4o — "4o" not purely numeric)
-            'gpt-4o'        => 'GPT-4o (' . __('★ Recommended — multimodal', 'rapls-ai-chatbot') . ')',
-            'gpt-4o-mini'   => 'GPT-4o mini (' . __('★ Recommended — affordable', 'rapls-ai-chatbot') . ')',
-            // Reasoning models (non-GPT prefix)
-            'o3'            => 'o3 (' . __('Advanced reasoning', 'rapls-ai-chatbot') . ')',
-            'o3-mini'       => 'o3 mini (' . __('Reasoning, affordable', 'rapls-ai-chatbot') . ')',
-            'o4-mini'       => 'o4 mini (' . __('Compact reasoning, fast', 'rapls-ai-chatbot') . ')',
+            'gpt-4o'        => 'GPT-4o',
+            'gpt-4o-mini'   => 'GPT-4o mini (' . __('Fast and affordable', 'rapls-ai-chatbot') . ')',
+            // GPT-5 / 5.1 / 4.1 nano and o3 / o4-mini are shut down or scheduled
+            // to be; set_model() sends their replacements from the shutdown date.
         ];
     }
 
@@ -837,20 +912,7 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
      * Get vision-capable models
      */
     public function get_vision_models(): array {
-        return [
-            'gpt-5.2',
-            'gpt-5.2-pro',
-            'gpt-5.1',
-            'gpt-5',
-            'gpt-5-mini',
-            'gpt-5-nano',
-            'gpt-5-pro',
-            'gpt-4.1',
-            'gpt-4.1-mini',
-            'gpt-4.1-nano',
-            'gpt-4o',
-            'gpt-4o-mini',
-        ];
+        return array_keys($this->get_available_models());
     }
 
     /**
@@ -861,10 +923,10 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
         if (in_array($model_id, $this->get_vision_models(), true)) {
             return true;
         }
-        // GPT-4o, GPT-4.1, GPT-5 series are vision-capable
+        // GPT-4o, GPT-4.1, GPT-5 and later are vision-capable
         if (strpos($model_id, 'gpt-4o') === 0 ||
             strpos($model_id, 'gpt-4.1') === 0 ||
-            strpos($model_id, 'gpt-5') === 0) {
+            preg_match('/^gpt-(?:[5-9]|\d{2,})(?:[.\-]|$)/', $model_id)) {
             return true;
         }
         // GPT-4-turbo is vision-capable
@@ -915,7 +977,7 @@ class RAPLSAICH_OpenAI_Provider implements RAPLSAICH_AI_Provider_Interface {
 
         // Exclude non-text-generation model prefixes/substrings
         $exclude_prefixes = ['dall-e-', 'gpt-image-', 'tts-', 'text-embedding-', 'whisper-', 'babbage-', 'davinci-'];
-        $exclude_contains = ['ft:', '-instruct', '-realtime'];
+        $exclude_contains = ['ft:', '-instruct', '-realtime', '-transcribe', 'gpt-live', '-cyber'];
 
         $models = [];
         foreach ($data['data'] as $model) {

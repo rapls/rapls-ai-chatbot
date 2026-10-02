@@ -2110,7 +2110,9 @@ class RAPLSAICH_REST_Controller {
         $map = [
             'openai' => 'gpt-4o-mini',
             'claude' => 'claude-haiku-4-5-20251001',
-            'gemini' => 'gemini-2.5-flash-lite',
+            // Not 3.5 Flash Lite (the default model), so a quota hit on the
+            // default still has somewhere to go.
+            'gemini' => 'gemini-3.1-flash-lite',
         ];
         if (!isset($map[$provider])) {
             return null;

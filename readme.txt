@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.20.5
+Stable tag: 1.21.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,18 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.0 =
+* Fixed: Gemini 2.0 Flash, the default Gemini model, was shut down by Google on June 1, 2026, and Gemini 2.0 Flash-Lite and Gemini 3 Pro Preview have been shut down as well. A site still set to one of them now sends its chats to Google's replacement (Gemini 3.6 Flash, Gemini 3.1 Flash-Lite and Gemini 3.1 Pro Preview), and wp-admin says so until a model is chosen again. New installs use Gemini 3.5 Flash-Lite. The saved setting is not changed for you.
+* Fixed: OpenAI shut down o3-mini on October 1, 2026, and shuts down GPT-4.1 nano and o4-mini on October 23 and GPT-5, GPT-5 mini, GPT-5 nano, GPT-5 Pro and o3 on December 11. From each date, a site still set to one of these models sends its chats to OpenAI's replacement (GPT-5.6 Sol, Terra or Luna). Claude Sonnet 4.5, which Anthropic retires on November 30, 2026, moves to Claude Sonnet 5.5 the same way.
+* Added: a warning, on the settings screen and on the plugin's own admin screens, when the selected model has an announced retirement date. It says when, and which model will answer afterwards.
+* Added: GPT-6 Astra, GPT-6.1 Sol, GPT-6 Luna and GPT-5.6 Sol, Terra and Luna; Claude Sonnet 5.5 (now the recommended Sonnet) and Claude Opus 5.5; Gemini 3.8 Flash (now recommended), 3.7 Flash, 3.6 Flash, 3.5 Flash, 3.5 Flash-Lite and 3.1 Flash-Lite. Models that are shut down or scheduled to be are removed from the lists; a site still using one keeps it selected, and a save no longer switches it to the first model in the list.
+* Changed: retired Claude Sonnet and Opus models now go to Claude Sonnet 5.5 and Claude Opus 5.5 instead of the 4.6 models.
+* Changed: GPT-6 and Gemini 3 models are sent without temperature (GPT-6 rejects it, and Google advises against lowering it on Gemini 3) and get more room for thinking, so replies are not cut off. Claude models that think by default, such as Sonnet 5.5 and Opus 5.5, are asked for low effort.
+* Fixed: with web search on and nothing found in the site's content, Claude Opus 5.5 and Claude Fable 5.1 returned an error, because the plugin forced the search tool, which those models do not accept. They are now told to search in the prompt instead.
+* Fixed: the OpenAI-compatible list offered deepseek-chat, which DeepSeek discontinued on July 24, 2026, and glm-4-plus, which no longer answers; the OpenRouter list offered deepseek/deepseek-chat-v3, which does not exist. They are replaced by deepseek-flash, glm-5.3, qwen3.8-max and deepseek/deepseek-chat, and the OpenRouter Claude entry is now Claude Sonnet 4.6. The model field's help text no longer names DeepSeek or GLM models, which change too often.
+* Fixed: usage costs. GPT-4.1 models were counted at the GPT-4 price, up to 150 times too high, which could stop the chat early under Pro's monthly budget limit, and most current OpenAI, Claude and Gemini models had no price, so GPT-5.2 Pro, for example, was counted at about 1/280 of its cost. Prices now follow each provider's pricing page.
+* Changed: Model Fallback uses Gemini 3.1 Flash-Lite, and the free-tier setup picks a Gemini 3 Flash-Lite model, because Google now serves Gemini 2.5 only to projects that already used it.
+
 = 1.20.5 =
 * Fixed: Claude Sonnet 4 and Claude Opus 4.1 were retired by Anthropic (June 15 and August 5, 2026) and stopped answering. Visitors saw "The AI model is currently unavailable. Please contact the site administrator.", and nothing in wp-admin said why. A site still set to a retired Claude model now sends its chats to the successor (Sonnet 4 to Sonnet 4.6, Opus 4 and 4.1 to Opus 4.6, Claude 3 Haiku models to Haiku 4.5), and wp-admin shows a notice until a model is chosen again. The saved setting is not changed for you. The same applies to a model typed in for a Pro bot.
 * Added: Claude Sonnet 4.6, now the recommended Sonnet model. Claude Sonnet 4 and Claude Opus 4.1 are removed from the model list.
@@ -455,6 +467,9 @@ You can disable these features in the plugin settings:
 * Initial release
 
 == Upgrade Notice ==
+
+= 1.21.0 =
+Gemini 2.0 Flash, the former default, was shut down by Google; sites still using it resume on Gemini 3.6 Flash. Adds GPT-6, Claude Sonnet 5.5 and Opus 5.5 and Gemini 3.x, and warns before a selected model is retired.
 
 = 1.20.5 =
 If your site uses Claude Sonnet 4 or Claude Opus 4.1, which Anthropic has retired, chats resume on their successors after this update. Also corrects Claude usage costs, which were overcounted for Haiku 4.5.

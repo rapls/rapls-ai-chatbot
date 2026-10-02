@@ -313,7 +313,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                      existing keys when blank values are submitted. -->
                 <input type="hidden" name="raplsaich_settings[openai_model]" value="<?php echo esc_attr($settings['openai_model'] ?? 'gpt-4o-mini'); ?>">
                 <input type="hidden" name="raplsaich_settings[claude_model]" value="<?php echo esc_attr($settings['claude_model'] ?? 'claude-haiku-4-5-20251001'); ?>">
-                <input type="hidden" name="raplsaich_settings[gemini_model]" value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-2.0-flash'); ?>">
+                <input type="hidden" name="raplsaich_settings[gemini_model]" value="<?php echo esc_attr($settings['gemini_model'] ?? 'gemini-3.5-flash-lite'); ?>">
                 <input type="hidden" name="raplsaich_settings[openrouter_model]" value="<?php echo esc_attr($settings['openrouter_model'] ?? 'openrouter/auto'); ?>">
                 <input type="hidden" name="raplsaich_settings[bot_name]" value="<?php echo esc_attr($settings['bot_name'] ?? 'Assistant'); ?>">
                 <input type="hidden" name="raplsaich_settings[bot_avatar]" value="<?php echo esc_attr($settings['bot_avatar'] ?? '🤖'); ?>">

@@ -17,7 +17,7 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
     /**
      * @var string Model name
      */
-    private string $model = 'gemini-2.0-flash';
+    private string $model = 'gemini-3.5-flash-lite';
 
     /**
      * @var string API URL
@@ -33,9 +33,97 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
 
     /**
      * Set Model
+     *
+     * A model Google has shut down is swapped for its replacement here, the
+     * one place every Gemini request passes through. The saved setting is left
+     * as it is; the settings screen and an admin notice say which model is
+     * actually answering.
      */
     public function set_model(string $model): void {
-        $this->model = $model;
+        $resolved = self::resolve_model($model);
+        if ($resolved !== $model) {
+            raplsaich_rate_limited_log(
+                'gemini_retired_model_' . md5($model),
+                sprintf('RAPLSAICH Gemini: model %s has been shut down by Google; sending %s instead.', $model, $resolved)
+            );
+        }
+        $this->model = $resolved;
+    }
+
+    /**
+     * Gemini models that are shut down or scheduled to be, with the model to
+     * send instead and the shutdown date. Source: the Gemini API deprecations
+     * page; replacements are the ones it recommends. A row whose date is still
+     * ahead is ignored until that day (see raplsaich_retirement_in_effect()).
+     *
+     * @return array<string, array{to: string, retired: string}>
+     */
+    public static function retired_models(): array {
+        return [
+            'gemini-2.0-flash'              => ['to' => 'gemini-3.6-flash', 'retired' => '2026-06-01'],
+            'gemini-2.0-flash-001'          => ['to' => 'gemini-3.6-flash', 'retired' => '2026-06-01'],
+            'gemini-2.0-flash-lite'         => ['to' => 'gemini-3.1-flash-lite', 'retired' => '2026-06-01'],
+            'gemini-2.0-flash-lite-001'     => ['to' => 'gemini-3.1-flash-lite', 'retired' => '2026-06-01'],
+            'gemini-3-pro-preview'          => ['to' => 'gemini-3.1-pro-preview', 'retired' => '2026-03-09'],
+            'gemini-3.1-flash-lite-preview' => ['to' => 'gemini-3.1-flash-lite', 'retired' => '2026-05-25'],
+        ];
+    }
+
+    /**
+     * Shutdown details for a model, or null if it is still served.
+     *
+     * Every Gemini 1.x and 2.0 model is shut down, so an ID not in the table
+     * but from those generations (a typed per-bot model, a dated variant)
+     * still gets a replacement rather than failing.
+     *
+     * @return array{to: string, retired: string}|null
+     */
+    public static function retirement(string $model): ?array {
+        /**
+         * Filter the shut-down Gemini models and their replacements.
+         *
+         * @param array $retired Model ID => ['to' => replacement ID, 'retired' => 'Y-m-d'].
+         */
+        $retired = (array) apply_filters('raplsaich_gemini_retired_models', self::retired_models());
+        if (isset($retired[$model]['to'])) {
+            return raplsaich_retirement_in_effect((string) ($retired[$model]['retired'] ?? '')) ? $retired[$model] : null;
+        }
+        if (preg_match('/^gemini-(?:1\.|2\.0-)/', $model)) {
+            return [
+                'to'      => strpos($model, '-lite') !== false ? 'gemini-3.1-flash-lite' : 'gemini-3.6-flash',
+                'retired' => '',
+            ];
+        }
+        return null;
+    }
+
+    /**
+     * Details of an announced retirement that has not happened yet, or null.
+     * The model still answers until the date; the admin is warned meanwhile.
+     *
+     * @return array{to: string, retired: string}|null
+     */
+    public static function scheduled_retirement(string $model): ?array {
+        /** This filter is documented in retirement(). */
+        $retired = (array) apply_filters('raplsaich_gemini_retired_models', self::retired_models());
+        return raplsaich_scheduled_retirement($retired, $model);
+    }
+
+    /**
+     * The model to actually send: the replacement if $model is shut down.
+     */
+    public static function resolve_model(string $model): string {
+        $info = self::retirement($model);
+        return $info ? $info['to'] : $model;
+    }
+
+    /**
+     * Gemini 3 and later think by default, and thought tokens count toward
+     * maxOutputTokens; Google also advises leaving temperature at its default
+     * on them (below 1.0 can cause looping).
+     */
+    private function is_thinking_generation(): bool {
+        return (bool) preg_match('/^gemini-(?:[3-9]|\d{2,})(?:[.\-]|$)/', $this->model);
     }
 
     /**
@@ -107,12 +195,21 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
             }
         }
 
+        $max_tokens = (int) ($options['max_tokens'] ?? 1000);
+        $generation_config = [
+            'maxOutputTokens' => $max_tokens,
+            'temperature'     => (float) ($options['temperature'] ?? 0.7),
+        ];
+        if ($this->is_thinking_generation()) {
+            // Leave room for thinking so the reply is not cut off (same
+            // multiplier as GPT-5), and keep Google's default temperature.
+            $generation_config['maxOutputTokens'] = RAPLSAICH_OpenAI_Provider::get_gpt5_effective_tokens($max_tokens)['tokens'];
+            unset($generation_config['temperature']);
+        }
+
         $body = [
             'contents' => $contents,
-            'generationConfig' => [
-                'maxOutputTokens' => $options['max_tokens'] ?? 1000,
-                'temperature'     => (float) ($options['temperature'] ?? 0.7),
-            ],
+            'generationConfig' => $generation_config,
         ];
 
         // Add system prompt as system_instruction if exists
@@ -308,16 +405,22 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
      */
     public function get_available_models(): array {
         return [
-            // Gemini 3 series (latest)
-            'gemini-3-pro-preview'    => 'Gemini 3 Pro (' . __('Preview, most capable', 'rapls-ai-chatbot') . ')',
+            // Gemini 3 series (current)
+            'gemini-3.8-flash'        => 'Gemini 3.8 Flash (' . __('★ Recommended — fast and smart', 'rapls-ai-chatbot') . ')',
+            'gemini-3.5-flash-lite'   => 'Gemini 3.5 Flash Lite (' . __('Fastest, cheapest', 'rapls-ai-chatbot') . ')',
+            'gemini-3.1-pro-preview'  => 'Gemini 3.1 Pro (' . __('Preview, most capable', 'rapls-ai-chatbot') . ')',
+            'gemini-3.7-flash'        => 'Gemini 3.7 Flash',
+            'gemini-3.6-flash'        => 'Gemini 3.6 Flash',
+            'gemini-3.5-flash'        => 'Gemini 3.5 Flash',
+            'gemini-3.1-flash-lite'   => 'Gemini 3.1 Flash Lite (' . __('Stable, cheapest', 'rapls-ai-chatbot') . ')',
             'gemini-3-flash-preview'  => 'Gemini 3 Flash (' . __('Preview, fast', 'rapls-ai-chatbot') . ')',
-            // Gemini 2.5 series
-            'gemini-2.5-pro'          => 'Gemini 2.5 Pro (' . __('Powerful, reasoning', 'rapls-ai-chatbot') . ')',
-            'gemini-2.5-flash'        => 'Gemini 2.5 Flash (' . __('★ Recommended — fast and smart', 'rapls-ai-chatbot') . ')',
-            'gemini-2.5-flash-lite'   => 'Gemini 2.5 Flash Lite (' . __('Fastest, cheapest', 'rapls-ai-chatbot') . ')',
-            // Gemini 2.0 series
-            'gemini-2.0-flash'        => 'Gemini 2.0 Flash (' . __('Stable', 'rapls-ai-chatbot') . ')',
-            'gemini-2.0-flash-lite'   => 'Gemini 2.0 Flash Lite (' . __('Stable, cheapest', 'rapls-ai-chatbot') . ')',
+            // Gemini 2.5 series (Google serves these only to projects that
+            // already used them)
+            'gemini-2.5-pro'          => 'Gemini 2.5 Pro',
+            'gemini-2.5-flash'        => 'Gemini 2.5 Flash',
+            'gemini-2.5-flash-lite'   => 'Gemini 2.5 Flash Lite',
+            // Gemini 2.0 and 3 Pro Preview are shut down; set_model() sends
+            // their replacements instead.
         ];
     }
 
@@ -325,23 +428,14 @@ class RAPLSAICH_Gemini_Provider implements RAPLSAICH_AI_Provider_Interface {
      * Get vision-capable models (all Gemini models support vision)
      */
     public function get_vision_models(): array {
-        return [
-            'gemini-3-pro-preview',
-            'gemini-3-flash-preview',
-            'gemini-2.5-pro',
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.0-flash-lite',
-        ];
+        return array_keys($this->get_available_models());
     }
 
     /**
      * Check if current model supports vision
      */
     public function supports_vision(): bool {
-        return strpos($this->model, 'gemini-2') !== false ||
-               strpos($this->model, 'gemini-3') !== false;
+        return (bool) preg_match('/^gemini-(?:[2-9]|\d{2,})(?:[.\-]|$)/', $this->model);
     }
 
     /**

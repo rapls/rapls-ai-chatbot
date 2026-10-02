@@ -437,7 +437,7 @@ class RAPLSAICH_Admin {
 
         $sanitized['openai_model'] = sanitize_text_field($input['openai_model'] ?? ($existing['openai_model'] ?? 'gpt-4o-mini'));
         $sanitized['claude_model'] = sanitize_text_field($input['claude_model'] ?? ($existing['claude_model'] ?? 'claude-haiku-4-5-20251001'));
-        $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-2.0-flash'));
+        $sanitized['gemini_model'] = sanitize_text_field($input['gemini_model'] ?? ($existing['gemini_model'] ?? 'gemini-3.5-flash-lite'));
         $sanitized['openrouter_model'] = sanitize_text_field($input['openrouter_model'] ?? ($existing['openrouter_model'] ?? 'openrouter/auto'));
         $sanitized['wpai_model']       = sanitize_text_field($input['wpai_model'] ?? ($existing['wpai_model'] ?? ''));
 
@@ -2717,8 +2717,10 @@ class RAPLSAICH_Admin {
 
     /**
      * Pick a free-tier Gemini chat model id from a /v1beta/models "models" array.
-     * Prefers gemini-2.5-flash, then flash-lite, then 2.0 flash; falls back to the
-     * preferred default id if the payload cannot be matched.
+     * Prefers the Gemini 3 Flash-Lite models (free tier, light thinking), then
+     * 3.8 Flash, then the 2.5 models (served only to projects that already
+     * used them); falls back to the preferred default id if the payload cannot
+     * be matched.
      */
     private function pick_free_gemini_model(array $models): string {
         $available = [];
@@ -2735,10 +2737,11 @@ class RAPLSAICH_Admin {
         }
 
         $preferred = apply_filters('raplsaich_gemini_free_preferred', [
+            'gemini-3.5-flash-lite',
+            'gemini-3.1-flash-lite',
+            'gemini-3.8-flash',
             'gemini-2.5-flash',
             'gemini-2.5-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.0-flash-lite',
         ]);
 
         foreach ($preferred as $candidate) {
@@ -2747,7 +2750,7 @@ class RAPLSAICH_Admin {
             }
         }
 
-        return 'gemini-2.5-flash';
+        return 'gemini-3.5-flash-lite';
     }
 
     /**
@@ -2961,28 +2964,161 @@ class RAPLSAICH_Admin {
     }
 
     /**
-     * Admin notice when the selected Claude model has been retired.
+     * The sentence shown when the saved OpenAI or Gemini model has been shut
+     * down. Claude keeps its own wording (retired_claude_model_message()).
+     *
+     * @param string $provider 'openai' or 'gemini'.
+     * @param string $saved    Saved model ID.
+     * @param array  $info     The provider's retirement() result.
+     */
+    public static function retired_model_message(string $provider, string $saved, array $info): string {
+        if ($provider === 'claude') {
+            return self::retired_claude_model_message($saved, $info);
+        }
+        $provider_object = $provider === 'gemini' ? new RAPLSAICH_Gemini_Provider() : new RAPLSAICH_OpenAI_Provider();
+        $provider_label  = $provider === 'gemini' ? 'Gemini' : 'OpenAI';
+        $models          = $provider_object->get_available_models();
+        // "GPT-6 Luna (★ Recommended — …)" → "GPT-6 Luna"
+        $new_name = isset($models[$info['to']])
+            ? trim(preg_replace('/\s*\(.*$/u', '', $models[$info['to']]))
+            : $info['to'];
+
+        if (!empty($info['retired'])) {
+            return sprintf(
+                /* translators: 1: provider name (OpenAI or Gemini), 2: shut-down model ID, 3: shutdown date, 4: model now used */
+                __('The %1$s model "%2$s" was shut down on %3$s, so chats are being sent to %4$s instead. Choose a model from the list and save to confirm.', 'rapls-ai-chatbot'),
+                $provider_label,
+                $saved,
+                wp_date(get_option('date_format'), strtotime($info['retired'] . ' 12:00:00 UTC')),
+                $new_name
+            );
+        }
+        return sprintf(
+            /* translators: 1: provider name (OpenAI or Gemini), 2: shut-down model ID, 3: model now used */
+            __('The %1$s model "%2$s" has been shut down, so chats are being sent to %3$s instead. Choose a model from the list and save to confirm.', 'rapls-ai-chatbot'),
+            $provider_label,
+            $saved,
+            $new_name
+        );
+    }
+
+    /**
+     * The warning shown while the saved model still answers but its
+     * retirement has been announced.
+     *
+     * @param string $provider 'claude', 'openai' or 'gemini'.
+     * @param string $saved    Saved model ID.
+     * @param array  $info     The provider's scheduled_retirement() result.
+     */
+    public static function scheduled_retirement_message(string $provider, string $saved, array $info): string {
+        switch ($provider) {
+            case 'claude':
+                $provider_object = new RAPLSAICH_Claude_Provider();
+                $provider_label  = 'Claude';
+                break;
+            case 'gemini':
+                $provider_object = new RAPLSAICH_Gemini_Provider();
+                $provider_label  = 'Gemini';
+                break;
+            default:
+                $provider_object = new RAPLSAICH_OpenAI_Provider();
+                $provider_label  = 'OpenAI';
+        }
+        $models   = $provider_object->get_available_models();
+        $new_name = isset($models[$info['to']])
+            ? trim(preg_replace('/\s*\(.*$/u', '', $models[$info['to']]))
+            : $info['to'];
+
+        return sprintf(
+            /* translators: 1: provider name (Claude, OpenAI or Gemini), 2: model ID, 3: retirement date, 4: model that will be used afterwards */
+            __('The %1$s model "%2$s" is scheduled to be retired on %3$s. From then on, chats will be sent to %4$s. To choose the model yourself, select a current model from the list and save.', 'rapls-ai-chatbot'),
+            $provider_label,
+            $saved,
+            wp_date(get_option('date_format'), strtotime($info['retired'] . ' 12:00:00 UTC')),
+            $new_name
+        );
+    }
+
+    /**
+     * The saved model's announced-but-future retirement for the active
+     * provider, or null.
+     *
+     * @param string $provider Provider key.
+     * @param string $saved    Saved model ID.
+     */
+    public static function saved_model_scheduled_retirement(string $provider, string $saved): ?array {
+        switch ($provider) {
+            case 'claude':
+                return RAPLSAICH_Claude_Provider::scheduled_retirement($saved);
+            case 'openai':
+                return RAPLSAICH_OpenAI_Provider::scheduled_retirement($saved);
+            case 'gemini':
+                return RAPLSAICH_Gemini_Provider::scheduled_retirement($saved);
+        }
+        return null;
+    }
+
+    /**
+     * The saved model's retirement details for the active provider, or null.
+     *
+     * @param string $provider Provider key.
+     * @param string $saved    Saved model ID.
+     */
+    public static function saved_model_retirement(string $provider, string $saved): ?array {
+        switch ($provider) {
+            case 'claude':
+                return RAPLSAICH_Claude_Provider::retirement($saved);
+            case 'openai':
+                return RAPLSAICH_OpenAI_Provider::retirement($saved);
+            case 'gemini':
+                return RAPLSAICH_Gemini_Provider::retirement($saved);
+        }
+        return null;
+    }
+
+    /**
+     * Admin notice when the selected Claude, OpenAI or Gemini model has been
+     * retired / shut down.
      *
      * Once the model stopped answering, visitors were told the AI model was
      * unavailable and to contact the administrator - who had nothing in
      * wp-admin saying why. Shown on every admin screen until a model
      * is saved again, except the settings page, which says it next to the list.
+     * (The method name predates OpenAI and Gemini; the hook is unchanged.)
+     *
+     * A retirement that is announced but still ahead gets a warning instead,
+     * on this plugin's own screens only: the model still answers, so it is not
+     * worth a notice on every admin screen (guideline 11).
      */
     public function retired_claude_model_notice(): void {
         if (!current_user_can(self::get_manage_cap())) {
             return;
         }
         $settings = get_option('raplsaich_settings', []);
-        if (!is_array($settings) || ($settings['ai_provider'] ?? '') !== 'claude') {
+        $provider = is_array($settings) ? (string) ($settings['ai_provider'] ?? '') : '';
+        if (!in_array($provider, ['claude', 'openai', 'gemini'], true)) {
             return;
         }
-        $saved = (string) ($settings['claude_model'] ?? '');
-        $info  = RAPLSAICH_Claude_Provider::retirement($saved);
-        if (!$info) {
-            return;
-        }
+        $saved = (string) ($settings[$provider . '_model'] ?? '');
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen check
-        if (isset($_GET['page']) && sanitize_key(wp_unslash($_GET['page'])) === 'raplsaich-settings') {
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page === 'raplsaich-settings') {
+            return;
+        }
+        $info = self::saved_model_retirement($provider, $saved);
+        if (!$info) {
+            $scheduled = self::saved_model_scheduled_retirement($provider, $saved);
+            if ($scheduled && strpos($page, 'raplsaich') === 0) {
+                ?>
+                <div class="notice notice-warning">
+                    <p>
+                        <strong><?php esc_html_e('Rapls AI Chatbot:', 'rapls-ai-chatbot'); ?></strong>
+                        <?php echo esc_html(self::scheduled_retirement_message($provider, $saved, $scheduled)); ?>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=raplsaich-settings')); ?>"><?php esc_html_e('Settings', 'rapls-ai-chatbot'); ?></a>
+                    </p>
+                </div>
+                <?php
+            }
             return;
         }
         $settings_url = admin_url('admin.php?page=raplsaich-settings');
@@ -2990,7 +3126,7 @@ class RAPLSAICH_Admin {
         <div class="notice notice-warning">
             <p>
                 <strong><?php esc_html_e('Rapls AI Chatbot:', 'rapls-ai-chatbot'); ?></strong>
-                <?php echo esc_html(self::retired_claude_model_message($saved, $info)); ?>
+                <?php echo esc_html(self::retired_model_message($provider, $saved, $info)); ?>
                 <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Settings', 'rapls-ai-chatbot'); ?></a>
             </p>
         </div>
@@ -4167,7 +4303,7 @@ class RAPLSAICH_Admin {
             'claude_api_key'        => '',
             'claude_model'          => 'claude-haiku-4-5-20251001',
             'gemini_api_key'        => '',
-            'gemini_model'          => 'gemini-2.0-flash',
+            'gemini_model'          => 'gemini-3.5-flash-lite',
             'openrouter_api_key'    => '',
             'openrouter_model'      => 'openrouter/auto',
             'wpai_model'            => '',

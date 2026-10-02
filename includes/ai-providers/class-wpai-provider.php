@@ -52,8 +52,6 @@ class RAPLSAICH_WPAI_Provider implements RAPLSAICH_AI_Provider_Interface {
         return [
             ''                       => __('Auto (Recommended — managed via Settings → Connectors)', 'rapls-ai-chatbot'),
             // OpenAI
-            'gpt-5'                  => 'OpenAI: GPT-5',
-            'gpt-5-mini'             => 'OpenAI: GPT-5 mini',
             'gpt-4.1'                => 'OpenAI: GPT-4.1',
             'gpt-4.1-mini'           => 'OpenAI: GPT-4.1 mini',
             'gpt-4o'                 => 'OpenAI: GPT-4o',
@@ -65,7 +63,6 @@ class RAPLSAICH_WPAI_Provider implements RAPLSAICH_AI_Provider_Interface {
             // Google
             'gemini-2.5-pro'         => 'Google: Gemini 2.5 Pro',
             'gemini-2.5-flash'       => 'Google: Gemini 2.5 Flash',
-            'gemini-2.0-flash'       => 'Google: Gemini 2.0 Flash',
         ];
     }
 

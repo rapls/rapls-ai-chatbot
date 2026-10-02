@@ -163,7 +163,7 @@ function raplsaich_get_max_context_chars(): int {
             return 40000;
 
         case 'gemini':
-            $model = $settings['gemini_model'] ?? 'gemini-2.0-flash';
+            $model = $settings['gemini_model'] ?? 'gemini-3.5-flash-lite';
             if (strpos($model, 'flash-lite') !== false) {
                 return 15000;
             }
@@ -270,6 +270,41 @@ function raplsaich_inject_current_date($system_prompt) {
 }
 
 /**
+ * Whether a model retirement dated $date has taken effect.
+ *
+ * The providers' retired-model tables list a retirement as soon as it is
+ * announced; the model keeps answering until that day, so it is not swapped
+ * for its successor before then. An empty date means "already retired".
+ *
+ * @param string $date Retirement date (Y-m-d), or ''.
+ */
+function raplsaich_retirement_in_effect(string $date): bool {
+    if ($date === '') {
+        return true;
+    }
+    return wp_date('Y-m-d') >= $date;
+}
+
+/**
+ * The row of a retired-model table for a model whose retirement is announced
+ * but still ahead, or null. Used to warn the admin before the switch happens.
+ *
+ * @param array  $table A provider's (filtered) retired-model table.
+ * @param string $model Model ID.
+ * @return array{to: string, retired: string}|null
+ */
+function raplsaich_scheduled_retirement(array $table, string $model): ?array {
+    if (!isset($table[$model]['to'])) {
+        return null;
+    }
+    $date = (string) ($table[$model]['retired'] ?? '');
+    if ($date === '' || raplsaich_retirement_in_effect($date)) {
+        return null;
+    }
+    return $table[$model];
+}
+
+/**
  * Normalize a user-supplied OpenAI-compatible base URL to its root.
  *
  * Users often paste the full endpoint (e.g. .../compatible-mode/v1/embeddings)
@@ -316,7 +351,7 @@ function raplsaich_create_ai_provider(array $settings, ?array $bot_config = null
         case 'gemini':
             $provider = new RAPLSAICH_Gemini_Provider();
             $provider->set_api_key(raplsaich_decrypt_api_key($settings['gemini_api_key'] ?? ''));
-            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['gemini_model'] ?? 'gemini-2.0-flash'));
+            $provider->set_model(!empty($bot_model) ? $bot_model : ($settings['gemini_model'] ?? 'gemini-3.5-flash-lite'));
             break;
 
         case 'openrouter':

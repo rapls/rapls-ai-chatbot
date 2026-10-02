@@ -301,11 +301,11 @@ class RAPLSAICH_OpenRouter_Provider implements RAPLSAICH_AI_Provider_Interface {
     public function get_available_models(): array {
         return [
             'openrouter/auto'              => 'Auto (' . __('Best model auto-selected', 'rapls-ai-chatbot') . ')',
-            'anthropic/claude-sonnet-4'    => 'Claude Sonnet 4',
+            'anthropic/claude-sonnet-4.6'  => 'Claude Sonnet 4.6',
             'openai/gpt-4o'               => 'GPT-4o',
             'google/gemini-2.5-flash'     => 'Gemini 2.5 Flash',
             'meta-llama/llama-4-maverick' => 'Llama 4 Maverick',
-            'deepseek/deepseek-chat-v3'   => 'DeepSeek V3',
+            'deepseek/deepseek-chat'      => 'DeepSeek V3',
         ];
     }
 

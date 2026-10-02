@@ -4198,8 +4198,8 @@ msgstr "最終発生: %1$s (%2$s, HTTP %3$d)"
 #. translators: %s: the Gemini preview model currently selected
 #: templates/admin/dashboard.php
 #, php-format
-msgid "Rate-limit errors occurred in the last 24 hours while using %s. Gemini 3 preview models have strict usage limits — consider switching to a stable model such as Gemini 2.5 Flash, or enabling Model Fallback (Settings → AI Settings)."
-msgstr "直近24時間に、%s の使用中にレート制限エラーが発生しました。Gemini 3系のプレビューモデルは利用回数の制限が厳しいため、Gemini 2.5 Flash などの安定版モデルへの切り替えか、モデルフォールバックの有効化 (設定 → AI 設定) をご検討ください。"
+msgid "Rate-limit errors occurred in the last 24 hours while using %s. Gemini 3 preview models have strict usage limits — consider switching to a stable model such as Gemini 3.8 Flash, or enabling Model Fallback (Settings → AI Settings)."
+msgstr "直近24時間に、%s の使用中にレート制限エラーが発生しました。Gemini 3系のプレビューモデルは利用回数の制限が厳しいため、Gemini 3.8 Flash などの安定版モデルへの切り替えか、モデルフォールバックの有効化 (設定 → AI 設定) をご検討ください。"
 
 #~ msgid ""
 #~ "To add trusted proxy IPs or CIDR ranges, use the "
@@ -8727,8 +8727,8 @@ msgstr "プロバイダーのベース URL を貼り付けてください。末�
 msgid "Paste the API key issued by your provider. For Qwen, this is your DashScope API key (it starts with sk-)."
 msgstr "プロバイダーが発行した API キーを貼り付けてください。Qwen の場合は DashScope の API キー (sk- で始まります) です。"
 
-msgid "Enter the chat model name exactly as your provider lists it. For Qwen: qwen-plus (recommended), qwen-turbo, or qwen-max. Other providers: deepseek-chat, glm-4-plus."
-msgstr "チャットモデル名を、プロバイダーの表記どおりに入力してください。Qwen の場合は qwen-plus (推奨)、qwen-turbo、qwen-max など。その他のプロバイダーは deepseek-chat、glm-4-plus などです。"
+msgid "Enter the chat model name exactly as your provider lists it. For Qwen: qwen-plus (recommended), qwen-turbo, or qwen-max. For other providers (DeepSeek, Zhipu GLM, and others), use the model name from the provider's model list."
+msgstr "チャットモデル名を、プロバイダーの表記どおりに入力してください。Qwen の場合は qwen-plus (推奨)、qwen-turbo、qwen-max など。その他のプロバイダー (DeepSeek、Zhipu GLM など) は、各社のモデル一覧にあるモデル名を入力してください。"
 
 msgid "OpenAI-compatible Embedding"
 msgstr "OpenAI 互換の埋め込み"
@@ -8842,3 +8842,23 @@ msgstr "キーを保存したときから、WordPress のセキュリティソ�
 #: includes/admin/class-admin.php:3025
 msgid "Your WordPress security salts have changed since the key was saved on %s. A security plugin that rotates salts, an object cache problem, or a restored database can all cause this."
 msgstr "%s にキーを保存したときから、WordPress のセキュリティソルトが変わっています。ソルトを自動で更新するセキュリティプラグイン、オブジェクトキャッシュの不具合、データベースの復元などが原因になります。"
+
+#. translators: 1: retired model ID, 2: model now used
+msgid "The Claude model \"%1$s\" has been retired by Anthropic, so chats are being sent to %2$s instead. Choose a model from the list and save to confirm."
+msgstr "Claude モデル「%1$s」は Anthropic による提供が終了したため、チャットを代わりに %2$s に送信しています。一覧からモデルを選び、保存して確定してください。"
+
+#. translators: 1: retired model ID, 2: retirement date, 3: model now used
+msgid "The Claude model \"%1$s\" was retired by Anthropic on %2$s, so chats are being sent to %3$s instead. Choose a model from the list and save to confirm."
+msgstr "Claude モデル「%1$s」は %2$s に Anthropic による提供が終了したため、チャットを代わりに %3$s に送信しています。一覧からモデルを選び、保存して確定してください。"
+
+#. translators: 1: provider name (OpenAI or Gemini), 2: shut-down model ID, 3: shutdown date, 4: model now used
+msgid "The %1$s model \"%2$s\" was shut down on %3$s, so chats are being sent to %4$s instead. Choose a model from the list and save to confirm."
+msgstr "%1$s のモデル「%2$s」は %3$s に提供が終了したため、チャットを代わりに %4$s に送信しています。一覧からモデルを選び、保存して確定してください。"
+
+#. translators: 1: provider name (OpenAI or Gemini), 2: shut-down model ID, 3: model now used
+msgid "The %1$s model \"%2$s\" has been shut down, so chats are being sent to %3$s instead. Choose a model from the list and save to confirm."
+msgstr "%1$s のモデル「%2$s」は提供が終了したため、チャットを代わりに %3$s に送信しています。一覧からモデルを選び、保存して確定してください。"
+
+#. translators: 1: provider name (Claude, OpenAI or Gemini), 2: model ID, 3: retirement date, 4: model that will be used afterwards
+msgid "The %1$s model \"%2$s\" is scheduled to be retired on %3$s. From then on, chats will be sent to %4$s. To choose the model yourself, select a current model from the list and save."
+msgstr "%1$s のモデル「%2$s」は %3$s に提供が終了する予定です。その日以降、チャットは %4$s に送信されます。ご自身でモデルを選ぶ場合は、一覧から現在のモデルを選んで保存してください。"

@@ -270,11 +270,12 @@ class RAPLSAICH_OpenAI_Compatible_Provider implements RAPLSAICH_AI_Provider_Inte
      */
     public function get_available_models(): array {
         return [
-            'qwen-plus'     => 'Qwen Plus (Alibaba DashScope)',
-            'qwen-turbo'    => 'Qwen Turbo (Alibaba DashScope)',
-            'qwen-max'      => 'Qwen Max (Alibaba DashScope)',
-            'deepseek-chat' => 'DeepSeek Chat',
-            'glm-4-plus'    => 'Zhipu GLM-4 Plus',
+            'qwen-plus'      => 'Qwen Plus (Alibaba DashScope)',
+            'qwen-turbo'     => 'Qwen Turbo (Alibaba DashScope)',
+            'qwen-max'       => 'Qwen Max (Alibaba DashScope)',
+            'qwen3.8-max'    => 'Qwen3.8 Max (Alibaba DashScope)',
+            'deepseek-flash' => 'DeepSeek Flash',
+            'glm-5.3'        => 'Zhipu GLM-5.3',
         ];
     }
 

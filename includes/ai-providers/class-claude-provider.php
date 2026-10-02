@@ -57,34 +57,39 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
     }
 
     /**
-     * Claude models Anthropic has retired, with the model to send instead and
-     * the retirement date. Source: the Claude model deprecations page.
+     * Claude models Anthropic has retired or scheduled for retirement, with the
+     * model to send instead and the retirement date. Source: the Claude model
+     * deprecations page. A row whose date is still ahead is ignored until that
+     * day (see raplsaich_retirement_in_effect()), so a scheduled retirement can
+     * be listed as soon as it is announced.
      *
-     * Successors follow Anthropic's recommendation where that model is in this
-     * plugin's list; Opus goes to Opus 4.6 (Anthropic names Opus 4.8) so the
-     * admin can see and re-select it in Settings.
+     * Successors are the current model of the same family in this plugin's
+     * list, so the admin can see and re-select it in Settings: Sonnet goes to
+     * Sonnet 5.5 (Anthropic's replacement for Sonnet 4.5), Opus to Opus 5.5.
      *
      * @return array<string, array{to: string, retired: string}>
      */
     public static function retired_models(): array {
         return [
-            'claude-sonnet-4-20250514'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-06-15'],
-            'claude-sonnet-4-0'          => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-06-15'],
-            'claude-opus-4-20250514'     => ['to' => 'claude-opus-4-6', 'retired' => '2026-06-15'],
-            'claude-opus-4-0'            => ['to' => 'claude-opus-4-6', 'retired' => '2026-06-15'],
-            'claude-opus-4-1-20250805'   => ['to' => 'claude-opus-4-6', 'retired' => '2026-08-05'],
-            'claude-opus-4-1'            => ['to' => 'claude-opus-4-6', 'retired' => '2026-08-05'],
-            'claude-3-7-sonnet-20250219' => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-02-19'],
-            'claude-3-7-sonnet-latest'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2026-02-19'],
+            'claude-sonnet-4-5-20250929' => ['to' => 'claude-sonnet-5-5', 'retired' => '2026-11-30'],
+            'claude-sonnet-4-5'          => ['to' => 'claude-sonnet-5-5', 'retired' => '2026-11-30'],
+            'claude-sonnet-4-20250514'   => ['to' => 'claude-sonnet-5-5', 'retired' => '2026-06-15'],
+            'claude-sonnet-4-0'          => ['to' => 'claude-sonnet-5-5', 'retired' => '2026-06-15'],
+            'claude-opus-4-20250514'     => ['to' => 'claude-opus-5-5', 'retired' => '2026-06-15'],
+            'claude-opus-4-0'            => ['to' => 'claude-opus-5-5', 'retired' => '2026-06-15'],
+            'claude-opus-4-1-20250805'   => ['to' => 'claude-opus-5-5', 'retired' => '2026-08-05'],
+            'claude-opus-4-1'            => ['to' => 'claude-opus-5-5', 'retired' => '2026-08-05'],
+            'claude-3-7-sonnet-20250219' => ['to' => 'claude-sonnet-5-5', 'retired' => '2026-02-19'],
+            'claude-3-7-sonnet-latest'   => ['to' => 'claude-sonnet-5-5', 'retired' => '2026-02-19'],
             'claude-3-5-haiku-20241022'  => ['to' => 'claude-haiku-4-5-20251001', 'retired' => '2026-02-19'],
             'claude-3-5-haiku-latest'    => ['to' => 'claude-haiku-4-5-20251001', 'retired' => '2026-02-19'],
             'claude-3-haiku-20240307'    => ['to' => 'claude-haiku-4-5-20251001', 'retired' => '2026-04-20'],
-            'claude-3-opus-20240229'     => ['to' => 'claude-opus-4-6', 'retired' => '2026-01-05'],
-            'claude-3-opus-latest'       => ['to' => 'claude-opus-4-6', 'retired' => '2026-01-05'],
-            'claude-3-5-sonnet-20240620' => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-10-28'],
-            'claude-3-5-sonnet-20241022' => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-10-28'],
-            'claude-3-5-sonnet-latest'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-10-28'],
-            'claude-3-sonnet-20240229'   => ['to' => 'claude-sonnet-4-6', 'retired' => '2025-07-21'],
+            'claude-3-opus-20240229'     => ['to' => 'claude-opus-5-5', 'retired' => '2026-01-05'],
+            'claude-3-opus-latest'       => ['to' => 'claude-opus-5-5', 'retired' => '2026-01-05'],
+            'claude-3-5-sonnet-20240620' => ['to' => 'claude-sonnet-5-5', 'retired' => '2025-10-28'],
+            'claude-3-5-sonnet-20241022' => ['to' => 'claude-sonnet-5-5', 'retired' => '2025-10-28'],
+            'claude-3-5-sonnet-latest'   => ['to' => 'claude-sonnet-5-5', 'retired' => '2025-10-28'],
+            'claude-3-sonnet-20240229'   => ['to' => 'claude-sonnet-5-5', 'retired' => '2025-07-21'],
         ];
     }
 
@@ -105,18 +110,30 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
          */
         $retired = (array) apply_filters('raplsaich_claude_retired_models', self::retired_models());
         if (isset($retired[$model]['to'])) {
-            return $retired[$model];
+            return raplsaich_retirement_in_effect((string) ($retired[$model]['retired'] ?? '')) ? $retired[$model] : null;
         }
         if (strpos($model, 'claude-3-') === 0) {
             if (strpos($model, 'haiku') !== false) {
                 return ['to' => 'claude-haiku-4-5-20251001', 'retired' => ''];
             }
             if (strpos($model, 'opus') !== false) {
-                return ['to' => 'claude-opus-4-6', 'retired' => ''];
+                return ['to' => 'claude-opus-5-5', 'retired' => ''];
             }
-            return ['to' => 'claude-sonnet-4-6', 'retired' => ''];
+            return ['to' => 'claude-sonnet-5-5', 'retired' => ''];
         }
         return null;
+    }
+
+    /**
+     * Details of an announced retirement that has not happened yet, or null.
+     * The model still answers until the date; the admin is warned meanwhile.
+     *
+     * @return array{to: string, retired: string}|null
+     */
+    public static function scheduled_retirement(string $model): ?array {
+        /** This filter is documented in retirement(). */
+        $retired = (array) apply_filters('raplsaich_claude_retired_models', self::retired_models());
+        return raplsaich_scheduled_retirement($retired, $model);
     }
 
     /**
@@ -137,6 +154,18 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
      */
     public static function accepts_sampling_params(string $model): bool {
         return (bool) preg_match('/^claude-(?:3-|haiku-4|sonnet-4|opus-4(?:-[0-6])?(?:-\d{8})?$)/', $model);
+    }
+
+    /**
+     * Whether the model accepts a forced tool_choice ("any" / "tool").
+     *
+     * Same allow-list reasoning as accepts_sampling_params(): Opus 5.5 and
+     * Fable 5.1 reject a forced choice with a 400, and later models are more
+     * likely to follow them. Where it is refused, the [WEB SEARCH — MANDATORY]
+     * system-prompt block does the steering on its own.
+     */
+    public static function accepts_forced_tool_choice(string $model): bool {
+        return (bool) preg_match('/^claude-(?:3-|haiku-4|sonnet-4|opus-4|(?:sonnet|opus|fable)-5(?:-\d{8})?$)/', $model);
     }
 
     /**
@@ -212,6 +241,15 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
         // 400; send it only to the generations that take it.
         if (self::accepts_sampling_params($this->model)) {
             $body['temperature'] = (float) ($options['temperature'] ?? 0.7);
+        } else {
+            // Those same generations take an effort level instead. On Opus 5 /
+            // 5.5, Sonnet 5 and Fable thinking is on by default and counts
+            // toward max_tokens, so at the default 1000 a reply can run out
+            // before any text. A site chatbot answers from supplied context
+            // and rarely needs deep reasoning.
+            $body['output_config'] = [
+                'effort' => (string) apply_filters('raplsaich_claude_effort', 'low', $this->model),
+            ];
         }
 
         if (!empty($system_message)) {
@@ -228,7 +266,7 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
                 ],
             ];
             // Force web search when knowledge base has no relevant content
-            if (!empty($options['force_web_search'])) {
+            if (!empty($options['force_web_search']) && self::accepts_forced_tool_choice($this->model)) {
                 $body['tool_choice'] = ['type' => 'any'];
             }
         }
@@ -392,14 +430,15 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
     public function get_available_models(): array {
         return [
             // Latest generation
-            'claude-opus-4-6'             => 'Claude Opus 4.6 (' . __('Most powerful', 'rapls-ai-chatbot') . ')',
-            'claude-sonnet-4-6'           => 'Claude Sonnet 4.6 (' . __('★ Recommended — fast and powerful', 'rapls-ai-chatbot') . ')',
+            'claude-opus-5-5'             => 'Claude Opus 5.5 (' . __('Most powerful', 'rapls-ai-chatbot') . ')',
+            'claude-sonnet-5-5'           => 'Claude Sonnet 5.5 (' . __('★ Recommended — fast and powerful', 'rapls-ai-chatbot') . ')',
             'claude-haiku-4-5-20251001'   => 'Claude Haiku 4.5 (' . __('★ Recommended — fastest, cheapest', 'rapls-ai-chatbot') . ')',
-            // Previous generation
-            'claude-sonnet-4-5-20250929'  => 'Claude Sonnet 4.5',
-            'claude-opus-4-5-20251101'    => 'Claude Opus 4.5 (' . __('Previous flagship', 'rapls-ai-chatbot') . ')',
-            // Claude Opus 4.1 and Sonnet 4 were retired by Anthropic (2026-08-05 /
-            // 2026-06-15); set_model() sends their successors instead.
+            // Previous generation (still served by Anthropic)
+            'claude-sonnet-4-6'           => 'Claude Sonnet 4.6',
+            'claude-opus-4-6'             => 'Claude Opus 4.6',
+            'claude-opus-4-5-20251101'    => 'Claude Opus 4.5',
+            // Claude Sonnet 4.5 retires 2026-11-30 and Opus 4.1 / Sonnet 4 have
+            // retired; set_model() sends their successors instead.
         ];
     }
 
@@ -407,22 +446,15 @@ class RAPLSAICH_Claude_Provider implements RAPLSAICH_AI_Provider_Interface {
      * Get vision-capable models
      */
     public function get_vision_models(): array {
-        return [
-            'claude-opus-4-6',
-            'claude-sonnet-4-6',
-            'claude-haiku-4-5-20251001',
-            'claude-sonnet-4-5-20250929',
-            'claude-opus-4-5-20251101',
-        ];
+        return array_keys($this->get_available_models());
     }
 
     /**
      * Check if current model supports vision
      */
     public function supports_vision(): bool {
-        return strpos($this->model, 'claude-opus-4') !== false ||
-               strpos($this->model, 'claude-sonnet-4') !== false ||
-               strpos($this->model, 'claude-haiku-4') !== false;
+        // Every Claude 4 and later model reads images.
+        return (bool) preg_match('/^claude-(?:opus|sonnet|haiku|fable|mythos)-(?:[4-9]|\d{2})/', $this->model);
     }
 
     /**
