@@ -659,10 +659,13 @@ class RAPLSAICH_Admin {
             : ($existing['recaptcha_fail_mode'] ?? 'open');
 
         // Crawler settings
-        // Check if crawler form was submitted (crawler_interval is always present in crawler form)
-        $crawler_form_submitted = array_key_exists('crawler_interval', $input);
+        // The on/off switch is on two forms: the Site Learning screen (Pro;
+        // crawler_interval is always present there) and the Site Learning
+        // section of the settings screen (_site_learning_toggle marks it).
+        $crawler_form_submitted = array_key_exists('crawler_interval', $input)
+            || !empty($input['_site_learning_toggle']);
         if ($crawler_form_submitted) {
-            // Crawler form: checkbox unchecked = not in input = false
+            // Either form: checkbox unchecked = not in input = false
             $sanitized['crawler_enabled'] = !empty($input['crawler_enabled']);
         } else {
             // Other form: preserve existing value
@@ -1271,7 +1274,11 @@ class RAPLSAICH_Admin {
             [
                 'label'  => __('Let the AI learn your site', 'rapls-ai-chatbot'),
                 'done'   => $learn_done,
-                'url'    => admin_url('admin.php?page=raplsaich-knowledge'),
+                // The switch and "Run Learning Now" are in Settings > AI Settings
+                // (the full Site Learning screen exists only with Pro).
+                'url'    => raplsaich_is_pro_active()
+                    ? admin_url('admin.php?page=raplsaich-crawler')
+                    : admin_url('admin.php?page=raplsaich-settings#tab-ai'),
                 'action' => __('Run site learning', 'rapls-ai-chatbot'),
             ],
             [
@@ -4760,10 +4767,12 @@ class RAPLSAICH_Admin {
 
                 <?php $this->render_feature_card(
                     __('Site Learning', 'rapls-ai-chatbot'),
-                    __('Enhance your AI with site-wide content indexing.', 'rapls-ai-chatbot'),
+                    // The free version learns the site automatically (Settings >
+                    // AI Settings); Pro adds the screen that controls it.
+                    __('Control what the bot learns from your site.', 'rapls-ai-chatbot'),
                     [
-                        __('Auto-learn site content on schedule', 'rapls-ai-chatbot'),
-                        __('Vector embedding for semantic search', 'rapls-ai-chatbot'),
+                        __('Choose content types and the learning schedule', 'rapls-ai-chatbot'),
+                        __('Exclude pages and manage learned pages', 'rapls-ai-chatbot'),
                         __('Enhanced HTML content extraction', 'rapls-ai-chatbot'),
                         __('WooCommerce product data auto-crawl', 'rapls-ai-chatbot'),
                     ],

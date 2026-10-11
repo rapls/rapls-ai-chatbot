@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.0
+Stable tag: 1.21.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -148,7 +148,7 @@ Yes. Google is moving Gemini API keys from the legacy "AIza" standard format to 
 Yes. Configure multiple providers in Settings and switch between them. WordPress 7.0 Connectors API also supports unified key management.
 
 = Does it crawl my entire site automatically? =
-Yes. Enable "Site Learning" in Settings to crawl published content (posts, pages, custom post types, WooCommerce products). Configure crawl scope and frequency.
+Yes. Site Learning is on by default: it learns your published posts, pages and other public post types once a day, and learns a post again when you update it. Turn it on or off, or run it right away, in Settings > AI Settings > Site Learning. Choosing which content types to learn and how often, excluding pages, managing the learned pages and learning WooCommerce product data are part of Pro.
 
 = Can I embed on external sites? =
 Yes. Configure cross-site embed in Display Settings. Use iframe or script loader.
@@ -157,7 +157,7 @@ Yes. Configure cross-site embed in Display Settings. Use iframe or script loader
 In Settings > AI Settings, Connectors UI appears if WP 7.0 is active. Register your Claude API key once; all Connectors-compatible plugins access it.
 
 = Is there conversation history? =
-Yes. Data Management tab lets you save/review all conversations. Configure retention period (30/90/365 days or indefinite).
+Yes. Conversations are saved in your WordPress database, and the Data Management tab sets how many days they are kept (0 keeps them indefinitely) or turns saving off. The usage dashboard shows conversation and message counts. The screen for browsing individual conversations is part of Pro.
 
 = Troubleshooting: chat not appearing? =
 * Verify API key is valid (test in Settings)
@@ -267,6 +267,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.1 =
+* Fixed: in the free version, Site Learning could not be turned back on once it was off. The switch was only on the Site Learning screen, which appears when the Pro add-on is installed, and the dashboard's "Run site learning" link led to the Knowledge page. Settings > AI Settings now has a Site Learning switch, the number of learned pages and the last run, and a "Run Learning Now" button. Choosing content types and the schedule, and managing learned pages, stay in Pro. Thanks to @solroed for the report.
+* Fixed: when Site Learning was on but its daily schedule had gone missing, learning stopped without any sign. The schedule is now restored the next time wp-admin is opened.
+* Changed: the readme now says which parts of Site Learning and conversation history are in the free version and which are in Pro, and describes the retention setting correctly (a number of days; 0 keeps conversations indefinitely).
+
 = 1.21.0 =
 * Fixed: Gemini 2.0 Flash, the default Gemini model, was shut down by Google on June 1, 2026, and Gemini 2.0 Flash-Lite and Gemini 3 Pro Preview have been shut down as well. A site still set to one of them now sends its chats to Google's replacement (Gemini 3.6 Flash, Gemini 3.1 Flash-Lite and Gemini 3.1 Pro Preview), and wp-admin says so until a model is chosen again. New installs use Gemini 3.5 Flash-Lite. The saved setting is not changed for you.
 * Fixed: OpenAI shut down o3-mini on October 1, 2026, and shuts down GPT-4.1 nano and o4-mini on October 23 and GPT-5, GPT-5 mini, GPT-5 nano, GPT-5 Pro and o3 on December 11. From each date, a site still set to one of these models sends its chats to OpenAI's replacement (GPT-5.6 Sol, Terra or Luna). Claude Sonnet 4.5, which Anthropic retires on November 30, 2026, moves to Claude Sonnet 5.5 the same way.
@@ -353,6 +358,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.1 =
+Sites on the free version can turn Site Learning on again: Settings > AI Settings now has a Site Learning switch and a "Run Learning Now" button.
 
 = 1.21.0 =
 Gemini 2.0 Flash, the former default, was shut down by Google; sites still using it resume on Gemini 3.6 Flash. Adds GPT-6, Claude Sonnet 5.5 and Opus 5.5 and Gemini 3.x, and warns before a selected model is retired.

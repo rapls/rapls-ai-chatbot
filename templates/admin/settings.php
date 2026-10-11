@@ -734,6 +734,55 @@ if (!defined('ABSPATH')) {
                     </table>
                 </div>
 
+                <!-- Site Learning (the on/off switch and a manual run; the full
+                     Site Learning screen with scope, schedule and the indexed list
+                     is registered by Pro) -->
+                <?php
+                $raplsaich_crawl_status = (new RAPLSAICH_Site_Crawler())->get_status();
+                $raplsaich_last_crawl   = $raplsaich_crawl_status['last_crawl_run'] ?: $raplsaich_crawl_status['last_crawl'];
+                ?>
+                <h3 id="site-learning" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
+                    <?php esc_html_e('Site Learning', 'rapls-ai-chatbot'); ?>
+                </h3>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Site Learning', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <input type="hidden" name="raplsaich_settings[_site_learning_toggle]" value="1">
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[crawler_enabled]" value="1"
+                                    <?php checked(!empty($settings['crawler_enabled'])); ?>>
+                                <?php esc_html_e('Auto-learn site content', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('The bot learns your published content (posts, pages and other public post types) so it can answer from it. Learning runs once a day, and a post is learned again when you update it.', 'rapls-ai-chatbot'); ?>
+                            </p>
+                            <p class="description">
+                                <?php esc_html_e('Indexed Pages', 'rapls-ai-chatbot'); ?>:
+                                <strong><?php echo esc_html(number_format_i18n((int) $raplsaich_crawl_status['indexed_count'])); ?></strong>
+                                &nbsp;|&nbsp;
+                                <?php esc_html_e('Last Crawl', 'rapls-ai-chatbot'); ?>:
+                                <strong><?php echo $raplsaich_last_crawl ? esc_html(mysql2date(get_option('date_format') . ' ' . get_option('time_format'), (string) $raplsaich_last_crawl)) : esc_html__('Never', 'rapls-ai-chatbot'); ?></strong>
+                            </p>
+                            <p>
+                                <button type="button" id="raplsaich-manual-crawl" class="button">
+                                    <?php esc_html_e('Run Learning Now', 'rapls-ai-chatbot'); ?>
+                                </button>
+                                <span id="crawl-status"></span>
+                            </p>
+                            <?php if (raplsaich_is_pro_active()) : ?>
+                                <p class="description">
+                                    <a href="<?php echo esc_url(admin_url('admin.php?page=raplsaich-crawler')); ?>"><?php esc_html_e('Open the Site Learning screen to choose content types and the schedule, and to manage learned pages.', 'rapls-ai-chatbot'); ?></a>
+                                </p>
+                            <?php else : ?>
+                                <p class="description">
+                                    <?php esc_html_e('Choosing content types and the schedule, and managing learned pages, are part of Rapls AI Chatbot Pro.', 'rapls-ai-chatbot'); ?>
+                                </p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </table>
+
                 <!-- Embedding Settings -->
                 <h3 style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccd0d4;">
                     <?php esc_html_e('Vector Embedding (RAG)', 'rapls-ai-chatbot'); ?>

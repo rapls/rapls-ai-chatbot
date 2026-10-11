@@ -439,6 +439,17 @@ class RAPLSAICH_Main {
         add_action('raplsaich_crawl_site', [$crawler, 'crawl_all']);
         add_action('save_post', [$crawler, 'on_save_post'], 10, 2);
         add_action('delete_post', [$crawler, 'on_delete_post']);
+
+        // The daily event is scheduled on activation only. When Site Learning
+        // is switched on and the event has gone missing (cron reset, a
+        // migration), schedule it again so learning resumes. Admin requests
+        // only, to keep the check off the front end.
+        if (is_admin() && !wp_next_scheduled('raplsaich_crawl_site')) {
+            $settings = get_option('raplsaich_settings', []);
+            if (!empty($settings['crawler_enabled'])) {
+                wp_schedule_event(time() + 300, 'daily', 'raplsaich_crawl_site');
+            }
+        }
     }
 
     /**

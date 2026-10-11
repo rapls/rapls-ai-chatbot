@@ -164,6 +164,7 @@ if (!defined('ABSPATH')) {
                         <span class="status-badge status-<?php echo esc_attr( !empty($settings['crawler_enabled']) ? 'ok' : 'off' ); ?>">
                             <?php echo !empty($settings['crawler_enabled']) ? esc_html__('Enabled', 'rapls-ai-chatbot') : esc_html__('Disabled', 'rapls-ai-chatbot'); ?>
                         </span>
+                        <a href="<?php echo esc_url(raplsaich_is_pro_active() ? admin_url('admin.php?page=raplsaich-crawler') : admin_url('admin.php?page=raplsaich-settings#tab-ai')); ?>" style="margin-left: 6px;"><?php esc_html_e('Settings', 'rapls-ai-chatbot'); ?></a>
                     </td>
                 </tr>
                 <tr>

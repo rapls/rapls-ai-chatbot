@@ -8862,3 +8862,21 @@ msgstr "%1$s のモデル「%2$s」は提供が終了したため、チャット
 #. translators: 1: provider name (Claude, OpenAI or Gemini), 2: model ID, 3: retirement date, 4: model that will be used afterwards
 msgid "The %1$s model \"%2$s\" is scheduled to be retired on %3$s. From then on, chats will be sent to %4$s. To choose the model yourself, select a current model from the list and save."
 msgstr "%1$s のモデル「%2$s」は %3$s に提供が終了する予定です。その日以降、チャットは %4$s に送信されます。ご自身でモデルを選ぶ場合は、一覧から現在のモデルを選んで保存してください。"
+
+msgid "The bot learns your published content (posts, pages and other public post types) so it can answer from it. Learning runs once a day, and a post is learned again when you update it."
+msgstr "公開しているコンテンツ (投稿・固定ページ・その他の公開投稿タイプ) を学習し、その内容をもとに回答します。学習は1日1回行い、投稿を更新したときにもその投稿を学習し直します。"
+
+msgid "Open the Site Learning screen to choose content types and the schedule, and to manage learned pages."
+msgstr "サイト学習の画面で、学習するコンテンツの種類とスケジュールを選び、学習済みページを管理できます。"
+
+msgid "Choosing content types and the schedule, and managing learned pages, are part of Rapls AI Chatbot Pro."
+msgstr "学習するコンテンツの種類とスケジュールの選択、学習済みページの管理は、Rapls AI Chatbot Pro の機能です。"
+
+msgid "Control what the bot learns from your site."
+msgstr "サイトから何を学習させるかを管理します。"
+
+msgid "Choose content types and the learning schedule"
+msgstr "学習するコンテンツの種類とスケジュールの選択"
+
+msgid "Exclude pages and manage learned pages"
+msgstr "ページの除外と学習済みページの管理"
