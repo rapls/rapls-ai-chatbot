@@ -4,7 +4,7 @@
  * Plugin Name:       Rapls AI Chatbot – Self-Hosted RAG & MCP Server
  * Plugin URI:        https://raplsworks.com/plugins/rapls-ai-chatbot/
  * Description:       Answers from your own posts and pages, says so when it doesn't know, and stops at the spending limit you set. Works with OpenAI, Claude or Gemini.
- * Version:           1.21.1
+ * Version:           1.21.2
  * Requires at least: 6.3
  * Requires PHP:      7.4
  * Author:            Rapls
@@ -41,6 +41,8 @@ define('RAPLSAICH_BUILD', '$Format:%h$'); // Auto-replaced by git archive (expor
 define('RAPLSAICH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('RAPLSAICH_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('RAPLSAICH_PLUGIN_BASENAME', plugin_basename(__FILE__));
+// The Pro product page. Every link to it uses this constant.
+define('RAPLSAICH_PRO_URL', 'https://raplsworks.com/plugins/rapls-ai-chatbot-pro/');
 
 /**
  * Plugin activation handler
@@ -517,7 +519,31 @@ add_filter('plugin_action_links_' . RAPLSAICH_PLUGIN_BASENAME, 'raplsaich_plugin
  */
 function raplsaich_plugin_row_meta($plugin_meta, $plugin_file)
 {
-    if ($plugin_file === RAPLSAICH_PLUGIN_BASENAME && raplsaich_is_pro_active()) {
+    if ($plugin_file !== RAPLSAICH_PLUGIN_BASENAME) {
+        return $plugin_meta;
+    }
+
+    // A link to the Pro product page, in this plugin's own row only, while Pro
+    // is not active.
+    /**
+     * Filter whether the plugin list row shows the link to the Pro page.
+     *
+     * @param bool $show Default true.
+     */
+    if (!raplsaich_is_pro_active() && apply_filters('raplsaich_show_pro_row_link', true)) {
+        $pro_url = add_query_arg(
+            [
+                'utm_source'   => 'plugin',
+                'utm_medium'   => 'row-meta',
+                'utm_campaign' => 'pro',
+            ],
+            RAPLSAICH_PRO_URL
+        );
+        $plugin_meta[] = '<a href="' . esc_url($pro_url) . '" target="_blank" rel="noopener noreferrer">' .
+            esc_html__('Pro', 'rapls-ai-chatbot') . '</a>';
+    }
+
+    if (raplsaich_is_pro_active()) {
         $last_key = array_key_last($plugin_meta);
         if ($last_key !== null) {
             $plugin_meta[$last_key] .= '<br><span style="color: #d63638;">' .

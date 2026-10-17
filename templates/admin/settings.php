@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
     <div class="raplsaich-pro-settings-banner">
         <span class="dashicons dashicons-star-filled"></span>
         <span><?php esc_html_e('Extend your AI chatbot with automation, analytics, and business-ready features.', 'rapls-ai-chatbot'); ?></span>
-        <a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer" class="button">
+        <a href="<?php echo esc_url(RAPLSAICH_PRO_URL); ?>" target="_blank" rel="noopener noreferrer" class="button">
             <?php esc_html_e('Learn More', 'rapls-ai-chatbot'); ?>
         </a>
     </div>
@@ -1919,7 +1919,7 @@ if (!defined('ABSPATH')) {
                                     <?php echo esc_html(implode(', ', $pro_themes)); ?>
                                 </p>
                                 <p class="description">
-                                    <a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to unlock all themes', 'rapls-ai-chatbot'); ?></a>
+                                    <a href="<?php echo esc_url(RAPLSAICH_PRO_URL); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to unlock all themes', 'rapls-ai-chatbot'); ?></a>
                                 </p>
                                 <?php endif; ?>
                             </div>
@@ -2060,7 +2060,7 @@ if (!defined('ABSPATH')) {
                                     <?php else : ?>
                                         <span class="description">
                                             <span class="dashicons dashicons-star-filled" style="font-size: 14px; width: 14px; height: 14px; vertical-align: text-bottom; color: #667eea;"></span>
-                                            <a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to customize the badge icon with presets, images, or emoji.', 'rapls-ai-chatbot'); ?></a>
+                                            <a href="<?php echo esc_url(RAPLSAICH_PRO_URL); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to customize the badge icon with presets, images, or emoji.', 'rapls-ai-chatbot'); ?></a>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -2095,7 +2095,7 @@ if (!defined('ABSPATH')) {
                             <?php else: ?>
                             <p class="description">
                                 <span class="dashicons dashicons-star-filled" style="color: #667eea; vertical-align: text-bottom;"></span>
-                                <a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to enable dark mode for the chatbot.', 'rapls-ai-chatbot'); ?></a>
+                                <a href="<?php echo esc_url(RAPLSAICH_PRO_URL); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Upgrade to Pro to enable dark mode for the chatbot.', 'rapls-ai-chatbot'); ?></a>
                             </p>
                             <?php endif; ?>
                         </td>
@@ -3045,6 +3045,12 @@ if (!defined('ABSPATH')) {
             <?php submit_button(__('Save Settings', 'rapls-ai-chatbot')); ?>
         </div>
     </form>
+
+    <?php
+    // Time-limited promotion (Black Friday 2026). Outside the form and the
+    // tabs, so it never nests in the form; draws nothing outside its window.
+    RAPLSAICH_Promo_Notice::bf26()->render();
+    ?>
 </div>
 
 <!-- Settings JS loaded via wp_enqueue_script("raplsaich-admin-settings") -->

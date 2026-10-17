@@ -154,28 +154,28 @@ class RAPLSAICH_Admin {
     }
 
     /**
-     * Show a review request once the plugin has proven useful.
+     * Whether the review request should be shown on the current screen.
      *
      * Unlike a pure time delay, this only asks sites that actually got value
      * from the plugin, so we never prompt an install that never produced a
-     * single conversation (which would invite a poor review). Shown on plugin
-     * screens only, dismissible once and never shown again.
+     * single conversation (which would invite a poor review). Plugin screens
+     * only, dismissible once and never shown again.
      */
-    public function review_request_notice(): void {
+    public function should_show_review_request(): bool {
         // Only to users who manage the plugin.
         if (!current_user_can(self::get_manage_cap())) {
-            return;
+            return false;
         }
 
         // Permanently dismissed already?
         if (get_option('raplsaich_review_dismissed', false)) {
-            return;
+            return false;
         }
 
         // Plugin screens only — do not spam the rest of wp-admin.
         $screen = function_exists('get_current_screen') ? get_current_screen() : null;
         if (!$screen || strpos((string) $screen->id, 'raplsaich') === false) {
-            return;
+            return false;
         }
 
         // Bootstrap the activation timestamp for installs that predate it.
@@ -189,7 +189,7 @@ class RAPLSAICH_Admin {
 
         // Never ask a site that has not yet had a real conversation.
         if ($convos < 1) {
-            return;
+            return false;
         }
 
         // Usage-proven threshold (strong signal, fires regardless of age) …
@@ -198,10 +198,27 @@ class RAPLSAICH_Admin {
         $min_days = (int) apply_filters('raplsaich_review_min_days', 7);
         $aged_enough = (time() - $activated_at) > $min_days * DAY_IN_SECONDS;
 
-        if ($convos < $usage_threshold && !$aged_enough) {
+        return $convos >= $usage_threshold || $aged_enough;
+    }
+
+    /**
+     * Show the review request (see should_show_review_request()).
+     *
+     * While the Black Friday notice is eligible for this user, the request is
+     * held back on every plugin screen: the two never appear together, and the
+     * one-week campaign reaches the existing users the request would otherwise
+     * cover. Once the user dismisses the campaign, or it ends, the request
+     * shows under its usual conditions again.
+     */
+    public function review_request_notice(): void {
+        if (!$this->should_show_review_request()) {
+            return;
+        }
+        if (RAPLSAICH_Promo_Notice::bf26()->is_eligible()) {
             return;
         }
 
+        $convos = (int) RAPLSAICH_Conversation::get_count();
         $review_url = 'https://wordpress.org/support/plugin/rapls-ai-chatbot/reviews/#new-post';
         ?>
         <div class="notice notice-success is-dismissible raplsaich-review-notice" id="raplsaich-review-notice" style="border-left-color: #ffb900;">
@@ -4732,7 +4749,7 @@ class RAPLSAICH_Admin {
                         <strong><?php esc_html_e('Upgrade to Pro', 'rapls-ai-chatbot'); ?></strong>
                         <p><?php esc_html_e('Extend your AI chatbot with analytics, lead capture, automation, and more.', 'rapls-ai-chatbot'); ?></p>
                     </div>
-                    <a href="https://raplsworks.com/plugins/rapls-ai-chatbot-pro/" target="_blank" rel="noopener noreferrer" class="button button-primary">
+                    <a href="<?php echo esc_url(RAPLSAICH_PRO_URL); ?>" target="_blank" rel="noopener noreferrer" class="button button-primary">
                         <?php esc_html_e('Get Pro Version', 'rapls-ai-chatbot'); ?>
                     </a>
                 </div>

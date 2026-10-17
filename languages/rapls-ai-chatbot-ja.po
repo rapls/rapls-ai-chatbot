@@ -8880,3 +8880,20 @@ msgstr "学習するコンテンツの種類とスケジュールの選択"
 
 msgid "Exclude pages and manage learned pages"
 msgstr "ページの除外と学習済みページの管理"
+
+msgid "Dismiss this notice"
+msgstr "このお知らせを閉じる"
+
+#. translators: 1: discount, e.g. "20%", 2: date and time the offer ends, in the site's timezone with its abbreviation (e.g. "December 2, 2026 5:59 PM JST")
+msgid "Black Friday: %1$s off Rapls AI Chatbot Pro until %2$s."
+msgstr "ブラックフライデー: Rapls AI Chatbot Pro が %2$s まで %1$s オフ。"
+
+#. translators: %s: coupon code
+msgid "Use code %s at checkout."
+msgstr "お支払いのときにコード %s をご利用ください。"
+
+msgid "See Pro features"
+msgstr "Pro の機能を見る"
+
+msgid "Pro"
+msgstr "Pro"

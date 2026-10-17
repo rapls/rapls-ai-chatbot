@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.1
+Stable tag: 1.21.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.2 =
+* Added: during Black Friday 2026 (November 26 to December 2), the Settings screen shows a short notice about the Rapls AI Chatbot Pro discount, with the end time in your site's timezone. It appears only on the Settings screen, only to administrators of sites without Pro, and not at all outside those dates. Each administrator can dismiss it for good, and the raplsaich_show_promo_notice filter turns it off. Nothing is loaded from outside the plugin.
+* Changed: while that notice is shown, the review request is held back, so the two never appear together. Once the notice is dismissed or the dates have passed, the review request returns under its usual conditions.
+* Added: a "Pro" link in this plugin's row on the Plugins screen while Pro is not active. The raplsaich_show_pro_row_link filter removes it.
+
 = 1.21.1 =
 * Fixed: in the free version, Site Learning could not be turned back on once it was off. The switch was only on the Site Learning screen, which appears when the Pro add-on is installed, and the dashboard's "Run site learning" link led to the Knowledge page. Settings > AI Settings now has a Site Learning switch, the number of learned pages and the last run, and a "Run Learning Now" button. Choosing content types and the schedule, and managing learned pages, stay in Pro. Thanks to @solroed for the report.
 * Fixed: when Site Learning was on but its daily schedule had gone missing, learning stopped without any sign. The schedule is now restored the next time wp-admin is opened.
@@ -358,6 +363,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.2 =
+Adds a dismissible Black Friday notice on the Settings screen (November 26 to December 2, 2026 only) and a Pro link in the plugin's row on the Plugins screen.
 
 = 1.21.1 =
 Sites on the free version can turn Site Learning on again: Settings > AI Settings now has a Site Learning switch and a "Run Learning Now" button.

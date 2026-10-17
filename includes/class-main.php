@@ -142,6 +142,7 @@ class RAPLSAICH_Main {
 
         // Admin
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/admin/class-admin.php';
+        require_once RAPLSAICH_PLUGIN_DIR . 'includes/admin/class-promo-notice.php';
 
         // Frontend
         require_once RAPLSAICH_PLUGIN_DIR . 'includes/frontend/class-chatbot-widget.php';
@@ -169,6 +170,8 @@ class RAPLSAICH_Main {
         $this->loader->add_action('admin_notices', $admin, 'security_settings_notice');
         $this->loader->add_action('admin_notices', $admin, 'handoff_pending_notice');
         $this->loader->add_action('admin_notices', $admin, 'review_request_notice');
+        // In-plugin promotion notice (Settings screen only): the dismiss link.
+        add_action('admin_init', ['RAPLSAICH_Promo_Notice', 'handle_dismiss_request']);
         $this->loader->add_action('admin_notices', $admin, 'cost_guard_notice');
         $this->loader->add_action('admin_init', $admin, 'register_settings');
         $this->loader->add_action('admin_init', $this, 'add_privacy_policy_content');

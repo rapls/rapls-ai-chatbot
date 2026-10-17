@@ -205,6 +205,14 @@ if (is_multisite()) {
     delete_site_transient('raplsaich_ms_activate_errors_last');
 }
 
+// Dismissed promotion notices (user_meta, e.g. raplsaich_promo_bf26_dismissed).
+// usermeta is shared by the whole network, so this runs once, outside the
+// per-site loop, and regardless of delete_data_on_uninstall: it is display
+// state, not user data. Keep in sync with RAPLSAICH_Promo_Notice::meta_keys().
+foreach (['raplsaich_promo_bf26_dismissed'] as $raplsaich_promo_meta_key) {
+    delete_metadata('user', 0, $raplsaich_promo_meta_key, '', true);
+}
+
 // completed_at = "script reached this line" (best-effort).
 // It does NOT guarantee every DB operation above succeeded —
 // individual DROP/DELETE may have silently failed at the DB level.
