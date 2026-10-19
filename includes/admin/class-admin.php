@@ -3691,12 +3691,13 @@ class RAPLSAICH_Admin {
             ? new RAPLSAICH_Humanizer()
             : null;
 
+        raplsaich_db_datetimes_to_timestamps(array_column((array) $messages, 'created_at'));
         $formatted = array_map(function($msg) use ($humanizer) {
             $data = [
                 'id'         => (int) $msg['id'],
                 'role'       => $msg['role'],
                 'content'    => $msg['content'],
-                'created_at' => mysql2date('Y/m/d H:i:s', $msg['created_at']),
+                'created_at' => raplsaich_format_db_datetime($msg['created_at'], 'Y/m/d H:i:s'),
             ];
             // Provider error recorded on the triggering user message —
             // rendered as a badge in the conversation view. Labels/format

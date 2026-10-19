@@ -247,6 +247,7 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
                     </tr>
                 </thead>
                 <tbody>
+                    <?php raplsaich_db_datetimes_to_timestamps(array_column((array) $knowledge_list, 'created_at')); ?>
                     <?php foreach ($knowledge_list as $item):
                         $item_status = $item['status'] ?? 'published';
                         $item_type = $item['type'] ?? 'qa';
@@ -323,7 +324,7 @@ $_GET['prefill_question']) ? sanitize_text_field(wp_unslash($_GET['prefill_quest
                                     <span class="raplsaich-toggle-slider"></span>
                                 </label>
                             </td>
-                            <td><?php echo esc_html(mysql2date('Y/m/d H:i', $item['created_at'])); ?></td>
+                            <td><?php echo esc_html(raplsaich_format_db_datetime($item['created_at'])); ?></td>
                             <td>
                                 <?php if ($item_status === 'draft' && $is_pro): ?>
                                 <button type="button" class="button button-small button-primary raplsaich-approve-draft"

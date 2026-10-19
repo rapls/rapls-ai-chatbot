@@ -379,6 +379,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                         </tr>
                     </thead>
                     <tbody id="indexed-list-body">
+                        <?php raplsaich_db_datetimes_to_timestamps(array_column((array) $indexed_list, 'indexed_at')); ?>
                         <?php foreach ($indexed_list as $item): ?>
                             <tr data-post-id="<?php echo esc_attr($item['post_id']); ?>">
                                 <td>
@@ -397,7 +398,7 @@ $post_types = get_post_types(['public' => true], 'objects');
                                         <?php echo esc_html(mb_strlen($item['url']) > 50 ? mb_substr($item['url'], 0, 50) . '...' : $item['url']); ?>
                                     </a>
                                 </td>
-                                <td><?php echo esc_html(mysql2date('Y/m/d H:i', $item['indexed_at'])); ?></td>
+                                <td><?php echo esc_html(raplsaich_format_db_datetime($item['indexed_at'])); ?></td>
                                 <td style="white-space: nowrap;">
                                     <button type="button" class="button button-small raplsaich-delete-index" data-post-id="<?php echo esc_attr($item['post_id']); ?>" data-index-id="<?php echo esc_attr($item['id']); ?>" title="<?php esc_attr_e('Delete', 'rapls-ai-chatbot'); ?>">
                                         🗑️

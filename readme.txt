@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.2
+Stable tag: 1.21.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,10 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.3 =
+* Fixed: conversation times ignored the WordPress timezone. The database server records conversation and message times in its own timezone, and the Conversations list, Conversation Details and the CSV export showed them without converting, so on hosts whose database runs in another timezone they were hours off. They are now shown in the timezone set in Settings > General, existing conversations included. The Knowledge list and the learned-pages list are corrected the same way. Thanks to @slafever for the report.
+* Fixed: the Conversations date filter and the "today" counts on the dashboard used the database server's day instead of the site's.
+
 = 1.21.2 =
 * Added: during Black Friday 2026 (November 26 to December 2), the Settings screen shows a short notice about the Rapls AI Chatbot Pro discount, with the end time in your site's timezone. It appears only on the Settings screen, only to administrators of sites without Pro, and not at all outside those dates. Each administrator can dismiss it for good, and the raplsaich_show_promo_notice filter turns it off. Nothing is loaded from outside the plugin.
 * Changed: while that notice is shown, the review request is held back, so the two never appear together. Once the notice is dismissed or the dates have passed, the review request returns under its usual conditions.
@@ -363,6 +367,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.3 =
+Conversation times are now shown in your site's timezone instead of the database server's.
 
 = 1.21.2 =
 Adds a dismissible Black Friday notice on the Settings screen (November 26 to December 2, 2026 only) and a Pro link in the plugin's row on the Plugins screen.

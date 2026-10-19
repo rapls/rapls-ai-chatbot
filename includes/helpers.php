@@ -305,6 +305,96 @@ function raplsaich_scheduled_retirement(array $table, string $model): ?array {
 }
 
 /**
+ * Unix timestamps for DATETIME values the database wrote itself.
+ *
+ * Conversation, message, knowledge and index rows get their times from
+ * MySQL (DEFAULT CURRENT_TIMESTAMP, NOW()), which uses the database server's
+ * timezone, not the site's. UNIX_TIMESTAMP() reads them back in that same
+ * timezone, daylight saving included, so each value converts correctly no
+ * matter when it was written. Values are converted in one query per chunk
+ * and remembered for the request.
+ *
+ * If the query fails, a value is read as site-local time, which is how
+ * these times were shown before.
+ *
+ * @param string[] $values DATETIME strings (Y-m-d H:i:s).
+ * @return array<string, int> Value => Unix timestamp (0 for empty/invalid).
+ */
+function raplsaich_db_datetimes_to_timestamps(array $values): array {
+    static $cache = [];
+    global $wpdb;
+
+    $todo = [];
+    foreach ($values as $value) {
+        $value = (string) $value;
+        if (isset($cache[$value])) {
+            continue;
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) || strpos($value, '0000-00-00') === 0) {
+            $cache[$value] = 0;
+            continue;
+        }
+        $todo[$value] = true;
+    }
+
+    foreach (array_chunk(array_keys($todo), 100) as $chunk) {
+        $columns = implode(', ', array_fill(0, count($chunk), 'UNIX_TIMESTAMP(%s)'));
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $row = $wpdb->get_row($wpdb->prepare("SELECT {$columns}", ...$chunk), ARRAY_N);
+        foreach ($chunk as $i => $value) {
+            $ts = is_array($row) ? (int) ($row[$i] ?? 0) : 0;
+            $cache[$value] = $ts > 0 ? $ts : (int) mysql2date('U', $value);
+        }
+    }
+
+    $out = [];
+    foreach ($values as $value) {
+        $out[(string) $value] = $cache[(string) $value] ?? 0;
+    }
+    return $out;
+}
+
+/**
+ * Format a database-written DATETIME (see raplsaich_db_datetimes_to_timestamps())
+ * in the site's timezone. Pass every value on the screen to
+ * raplsaich_db_datetimes_to_timestamps() first to convert them in one query.
+ *
+ * @param string|null $value  DATETIME string.
+ * @param string      $format PHP date format.
+ * @return string Formatted time, or '' for an empty/invalid value.
+ */
+function raplsaich_format_db_datetime(?string $value, string $format = 'Y/m/d H:i'): string {
+    $ts = raplsaich_db_datetimes_to_timestamps([(string) $value])[(string) $value] ?? 0;
+    return $ts > 0 ? wp_date($format, $ts) : '';
+}
+
+/**
+ * The database-timezone DATETIME for a moment, for comparing with values the
+ * database wrote itself (e.g. a date filter typed in the site's timezone).
+ *
+ * @param int $timestamp Unix timestamp.
+ * @return string DATETIME in the database's timezone.
+ */
+function raplsaich_timestamp_to_db_datetime(int $timestamp): string {
+    global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $value = $wpdb->get_var($wpdb->prepare('SELECT FROM_UNIXTIME(%d)', $timestamp));
+    return is_string($value) && $value !== '' ? substr($value, 0, 19) : wp_date('Y-m-d H:i:s', $timestamp);
+}
+
+/**
+ * The database-timezone DATETIME for a time typed in the site's timezone
+ * (e.g. the start of a date filter), for comparing with created_at.
+ *
+ * @param string $local DATETIME in the site's timezone (Y-m-d H:i:s).
+ * @return string DATETIME in the database's timezone; $local itself if it is not a valid time.
+ */
+function raplsaich_site_datetime_to_db_datetime(string $local): string {
+    $time = date_create_immutable($local, wp_timezone());
+    return $time ? raplsaich_timestamp_to_db_datetime($time->getTimestamp()) : $local;
+}
+
+/**
  * Normalize a user-supplied OpenAI-compatible base URL to its root.
  *
  * Users often paste the full endpoint (e.g. .../compatible-mode/v1/embeddings)

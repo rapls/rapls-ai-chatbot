@@ -203,11 +203,11 @@ class RAPLSAICH_Conversation {
             // Date range only applies when not deep-linking to a single id.
             if (!empty($args['date_from'])) {
                 $where .= ' AND c.created_at >= %s';
-                $params[] = $args['date_from'] . ' 00:00:00';
+                $params[] = raplsaich_site_datetime_to_db_datetime($args['date_from'] . ' 00:00:00');
             }
             if (!empty($args['date_to'])) {
                 $where .= ' AND c.created_at <= %s';
-                $params[] = $args['date_to'] . ' 23:59:59';
+                $params[] = raplsaich_site_datetime_to_db_datetime($args['date_to'] . ' 23:59:59');
             }
         }
 
@@ -304,11 +304,11 @@ class RAPLSAICH_Conversation {
         if ($cid === 0) {
             if (!empty($args['date_from'])) {
                 $where .= ' AND c.created_at >= %s';
-                $params[] = $args['date_from'] . ' 00:00:00';
+                $params[] = raplsaich_site_datetime_to_db_datetime($args['date_from'] . ' 00:00:00');
             }
             if (!empty($args['date_to'])) {
                 $where .= ' AND c.created_at <= %s';
-                $params[] = $args['date_to'] . ' 23:59:59';
+                $params[] = raplsaich_site_datetime_to_db_datetime($args['date_to'] . ' 23:59:59');
             }
         }
 
@@ -346,11 +346,12 @@ class RAPLSAICH_Conversation {
         global $wpdb;
         $table = self::get_table_name();
 
-        // Use MySQL CURDATE() to match CURRENT_TIMESTAMP stored in created_at (same TZ)
+        // "Today" is the site's day; created_at is in the database's timezone.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM `{$table}` WHERE DATE(created_at) = CURDATE()"
-        );
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= %s",
+            raplsaich_site_datetime_to_db_datetime(wp_date('Y-m-d 00:00:00'))
+        ));
     }
 
     /**
@@ -736,6 +737,7 @@ class RAPLSAICH_Conversation {
             __('Created At', 'rapls-ai-chatbot'),
         ];
 
+        raplsaich_db_datetimes_to_timestamps(array_column((array) $conversations, 'created_at'));
         foreach ($conversations as $c) {
             $rows[] = [
                 $c['id'] ?? '',
@@ -744,7 +746,7 @@ class RAPLSAICH_Conversation {
                 $c['message_count'] ?? '',
                 !empty($c['converted_at']) ? __('Yes', 'rapls-ai-chatbot') : __('No', 'rapls-ai-chatbot'),
                 self::csv_safe_cell($c['page_url'] ?? ''),
-                $c['created_at'] ?? '',
+                raplsaich_format_db_datetime($c['created_at'] ?? '', 'Y-m-d H:i:s'),
             ];
         }
 

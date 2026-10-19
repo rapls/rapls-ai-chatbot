@@ -152,11 +152,12 @@ class RAPLSAICH_Message {
         global $wpdb;
         $table = self::get_table_name();
 
-        // Use MySQL CURDATE() to match CURRENT_TIMESTAMP stored in created_at (same TZ)
+        // "Today" is the site's day; created_at is in the database's timezone.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
-        return (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM `{$table}` WHERE DATE(created_at) = CURDATE()"
-        );
+        return (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM `{$table}` WHERE created_at >= %s",
+            raplsaich_site_datetime_to_db_datetime(wp_date('Y-m-d 00:00:00'))
+        ));
     }
 
     /**

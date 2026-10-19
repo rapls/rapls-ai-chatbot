@@ -141,6 +141,7 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                 </tr>
             </thead>
             <tbody>
+                <?php raplsaich_db_datetimes_to_timestamps(array_merge(array_column((array) $conversations, 'created_at'), array_column((array) $conversations, 'updated_at'))); ?>
                 <?php foreach ($conversations as $conv): ?>
                     <?php
                     // Get lead info for this conversation
@@ -236,8 +237,8 @@ $_GET['page'] ?? '')))); ?>" class="button"><?php esc_html_e('Clear', 'rapls-ai-
                         </td>
                         <td title="<?php
                             /* translators: %s: conversation start datetime */
-                            echo esc_attr(sprintf(__('Started: %s', 'rapls-ai-chatbot'), mysql2date('Y/m/d H:i', $conv['created_at'])));
-                        ?>"><?php echo esc_html(mysql2date('Y/m/d H:i', $conv['updated_at'])); ?></td>
+                            echo esc_attr(sprintf(__('Started: %s', 'rapls-ai-chatbot'), raplsaich_format_db_datetime($conv['created_at'])));
+                        ?>"><?php echo esc_html(raplsaich_format_db_datetime($conv['updated_at'])); ?></td>
                         <td>
                             <button type="button" class="button button-small raplsaich-view-conversation"
                                     data-id="<?php echo esc_attr($conv['id']); ?>">
