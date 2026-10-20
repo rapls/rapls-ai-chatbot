@@ -2366,6 +2366,19 @@ if (!defined('ABSPATH')) {
                             </p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e('Load reCAPTCHA', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[recaptcha_lazy]" value="1"
+                                    <?php checked($settings['recaptcha_lazy'] ?? false); ?>>
+                                <?php esc_html_e('Only when the chat is opened', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e('Google\'s reCAPTCHA script (about 700 KB on mobile) is then loaded when a visitor opens the chat or clicks into its input, not on every page load, so pages where nobody chats stay lighter. The first message waits a moment for it. reCAPTCHA v3 scores visitors partly from how they used the page before the check, so scores can be a little less accurate. Not used with "Use existing reCAPTCHA on the page".', 'rapls-ai-chatbot'); ?>
+                            </p>
+                        </td>
+                    </tr>
                 </table>
 
                 <hr style="margin: 30px 0;">

@@ -597,6 +597,14 @@
                 }
             });
 
+            // reCAPTCHA on demand: start loading as soon as the visitor
+            // reaches for the input (covers inline mode, which never "opens").
+            if (this.config.recaptcha_lazy) {
+                this.inputTextarea.addEventListener('focus', function() {
+                    self._loadRecaptcha();
+                });
+            }
+
             // テキストエリア自動リサイズ
             this.inputTextarea.addEventListener('input', function() {
                 this.style.height = 'auto';
@@ -700,6 +708,9 @@
             this.window.setAttribute('aria-hidden', 'false');
             this.window.inert = false;
             this.applyIosKeyboardFix();
+            if (this.config.recaptcha_lazy) {
+                this._loadRecaptcha();
+            }
 
             // セッション読み込み中は待機（loadSession完了後にcheckAndShowLeadFormが呼ばれる）
             if (this.sessionLoading) {
@@ -1643,7 +1654,7 @@
          * reCAPTCHAトークンを取得
          * @param {string} action - reCAPTCHA action name (must match PHP expected_action)
          */
-        getRecaptchaToken: function(action) {
+        getRecaptchaToken: function(action, afterLoad) {
             var self = this;
 
             // reCAPTCHAが無効の場合は空のトークンを返す
@@ -1653,6 +1664,13 @@
 
             // grecaptchaが利用可能かチェック
             if (typeof grecaptcha === 'undefined' || !grecaptcha.execute) {
+                // On-demand mode: load it now and ask again once (afterLoad
+                // stops a loop when the script cannot load).
+                if (this.config.recaptcha_lazy && !afterLoad) {
+                    return this._loadRecaptcha().then(function() {
+                        return self.getRecaptchaToken(action, true);
+                    });
+                }
                 if (self.config.debug) console.warn('reCAPTCHA is not loaded');
                 return Promise.resolve('');
             }
@@ -1674,6 +1692,47 @@
                     resolve('');
                 }
             });
+        },
+
+        /**
+         * Loads Google's reCAPTCHA script once, when it is first needed
+         * (recaptcha_lazy: the chat is opened, its input is focused, or a
+         * token is requested). Resolves when grecaptcha is ready, or after
+         * 10 seconds or a load error, so a send never hangs; the caller then
+         * gets an empty token and the server decides.
+         */
+        _loadRecaptcha: function() {
+            var self = this;
+            if (typeof grecaptcha !== 'undefined' && grecaptcha.execute) {
+                return Promise.resolve();
+            }
+            if (this._recaptchaLoading) {
+                return this._recaptchaLoading;
+            }
+            this._recaptchaLoading = new Promise(function(resolve) {
+                var done = false;
+                var finish = function(ok) {
+                    if (done) return;
+                    done = true;
+                    // Let a later attempt try again after a failure.
+                    if (!ok) self._recaptchaLoading = null;
+                    resolve();
+                };
+                var script = document.createElement('script');
+                script.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(self.config.recaptcha_site_key);
+                script.async = true;
+                script.onload = function() {
+                    if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {
+                        grecaptcha.ready(function() { finish(true); });
+                    } else {
+                        finish(false);
+                    }
+                };
+                script.onerror = function() { finish(false); };
+                setTimeout(function() { finish(typeof grecaptcha !== 'undefined' && !!grecaptcha.execute); }, 10000);
+                document.head.appendChild(script);
+            });
+            return this._recaptchaLoading;
         },
 
         /**

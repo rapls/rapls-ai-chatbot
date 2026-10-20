@@ -240,8 +240,13 @@ class RAPLSAICH_Chatbot_Widget {
         $recaptcha_enabled = !empty($settings['recaptcha_enabled']);
         $recaptcha_site_key = $settings['recaptcha_site_key'] ?? '';
         $recaptcha_use_existing = !empty($settings['recaptcha_use_existing']);
+        // On demand: chatbot.js loads Google's script when the chat is opened,
+        // its input is focused or a token is needed, instead of on every page
+        // load. Not with "use existing", where another plugin owns the script.
+        $recaptcha_lazy = $recaptcha_enabled && !empty($recaptcha_site_key) && !$recaptcha_use_existing
+            && !empty($settings['recaptcha_lazy']);
 
-        if ($recaptcha_enabled && !empty($recaptcha_site_key) && !$recaptcha_use_existing) {
+        if ($recaptcha_enabled && !empty($recaptcha_site_key) && !$recaptcha_use_existing && !$recaptcha_lazy) {
             // Check if reCAPTCHA is already loaded (by us or another plugin)
             if (!wp_script_is('raplsaich-recaptcha', 'enqueued') &&
                 !wp_script_is('google-recaptcha', 'enqueued') && !wp_script_is('google-recaptcha', 'registered')) {
@@ -287,6 +292,7 @@ class RAPLSAICH_Chatbot_Widget {
             'site_locale'         => get_locale(),
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
+            'recaptcha_lazy'      => $recaptcha_lazy,
             'is_pro'              => false, // Pro overrides to true via raplsaich_frontend_config filter
             'session_version'     => get_option('raplsaich_session_version', 1),
             'markdown_enabled'    => $settings['markdown_enabled'] ?? true,

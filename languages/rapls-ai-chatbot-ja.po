@@ -8897,3 +8897,12 @@ msgstr "Pro の機能を見る"
 
 msgid "Pro"
 msgstr "Pro"
+
+msgid "Load reCAPTCHA"
+msgstr "reCAPTCHA の読み込み"
+
+msgid "Only when the chat is opened"
+msgstr "チャットを開いたときだけ"
+
+msgid "Google's reCAPTCHA script (about 700 KB on mobile) is then loaded when a visitor opens the chat or clicks into its input, not on every page load, so pages where nobody chats stay lighter. The first message waits a moment for it. reCAPTCHA v3 scores visitors partly from how they used the page before the check, so scores can be a little less accurate. Not used with \"Use existing reCAPTCHA on the page\"."
+msgstr "Google の reCAPTCHA スクリプト (モバイルで約700 KB) を、ページを開くたびではなく、訪問者がチャットを開くか入力欄をクリックしたときに読み込みます。チャットを使わないページは軽くなります。最初のメッセージは、読み込みを少し待ってから送られます。reCAPTCHA v3 は確認の前のページ上の操作もスコアに使うため、スコアの精度が少し下がることがあります。「ページ上の既存の reCAPTCHA を使用」がオンのときは使われません。"

@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.3
+Stable tag: 1.21.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -226,7 +226,7 @@ Used only if you select the "OpenAI-compatible" provider and enter a base URL. U
 
 = 6. Google reCAPTCHA v3 (Optional) =
 
-Used only if you enable reCAPTCHA in the plugin settings for spam protection. The visitor's IP address and interaction data are sent to Google for verification.
+Used only if you enable reCAPTCHA in the plugin settings for spam protection. The visitor's IP address and interaction data are sent to Google for verification. By default Google's script is loaded on every page that shows the chat; with "Load reCAPTCHA: Only when the chat is opened", it is loaded only when a visitor opens the chat or clicks into its input.
 
 * Service URL: [https://www.google.com/recaptcha/](https://www.google.com/recaptcha/)
 * Terms of Use: [https://policies.google.com/terms](https://policies.google.com/terms)
@@ -266,6 +266,9 @@ You can disable these features in the plugin settings:
 * Web search
 
 == Changelog ==
+
+= 1.21.4 =
+* Added: Settings > Security > "Load reCAPTCHA: Only when the chat is opened". Google's reCAPTCHA script (about 700 KB on mobile, which PageSpeed lists twice because reCAPTCHA loads it again in its own hidden frame) is then loaded when a visitor opens the chat or clicks into its input, instead of on every page load. Pages where nobody chats stay lighter. The first message, a lead form or an offline message waits for the script before sending. Off by default, so nothing changes until you switch it on. Thanks to @slafever for the report and measurements.
 
 = 1.21.3 =
 * Fixed: conversation times ignored the WordPress timezone. The database server records conversation and message times in its own timezone, and the Conversations list, Conversation Details and the CSV export showed them without converting, so on hosts whose database runs in another timezone they were hours off. They are now shown in the timezone set in Settings > General, existing conversations included. The Knowledge list and the learned-pages list are corrected the same way. Thanks to @slafever for the report.
@@ -367,6 +370,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.4 =
+New option to load Google reCAPTCHA only when the chat is opened, instead of on every page load.
 
 = 1.21.3 =
 Conversation times are now shown in your site's timezone instead of the database server's.

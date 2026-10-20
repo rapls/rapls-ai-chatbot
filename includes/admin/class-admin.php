@@ -326,7 +326,7 @@ class RAPLSAICH_Admin {
         }
 
         // Boolean fields
-        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'usage_show_remaining', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall', 'page_context_enabled', 'model_fallback_enabled', 'cost_guard_enabled', 'weekly_summary_enabled', 'visitor_delete_enabled', 'ga4_events_enabled'];
+        $bool_fields = ['show_on_mobile', 'dark_mode', 'markdown_enabled', 'save_history', 'show_feedback_buttons', 'humanizer_enabled', 'grounding_strict_enabled', 'usage_enabled', 'usage_guest_ip_identify', 'usage_show_remaining', 'crawler_enabled', 'consent_strict_mode', 'embedding_enabled', 'web_search_enabled', 'mcp_enabled', 'recaptcha_enabled', 'recaptcha_lazy', 'trust_cloudflare_ip', 'trust_proxy_ip', 'delete_data_on_uninstall', 'page_context_enabled', 'model_fallback_enabled', 'cost_guard_enabled', 'weekly_summary_enabled', 'visitor_delete_enabled', 'ga4_events_enabled'];
         foreach ($bool_fields as $field) {
             if (isset($settings[$field])) {
                 $settings[$field] = (bool) $settings[$field];
@@ -622,8 +622,10 @@ class RAPLSAICH_Admin {
         $sanitized['recaptcha_threshold'] = max(0.1, min(1.0, floatval($input['recaptcha_threshold'] ?? ($existing['recaptcha_threshold'] ?? 0.5))));
         if ($settings_page_submitted) {
             $sanitized['recaptcha_use_existing'] = !empty($input['recaptcha_use_existing']);
+            $sanitized['recaptcha_lazy'] = !empty($input['recaptcha_lazy']);
         } else {
             $sanitized['recaptcha_use_existing'] = $existing['recaptcha_use_existing'] ?? false;
+            $sanitized['recaptcha_lazy'] = $existing['recaptcha_lazy'] ?? false;
         }
 
         // History settings (save_history has hidden input in crawler.php, but guard for safety)
@@ -4429,6 +4431,7 @@ class RAPLSAICH_Admin {
             'recaptcha_secret_key'  => '',
             'recaptcha_threshold'   => 0.5,
             'recaptcha_use_existing' => false,
+            'recaptcha_lazy'        => false,
             'recaptcha_fail_mode'   => 'open',
 
             // IP Trust
