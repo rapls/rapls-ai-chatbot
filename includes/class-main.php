@@ -167,6 +167,7 @@ class RAPLSAICH_Main {
         $this->loader->add_action('admin_notices', $admin, 'retired_claude_model_notice');
         $this->loader->add_action('admin_notices', $admin, 'recaptcha_secret_decryption_notice');
         $this->loader->add_action('admin_notices', $admin, 'gemini_legacy_key_notice');
+        $this->loader->add_action('admin_notices', $admin, 'settings_write_failed_notice');
         $this->loader->add_action('admin_notices', $admin, 'security_settings_notice');
         $this->loader->add_action('admin_notices', $admin, 'handoff_pending_notice');
         $this->loader->add_action('admin_notices', $admin, 'review_request_notice');

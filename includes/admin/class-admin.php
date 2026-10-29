@@ -3338,6 +3338,29 @@ class RAPLSAICH_Admin {
      * Shown only on the plugin's own admin pages, and only when Gemini is
      * actually in use (chat provider or embedding provider).
      */
+    /**
+     * Tell the admin when the database refused the last settings write.
+     * The flag is set by the update_option/add_option hooks in helpers.php.
+     */
+    public function settings_write_failed_notice(): void {
+        if (!current_user_can(self::get_manage_cap()) || !get_transient('raplsaich_settings_write_failed')) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
+        if (strpos($page, 'raplsaich') !== 0) {
+            return;
+        }
+
+        // Shown once; the next failed write sets it again.
+        delete_transient('raplsaich_settings_write_failed');
+
+        echo '<div class="notice notice-error"><p>'
+            . esc_html__('The chatbot settings could not be saved: the database rejected the last change, so the previous settings are still in effect. Try saving again. If this keeps happening, ask your host to check the database error log.', 'rapls-ai-chatbot')
+            . '</p></div>';
+    }
+
     public function gemini_legacy_key_notice(): void {
         if (!current_user_can(self::get_manage_cap())) {
             return;

@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.5
+Stable tag: 1.21.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,10 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.6 =
+* Fixed: on sites whose options table still uses the older "utf8" character set, no chatbot settings could be saved, including API keys. The settings contain an emoji (the default bot avatar 🤖), and such a table cannot store emoji, so the database rejected every save without an error. Emoji and other characters the table cannot hold are now stored as character references and read back as the original characters. Sites on "utf8mb4" are unchanged. Thanks to @awmaeder for the report and testing.
+* Added: a notice on the plugin's screens when the database rejects a settings save, instead of failing silently.
+
 = 1.21.5 =
 * Fixed: after the setup box at the top of the Settings page connected a Gemini or OpenRouter key, clicking "Save Settings" without reloading switched the AI provider and model back to their old values, so the key looked lost. The settings form now updates itself as soon as the connection succeeds. Thanks to @awmaeder for the report.
 
@@ -373,6 +377,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.6 =
+Settings, including API keys, now save on sites whose database cannot store emoji.
 
 = 1.21.5 =
 Saving the settings right after the setup box connects a key no longer switches the AI provider back.

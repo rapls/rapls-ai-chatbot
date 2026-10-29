@@ -699,3 +699,104 @@ function raplsaich_encryption_diagnosis(): array {
 
     return $result;
 }
+
+/**
+ * Whether the options table can only hold 3-byte UTF-8 ("utf8" / "utf8mb3").
+ *
+ * Such a column cannot store emoji or other characters above U+FFFF, and
+ * wpdb refuses to write a value that contains one: update_option() returns
+ * false and nothing is saved. The default bot avatar is an emoji, so on these
+ * sites the whole settings array silently failed to save.
+ */
+function raplsaich_options_need_4byte_encoding(): bool {
+    static $need = null;
+    if ($need === null) {
+        global $wpdb;
+        $charset = $wpdb->get_col_charset($wpdb->options, 'option_value');
+        $need = ('utf8' === $charset);
+    }
+    return $need;
+}
+
+/**
+ * Replace characters above U+FFFF with numeric references (&#x1f916;) in a
+ * string or nested array, so a 3-byte UTF-8 column can store them.
+ *
+ * @param mixed $value Settings value.
+ * @return mixed
+ */
+function raplsaich_encode_4byte_chars($value) {
+    if (is_array($value)) {
+        return array_map('raplsaich_encode_4byte_chars', $value);
+    }
+    if (!is_string($value) || !preg_match('/[\xF0-\xF4]/', $value)) {
+        return $value;
+    }
+    $encoded = preg_replace_callback('/[\x{10000}-\x{10FFFF}]/u', static function ($m) {
+        $b = $m[0];
+        $cp = ((ord($b[0]) & 0x07) << 18) | ((ord($b[1]) & 0x3F) << 12) | ((ord($b[2]) & 0x3F) << 6) | (ord($b[3]) & 0x3F);
+        return '&#x' . dechex($cp) . ';';
+    }, $value);
+    return $encoded === null ? $value : $encoded;
+}
+
+/**
+ * Turn the references written by raplsaich_encode_4byte_chars() back into
+ * characters. Only U+10000–U+10FFFF is decoded, so no HTML-significant
+ * character (< > & " ') can appear from a stored reference.
+ *
+ * @param mixed $value Settings value.
+ * @return mixed
+ */
+function raplsaich_decode_4byte_chars($value) {
+    if (is_array($value)) {
+        return array_map('raplsaich_decode_4byte_chars', $value);
+    }
+    if (!is_string($value) || strpos($value, '&#x') === false) {
+        return $value;
+    }
+    $decoded = preg_replace_callback('/&#x(10[0-9a-f]{4}|[1-9a-f][0-9a-f]{4});/i', static function ($m) {
+        $cp = hexdec($m[1]);
+        return chr(0xF0 | ($cp >> 18)) . chr(0x80 | (($cp >> 12) & 0x3F)) . chr(0x80 | (($cp >> 6) & 0x3F)) . chr(0x80 | ($cp & 0x3F));
+    }, $value);
+    return $decoded === null ? $value : $decoded;
+}
+
+/**
+ * Encode on every write of raplsaich_settings when the column needs it.
+ * pre_update_option covers update_option(), including the writes that remove
+ * the sanitize_option filters; sanitize_option covers add_option() on
+ * activation. Encoding twice is harmless: an encoded value has nothing left
+ * to encode.
+ */
+function raplsaich_encode_settings_for_db($value) {
+    return raplsaich_options_need_4byte_encoding() ? raplsaich_encode_4byte_chars($value) : $value;
+}
+add_filter('pre_update_option_raplsaich_settings', 'raplsaich_encode_settings_for_db', PHP_INT_MAX);
+add_filter('sanitize_option_raplsaich_settings', 'raplsaich_encode_settings_for_db', PHP_INT_MAX);
+
+// Every reader gets the characters back. Decoded on all sites, so a value
+// stored before the table was converted to utf8mb4 still reads correctly.
+add_filter('option_raplsaich_settings', 'raplsaich_decode_4byte_chars');
+
+/*
+ * Note a settings write that the database rejected. wpdb returns false
+ * without telling anyone, so the screen said "saved" while nothing changed.
+ * The flag is set just before the write and cleared once it succeeds; one
+ * left behind means the write failed.
+ */
+add_action('update_option', static function ($option) {
+    if ('raplsaich_settings' === $option) {
+        set_transient('raplsaich_settings_write_failed', 1, DAY_IN_SECONDS);
+    }
+});
+add_action('add_option', static function ($option) {
+    if ('raplsaich_settings' === $option) {
+        set_transient('raplsaich_settings_write_failed', 1, DAY_IN_SECONDS);
+    }
+});
+add_action('update_option_raplsaich_settings', 'raplsaich_clear_settings_write_flag');
+add_action('add_option_raplsaich_settings', 'raplsaich_clear_settings_write_flag');
+function raplsaich_clear_settings_write_flag() {
+    delete_transient('raplsaich_settings_write_failed');
+}
