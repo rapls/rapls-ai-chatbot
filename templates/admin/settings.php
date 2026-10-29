@@ -219,9 +219,6 @@ if (!defined('ABSPATH')) {
                     <?php esc_html_e('Reload this page now', 'rapls-ai-chatbot'); ?>
                 </a>
             </p>
-            <p class="raplsaich-onboarding__reload-note">
-                <?php esc_html_e('Until you reload, the settings form below still shows the previous values. Reload first so you do not accidentally overwrite the key you just saved.', 'rapls-ai-chatbot'); ?>
-            </p>
             <strong><?php esc_html_e('Next: add the chatbot to your site.', 'rapls-ai-chatbot'); ?></strong>
             <ul style="margin: 6px 0 0 18px;">
                 <li><?php esc_html_e('Insert the Gutenberg block "AI Chatbot" into any page or post.', 'rapls-ai-chatbot'); ?></li>

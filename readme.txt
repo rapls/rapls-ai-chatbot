@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.4
+Stable tag: 1.21.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.5 =
+* Fixed: after the setup box at the top of the Settings page connected a Gemini or OpenRouter key, clicking "Save Settings" without reloading switched the AI provider and model back to their old values, so the key looked lost. The settings form now updates itself as soon as the connection succeeds. Thanks to @awmaeder for the report.
+
 = 1.21.4 =
 * Added: Settings > Security > "Load reCAPTCHA: Only when the chat is opened". Google's reCAPTCHA script (about 700 KB on mobile, which PageSpeed lists twice because reCAPTCHA loads it again in its own hidden frame) is then loaded when a visitor opens the chat or clicks into its input, instead of on every page load. Pages where nobody chats stay lighter. The first message, a lead form or an offline message waits for the script before sending. Off by default, so nothing changes until you switch it on. Thanks to @slafever for the report and measurements.
 
@@ -370,6 +373,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.5 =
+Saving the settings right after the setup box connects a key no longer switches the AI provider back.
 
 = 1.21.4 =
 New option to load Google reCAPTCHA only when the chat is opened, instead of on every page load.

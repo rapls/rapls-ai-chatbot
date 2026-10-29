@@ -391,6 +391,33 @@ jQuery(document).ready(function($) {
             $cta.attr('hidden', true);
         }
 
+        // The server has saved the key, provider and model. Mirror them into the
+        // settings form below, which still holds the values from page load, so
+        // clicking "Save Settings" before reloading does not switch them back.
+        function syncSettingsForm(data) {
+            var provider = data.provider;
+            var $provider = $('#ai_provider');
+            if (!provider || !$provider.find('option[value="' + provider + '"]').length) {
+                return;
+            }
+            $provider.val(provider).trigger('change');
+
+            if (data.model) {
+                var $model = $('#raplsaich-' + provider + '-model');
+                if ($model.length && !$model.find('option').filter(function() { return this.value === data.model; }).length) {
+                    $model.append($('<option>').val(data.model).text(data.model));
+                }
+                $model.val(data.model);
+            }
+
+            var $key = $('#' + provider + '_api_key');
+            $key.val('').attr('placeholder', raplsaichAdmin.i18n.keyMask || '••••••••(configured)');
+            $key.closest('.raplsaich-api-key-wrapper').find('.raplsaich-key-status')
+                .removeClass('raplsaich-key-empty')
+                .addClass('raplsaich-key-set')
+                .text(raplsaichAdmin.i18n.keyConfigured || 'Configured');
+        }
+
         function setStatus(level, message) {
             $status.removeClass('raplsaich-onboarding__status--info raplsaich-onboarding__status--success raplsaich-onboarding__status--error');
             if (!message) {
@@ -444,6 +471,7 @@ jQuery(document).ready(function($) {
                     setStatus('success', message);
                     $cta.removeAttr('hidden');
                     $input.val('').prop('disabled', true);
+                    syncSettingsForm(resp.data || {});
                     // Bring the big "reload this page" CTA into view and focus it,
                     // so the recommended next step is unmissable.
                     var $reload = $('#raplsaich-onboarding-reload');
