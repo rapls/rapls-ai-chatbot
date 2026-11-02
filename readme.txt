@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.6
+Stable tag: 1.21.7
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,10 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.21.7 =
+* Fixed: embeddings did not reach 100% on their own. When the embedding provider's rate limit was reached (common on the Gemini free tier), "Generate Embeddings" stopped and site learning skipped the chunks, with nothing retrying them later. "Generate Embeddings" now waits and continues, and anything still missing is filled in by a background job every few minutes until it is done. Thanks to @awmaeder for the report.
+* Fixed: the "remaining" count while generating embeddings showed at most 1. It now shows the real number.
+
 = 1.21.6 =
 * Fixed: on sites whose options table still uses the older "utf8" character set, no chatbot settings could be saved, including API keys. The settings contain an emoji (the default bot avatar 🤖), and such a table cannot store emoji, so the database rejected every save without an error. Emoji and other characters the table cannot hold are now stored as character references and read back as the original characters. Sites on "utf8mb4" are unchanged. Thanks to @awmaeder for the report and testing.
 * Added: a notice on the plugin's screens when the database rejects a settings save, instead of failing silently.
@@ -377,6 +381,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.21.7 =
+Embeddings now finish on their own when the provider's rate limit is reached, instead of stopping part way.
 
 = 1.21.6 =
 Settings, including API keys, now save on sites whose database cannot store emoji.

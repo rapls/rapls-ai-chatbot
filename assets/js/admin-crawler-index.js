@@ -150,6 +150,26 @@ jQuery(document).ready(function($) {
         $btn.prop('disabled', true);
         $status.text((raplsaichCrawler.processing||'Processing...'));
 
+        // Rate-limit waits in a row without any progress before handing the
+        // rest to the background job.
+        var RATE_LIMIT_WAIT = 60;
+        var MAX_RATE_LIMIT_WAITS = 5;
+        var rateLimitWaits = 0;
+        var leftBehind = 0;
+
+        // Count down on the status line, then run the next batch.
+        function waitThen(seconds, next) {
+            var tpl = raplsaichCrawler.embedRateLimited || 'Rate limit reached. Continuing in %d seconds...';
+            (function tick(left) {
+                $status.text(tpl.replace('%d', left));
+                if (left <= 0) {
+                    next();
+                    return;
+                }
+                setTimeout(function() { tick(left - 1); }, 1000);
+            })(seconds);
+        }
+
         function processBatch(source) {
             $.post(ajaxurl, {
                 action: 'raplsaich_generate_embeddings',
@@ -158,22 +178,48 @@ jQuery(document).ready(function($) {
             }, function(response) {
                 if (response.success) {
                     $status.text(response.data.message);
-                    // Continue only while the pass is still making forward
-                    // progress. A pass that embeds nothing but still reports
-                    // items remaining means those items keep failing — stop
-                    // instead of looping on them (and hammering the API).
                     var madeProgress = (response.data.processed || 0) > 0;
-                    if (response.data.remaining > 0 && madeProgress) {
+                    var remaining = response.data.remaining || 0;
+                    if (madeProgress) {
+                        rateLimitWaits = 0;
+                    }
+                    // A rate limit is temporary: wait and try again instead of
+                    // stopping. Give up after several waits with no progress;
+                    // the server has scheduled the background job by then.
+                    if (remaining > 0 && response.data.rate_limited && rateLimitWaits < MAX_RATE_LIMIT_WAITS) {
+                        if (!madeProgress) {
+                            rateLimitWaits++;
+                        }
+                        waitThen(RATE_LIMIT_WAIT, function() { processBatch(source); });
+                        return;
+                    }
+                    // Otherwise continue only while the pass is still making
+                    // forward progress. A pass that embeds nothing but still
+                    // reports items remaining means those items keep failing —
+                    // stop instead of looping on them (and hammering the API).
+                    if (remaining > 0 && madeProgress) {
                         processBatch(source);
-                    } else if (source === 'index') {
+                        return;
+                    }
+                    leftBehind += remaining;
+                    if (source === 'index') {
                         // After index, process knowledge
+                        rateLimitWaits = 0;
                         processBatch('knowledge');
                     } else {
+                        var notice = '';
                         if ((response.data.failed || 0) > 0 && raplsaichCrawler.embedFailedNotice) {
-                            $status.text(raplsaichCrawler.embedFailedNotice.replace('%d', response.data.failed));
+                            notice = raplsaichCrawler.embedFailedNotice.replace('%d', response.data.failed);
+                        }
+                        if (leftBehind > 0 && raplsaichCrawler.embedContinueBackground) {
+                            notice = (notice ? notice + ' ' : '') + raplsaichCrawler.embedContinueBackground.replace('%d', leftBehind);
+                        }
+                        if (notice) {
+                            $status.text(notice);
                         }
                         $btn.prop('disabled', false);
-                        setTimeout(function() { location.reload(); }, 1500);
+                        // Leave a longer message on screen long enough to read.
+                        setTimeout(function() { location.reload(); }, leftBehind > 0 ? 6000 : 1500);
                     }
                 } else {
                     $status.text((raplsaichCrawler.errorLabel||'Error:')+' ' + (response.data || ''));

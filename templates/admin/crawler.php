@@ -432,5 +432,9 @@ wp_localize_script("raplsaich-admin-crawler", "raplsaichCrawler", [
     "removeExcl" => __("Remove exclusion", "rapls-ai-chatbot"),
     /* translators: %d: number of knowledge entries that could not be embedded */
     "embedFailedNotice" => __("Done, but %d entry could not be embedded. See the Knowledge Base list for the reason.", "rapls-ai-chatbot"),
+    /* translators: %d: seconds until the next try */
+    "embedRateLimited" => __("The embedding provider's rate limit was reached. Continuing in %d seconds...", "rapls-ai-chatbot"),
+    /* translators: %d: number of items still without embeddings */
+    "embedContinueBackground" => __("Items still without embeddings: %d. They will be retried in the background over the next few minutes.", "rapls-ai-chatbot"),
 ]);
 ?>

@@ -369,6 +369,7 @@ class RAPLSAICH_Site_Crawler {
 
         try {
             $embeddings = $generator->generate_batch($chunks);
+            $missed     = false;
             foreach ($embeddings as $i => $emb) {
                 if ($emb && isset($chunk_ids[$i]) && $chunk_ids[$i] > 0) {
                     RAPLSAICH_Content_Index::update_embedding(
@@ -376,7 +377,18 @@ class RAPLSAICH_Site_Crawler {
                         RAPLSAICH_Vector_Search::pack_embedding($emb),
                         $generator->get_model()
                     );
+                } elseif (!empty($chunk_ids[$i])) {
+                    $missed = true;
                 }
+            }
+            // Chunks that did not embed now (usually the provider's rate limit
+            // during a large crawl) are filled in by the background job.
+            if ($missed || count($embeddings) < count($chunk_ids)) {
+                RAPLSAICH_Embedding_Generator::schedule_pending(
+                    in_array('rate_limit', $generator->get_last_errors(), true)
+                        ? RAPLSAICH_Embedding_Generator::PENDING_RATE_LIMIT_DELAY
+                        : RAPLSAICH_Embedding_Generator::PENDING_INTERVAL
+                );
             }
         } catch (Exception $e) {
             if (defined('WP_DEBUG') && WP_DEBUG) {

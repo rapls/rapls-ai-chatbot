@@ -443,6 +443,7 @@ class RAPLSAICH_Main {
         add_action('raplsaich_crawl_site', [$crawler, 'crawl_all']);
         add_action('save_post', [$crawler, 'on_save_post'], 10, 2);
         add_action('delete_post', [$crawler, 'on_delete_post']);
+        add_action(RAPLSAICH_Embedding_Generator::PENDING_HOOK, ['RAPLSAICH_Embedding_Generator', 'run_pending']);
 
         // The daily event is scheduled on activation only. When Site Learning
         // is switched on and the event has gone missing (cron reset, a

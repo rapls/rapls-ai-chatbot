@@ -268,6 +268,149 @@ class RAPLSAICH_Embedding_Generator {
     }
 
     /**
+     * Cron hook that fills in embeddings left missing (rate limits during
+     * site learning, a manual run that stopped early).
+     */
+    const PENDING_HOOK = 'raplsaich_embed_pending';
+
+    /**
+     * Seconds between background runs, and after a rate-limit response.
+     */
+    const PENDING_INTERVAL = 120;
+    const PENDING_RATE_LIMIT_DELAY = 300;
+
+    /**
+     * Background runs in a row that may make no progress before it gives up
+     * until the next trigger.
+     */
+    const PENDING_MAX_IDLE_RUNS = 6;
+
+    /**
+     * Embed one batch of rows that have no embedding yet.
+     *
+     * Shared by the "Generate Embeddings" button and the background job.
+     *
+     * @param string $source 'index' or 'knowledge'.
+     * @param int    $limit  Rows per batch.
+     * @return array{processed:int,remaining:int,failed:int,rate_limited:bool,error:string}
+     */
+    public static function process_pending_batch(string $source, int $limit = 50): array {
+        $result = ['processed' => 0, 'remaining' => 0, 'failed' => 0, 'rate_limited' => false, 'error' => ''];
+
+        $generator = new self();
+        if (!$generator->is_configured()) {
+            $result['error'] = 'not_configured';
+            return $result;
+        }
+
+        // Entries whose failure is permanent for the current content (too large,
+        // no text) are skipped so they cannot stall the batch loop; they return
+        // to the queue only when edited or cleared.
+        $skip_ids = $source === 'knowledge' ? RAPLSAICH_Knowledge::get_permanent_embed_failure_ids() : [];
+
+        $pending = $source === 'knowledge'
+            ? RAPLSAICH_Knowledge::get_unembedded_entries($limit, $skip_ids)
+            : RAPLSAICH_Content_Index::get_unembedded_chunks($limit);
+
+        if (!empty($pending)) {
+            $texts = [];
+            $ids   = [];
+            foreach ($pending as $row) {
+                $texts[] = ($row['title'] ?? '') . "\n" . ($row['content'] ?? '');
+                $ids[]   = (int) $row['id'];
+            }
+
+            $embeddings = $generator->generate_batch($texts);
+            $errors     = $generator->get_last_errors();
+
+            foreach ($embeddings as $i => $emb) {
+                $id = $ids[$i] ?? 0;
+                if ($emb && $id) {
+                    $packed = RAPLSAICH_Vector_Search::pack_embedding($emb);
+                    if ($source === 'knowledge') {
+                        RAPLSAICH_Knowledge::update_embedding($id, $packed, $generator->get_model());
+                        RAPLSAICH_Knowledge::clear_embed_error($id);
+                    } else {
+                        RAPLSAICH_Content_Index::update_embedding($id, $packed, $generator->get_model());
+                    }
+                    $result['processed']++;
+                } elseif ($source === 'knowledge' && $id) {
+                    // Record why this entry did not embed, so the Knowledge Base
+                    // screen can show a reason instead of silently indexing nothing.
+                    RAPLSAICH_Knowledge::set_embed_error($id, $errors[$i] ?? 'api_error');
+                }
+            }
+
+            $result['rate_limited'] = in_array('rate_limit', $errors, true);
+        }
+
+        if ($source === 'knowledge') {
+            $result['remaining'] = RAPLSAICH_Knowledge::count_unembedded_entries(RAPLSAICH_Knowledge::get_permanent_embed_failure_ids());
+            $result['failed']    = count(RAPLSAICH_Knowledge::get_embed_errors());
+        } else {
+            $result['remaining'] = RAPLSAICH_Content_Index::count_unembedded_chunks();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Schedule the background job unless it is already waiting.
+     *
+     * @param int $delay Seconds from now.
+     */
+    public static function schedule_pending(int $delay = self::PENDING_INTERVAL): void {
+        if (wp_next_scheduled(self::PENDING_HOOK)) {
+            return;
+        }
+        if (!(new self())->is_configured()) {
+            return;
+        }
+        wp_schedule_single_event(time() + $delay, self::PENDING_HOOK);
+    }
+
+    /**
+     * Background job: embed one batch from the site index, then one from the
+     * knowledge base, and schedule itself again while rows remain.
+     *
+     * Rate limits push the next run further out. Runs that make no progress
+     * for any other reason are counted, and after PENDING_MAX_IDLE_RUNS of
+     * them the job stops, so a row that can never embed does not keep calling
+     * the API. A later crawl or click starts it again.
+     */
+    public static function run_pending(): void {
+        $index     = self::process_pending_batch('index');
+        $knowledge = $index['error'] === '' ? self::process_pending_batch('knowledge') : $index;
+
+        if ($index['error'] !== '') {
+            delete_transient('raplsaich_embed_idle_runs');
+            return;
+        }
+
+        $remaining    = $index['remaining'] + $knowledge['remaining'];
+        $processed    = $index['processed'] + $knowledge['processed'];
+        $rate_limited = $index['rate_limited'] || $knowledge['rate_limited'];
+
+        if ($remaining === 0) {
+            delete_transient('raplsaich_embed_idle_runs');
+            return;
+        }
+
+        if ($processed > 0) {
+            delete_transient('raplsaich_embed_idle_runs');
+        } else {
+            $idle = (int) get_transient('raplsaich_embed_idle_runs') + 1;
+            if ($idle >= self::PENDING_MAX_IDLE_RUNS) {
+                delete_transient('raplsaich_embed_idle_runs');
+                return;
+            }
+            set_transient('raplsaich_embed_idle_runs', $idle, DAY_IN_SECONDS);
+        }
+
+        self::schedule_pending($rate_limited ? self::PENDING_RATE_LIMIT_DELAY : self::PENDING_INTERVAL);
+    }
+
+    /**
      * Per-item failure reasons from the most recent generate_batch() call,
      * keyed by the input index. See $last_errors for the reason codes.
      *

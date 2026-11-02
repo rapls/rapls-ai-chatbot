@@ -70,6 +70,7 @@ function raplsaich_uninstall_site() {
     wp_clear_scheduled_hook('raplsaich_cleanup_old_conversations');
     wp_clear_scheduled_hook('raplsaich_monthly_report');
     wp_clear_scheduled_hook('raplsaich_weekly_summary');
+    wp_clear_scheduled_hook('raplsaich_embed_pending');
 
     // Only delete settings, options, and database tables if user opted in
     if ($delete_data) {

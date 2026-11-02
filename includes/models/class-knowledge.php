@@ -630,6 +630,32 @@ class RAPLSAICH_Knowledge {
     }
 
     /**
+     * Count active knowledge entries without embeddings.
+     *
+     * @param int[] $exclude_ids IDs to leave out (see get_unembedded_entries()).
+     */
+    public static function count_unembedded_entries(array $exclude_ids = []): int {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'embedding'"));
+        if (!$has_col) {
+            return 0;
+        }
+
+        $exclude_sql = '';
+        $exclude_ids = array_values(array_unique(array_map('intval', $exclude_ids)));
+        if (!empty($exclude_ids)) {
+            // Integer-cast list — safe to interpolate directly.
+            $exclude_sql = ' AND id NOT IN (' . implode(',', $exclude_ids) . ')';
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE embedding IS NULL AND is_active = 1{$exclude_sql}");
+    }
+
+    /**
      * Clear all embeddings
      */
     public static function clear_all_embeddings(): bool {

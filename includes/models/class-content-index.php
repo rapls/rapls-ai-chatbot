@@ -253,6 +253,23 @@ class RAPLSAICH_Content_Index {
     }
 
     /**
+     * Count chunks without embeddings.
+     */
+    public static function count_unembedded_chunks(): int {
+        global $wpdb;
+        $table = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $has_col = !empty($wpdb->get_results("SHOW COLUMNS FROM `{$table}` LIKE 'embedding'"));
+        if (!$has_col) {
+            return 0;
+        }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$table}` WHERE embedding IS NULL");
+    }
+
+    /**
      * Clear all embeddings (for model change or reset)
      *
      * @return bool True on success

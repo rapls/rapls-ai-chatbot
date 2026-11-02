@@ -4559,72 +4559,32 @@ class RAPLSAICH_Admin {
         }
 
         $source = sanitize_text_field(wp_unslash($_POST['source'] ?? 'index'));
+        $source = $source === 'knowledge' ? 'knowledge' : 'index';
 
-        // Entries whose failure is permanent for the current content (too large,
-        // no text) are skipped so they cannot stall the batch loop; they return
-        // to the queue only when edited or cleared.
-        $skip_ids = $source === 'knowledge' ? RAPLSAICH_Knowledge::get_permanent_embed_failure_ids() : [];
+        $result = RAPLSAICH_Embedding_Generator::process_pending_batch($source);
 
-        if ($source === 'knowledge') {
-            $pending = RAPLSAICH_Knowledge::get_unembedded_entries(50, $skip_ids);
+        // Rows still missing after this pass (the button loop may stop on a
+        // rate limit or a row that keeps failing): let the background job
+        // continue from here, so it reaches 100% without more clicks.
+        if ($result['remaining'] > 0 && ($result['processed'] === 0 || $result['rate_limited'])) {
+            RAPLSAICH_Embedding_Generator::schedule_pending(
+                $result['rate_limited'] ? RAPLSAICH_Embedding_Generator::PENDING_RATE_LIMIT_DELAY : RAPLSAICH_Embedding_Generator::PENDING_INTERVAL
+            );
+        }
+
+        if ($result['processed'] === 0 && $result['remaining'] === 0) {
+            $message = __('All embeddings are up to date.', 'rapls-ai-chatbot');
         } else {
-            $pending = RAPLSAICH_Content_Index::get_unembedded_chunks(50);
-        }
-
-        if (empty($pending)) {
-            wp_send_json_success([
-                'processed' => 0,
-                'remaining' => 0,
-                'failed'    => $source === 'knowledge' ? count(RAPLSAICH_Knowledge::get_embed_errors()) : 0,
-                /* translators: embedding generation complete */
-                'message'   => __('All embeddings are up to date.', 'rapls-ai-chatbot'),
-            ]);
-        }
-
-        $texts = [];
-        $ids = [];
-        foreach ($pending as $row) {
-            $texts[] = ($row['title'] ?? '') . "\n" . ($row['content'] ?? '');
-            $ids[]   = (int) $row['id'];
-        }
-
-        $embeddings = $generator->generate_batch($texts);
-        $errors     = $generator->get_last_errors();
-
-        $processed = 0;
-        foreach ($embeddings as $i => $emb) {
-            $id = $ids[$i] ?? 0;
-            if ($emb && $id) {
-                $packed = RAPLSAICH_Vector_Search::pack_embedding($emb);
-                if ($source === 'knowledge') {
-                    RAPLSAICH_Knowledge::update_embedding($id, $packed, $generator->get_model());
-                    RAPLSAICH_Knowledge::clear_embed_error($id);
-                } else {
-                    RAPLSAICH_Content_Index::update_embedding($id, $packed, $generator->get_model());
-                }
-                $processed++;
-            } elseif ($source === 'knowledge' && $id) {
-                // Record why this entry did not embed, so the Knowledge Base
-                // screen can show a reason instead of silently indexing nothing.
-                RAPLSAICH_Knowledge::set_embed_error($id, $errors[$i] ?? 'api_error');
-            }
-        }
-
-        // Count remaining (excluding the permanently-failed entries we skip).
-        if ($source === 'knowledge') {
-            $remaining   = count(RAPLSAICH_Knowledge::get_unembedded_entries(1, RAPLSAICH_Knowledge::get_permanent_embed_failure_ids()));
-            $total_failed = count(RAPLSAICH_Knowledge::get_embed_errors());
-        } else {
-            $remaining    = count(RAPLSAICH_Content_Index::get_unembedded_chunks(1));
-            $total_failed = 0;
+            /* translators: 1: number processed, 2: number remaining */
+            $message = sprintf(__('Processed %1$d embeddings. %2$d remaining.', 'rapls-ai-chatbot'), $result['processed'], $result['remaining']);
         }
 
         wp_send_json_success([
-            'processed' => $processed,
-            'remaining' => $remaining,
-            'failed'    => $total_failed,
-            /* translators: 1: number processed, 2: number remaining */
-            'message'   => sprintf(__('Processed %1$d embeddings. %2$d remaining.', 'rapls-ai-chatbot'), $processed, $remaining),
+            'processed'    => $result['processed'],
+            'remaining'    => $result['remaining'],
+            'failed'       => $result['failed'],
+            'rate_limited' => $result['rate_limited'],
+            'message'      => $message,
         ]);
     }
 
