@@ -7717,6 +7717,14 @@ msgstr "すべての回答の下にも質問ボタンを表示する (ウェル�
 msgid "When on, the same preset chips reappear after each AI response — handy for navigation-style bots where visitors often jump between common topics. When off, the chips show only once after the welcome message."
 msgstr "オンにすると、AI が回答するたびに同じ質問ボタンが再表示されます。よくある話題を行き来するナビゲーション型のボットに便利です。オフの場合は、ウェルカムメッセージの直後に1回だけ表示されます。"
 
+#: templates/admin/settings.php
+msgid "Type the preset questions into the empty message box, one after another"
+msgstr "空のメッセージ入力欄に、質問ボタンの質問を1つずつタイプ表示する"
+
+#: templates/admin/settings.php
+msgid "Shows visitors what they can ask before they start typing. The animation pauses while the visitor is typing. Visitors who have reduced motion turned on see the first question without animation."
+msgstr "入力を始める前に、どんな質問ができるかを訪問者に示します。訪問者が入力している間は、アニメーションが止まります。「視差効果を減らす」などの動きを減らす設定をオンにしている訪問者には、最初の質問をアニメーションなしで表示します。"
+
 #:#: templates/admin/settings.php
 msgid "Fixed reply (optional)"
 msgstr "固定回答 (任意)"

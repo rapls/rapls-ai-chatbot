@@ -1371,6 +1371,16 @@ if (!defined('ABSPATH')) {
                                     <?php esc_html_e('When on, the same preset chips reappear after each AI response — handy for navigation-style bots where visitors often jump between common topics. When off, the chips show only once after the welcome message.', 'rapls-ai-chatbot'); ?>
                                 </span>
                             </p>
+                            <p style="margin-top: 12px;">
+                                <label>
+                                    <input type="checkbox" name="raplsaich_settings[preset_questions_typing_placeholder]" value="1"
+                                        <?php checked($settings['preset_questions_typing_placeholder'] ?? false); ?>>
+                                    <?php esc_html_e('Type the preset questions into the empty message box, one after another', 'rapls-ai-chatbot'); ?>
+                                </label>
+                                <span class="description" style="display:block;margin-left:24px;color:#646970;">
+                                    <?php esc_html_e('Shows visitors what they can ask before they start typing. The animation pauses while the visitor is typing. Visitors who have reduced motion turned on see the first question without animation.', 'rapls-ai-chatbot'); ?>
+                                </span>
+                            </p>
                             <script>
                             (function() {
                                 var maxRows = 10;

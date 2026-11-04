@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.21.7
+Stable tag: 1.22.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.22.0 =
+* Added: an option to type the preset questions into the empty message box, one after another, so visitors can see what they can ask before they start typing. It pauses while the visitor is typing, and visitors who have reduced motion turned on see the first question without animation. Turn it on under Chat Settings > Preset Question Buttons; it is off by default. Thanks to @awmaeder for the suggestion.
+
 = 1.21.7 =
 * Fixed: embeddings did not reach 100% on their own. When the embedding provider's rate limit was reached (common on the Gemini free tier), "Generate Embeddings" stopped and site learning skipped the chunks, with nothing retrying them later. "Generate Embeddings" now waits and continues, and anything still missing is filled in by a background job every few minutes until it is done. Thanks to @awmaeder for the report.
 * Fixed: the "remaining" count while generating embeddings showed at most 1. It now shows the real number.
@@ -381,6 +384,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.22.0 =
+New option to type the preset questions into the empty message box as an animated hint. Off by default.
 
 = 1.21.7 =
 Embeddings now finish on their own when the provider's rate limit is reached, instead of stopping part way.

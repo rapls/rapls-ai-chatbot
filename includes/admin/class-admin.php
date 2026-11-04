@@ -823,12 +823,14 @@ class RAPLSAICH_Admin {
         if ($settings_page_submitted) {
             $sanitized['preset_questions_enabled']    = !empty($input['preset_questions_enabled']);
             $sanitized['preset_questions_persistent'] = !empty($input['preset_questions_persistent']);
+            $sanitized['preset_questions_typing_placeholder'] = !empty($input['preset_questions_typing_placeholder']);
             $sanitized['preset_questions'] = self::sanitize_preset_questions(
                 $input['preset_questions'] ?? []
             );
         } else {
             $sanitized['preset_questions_enabled']    = $existing['preset_questions_enabled'] ?? false;
             $sanitized['preset_questions_persistent'] = $existing['preset_questions_persistent'] ?? false;
+            $sanitized['preset_questions_typing_placeholder'] = $existing['preset_questions_typing_placeholder'] ?? false;
             $sanitized['preset_questions']            = $existing['preset_questions'] ?? [];
         }
 
@@ -4403,6 +4405,7 @@ class RAPLSAICH_Admin {
             // Preset Question Buttons (chips shown under the welcome message)
             'preset_questions_enabled'    => false,
             'preset_questions_persistent' => false, // when true, also show after every bot reply
+            'preset_questions_typing_placeholder' => false, // type the preset questions into the empty input as a placeholder
             'preset_questions'            => [],
 
             // Glossary (proper nouns / brand terms protected from mistranslation)

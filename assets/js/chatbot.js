@@ -121,6 +121,10 @@
             // Pro features initialize here (registered by chatbot-pro.js)
             this.runProHook('init');
 
+            // Optional: type the preset questions into the empty input as an
+            // animated placeholder.
+            this.initTypingPlaceholder();
+
             // Deep-link: a ?raplsaich_q= (or ?q=) URL opens the chat and sends
             // that question automatically. Lets sites link "suggested questions"
             // straight into a live conversation.
@@ -236,6 +240,118 @@
                     this.config.strings.placeholder = placeholder;
                 }
             }
+        },
+
+        /**
+         * Type the preset questions into the empty input as a placeholder,
+         * one after another (enabled by the preset_typing_placeholder setting).
+         *
+         * Keeps running while the input has focus (the chat focuses it on
+         * open), but shows the normal placeholder whenever the input contains
+         * text and starts over once it is empty again, including after a send
+         * clears it. Idles while the chat window is closed or the tab is
+         * hidden. Visitors with prefers-reduced-motion see the first question,
+         * without animation.
+         */
+        initTypingPlaceholder: function() {
+            if (!this.config.preset_typing_placeholder || !this.inputTextarea) return;
+
+            var questions = [];
+            var presets = this.config.preset_questions || [];
+            for (var i = 0; i < presets.length; i++) {
+                var item = presets[i] || {};
+                var leaves = Array.isArray(item.children) ? item.children : [item];
+                for (var j = 0; j < leaves.length; j++) {
+                    var q = leaves[j] && leaves[j].question ? String(leaves[j].question).trim() : '';
+                    if (q && questions.indexOf(q) === -1) questions.push(q);
+                }
+            }
+            if (!questions.length) return;
+
+            var self = this;
+            var input = this.inputTextarea;
+            var originalPlaceholder = input.placeholder || '';
+            var basePlaceholder = function() {
+                return (self.config.strings && self.config.strings.placeholder) || originalPlaceholder;
+            };
+
+            var reducedMotion = false;
+            try {
+                reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+            } catch (e) {
+                reducedMotion = false;
+            }
+            if (reducedMotion) {
+                // A placeholder is only visible while the input is empty, so
+                // a static question needs no further handling.
+                input.placeholder = questions[0];
+                return;
+            }
+
+            var TYPE_MS = 55, ERASE_MS = 25, HOLD_MS = 2200, GAP_MS = 500, IDLE_MS = 400;
+            var state = { index: 0, chars: 0, deleting: false, paused: false };
+
+            var tick = function() {
+                // The visitor is typing (or a value was restored): show the
+                // normal placeholder and start the current question over once
+                // the input is empty again.
+                if (input.value) {
+                    if (!state.paused) {
+                        state.paused = true;
+                        state.chars = 0;
+                        state.deleting = false;
+                        input.placeholder = basePlaceholder();
+                    }
+                    setTimeout(tick, IDLE_MS);
+                    return;
+                }
+                if (state.paused) {
+                    state.paused = false;
+                    input.placeholder = '';
+                    setTimeout(tick, GAP_MS);
+                    return;
+                }
+                // Nothing to look at: wait without touching the DOM.
+                if (!self.isOpen || document.hidden) {
+                    setTimeout(tick, IDLE_MS);
+                    return;
+                }
+                var text = questions[state.index];
+                if (!state.deleting) {
+                    state.chars++;
+                    input.placeholder = text.slice(0, state.chars);
+                    if (state.chars >= text.length) {
+                        state.deleting = true;
+                        setTimeout(tick, HOLD_MS);
+                    } else {
+                        setTimeout(tick, TYPE_MS);
+                    }
+                } else {
+                    state.chars--;
+                    input.placeholder = text.slice(0, Math.max(0, state.chars));
+                    if (state.chars <= 0) {
+                        state.deleting = false;
+                        state.chars = 0;
+                        state.index = (state.index + 1) % questions.length;
+                        setTimeout(tick, GAP_MS);
+                    } else {
+                        setTimeout(tick, ERASE_MS);
+                    }
+                }
+            };
+
+            // React at once to typing instead of waiting for the next tick.
+            input.addEventListener('input', function() {
+                if (input.value && !state.paused) {
+                    state.paused = true;
+                    state.chars = 0;
+                    state.deleting = false;
+                    input.placeholder = basePlaceholder();
+                }
+            });
+
+            input.placeholder = '';
+            setTimeout(tick, GAP_MS);
         },
 
         /**
