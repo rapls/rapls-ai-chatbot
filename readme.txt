@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.23.0
+Stable tag: 1.23.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.23.1 =
+* Fixed: on themes that give every text box a minimum height (such as Cocoon on phones), the chat's message box was several lines tall. It is one line again.
+* Fixed: with the iOS Safari keyboard fix on, the page showed through between the chat window and the keyboard on iPhone Safari. That space now uses the chat's background color.
+* Fixed: "Bottom, clear of the keyboard buttons" did not add its space in Firefox on iPhone.
+
 = 1.23.0 =
 * Added: a "Message box position on phones" option under Display Settings > Mobile Display, for when the chat fills the screen. On iPhone, the buttons that float above the keyboard could cover the message box. "Bottom, clear of the keyboard buttons" adds space under the message box while the keyboard is open, and "Top, under the header" moves the message box away from the keyboard. The default, "Bottom", keeps the current layout. Thanks to @awmaeder for the report and screenshots.
 
@@ -390,6 +395,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.23.1 =
+Fixes a tall message box on some themes and the keyboard layout on iPhone.
 
 = 1.23.0 =
 New option to keep the message box clear of the iPhone keyboard buttons, or to place it at the top on phones. The default layout is unchanged.

@@ -1036,6 +1036,9 @@
     font-size: 16px;
     font-family: inherit;
     resize: none;
+    /* Some themes give every textarea a min-height (Cocoon: 160px below
+       834px), which beats max-height and makes the box several lines tall. */
+    min-height: 0;
     max-height: 100px;
     line-height: 1.4;
     outline: 2px solid transparent;
@@ -1353,6 +1356,20 @@
        inside the visual viewport, so leave room for them while it is open. */
     .wp-ai-chatbot.raplsaich-mobile-input-bottom-avoid.raplsaich-kbd-open[data-state="open"] .chatbot-input {
         padding-bottom: 68px;
+    }
+
+    /* iPhone Safari leaves the band with its floating buttons (URL pill,
+       up/down, done) out of the visual viewport, so the page showed through
+       between the chat window and the keyboard. Fill it with the chat
+       background. */
+    .wp-ai-chatbot.raplsaich-kbd-open[data-state="open"]::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 100%;
+        height: 100vh;
+        background: var(--raplsaich-bg);
     }
 }
 

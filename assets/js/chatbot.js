@@ -485,7 +485,11 @@
                 }
                 // The on-screen keyboard shrinks the visual viewport well
                 // below the layout viewport; the URL bar alone does not.
-                self.container.classList.toggle('raplsaich-kbd-open', (window.innerHeight - vv.height) > 120);
+                // Firefox on iOS resizes the layout viewport too, so also
+                // treat a focused message box on a touch screen as "open".
+                var inputFocused = !!self.inputTextarea && document.activeElement === self.inputTextarea
+                    && (navigator.maxTouchPoints || 0) > 0;
+                self.container.classList.toggle('raplsaich-kbd-open', inputFocused || (window.innerHeight - vv.height) > 120);
                 // iOS が window を強制スクロールした場合の打ち消し
                 if ((window.scrollY || window.pageYOffset) !== 0) {
                     window.scrollTo(0, 0);
@@ -528,6 +532,11 @@
                     setTimeout(self._iosKbdApply, 600);
                 };
                 this.inputTextarea.addEventListener('focus', this._iosKbdFocus);
+                // Drop the keyboard state once the keyboard has closed.
+                this.inputTextarea.addEventListener('blur', function() {
+                    setTimeout(self._iosKbdApply, 50);
+                    setTimeout(self._iosKbdApply, 350);
+                });
             }
         },
 
