@@ -249,9 +249,10 @@
          * Keeps running while the input has focus (the chat focuses it on
          * open), but shows the normal placeholder whenever the input contains
          * text and starts over once it is empty again, including after a send
-         * clears it. Idles while the chat window is closed or the tab is
-         * hidden. Visitors with prefers-reduced-motion see the first question,
-         * without animation.
+         * clears it. Long questions stay on one line and scroll to the left.
+         * Idles while the chat window is closed or the tab is hidden. Visitors
+         * with prefers-reduced-motion see the first question, without
+         * animation, cut to one line.
          */
         initTypingPlaceholder: function() {
             if (!this.config.preset_typing_placeholder || !this.inputTextarea) return;
@@ -281,10 +282,69 @@
             } catch (e) {
                 reducedMotion = false;
             }
+
+            // The empty input is one line high, so a question that wraps
+            // would hide its second line. Measure the text and keep it on one
+            // line: while typing, drop characters from the start (the text
+            // scrolls to the left); for the static question, cut the end.
+            var ELLIPSIS = '\u2026';
+            var measureCtx = null;
+            var measureFont = '';
+            var textWidth = function(str) {
+                return measureCtx ? measureCtx.measureText(str).width : 0;
+            };
+            var availableWidth = function() {
+                var cs;
+                try {
+                    cs = window.getComputedStyle(input);
+                } catch (e) {
+                    return 0;
+                }
+                var width = input.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0) - 4;
+                if (width <= 0) return 0;
+                var font = [cs.fontStyle, cs.fontVariant, cs.fontWeight, cs.fontSize, cs.fontFamily].join(' ');
+                if (!measureCtx) {
+                    try {
+                        measureCtx = document.createElement('canvas').getContext('2d');
+                    } catch (e) {
+                        measureCtx = null;
+                    }
+                    if (!measureCtx) return 0;
+                }
+                if (font !== measureFont) {
+                    measureCtx.font = font;
+                    measureFont = font;
+                }
+                return width;
+            };
+            var fitTail = function(str) {
+                var width = availableWidth();
+                if (!width || textWidth(str) <= width) return str;
+                var start = 1;
+                while (start < str.length && textWidth(ELLIPSIS + str.slice(start)) > width) start++;
+                return ELLIPSIS + str.slice(start);
+            };
+            var fitHead = function(str) {
+                var width = availableWidth();
+                if (!width || textWidth(str) <= width) return str;
+                var end = str.length - 1;
+                while (end > 0 && textWidth(str.slice(0, end) + ELLIPSIS) > width) end--;
+                return str.slice(0, end) + ELLIPSIS;
+            };
+
             if (reducedMotion) {
-                // A placeholder is only visible while the input is empty, so
-                // a static question needs no further handling.
+                // No animation: show the first question, cut to one line.
+                // Re-fit now and then, because the input has no width while
+                // the chat is closed and changes width with the window.
+                var showStatic = function() {
+                    if (!input.value && self.isOpen && !document.hidden) {
+                        var fitted = fitHead(questions[0]);
+                        if (input.placeholder !== fitted) input.placeholder = fitted;
+                    }
+                    setTimeout(showStatic, 1000);
+                };
                 input.placeholder = questions[0];
+                showStatic();
                 return;
             }
 
@@ -319,7 +379,7 @@
                 var text = questions[state.index];
                 if (!state.deleting) {
                     state.chars++;
-                    input.placeholder = text.slice(0, state.chars);
+                    input.placeholder = fitTail(text.slice(0, state.chars));
                     if (state.chars >= text.length) {
                         state.deleting = true;
                         setTimeout(tick, HOLD_MS);
@@ -328,7 +388,7 @@
                     }
                 } else {
                     state.chars--;
-                    input.placeholder = text.slice(0, Math.max(0, state.chars));
+                    input.placeholder = fitTail(text.slice(0, Math.max(0, state.chars)));
                     if (state.chars <= 0) {
                         state.deleting = false;
                         state.chars = 0;

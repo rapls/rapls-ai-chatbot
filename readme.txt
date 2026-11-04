@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.22.0
+Stable tag: 1.22.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.22.1 =
+* Fixed: on small screens, a preset question that was typed into the message box wrapped onto a second line that could not be seen. Long questions now stay on one line and scroll to the left as they are typed; with reduced motion turned on, the question is cut off with "…". Thanks to @awmaeder for the report.
+
 = 1.22.0 =
 * Added: an option to type the preset questions into the empty message box, one after another, so visitors can see what they can ask before they start typing. It pauses while the visitor is typing, and visitors who have reduced motion turned on see the first question without animation. Turn it on under Chat Settings > Preset Question Buttons; it is off by default. Thanks to @awmaeder for the suggestion.
 
@@ -384,6 +387,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.22.1 =
+Long preset questions in the message box now stay on one line on small screens.
 
 = 1.22.0 =
 New option to type the preset questions into the empty message box as an animated hint. Off by default.
