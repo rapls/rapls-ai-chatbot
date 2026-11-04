@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.22.1
+Stable tag: 1.23.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.23.0 =
+* Added: a "Message box position on phones" option under Display Settings > Mobile Display, for when the chat fills the screen. On iPhone, the buttons that float above the keyboard could cover the message box. "Bottom, clear of the keyboard buttons" adds space under the message box while the keyboard is open, and "Top, under the header" moves the message box away from the keyboard. The default, "Bottom", keeps the current layout. Thanks to @awmaeder for the report and screenshots.
+
 = 1.22.1 =
 * Fixed: on small screens, a preset question that was typed into the message box wrapped onto a second line that could not be seen. Long questions now stay on one line and scroll to the left as they are typed; with reduced motion turned on, the question is cut off with "…". Thanks to @awmaeder for the report.
 
@@ -387,6 +390,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.23.0 =
+New option to keep the message box clear of the iPhone keyboard buttons, or to place it at the top on phones. The default layout is unchanged.
 
 = 1.22.1 =
 Long preset questions in the message box now stay on one line on small screens.

@@ -3383,6 +3383,26 @@ msgstr ""
 "iPhone Safari でオンスクリーンキーボードが表示されたときに、閉じるボタンを画面"
 "内に保ちます。VisualViewport API を使用します。テーマと競合する場合は無効にし"
 "てください。"
+
+#: templates/admin/settings.php
+msgid "Message box position on phones"
+msgstr "スマホでの入力欄の位置"
+
+#: templates/admin/settings.php
+msgid "Bottom"
+msgstr "下"
+
+#: templates/admin/settings.php
+msgid "Bottom, clear of the keyboard buttons"
+msgstr "下 (キーボードのボタンを避ける)"
+
+#: templates/admin/settings.php
+msgid "Top, under the header"
+msgstr "上 (ヘッダーの下)"
+
+#: templates/admin/settings.php
+msgid "Applies when the chat fills the screen (480px wide or less). On iPhone, the buttons that float above the keyboard can cover the message box. \"Bottom, clear of the keyboard buttons\" adds space under the message box while the keyboard is open and turns on the keyboard fix above. \"Top\" moves the message box under the header, away from the keyboard."
+msgstr "チャットが全画面で表示されるとき (幅 480px 以下) に適用されます。iPhone では、キーボードの上に浮かぶボタンがメッセージ入力欄に重なることがあります。「下 (キーボードのボタンを避ける)」は、キーボードが開いている間だけ入力欄の下に余白を足し、上記のキーボード対策もオンにします。「上」は入力欄をヘッダーの下に移し、キーボードから離します。"
 #:#: templates/admin/settings.php:692
 msgid "Show feedback buttons (👍👎) on bot messages"
 msgstr "ボットのメッセージにフィードバックボタン (👍👎) を表示"

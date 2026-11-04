@@ -2124,6 +2124,18 @@ if (!defined('ABSPATH')) {
                             <p class="description">
                                 <?php esc_html_e('Keeps the close button visible when the on-screen keyboard is open on iPhone Safari. Uses the VisualViewport API. Disable if it conflicts with your theme.', 'rapls-ai-chatbot'); ?>
                             </p>
+                            <?php $mobile_input_position = $settings['mobile_input_position'] ?? 'bottom'; ?>
+                            <p style="margin-top: 12px;">
+                                <label for="raplsaich_mobile_input_position"><?php esc_html_e('Message box position on phones', 'rapls-ai-chatbot'); ?></label><br>
+                                <select id="raplsaich_mobile_input_position" name="raplsaich_settings[mobile_input_position]">
+                                    <option value="bottom" <?php selected($mobile_input_position, 'bottom'); ?>><?php esc_html_e('Bottom', 'rapls-ai-chatbot'); ?></option>
+                                    <option value="bottom_avoid" <?php selected($mobile_input_position, 'bottom_avoid'); ?>><?php esc_html_e('Bottom, clear of the keyboard buttons', 'rapls-ai-chatbot'); ?></option>
+                                    <option value="top" <?php selected($mobile_input_position, 'top'); ?>><?php esc_html_e('Top, under the header', 'rapls-ai-chatbot'); ?></option>
+                                </select>
+                            </p>
+                            <p class="description">
+                                <?php esc_html_e('Applies when the chat fills the screen (480px wide or less). On iPhone, the buttons that float above the keyboard can cover the message box. "Bottom, clear of the keyboard buttons" adds space under the message box while the keyboard is open and turns on the keyboard fix above. "Top" moves the message box under the header, away from the keyboard.', 'rapls-ai-chatbot'); ?>
+                            </p>
                         </td>
                     </tr>
                     <tr>

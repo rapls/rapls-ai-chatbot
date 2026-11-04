@@ -1334,6 +1334,26 @@
     .chatbot-resize-handle {
         display: none;
     }
+
+    /* Message box position: "Top, under the header" */
+    .wp-ai-chatbot.raplsaich-mobile-input-top[data-state="open"] .chatbot-header {
+        order: -3;
+    }
+    .wp-ai-chatbot.raplsaich-mobile-input-top[data-state="open"] .chatbot-input {
+        order: -2;
+        border-top: none;
+        border-bottom: 1px solid var(--raplsaich-border);
+    }
+    .wp-ai-chatbot.raplsaich-mobile-input-top[data-state="open"] .chatbot-image-preview {
+        order: -1;
+    }
+
+    /* Message box position: "Bottom, clear of the keyboard buttons".
+       iOS floats its form buttons (up/down, done) just above the keyboard,
+       inside the visual viewport, so leave room for them while it is open. */
+    .wp-ai-chatbot.raplsaich-mobile-input-bottom-avoid.raplsaich-kbd-open[data-state="open"] .chatbot-input {
+        padding-bottom: 68px;
+    }
 }
 
 /* ============================================

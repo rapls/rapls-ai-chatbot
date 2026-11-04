@@ -575,6 +575,15 @@ class RAPLSAICH_Admin {
             $sanitized['ios_keyboard_fix'] = $existing['ios_keyboard_fix'] ?? false;
         }
 
+        // Where the message box sits in the full-screen mobile view.
+        $mobile_input_positions = ['bottom', 'bottom_avoid', 'top'];
+        $mobile_input_position = $display_form_submitted
+            ? ($input['mobile_input_position'] ?? 'bottom')
+            : ($existing['mobile_input_position'] ?? 'bottom');
+        $sanitized['mobile_input_position'] = in_array($mobile_input_position, $mobile_input_positions, true)
+            ? $mobile_input_position
+            : 'bottom';
+
         // Page visibility settings (checkboxes: unchecked = not present when Display form submitted)
         if ($display_form_submitted) {
             $sanitized['badge_show_on_home'] = !empty($input['badge_show_on_home']);
@@ -4394,6 +4403,7 @@ class RAPLSAICH_Admin {
             'primary_color'         => '#007bff',
             'show_on_mobile'        => true,
             'ios_keyboard_fix'      => false,
+            'mobile_input_position' => 'bottom', // bottom | bottom_avoid | top
             'widget_theme'          => 'default',
             'dark_mode'             => false,
             'markdown_enabled'      => true,

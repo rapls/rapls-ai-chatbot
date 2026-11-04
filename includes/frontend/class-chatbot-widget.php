@@ -316,6 +316,11 @@ class RAPLSAICH_Chatbot_Widget {
             'show_regenerate'      => !empty($ext_settings['show_regenerate_button']),
             'badge_position'       => $badge_position,
             'ios_keyboard_fix'     => !empty($settings['ios_keyboard_fix']),
+            // Message box position in the full-screen mobile view:
+            // bottom | bottom_avoid (room for the iOS keyboard toolbar) | top.
+            'mobile_input_position' => in_array(($settings['mobile_input_position'] ?? ''), ['bottom_avoid', 'top'], true)
+                ? $settings['mobile_input_position']
+                : 'bottom',
             'save_history'         => !empty($settings['save_history']),
             'quick_replies'        => RAPLSAICH_Extensions::get_instance()->get_quick_replies(),
             'consent_strict_mode'  => !empty($settings['consent_strict_mode']),

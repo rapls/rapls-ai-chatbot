@@ -103,6 +103,7 @@
             this.cacheElements();
             if (!this.container) return;
             this.applyBrowserLanguagePlaceholders();
+            this.applyMobileInputPosition();
 
             // Inline mode: shortcode-embedded chatbot
             if (this.config.inlineMode) {
@@ -203,6 +204,17 @@
                     && !/cubot/i.test(ua);
             } catch (e) {
                 return false;
+            }
+        },
+
+        /**
+         * Mark the container with the message box position chosen for the
+         * full-screen mobile view; the CSS does the rest.
+         */
+        applyMobileInputPosition: function() {
+            var pos = this.config.mobile_input_position;
+            if (pos === 'top' || pos === 'bottom_avoid') {
+                this.container.classList.add('raplsaich-mobile-input-' + pos.replace('_', '-'));
             }
         },
 
@@ -453,7 +465,9 @@
          *  4. CSS !important を setProperty('important') で上書き
          */
         setupIosKeyboardFix: function() {
-            if (!this.config.ios_keyboard_fix) return;
+            // "Bottom, clear of the keyboard buttons" needs to know when the
+            // keyboard is open, so it turns this fix on as well.
+            if (!this.config.ios_keyboard_fix && this.config.mobile_input_position !== 'bottom_avoid') return;
             if (!window.visualViewport) return;
             if (this.config.inlineMode || this.config.embedMode) return;
 
@@ -466,8 +480,12 @@
                     self.container.style.removeProperty('height');
                     self.container.style.removeProperty('top');
                     self.container.style.removeProperty('bottom');
+                    self.container.classList.remove('raplsaich-kbd-open');
                     return;
                 }
+                // The on-screen keyboard shrinks the visual viewport well
+                // below the layout viewport; the URL bar alone does not.
+                self.container.classList.toggle('raplsaich-kbd-open', (window.innerHeight - vv.height) > 120);
                 // iOS が window を強制スクロールした場合の打ち消し
                 if ((window.scrollY || window.pageYOffset) !== 0) {
                     window.scrollTo(0, 0);
