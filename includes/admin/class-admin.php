@@ -710,8 +710,10 @@ class RAPLSAICH_Admin {
         $sanitized['crawler_max_results'] = max(1, min(20, absint($input['crawler_max_results'] ?? ($existing['crawler_max_results'] ?? 3))));
         $sources_mode = $input['sources_display_mode'] ?? ($existing['sources_display_mode'] ?? 'matched');
         $sanitized['sources_display_mode'] = in_array($sources_mode, ['none', 'matched', 'all'], true) ? $sources_mode : 'matched';
-        // Checkbox on the Site Learning screen, which always posts sources_display_mode.
-        $sanitized['remove_unknown_links'] = array_key_exists('sources_display_mode', $input)
+        // Checkbox on both the Site Learning screen (Pro; always posts
+        // sources_display_mode) and the Site Learning section of the settings
+        // screen (_site_learning_toggle marks it).
+        $sanitized['remove_unknown_links'] = (array_key_exists('sources_display_mode', $input) || !empty($input['_site_learning_toggle']))
             ? !empty($input['remove_unknown_links'])
             : !empty($existing['remove_unknown_links']);
         $link_target = $input['link_target'] ?? ($existing['link_target'] ?? '_blank');

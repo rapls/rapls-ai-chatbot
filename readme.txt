@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.24.0
+Stable tag: 1.24.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.24.1 =
+* Fixed: the "Links in Answers" option from 1.24.0 was only on the Site Learning screen, which appears only with Pro, so sites without Pro could not turn it on. It is now also under Settings > AI Settings > Site Learning. Both places change the same setting.
+
 = 1.24.0 =
 * Added: an option to remove links to pages on your own site that do not exist. AI models sometimes make up URLs, especially for posts. When it is on, every link to your site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is saved and shown; links to pages that are not found are removed and only their text is kept. Links to other sites are not changed. Turn it on under Site Learning > Learning Settings > Links in Answers; it is off by default. Thanks to @awmaeder for the idea.
 
@@ -398,6 +401,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.24.1 =
+The "Links in Answers" option can now be turned on without Pro, under Settings > AI Settings > Site Learning.
 
 = 1.24.0 =
 New option to remove made-up links to your own site from AI answers. Off by default.
