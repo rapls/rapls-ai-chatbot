@@ -1554,6 +1554,13 @@ class RAPLSAICH_REST_Controller {
                 do_action('raplsaich_ai_request_end', $request_id);
             }
 
+            // Optional: unlink made-up URLs to this site before the answer is
+            // saved, cached or shown.
+            if (!empty($settings['remove_unknown_links']) && isset($response['content']) && is_string($response['content'])) {
+                $guarded = RAPLSAICH_Link_Guard::clean($response['content']);
+                $response['content'] = $guarded['content'];
+            }
+
             // Save AI response
             $resp_msg_id = 0;
             if ($save_history) {

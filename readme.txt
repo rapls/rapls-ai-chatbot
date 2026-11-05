@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.23.1
+Stable tag: 1.24.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.24.0 =
+* Added: an option to remove links to pages on your own site that do not exist. AI models sometimes make up URLs, especially for posts. When it is on, every link to your site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is saved and shown; links to pages that are not found are removed and only their text is kept. Links to other sites are not changed. Turn it on under Site Learning > Learning Settings > Links in Answers; it is off by default. Thanks to @awmaeder for the idea.
+
 = 1.23.1 =
 * Fixed: on themes that give every text box a minimum height (such as Cocoon on phones), the chat's message box was several lines tall. It is one line again.
 * Fixed: with the iOS Safari keyboard fix on, the page showed through between the chat window and the keyboard on iPhone Safari. That space now uses the chat's background color.
@@ -395,6 +398,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.24.0 =
+New option to remove made-up links to your own site from AI answers. Off by default.
 
 = 1.23.1 =
 Fixes a tall message box on some themes and the keyboard layout on iPhone.

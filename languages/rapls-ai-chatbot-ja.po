@@ -505,6 +505,18 @@ msgstr "参照したページをすべて表示"
 
 msgid "Controls whether reference page links are displayed below AI responses."
 msgstr "AI 応答の下に参照ページのリンクを表示するかを制御します。"
+
+#: templates/admin/crawler.php
+msgid "Links in Answers"
+msgstr "回答内のリンク"
+
+#: templates/admin/crawler.php
+msgid "Remove links to pages on this site that do not exist"
+msgstr "このサイト内の存在しないページへのリンクを外す"
+
+#: templates/admin/crawler.php
+msgid "AI models sometimes make up URLs. When on, every link to this site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is shown. Links to pages that are not found are removed and only their text is kept. Links to other sites are not changed."
+msgstr "AI モデルは、存在しない URL を作ってしまうことがあります。オンにすると、回答を表示する前に、回答内のこのサイトへのリンクを、学習済みのページと WordPress (投稿、固定ページ、メディア、カテゴリーやタグの一覧) に照らして確認します。見つからないページへのリンクは外し、リンクの文字だけを残します。ほかのサイトへのリンクは変更しません。"
 #:#: includes/admin/class-admin.php:2578
 msgid "Maximum number of indexed pages to reference per response (1-10)."
 msgstr "回答ごとに参照するインデックス済みページの最大数 (1-10)。"

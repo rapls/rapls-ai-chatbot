@@ -235,6 +235,17 @@ $post_types = get_post_types(['public' => true], 'objects');
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><?php esc_html_e('Links in Answers', 'rapls-ai-chatbot'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="raplsaich_settings[remove_unknown_links]" value="1"
+                                    <?php checked(!empty($settings['remove_unknown_links'])); ?>>
+                                <?php esc_html_e('Remove links to pages on this site that do not exist', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('AI models sometimes make up URLs. When on, every link to this site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is shown. Links to pages that are not found are removed and only their text is kept. Links to other sites are not changed.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><?php esc_html_e('Excluded Pages', 'rapls-ai-chatbot'); ?></th>
                         <td>
                             <?php
