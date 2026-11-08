@@ -169,32 +169,60 @@ class RAPLSAICH_Search_Engine {
         // Vector search (if embedding is configured)
         $vector_results = $this->vector_search($query, $limit);
 
+        $slot_mode = self::knowledge_slot_mode();
+
         // Merge keyword + vector results
         if (!empty($vector_results)) {
-            $results = $this->merge_hybrid_results($results, $vector_results, $limit);
+            $results = $this->merge_hybrid_results($results, $vector_results, $limit, $slot_mode);
         }
 
         // Sort by score and return top results
         usort($results, fn($a, $b) => $b['score'] <=> $a['score']);
 
-        // Cap how many chunks from the same document can appear, so one large
-        // split file cannot crowd out other sources. Chunks of a document share
-        // a base title with a " (k/N)" suffix; two per document is enough context.
-        $cap           = max($limit, 5);
-        $per_document   = [];
-        $final_results = [];
-        foreach ($results as $r) {
-            if (($r['type'] ?? '') === 'knowledge' && class_exists('RAPLSAICH_Knowledge')) {
-                $doc_key = RAPLSAICH_Knowledge::strip_chunk_suffix((string) ($r['title'] ?? ''));
-                $seen    = $per_document[$doc_key] ?? 0;
-                if ($seen >= 2) {
-                    continue;
+        $cap = max($limit, 5);
+        if ($slot_mode === 'legacy') {
+            // Previous behavior: one ranked list. The always-included
+            // knowledge carries much larger scores than site pages, so it
+            // usually fills the slots first.
+            $final_results = $this->take_results($results, $cap);
+        } else {
+            // Items that matched the question (by keyword, or by a vector
+            // score at or above the grounding threshold, see
+            // merge_hybrid_results) versus knowledge that is included on
+            // every question regardless of what was asked.
+            $matched         = [];
+            $always_included = [];
+            $other           = [];
+            foreach ($results as $r) {
+                if (!empty($r['keyword_matched'])) {
+                    $matched[] = $r;
+                } elseif (($r['type'] ?? '') === 'knowledge') {
+                    $always_included[] = $r;
+                } else {
+                    $other[] = $r; // weak vector-only hits
                 }
-                $per_document[$doc_key] = $seen + 1;
             }
-            $final_results[] = $r;
-            if (count($final_results) >= $cap) {
-                break;
+
+            if ($slot_mode === 'add') {
+                // B: the matched items get all the slots, and the
+                // always-included knowledge is added on top of them.
+                $first = $this->take_results($matched, $cap);
+                $final_results = array_merge(
+                    $first,
+                    $this->take_results($always_included, max($limit * 2, 5), $first)
+                );
+            } else {
+                // A (default): the matched items come first, at least
+                // three of them when there are that many; the slots left
+                // are filled with the always-included knowledge, highest
+                // priority first, and then with any further matches.
+                $take_matched = min(count($matched), max(3, $cap - count($always_included)));
+                $first        = $this->take_results($matched, $take_matched);
+                $rest         = array_merge($always_included, $matched, $other);
+                $final_results = array_merge(
+                    $first,
+                    $this->take_results($rest, $cap - count($first), $first)
+                );
             }
         }
 
@@ -212,6 +240,62 @@ class RAPLSAICH_Search_Engine {
         }
 
         return $final_results;
+    }
+
+    /**
+     * How the always-included knowledge shares the result slots with items
+     * that matched the question.
+     *
+     * - matched_first (default): matched items first, knowledge in the slots left.
+     * - add: matched items fill the slots, knowledge is added on top.
+     * - legacy: one ranked list, as before 1.24.2.
+     */
+    public static function knowledge_slot_mode(): string {
+        $settings = get_option('raplsaich_settings', []);
+        $mode = is_array($settings) ? ($settings['knowledge_slot_mode'] ?? 'matched_first') : 'matched_first';
+        return in_array($mode, ['matched_first', 'add', 'legacy'], true) ? $mode : 'matched_first';
+    }
+
+    /**
+     * Take up to $count items in order, allowing at most two chunks of the
+     * same knowledge document (counting those already in $already), so one
+     * large split file cannot crowd out other sources. Chunks of a document
+     * share a base title with a " (k/N)" suffix.
+     */
+    private function take_results(array $items, int $count, array $already = []): array {
+        if ($count <= 0) {
+            return [];
+        }
+        $per_document = [];
+        $taken_keys   = [];
+        foreach ($already as $r) {
+            $taken_keys[($r['type'] ?? '') . ':' . ($r['title'] ?? '')] = true;
+            if (($r['type'] ?? '') === 'knowledge' && class_exists('RAPLSAICH_Knowledge')) {
+                $doc_key = RAPLSAICH_Knowledge::strip_chunk_suffix((string) ($r['title'] ?? ''));
+                $per_document[$doc_key] = ($per_document[$doc_key] ?? 0) + 1;
+            }
+        }
+        $out = [];
+        foreach ($items as $r) {
+            $key = ($r['type'] ?? '') . ':' . ($r['title'] ?? '');
+            if (isset($taken_keys[$key])) {
+                continue;
+            }
+            if (($r['type'] ?? '') === 'knowledge' && class_exists('RAPLSAICH_Knowledge')) {
+                $doc_key = RAPLSAICH_Knowledge::strip_chunk_suffix((string) ($r['title'] ?? ''));
+                $seen    = $per_document[$doc_key] ?? 0;
+                if ($seen >= 2) {
+                    continue;
+                }
+                $per_document[$doc_key] = $seen + 1;
+            }
+            $taken_keys[$key] = true;
+            $out[] = $r;
+            if (count($out) >= $count) {
+                break;
+            }
+        }
+        return $out;
     }
 
     /**
@@ -253,20 +337,29 @@ class RAPLSAICH_Search_Engine {
     }
 
     /**
-     * Merge keyword search results with vector search results using hybrid scoring
+     * Merge keyword search results with vector search results by rank
+     * (Reciprocal Rank Fusion).
      *
-     * Score formula:
-     *   - Both keyword + vector: 0.4 * norm_keyword + 0.6 * vector_score
-     *   - Keyword only: 0.4 * norm_keyword
-     *   - Vector only: 0.6 * vector_score
-     *   - Knowledge priority bonus preserved from existing logic
+     * Each list contributes 1 / (60 + rank) for the items it found, so an
+     * item found by both lists ranks highest, and the best keyword hit ranks
+     * level with the best vector hit. Raw scores are not mixed: cosine
+     * similarities from embedding models sit close together (0.6–0.8 for
+     * anything loosely related), and with the former weighted sum
+     * (0.4 * keyword + 0.6 * vector) a page that matched the exact words of
+     * the question (a person's name, a product code) but was not among the
+     * vector hits capped out at 0.4 and was pushed out by loosely similar
+     * pages once most of the index had embeddings.
+     *
+     * The fused value is normalised to 0–1 and scaled by the best keyword
+     * score, so the result stays in the same range as before, and the
+     * knowledge priority bonus is unchanged.
      *
      * @param array $keyword_results Keyword search results (with 'score')
      * @param array $vector_results  Vector search results (with 'vector_score')
      * @param int   $limit           Max results
      * @return array Merged results with hybrid scores
      */
-    private function merge_hybrid_results(array $keyword_results, array $vector_results, int $limit): array {
+    private function merge_hybrid_results(array $keyword_results, array $vector_results, int $limit, string $slot_mode = 'matched_first'): array {
         // Normalize keyword scores to 0-1 range
         $max_keyword = 0;
         foreach ($keyword_results as $r) {
@@ -320,8 +413,38 @@ class RAPLSAICH_Search_Engine {
             }
         }
 
-        // Calculate final hybrid scores
-        foreach ($merged as &$item) {
+        // Ranks in each list (1 = best). Items absent from a list get no
+        // contribution from it.
+        $rrf_k = 60;
+        $keyword_rank = [];
+        $kw_sorted = $keyword_results;
+        usort($kw_sorted, fn($a, $b) => ($b['score'] ?? 0) <=> ($a['score'] ?? 0));
+        // Only items that actually matched the words of the question are
+        // ranked; knowledge included on every question is not a keyword hit.
+        $rank = 0;
+        foreach ($kw_sorted as $r) {
+            if (empty($r['keyword_matched'])) {
+                continue;
+            }
+            $key = $r['type'] . ':' . $r['title'];
+            if (!isset($keyword_rank[$key])) {
+                $keyword_rank[$key] = ++$rank;
+            }
+        }
+        $vector_rank = [];
+        $vec_sorted = $vector_results;
+        usort($vec_sorted, fn($a, $b) => ($b['vector_score'] ?? 0) <=> ($a['vector_score'] ?? 0));
+        foreach ($vec_sorted as $i => $r) {
+            $key = $r['type'] . ':' . $r['title'];
+            if (!isset($vector_rank[$key])) {
+                $vector_rank[$key] = $i + 1;
+            }
+        }
+        $rrf_max = 2 / ($rrf_k + 1);
+        $scale   = max($max_keyword, 1);
+
+        // Calculate final scores
+        foreach ($merged as $key => &$item) {
             $kw = $item['_keyword_norm'] ?? 0.0;
             $vs = $item['_vector_score'] ?? 0.0;
 
@@ -336,9 +459,28 @@ class RAPLSAICH_Search_Engine {
                 }
             }
 
-            $hybrid = (0.4 * $kw) + (0.6 * $vs);
-            // Scale hybrid back to a comparable range + priority bonus
-            $item['score'] = ($hybrid * $max_keyword) + $priority_bonus;
+            if ($slot_mode === 'legacy') {
+                // Previous weighted sum, kept for the "previous behavior" option.
+                $item['score'] = (((0.4 * $kw) + (0.6 * $vs)) * $max_keyword) + $priority_bonus;
+                unset($item['_keyword_norm'], $item['_vector_score']);
+                continue;
+            }
+
+            $rrf = 0.0;
+            if ($kw > 0 && isset($keyword_rank[$key])) {
+                $rrf += 1 / ($rrf_k + $keyword_rank[$key]);
+            }
+            if ($vs > 0 && isset($vector_rank[$key])) {
+                $rrf += 1 / ($rrf_k + $vector_rank[$key]);
+            }
+            // Within the same fused rank, prefer the item that matched the
+            // words of the question, then the closer vector match.
+            $tiebreak = (0.001 * $kw) + (0.0001 * $vs);
+            $item['score'] = (($rrf / $rrf_max) + $tiebreak) * $scale + $priority_bonus;
+            if ($vs > 0) {
+                // Grounding and reference cards read the raw similarity.
+                $item['vector_score'] = $vs;
+            }
 
             unset($item['_keyword_norm'], $item['_vector_score']);
         }

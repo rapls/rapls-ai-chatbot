@@ -713,6 +713,11 @@ class RAPLSAICH_Admin {
         // Checkbox on both the Site Learning screen (Pro; always posts
         // sources_display_mode) and the Site Learning section of the settings
         // screen (_site_learning_toggle marks it).
+        // Select in the Site Learning section of the settings screen.
+        $slot_mode = !empty($input['_site_learning_toggle'])
+            ? ($input['knowledge_slot_mode'] ?? 'matched_first')
+            : ($existing['knowledge_slot_mode'] ?? 'matched_first');
+        $sanitized['knowledge_slot_mode'] = in_array($slot_mode, ['matched_first', 'add', 'legacy'], true) ? $slot_mode : 'matched_first';
         $sanitized['remove_unknown_links'] = (array_key_exists('sources_display_mode', $input) || !empty($input['_site_learning_toggle']))
             ? !empty($input['remove_unknown_links'])
             : !empty($existing['remove_unknown_links']);
@@ -4416,6 +4421,7 @@ class RAPLSAICH_Admin {
             'show_feedback_buttons' => false,
             'sources_display_mode'  => 'matched',
             'remove_unknown_links'  => false, // unlink own-site URLs in AI answers that don't exist
+            'knowledge_slot_mode'   => 'matched_first', // matched_first | add | legacy
             // Where chat reply links open: '_blank' (new window/tab) or '_self' (same window).
             'link_target'           => '_blank',
 

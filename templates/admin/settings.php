@@ -789,6 +789,18 @@ if (!defined('ABSPATH')) {
                             <p class="description"><?php esc_html_e('AI models sometimes make up URLs. When on, every link to this site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is shown. Links to pages that are not found are removed and only their text is kept. Links to other sites are not changed.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><label for="raplsaich_knowledge_slot_mode"><?php esc_html_e('Knowledge Used on Every Question', 'rapls-ai-chatbot'); ?></label></th>
+                        <td>
+                            <?php $raplsaich_slot_mode = RAPLSAICH_Search_Engine::knowledge_slot_mode(); ?>
+                            <select id="raplsaich_knowledge_slot_mode" name="raplsaich_settings[knowledge_slot_mode]">
+                                <option value="matched_first" <?php selected($raplsaich_slot_mode, 'matched_first'); ?>><?php esc_html_e('Use what matches the question first (recommended)', 'rapls-ai-chatbot'); ?></option>
+                                <option value="add" <?php selected($raplsaich_slot_mode, 'add'); ?>><?php esc_html_e('Add it to what matches the question', 'rapls-ai-chatbot'); ?></option>
+                                <option value="legacy" <?php selected($raplsaich_slot_mode, 'legacy'); ?>><?php esc_html_e('Use the knowledge first (previous behavior)', 'rapls-ai-chatbot'); ?></option>
+                            </select>
+                            <p class="description"><?php esc_html_e('Active knowledge base entries, highest priority first, are given to the AI with every question, whatever was asked. Each answer uses up to five sources. "Use what matches the question first" keeps at least three of them for pages and entries that match the question, such as a page that contains a name the visitor asked about, and fills the rest with that knowledge. "Add it to what matches the question" uses all five for matches and adds the knowledge on top, which sends more text to the AI and costs more. "Use the knowledge first" is how earlier versions worked: on sites with five or more entries, matching pages could be left out.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
                 </table>
 
                 <!-- Embedding Settings -->

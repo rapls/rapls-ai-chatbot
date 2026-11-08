@@ -514,6 +514,26 @@ msgstr "回答内のリンク"
 msgid "Remove links to pages on this site that do not exist"
 msgstr "このサイト内の存在しないページへのリンクを外す"
 
+#: templates/admin/settings.php
+msgid "Knowledge Used on Every Question"
+msgstr "毎回使うナレッジ"
+
+#: templates/admin/settings.php
+msgid "Use what matches the question first (recommended)"
+msgstr "質問に一致した内容を優先する (推奨)"
+
+#: templates/admin/settings.php
+msgid "Add it to what matches the question"
+msgstr "質問に一致した内容に加えて使う"
+
+#: templates/admin/settings.php
+msgid "Use the knowledge first (previous behavior)"
+msgstr "ナレッジを先に使う (従来の動作)"
+
+#: templates/admin/settings.php
+msgid "Active knowledge base entries, highest priority first, are given to the AI with every question, whatever was asked. Each answer uses up to five sources. \"Use what matches the question first\" keeps at least three of them for pages and entries that match the question, such as a page that contains a name the visitor asked about, and fills the rest with that knowledge. \"Add it to what matches the question\" uses all five for matches and adds the knowledge on top, which sends more text to the AI and costs more. \"Use the knowledge first\" is how earlier versions worked: on sites with five or more entries, matching pages could be left out."
+msgstr "有効なナレッジベースの項目は、質問の内容にかかわらず、優先度の高い順に毎回 AI に渡されます。1つの回答に使う情報は最大5件です。「質問に一致した内容を優先する」は、そのうち少なくとも3件を、質問に一致したページや項目 (訪問者が尋ねた名前を含むページなど) に使い、残りをナレッジで埋めます。「質問に一致した内容に加えて使う」は、5件すべてを一致した内容に使い、ナレッジはそれとは別に加えます。AI に送る文章が増えるため、料金も増えます。「ナレッジを先に使う」は以前のバージョンの動作です。項目が5件以上あるサイトでは、質問に一致したページが使われないことがありました。"
+
 #: templates/admin/crawler.php
 msgid "AI models sometimes make up URLs. When on, every link to this site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is shown. Links to pages that are not found are removed and only their text is kept. Links to other sites are not changed."
 msgstr "AI モデルは、存在しない URL を作ってしまうことがあります。オンにすると、回答を表示する前に、回答内のこのサイトへのリンクを、学習済みのページと WordPress (投稿、固定ページ、メディア、カテゴリーやタグの一覧) に照らして確認します。見つからないページへのリンクは外し、リンクの文字だけを残します。ほかのサイトへのリンクは変更しません。"

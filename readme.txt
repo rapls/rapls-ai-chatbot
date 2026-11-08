@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.24.1
+Stable tag: 1.24.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.24.2 =
+* Fixed: on sites with five or more active knowledge base entries, answers could ignore the pages that matched the question. Every answer is built from up to five sources, and the knowledge base entries, which are added to every question whatever was asked, scored far higher than site pages and filled all five, so a page containing the exact name or term a visitor asked about never reached the AI. Adding a few large entries could make information that was found the day before disappear. Pages and entries that match the question now come first. Thanks to @awmaeder for the report and testing.
+* Added: Settings > AI Settings > Site Learning > "Knowledge Used on Every Question" chooses how the knowledge base shares those five places. "Use what matches the question first" (the default) keeps at least three for matches and fills the rest with knowledge. "Add it to what matches the question" uses all five for matches and adds the knowledge on top, which sends more text to the AI and costs more. "Use the knowledge first" keeps the previous behavior.
+* Changed: keyword and vector results are now combined by rank (Reciprocal Rank Fusion) instead of a weighted sum of their scores, so a page that matched the exact words of the question is no longer pushed out by pages that are only loosely similar in meaning.
+
 = 1.24.1 =
 * Fixed: the "Links in Answers" option from 1.24.0 was only on the Site Learning screen, which appears only with Pro, so sites without Pro could not turn it on. It is now also under Settings > AI Settings > Site Learning. Both places change the same setting.
 
@@ -401,6 +406,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.24.2 =
+Answers use the pages that match the question again on sites with five or more knowledge base entries. The previous behavior can be restored in the settings.
 
 = 1.24.1 =
 The "Links in Answers" option can now be turned on without Pro, under Settings > AI Settings > Site Learning.
