@@ -102,7 +102,7 @@
             // bookmarkKey — initialized by Pro
             this.cacheElements();
             if (!this.container) return;
-            this.applyBrowserLanguagePlaceholders();
+            this.applyUiLanguage();
             this.applyMobileInputPosition();
 
             // Inline mode: shortcode-embedded chatbot
@@ -219,39 +219,136 @@
         },
 
         /**
-         * Apply browser-language-based placeholders for input field.
-         * Overrides the server-side placeholder with a browser-locale-aware translation.
+         * The visitor's language for the chat window's own texts: the fixed
+         * Response Language, or the browser language with "Auto-detect".
          */
-        applyBrowserLanguagePlaceholders: function() {
-            if (!this.inputTextarea) return;
-            // Priority: 1) response_language setting (unless 'auto'), 2) site locale, 3) browser language
-            var configLang = (this.config.response_language || '').toLowerCase().split('-')[0];
-            var siteLang = (this.config.site_locale || '').toLowerCase().split('-')[0].split('_')[0];
-            var browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase().split('-')[0];
-            var lang = (configLang && configLang !== 'auto') ? configLang : (siteLang || browserLang);
-            var placeholders = {
-                ja: 'メッセージを入力...',
-                en: 'Type a message...',
-                zh: '输入消息...',
-                ko: '메시지를 입력하세요...',
-                es: 'Escribe un mensaje...',
-                fr: 'Tapez un message...',
-                de: 'Nachricht eingeben...',
-                pt: 'Digite uma mensagem...',
-                it: 'Scrivi un messaggio...',
-                ru: 'Введите сообщение...',
-                ar: '...اكتب رسالة',
-                th: 'พิมพ์ข้อความ...',
-                vi: 'Nhập tin nhắn...'
-            };
-            var placeholder = placeholders[lang];
-            if (placeholder) {
-                this.inputTextarea.placeholder = placeholder;
-                // Update config.strings so voice input reset also uses the correct placeholder
-                if (this.config.strings) {
-                    this.config.strings.placeholder = placeholder;
+        resolveUiLanguage: function() {
+            var cfg = String(this.config.ui_language || '').toLowerCase();
+            if (!cfg) {
+                // Config from an older server: fall back to the old rule.
+                var rl = String(this.config.response_language || '').toLowerCase();
+                cfg = rl || String(this.config.site_locale || 'en').toLowerCase().substring(0, 2);
+            }
+            if (cfg === 'auto') {
+                var nav = (navigator.languages && navigator.languages[0]) || navigator.language || navigator.userLanguage || 'en';
+                cfg = String(nav).toLowerCase();
+            }
+            return cfg.split(/[-_]/)[0] || 'en';
+        },
+
+        /**
+         * Show the chat window's own texts (buttons, notices, error messages)
+         * in the visitor's language. WordPress translates them only into the
+         * site language, and only when a language pack exists, so a visitor
+         * reading another language, or a site whose language has no pack,
+         * would otherwise see them in the wrong language. Uses the built-in
+         * table in chatbot-i18n.js; texts the site owner wrote are kept.
+         */
+        applyUiLanguage: function() {
+            var lang = this.resolveUiLanguage();
+            this.uiLanguage = lang;
+            this.uiLanguageOverridden = false;
+
+            var serverLang = String(this.config.strings_lang || '').toLowerCase();
+            var table = window.raplsaichI18n || {};
+            var dict = table[lang];
+            if (!dict || lang === serverLang) return;
+
+            var strings = this.config.strings || (this.config.strings = {});
+            for (var key in strings) {
+                if (Object.prototype.hasOwnProperty.call(strings, key) && typeof strings[key] === 'string' && dict[key]) {
+                    strings[key] = dict[key];
                 }
             }
+
+            // Error-code messages. Codes whose text comes from the server
+            // ("__use_server_message__") are replaced too, since the server
+            // writes them in the site language. Admins keep the server text,
+            // which can carry a request ID for support.
+            var ecKeys = {
+                session_expired: 'ec_session_expired',
+                timing_failed: 'ec_timing_failed',
+                rate_limited: 'error_rate_limit',
+                recaptcha_required: 'error_unavailable',
+                recaptcha_misconfigured: 'error_unavailable',
+                recaptcha_failed: 'ec_security_failed',
+                recaptcha_missing: 'ec_security_failed',
+                recaptcha_low_score: 'ec_security_check_failed',
+                recaptcha_unavailable: 'ec_recaptcha_unavailable',
+                origin_mismatch: 'error_unavailable',
+                honeypot_triggered: 'error_unavailable',
+                invalid_message: 'ec_invalid_message',
+                bot_request: 'ec_bot_request',
+                ai_auth_error: 'ec_ai_auth_error',
+                ai_model_unavailable: 'ec_ai_model_unavailable',
+                ai_unreachable: 'ec_ai_unreachable',
+                ai_provider_error: 'ec_ai_provider_error',
+                chat_failed: 'ec_chat_failed'
+            };
+            // Codes whose message the site owner wrote (add-ons list them in
+            // ui_keep_server_codes) keep that message.
+            var keep = this.config.ui_keep_server_codes || [];
+            var ecm = strings.error_code_messages;
+            if (ecm && typeof ecm === 'object') {
+                for (var code in ecm) {
+                    if (!Object.prototype.hasOwnProperty.call(ecm, code)) continue;
+                    var dk = ecKeys[code] || ('ec_' + code);
+                    if (!dict[dk] || keep.indexOf(code) !== -1) continue;
+                    if (ecm[code] === '__use_server_message__' && this.config.is_plugin_admin) continue;
+                    ecm[code] = dict[dk];
+                }
+            }
+
+            // Labels the widget template printed in the site language.
+            var c = this.container;
+            var set = function(selector, attrs, key) {
+                if (!c || !dict[key]) return;
+                var els = c.querySelectorAll(selector);
+                for (var i = 0; i < els.length; i++) {
+                    for (var j = 0; j < attrs.length; j++) {
+                        if (attrs[j] === 'text') {
+                            els[i].textContent = dict[key];
+                        } else if (els[i].hasAttribute(attrs[j])) {
+                            els[i].setAttribute(attrs[j], dict[key]);
+                        }
+                    }
+                }
+            };
+            set('.chatbot-badge', ['aria-label'], 'open_chat');
+            set('.chatbot-window', ['aria-label'], 'chat');
+            set('.bot-status', ['text'], 'online');
+            set('.chatbot-tts-toggle', ['aria-label'], 'tts');
+            set('.chatbot-new-conversation', ['aria-label', 'title'], 'new_conversation');
+            set('.chatbot-delete-history', ['aria-label', 'title'], 'delete_history');
+            set('.chatbot-close', ['aria-label'], 'close');
+            set('.chatbot-typing', ['aria-label'], 'typing');
+            set('.chatbot-image-preview img', ['alt'], 'preview');
+            set('.image-preview-remove', ['aria-label'], 'remove_image');
+            set('.chatbot-image-btn', ['aria-label'], 'upload_image');
+            set('.chatbot-screenshot-btn', ['aria-label'], 'screenshot');
+            set('.chatbot-mic-btn', ['aria-label'], 'voice_input');
+            set('.chatbot-input button[type="submit"]', ['aria-label'], 'send');
+            // Add-on markup: data-raplsaich-i18n="key" replaces the text,
+            // data-raplsaich-i18n-attr="aria-label:key,title:key" attributes.
+            if (c) {
+                var tagged = c.querySelectorAll('[data-raplsaich-i18n], [data-raplsaich-i18n-attr]');
+                for (var t = 0; t < tagged.length; t++) {
+                    var el = tagged[t];
+                    var tk = el.getAttribute('data-raplsaich-i18n');
+                    if (tk && dict[tk]) el.textContent = dict[tk];
+                    var pairs = (el.getAttribute('data-raplsaich-i18n-attr') || '').split(',');
+                    for (var p = 0; p < pairs.length; p++) {
+                        var kv = pairs[p].split(':');
+                        if (kv.length === 2 && dict[kv[1].trim()]) el.setAttribute(kv[0].trim(), dict[kv[1].trim()]);
+                    }
+                }
+            }
+            if (this.inputTextarea) {
+                if (dict.placeholder) this.inputTextarea.placeholder = dict.placeholder;
+                if (dict.message_input) this.inputTextarea.setAttribute('aria-label', dict.message_input);
+            }
+            if (this.window) this.window.setAttribute('lang', lang);
+            this.uiLanguageOverridden = true;
         },
 
         /**
@@ -1259,32 +1356,16 @@
         showWelcomeMessage: function() {
             var welcomeMsg = this.config.welcome_message || 'Hello! How can I help you today?';
 
-            // Auto-detect: use per-language welcome message for browser language
-            if (this.config.response_language === 'auto') {
-                var browserLang = (navigator.language || navigator.userLanguage || 'en').substring(0, 2).toLowerCase();
-                var defaultTranslations = {
-                    en: 'Hello! How can I help you today?',
-                    ja: 'こんにちは！何かお手伝いできることはありますか？',
-                    zh: '您好！有什么可以帮助您的吗？',
-                    ko: '안녕하세요! 무엇을 도와드릴까요?',
-                    es: '¡Hola! ¿En qué puedo ayudarte hoy?',
-                    fr: 'Bonjour ! Comment puis-je vous aider aujourd\'hui ?',
-                    de: 'Hallo! Wie kann ich Ihnen heute helfen?',
-                    pt: 'Olá! Como posso ajudá-lo hoje?',
-                    it: 'Ciao! Come posso aiutarti oggi?',
-                    ru: 'Здравствуйте! Чем могу помочь?',
-                    ar: 'مرحبا! كيف يمكنني مساعدتك اليوم؟',
-                    th: 'สวัสดีครับ! มีอะไรให้ช่วยไหมครับ?',
-                    vi: 'Xin chào! Tôi có thể giúp gì cho bạn?',
-                };
-                var adminMessages = this.config.welcome_messages || {};
-                // Priority: 1) per-language admin message, 2) main welcome_message (kept as-is),
-                // 3) default translation (only when main message is unchanged from default)
-                if (adminMessages[browserLang]) {
-                    welcomeMsg = adminMessages[browserLang];
-                } else if (welcomeMsg === 'Hello! How can I help you today?' && defaultTranslations[browserLang]) {
-                    welcomeMsg = defaultTranslations[browserLang];
-                }
+            // Per-language welcome messages the admin wrote win; the default
+            // welcome text is shown in the visitor's language. A welcome
+            // message the admin changed is kept as written.
+            var uiLang = this.uiLanguage || this.resolveUiLanguage();
+            var adminMessages = this.config.welcome_messages || {};
+            var table = window.raplsaichI18n || {};
+            if (this.config.response_language === 'auto' && adminMessages[uiLang]) {
+                welcomeMsg = adminMessages[uiLang];
+            } else if (welcomeMsg === 'Hello! How can I help you today?' && table[uiLang] && table[uiLang].welcome) {
+                welcomeMsg = table[uiLang].welcome;
             }
 
             this.addMessage('bot', welcomeMsg);
@@ -1595,7 +1676,11 @@
                     // For rate_limited or __use_server_message__, prefer server message
                     var ecMapValue = ecMap[ec];
                     var errorMessage;
-                    if ((ec === 'rate_limited' || ecMapValue === '__use_server_message__') && error.message) {
+                    // The server writes its messages in the site language; when the
+                    // window shows another language, the mapped text is used instead.
+                    if (ec === 'rate_limited' && self.uiLanguageOverridden && ecMapValue) {
+                        errorMessage = ecMapValue;
+                    } else if ((ec === 'rate_limited' || ecMapValue === '__use_server_message__') && error.message) {
                         errorMessage = error.message;
                     } else if (ecMapValue === '__use_server_message__') {
                         // Sentinel with no server message — fall through to status fallback

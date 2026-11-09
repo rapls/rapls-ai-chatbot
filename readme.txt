@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.24.2
+Stable tag: 1.25.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,14 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.25.0 =
+* Added: the chat window's own texts (buttons, notices and error messages) are shown in the visitor's language. WordPress translates them only into the site language, and only when a language pack exists, so a German site without a German pack showed them in English, and with Response Language set to "Auto-detect" a visitor reading another language saw them in the site language. Translations for the 13 response languages are now built in: with "Auto-detect" they follow the visitor's browser, otherwise the language you set. Texts you wrote yourself, such as the welcome message, are not changed. The translations are loaded only when they can be needed. Thanks to @awmaeder for the suggestion.
+* Added: "Reference Count" under Settings > AI Settings > Site Learning, so sites without Pro can choose how many sources (learned pages and knowledge base entries) each answer uses. A higher number helps when the same topic is spread over many pages.
+* Fixed: long questions gave worse answers than short ones. A word that appears on almost every page, such as the site or organisation name, counted as much as the word the question was about, so pages that only mentioned the name pushed out the pages that answered the question; on some sites the search never got past that word at all. Each word now counts by how rare it is on the site, words found on most pages are left out of the search, and the best matches are fetched first. Thanks to @awmaeder for the report.
+* Fixed: a high-priority knowledge base entry that shared a single word with the question could take the place of the page that answered it. Matches are now ordered by how much of the question they contain.
+* Fixed: each answer uses at least five sources, but only three learned pages were looked up, so the other places could only be filled with knowledge base entries.
+* Developer: the filters raplsaich_frontend_i18n_scripts and raplsaich_strings_language let add-ons add their own translations of chat window texts.
+
 = 1.24.2 =
 * Fixed: on sites with five or more active knowledge base entries, answers could ignore the pages that matched the question. Every answer is built from up to five sources, and the knowledge base entries, which are added to every question whatever was asked, scored far higher than site pages and filled all five, so a page containing the exact name or term a visitor asked about never reached the AI. Adding a few large entries could make information that was found the day before disappear. Pages and entries that match the question now come first. Thanks to @awmaeder for the report and testing.
 * Added: Settings > AI Settings > Site Learning > "Knowledge Used on Every Question" chooses how the knowledge base shares those five places. "Use what matches the question first" (the default) keeps at least three for matches and fills the rest with knowledge. "Add it to what matches the question" uses all five for matches and adds the knowledge on top, which sends more text to the AI and costs more. "Use the knowledge first" keeps the previous behavior.
@@ -406,6 +414,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.25.0 =
+Chat window texts in the visitor's language, and better answers to long questions. If you use Rapls AI Chatbot Pro, update it to 1.9.12 as well.
 
 = 1.24.2 =
 Answers use the pages that match the question again on sites with five or more knowledge base entries. The previous behavior can be restored in the settings.

@@ -260,12 +260,48 @@ class RAPLSAICH_Chatbot_Widget {
             }
         }
 
+        // Language of the chat window's own texts (buttons, notices, errors).
+        // WordPress translates them only into the site language, and only
+        // when a language pack exists; the built-in table in chatbot-i18n.js
+        // covers visitors in other languages ("Auto-detect") and sites whose
+        // language has no pack yet. It is loaded only when it can be needed.
+        $ui_language  = self::ui_language($settings);
+        $strings_lang = self::strings_language();
+        $chatbot_deps = [];
+        if ($ui_language === 'auto' || $ui_language !== $strings_lang) {
+            $i18n_mtime = @filemtime(RAPLSAICH_PLUGIN_DIR . 'assets/js/chatbot-i18n.js');
+            wp_enqueue_script(
+                'raplsaich-chatbot-i18n',
+                RAPLSAICH_PLUGIN_URL . 'assets/js/chatbot-i18n.js',
+                [],
+                RAPLSAICH_VERSION . '.' . ($i18n_mtime ?: '0'),
+                true
+            );
+            $chatbot_deps[] = 'raplsaich-chatbot-i18n';
+
+            /**
+             * Filter the translation tables loaded before chatbot.js, so an
+             * add-on can enqueue its own (it merges into window.raplsaichI18n)
+             * and return the script handle.
+             *
+             * @param string[] $handles      Extra script handles.
+             * @param string   $ui_language  'auto' or a two-letter code.
+             * @param string   $strings_lang Language the server strings are in.
+             */
+            $extra_i18n = apply_filters('raplsaich_frontend_i18n_scripts', [], $ui_language, $strings_lang);
+            foreach ((array) $extra_i18n as $handle) {
+                if (is_string($handle) && $handle !== '' && wp_script_is($handle, 'registered')) {
+                    $chatbot_deps[] = $handle;
+                }
+            }
+        }
+
         $chatbot_js_mtime = @filemtime(RAPLSAICH_PLUGIN_DIR . 'assets/js/chatbot.js');
         $chatbot_js_ver = RAPLSAICH_VERSION . '.' . ($chatbot_js_mtime ?: '0');
         wp_enqueue_script(
             'raplsaich-chatbot',
             RAPLSAICH_PLUGIN_URL . 'assets/js/chatbot.js',
-            [],
+            $chatbot_deps,
             $chatbot_js_ver,
             true
         );
@@ -290,6 +326,8 @@ class RAPLSAICH_Chatbot_Widget {
             'welcome_messages'    => !empty($settings['welcome_messages']) ? $settings['welcome_messages'] : new \stdClass(),
             'response_language'   => $settings['response_language'] ?? '',
             'site_locale'         => get_locale(),
+            'ui_language'         => $ui_language,
+            'strings_lang'        => $strings_lang,
             'recaptcha_enabled'   => $recaptcha_enabled,
             'recaptcha_site_key'  => $recaptcha_site_key,
             'recaptcha_lazy'      => $recaptcha_lazy,
@@ -405,6 +443,7 @@ class RAPLSAICH_Chatbot_Widget {
                 'dedup_stale'            => __('A cache inconsistency was detected. Please reload the page. If this persists, the site administrator should check the object cache configuration.', 'rapls-ai-chatbot'),
                 'dedup_truncated_no_history' => __('Your response was processed successfully. To see saved responses, consider enabling chat history in the plugin settings.', 'rapls-ai-chatbot'),
                 'api_error'              => __('API error', 'rapls-ai-chatbot'),
+                'open'                   => __('Open', 'rapls-ai-chatbot'),
                 // Pro strings (offline, sentiment, handoff, bookmark, search, share, etc.)
                 // are added by Pro via raplsaich_frontend_config filter.
             ],
@@ -647,6 +686,44 @@ wp_footer();
     /**
      * Check if widget should be displayed
      */
+    /**
+     * Language the chat window's own texts should be shown in: the fixed
+     * Response Language, the site language ("Site language"), or 'auto'
+     * (the visitor's browser language, resolved in chatbot.js).
+     */
+    public static function ui_language(array $settings): string {
+        $lang = strtolower((string) ($settings['response_language'] ?? ''));
+        if ($lang === 'auto') {
+            return 'auto';
+        }
+        if ($lang === '') {
+            $lang = strtolower(substr((string) get_locale(), 0, 2));
+        }
+        return $lang !== '' ? $lang : 'en';
+    }
+
+    /**
+     * Language the server-side strings actually come out in: the site
+     * language when a translation for it is loaded, English otherwise.
+     */
+    public static function strings_language(): string {
+        $site = strtolower(substr((string) get_locale(), 0, 2));
+        if ($site === '' || $site === 'en') {
+            return 'en';
+        }
+        $translated = __('Type a message...', 'rapls-ai-chatbot') !== 'Type a message...';
+        $lang = $translated ? $site : 'en';
+        /**
+         * Filter the language the chat window's server-side strings are in.
+         * An add-on whose own strings have no translation for the site
+         * language returns 'en', so the built-in tables are used for all.
+         *
+         * @param string $lang Two-letter code.
+         * @param string $site Site language (two letters).
+         */
+        return (string) apply_filters('raplsaich_strings_language', $lang, $site);
+    }
+
     private function should_display(): bool {
         // Don't display in admin
         if (is_admin()) {

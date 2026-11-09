@@ -21,6 +21,11 @@ class RAPLSAICH_Search_Engine {
     private static array $fulltext_cache = [];
 
     /**
+     * Per-request cache of keyword weights, keyed by table + keyword.
+     */
+    private static array $weight_cache = [];
+
+    /**
      * Bot-specific knowledge category filter (empty = all categories)
      * @var string[]
      */
@@ -121,6 +126,11 @@ class RAPLSAICH_Search_Engine {
      */
     public function search(string $query, int $limit = 3): array {
         $results = [];
+        // Every answer uses at least five sources (see $cap below), so each
+        // search fetches enough candidates to fill them. Fetching only
+        // $limit (3 by default) left two slots that only the always-included
+        // knowledge could fill.
+        $fetch = max($limit, 5);
 
         // Knowledge base search — skip when bot disables knowledge
         $priority_knowledge = [];
@@ -136,7 +146,7 @@ class RAPLSAICH_Search_Engine {
             $results = array_merge($results, $priority_knowledge);
 
             // Search knowledge base by keywords (additional match)
-            $knowledge_results = $this->search_knowledge($query, $limit);
+            $knowledge_results = $this->search_knowledge($query, $fetch);
             foreach ($knowledge_results as $kr) {
                 $kr['keyword_matched'] = true;
                 $exists = false;
@@ -158,7 +168,7 @@ class RAPLSAICH_Search_Engine {
         // Search from index (keyword) — skip for greetings/chitchat or when bot disables site crawl
         $index_results = [];
         if ($this->use_site_crawl && !$this->is_greeting($query)) {
-            $index_results = $this->search_index($query, $limit);
+            $index_results = $this->search_index($query, $fetch);
             foreach ($index_results as &$ir) {
                 $ir['keyword_matched'] = true;
             }
@@ -167,7 +177,7 @@ class RAPLSAICH_Search_Engine {
         $results = array_merge($results, $index_results);
 
         // Vector search (if embedding is configured)
-        $vector_results = $this->vector_search($query, $limit);
+        $vector_results = $this->vector_search($query, $fetch);
 
         $slot_mode = self::knowledge_slot_mode();
 
@@ -193,8 +203,10 @@ class RAPLSAICH_Search_Engine {
             $matched         = [];
             $always_included = [];
             $other           = [];
+            $rel_weights     = $this->relevance_weights($query);
             foreach ($results as $r) {
                 if (!empty($r['keyword_matched'])) {
+                    $r['_relevance'] = $this->relevance($r, $rel_weights);
                     $matched[] = $r;
                 } elseif (($r['type'] ?? '') === 'knowledge') {
                     $always_included[] = $r;
@@ -202,6 +214,20 @@ class RAPLSAICH_Search_Engine {
                     $other[] = $r; // weak vector-only hits
                 }
             }
+
+            // Order the matches by how much of the question they cover, not
+            // by score: knowledge scores carry a large priority bonus, so a
+            // high-priority entry that shares one word with the question
+            // (often the organisation name) used to outrank the page that
+            // answers it. The score only breaks ties.
+            usort($matched, function ($a, $b) {
+                $d = ($b['_relevance'] ?? 0) <=> ($a['_relevance'] ?? 0);
+                return $d !== 0 ? $d : (($b['score'] ?? 0) <=> ($a['score'] ?? 0));
+            });
+            foreach ($matched as &$m) {
+                unset($m['_relevance']);
+            }
+            unset($m);
 
             if ($slot_mode === 'add') {
                 // B: the matched items get all the slots, and the
@@ -240,6 +266,61 @@ class RAPLSAICH_Search_Engine {
         }
 
         return $final_results;
+    }
+
+    /**
+     * Keyword weights used to compare matches from different sources. Taken
+     * from the learned pages when there are enough of them (a larger sample
+     * of the site's wording), otherwise from the knowledge base.
+     *
+     * @return array<string,float>
+     */
+    private function relevance_weights(string $query): array {
+        $keywords = $this->extract_keywords($query);
+        if (empty($keywords)) {
+            return [];
+        }
+        global $wpdb;
+        $tables = [];
+        if ($this->use_site_crawl) {
+            $tables[] = $this->get_table_name();
+        }
+        if ($this->use_knowledge && $this->get_knowledge_schema()['exists']) {
+            $tables[] = $this->get_knowledge_table();
+        }
+        foreach ($tables as $table) {
+            if ($table === '') {
+                continue;
+            }
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+            $rows = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table}");
+            if ($rows >= 4) {
+                return $this->keyword_stats($table, $keywords)['weights'];
+            }
+        }
+        return array_fill_keys($keywords, 1.0);
+    }
+
+    /**
+     * Share of the question (0–1, by keyword weight) that an item contains,
+     * or its vector similarity when that is higher.
+     *
+     * @param array               $item    Search result.
+     * @param array<string,float> $weights From relevance_weights().
+     */
+    private function relevance(array $item, array $weights): float {
+        $coverage = 0.0;
+        $total    = array_sum($weights);
+        if ($total > 0) {
+            $text = raplsaich_mb_strtolower(($item['title'] ?? '') . ' ' . ($item['content'] ?? ''));
+            foreach ($weights as $keyword => $w) {
+                if (raplsaich_mb_strpos($text, raplsaich_mb_strtolower((string) $keyword)) !== false) {
+                    $coverage += $w;
+                }
+            }
+            $coverage /= $total;
+        }
+        return max($coverage, (float) ($item['vector_score'] ?? 0));
     }
 
     /**
@@ -618,10 +699,19 @@ class RAPLSAICH_Search_Engine {
             return [];
         }
 
-        // Try FULLTEXT search
-        $fulltext_results = $this->fulltext_search($table, $query, $limit);
-        if (!empty($fulltext_results)) {
-            return $fulltext_results;
+        // Leave out words found on most pages (see keyword_stats). Before,
+        // a word such as the site name matched FULLTEXT on its own, so the
+        // search returned arbitrary pages and never reached the LIKE search.
+        $search = $this->keyword_stats($table, $keywords)['search'];
+
+        // FULLTEXT splits words at spaces, so it cannot match Japanese,
+        // Chinese or Thai words; use the LIKE search for those.
+        $has_unspaced = (bool) preg_match('/[\p{Han}\p{Hiragana}\p{Katakana}\p{Thai}]/u', implode(' ', $search));
+        if (!$has_unspaced) {
+            $fulltext_results = $this->fulltext_search($table, implode(' ', $search), $limit);
+            if (!empty($fulltext_results)) {
+                return $fulltext_results;
+            }
         }
 
         // Fallback: LIKE search
@@ -651,6 +741,7 @@ class RAPLSAICH_Search_Engine {
      * FULLTEXT search
      */
     private function fulltext_search(string $table, string $query, int $limit): array {
+        // $query: space-separated keywords from search_index().
         global $wpdb;
 
         // Skip FULLTEXT if index doesn't exist (e.g. MariaDB version mismatch, InnoDB limitations)
@@ -658,7 +749,7 @@ class RAPLSAICH_Search_Engine {
             return [];
         }
 
-        $search_query = $this->prepare_fulltext_query($query);
+        $search_query = $query;
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe internal value
         $sql = $wpdb->prepare(
@@ -704,39 +795,61 @@ class RAPLSAICH_Search_Engine {
     private function like_search(string $table, array $keywords, int $limit): array {
         global $wpdb;
 
-        $where_clauses = [];
-        $params = [];
-
-        foreach ($keywords as $keyword) {
-            $where_clauses[] = "(title LIKE %s OR content LIKE %s)";
-            $like_param = '%' . $wpdb->esc_like($keyword) . '%';
-            $params[] = $like_param;
-            $params[] = $like_param;
-        }
-
-        if (empty($where_clauses)) {
+        // Words that appear on most pages (the site or organisation name,
+        // "months", "coming"…) match nearly everything. Weight each keyword
+        // by how rare it is, leave the common ones out of the WHERE clause,
+        // and rank in SQL so the LIMIT keeps the best rows instead of the
+        // first rows that happen to contain any keyword.
+        $stats   = $this->keyword_stats($table, $keywords);
+        $weights = $stats['weights'];
+        $search  = $stats['search'];
+        if (empty($search)) {
             return [];
         }
 
-        $where = implode(' OR ', $where_clauses);
-        $params[] = $limit * 2;
+        $where_clauses = [];
+        $where_params  = [];
+        $rank_parts    = [];
+        $rank_params   = [];
+        foreach ($search as $keyword) {
+            $like_param = '%' . $wpdb->esc_like($keyword) . '%';
+            $where_clauses[] = "(title LIKE %s OR content LIKE %s)";
+            $where_params[]  = $like_param;
+            $where_params[]  = $like_param;
+        }
+        foreach ($weights as $keyword => $w) {
+            $like_param    = '%' . $wpdb->esc_like((string) $keyword) . '%';
+            $rank_parts[]  = '(CASE WHEN title LIKE %s THEN %f ELSE 0 END) + (CASE WHEN content LIKE %s THEN %f ELSE 0 END)';
+            $rank_params[] = $like_param;
+            $rank_params[] = 3 * $w;
+            $rank_params[] = $like_param;
+            $rank_params[] = $w;
+        }
+
+        $where  = implode(' OR ', $where_clauses);
+        $rank   = implode(' + ', $rank_parts);
+        $params = array_merge($rank_params, $where_params, [$limit * 3]);
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and WHERE clauses are safe internal values
         $sql = $wpdb->prepare(
-            "SELECT post_id, post_type, title, content, url, 1 as score
+            "SELECT post_id, post_type, title, content, url, ({$rank}) as score
              FROM {$table}
              WHERE {$where}
+             ORDER BY score DESC
              LIMIT %d",
             ...$params
         );
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $results = $wpdb->get_results($sql, ARRAY_A);
+        if (empty($results)) {
+            return [];
+        }
         $grouped = $this->group_by_post($results);
 
-        // Calculate score by keyword match count
+        // Calculate score by weighted keyword matches
         foreach ($grouped as &$item) {
-            $item['score'] = $this->calculate_keyword_score($item, $keywords);
+            $item['score'] = $this->calculate_keyword_score($item, array_keys($weights), $weights);
         }
         unset($item);
 
@@ -753,6 +866,84 @@ class RAPLSAICH_Search_Engine {
                 'score'     => $item['score'],
             ];
         }, array_slice($grouped, 0, $limit));
+    }
+
+    /**
+     * Weight each keyword by how rare it is in $table (BM25-style inverse
+     * document frequency), scaled so the rarest keyword weighs 1. A word
+     * found in every row weighs almost nothing; a word found in a few rows
+     * keeps its full weight, as before.
+     *
+     * Also returns the keywords worth searching for: all of them, minus the
+     * ones found in more than half of the rows when a rarer keyword remains.
+     *
+     * @param string   $table       Validated table name.
+     * @param string[] $keywords    Keywords.
+     * @param string   $extra_where Extra SQL condition ending in "AND", already prepared.
+     * @return array{weights: array<string,float>, search: string[]}
+     */
+    private function keyword_stats(string $table, array $keywords, string $extra_where = ''): array {
+        global $wpdb;
+
+        $keywords = array_values(array_unique(array_filter(
+            array_map('strval', $keywords),
+            fn($k) => raplsaich_mb_strlen($k) >= 2
+        )));
+        $plain = ['weights' => array_fill_keys($keywords, 1.0), 'search' => $keywords];
+        if (count($keywords) < 2) {
+            return $plain;
+        }
+
+        $cache_key = md5($table . '|' . $extra_where . '|' . implode("\n", $keywords));
+        if (isset(self::$weight_cache[$cache_key])) {
+            return self::$weight_cache[$cache_key];
+        }
+
+        $sums   = [];
+        $params = [];
+        foreach ($keywords as $i => $keyword) {
+            $like_param = '%' . $wpdb->esc_like($keyword) . '%';
+            $sums[]   = "SUM(CASE WHEN title LIKE %s OR content LIKE %s THEN 1 ELSE 0 END) AS df{$i}";
+            $params[] = $like_param;
+            $params[] = $like_param;
+        }
+        $where = $extra_where !== '' ? 'WHERE ' . preg_replace('/\s*AND\s*$/', '', $extra_where) : '';
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and SQL parts are safe internal values
+        $sql = $wpdb->prepare('SELECT COUNT(*) AS n, ' . implode(', ', $sums) . " FROM {$table} {$where}", ...$params);
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
+        $row = $wpdb->get_row($sql, ARRAY_A);
+
+        $n = is_array($row) ? (int) ($row['n'] ?? 0) : 0;
+        if ($n <= 0) {
+            return self::$weight_cache[$cache_key] = $plain;
+        }
+
+        $idf  = [];
+        $rare = [];
+        foreach ($keywords as $i => $keyword) {
+            $df = min($n, max(0, (int) ($row['df' . $i] ?? 0)));
+            $idf[$keyword] = log(1 + ($n - $df + 0.5) / ($df + 0.5));
+            if ($df * 2 <= $n) {
+                $rare[] = $keyword;
+            }
+        }
+        $max = max($idf);
+        if ($max <= 0) {
+            return self::$weight_cache[$cache_key] = $plain;
+        }
+
+        $weights = [];
+        foreach ($idf as $keyword => $v) {
+            // The floor keeps a common word from counting for nothing.
+            $weights[$keyword] = max(0.02, $v / $max);
+        }
+
+        return self::$weight_cache[$cache_key] = [
+            'weights' => $weights,
+            // Very small tables: too few rows to tell common from rare.
+            'search'  => ($n >= 4 && !empty($rare)) ? $rare : $keywords,
+        ];
     }
 
     /**
@@ -786,7 +977,6 @@ class RAPLSAICH_Search_Engine {
         }
         $active_condition = !empty($pre_conditions) ? implode(' AND ', $pre_conditions) . ' AND' : '';
         $priority_column = $has_priority ? 'priority' : '0 as priority';
-        $order_by = $has_priority ? 'ORDER BY priority DESC, created_at DESC' : 'ORDER BY created_at DESC';
 
         $keywords = $this->extract_keywords($query);
 
@@ -800,29 +990,45 @@ class RAPLSAICH_Search_Engine {
             return [];
         }
 
-        $where_clauses = [];
-        $params = [];
-
-        foreach ($keywords as $keyword) {
-            if (raplsaich_mb_strlen($keyword) < 2) {
-                continue;
-            }
-            $where_clauses[] = "(title LIKE %s OR content LIKE %s)";
-            $like_param = '%' . $wpdb->esc_like($keyword) . '%';
-            $params[] = $like_param;
-            $params[] = $like_param;
-        }
-
-        if (empty($where_clauses)) {
+        // Same weighting as the page search: a word in most entries (the
+        // organisation name, for example) must not pull in every entry.
+        // Entries are ranked by how well they match first, then by priority;
+        // ordering by priority alone kept the LIMIT from reaching the entry
+        // the question was about.
+        $stats   = $this->keyword_stats($table, $keywords, $active_condition);
+        $weights = $stats['weights'];
+        $search  = $stats['search'];
+        if (empty($search)) {
             return [];
         }
 
-        $where = implode(' OR ', $where_clauses);
-        $params[] = $limit;
+        $where_clauses = [];
+        $where_params  = [];
+        foreach ($search as $keyword) {
+            $like_param = '%' . $wpdb->esc_like($keyword) . '%';
+            $where_clauses[] = "(title LIKE %s OR content LIKE %s)";
+            $where_params[]  = $like_param;
+            $where_params[]  = $like_param;
+        }
+        $rank_parts  = [];
+        $rank_params = [];
+        foreach ($weights as $keyword => $w) {
+            $like_param    = '%' . $wpdb->esc_like((string) $keyword) . '%';
+            $rank_parts[]  = '(CASE WHEN title LIKE %s THEN %f ELSE 0 END) + (CASE WHEN content LIKE %s THEN %f ELSE 0 END)';
+            $rank_params[] = $like_param;
+            $rank_params[] = 3 * $w;
+            $rank_params[] = $like_param;
+            $rank_params[] = $w;
+        }
+
+        $where     = implode(' OR ', $where_clauses);
+        $rank      = implode(' + ', $rank_parts);
+        $order_by  = $has_priority ? 'ORDER BY match_rank DESC, priority DESC, created_at DESC' : 'ORDER BY match_rank DESC, created_at DESC';
+        $params    = array_merge($rank_params, $where_params, [$limit]);
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name and SQL parts are safe internal values
         $sql = $wpdb->prepare(
-            "SELECT id, title, content, category, {$priority_column}
+            "SELECT id, title, content, category, {$priority_column}, ({$rank}) AS match_rank
              FROM {$table}
              WHERE {$active_condition} ({$where})
              {$order_by}
@@ -837,7 +1043,7 @@ class RAPLSAICH_Search_Engine {
             return [];
         }
 
-        return array_map(function($item) use ($keywords) {
+        return array_map(function($item) use ($weights) {
             // Priority adds significant boost (each priority point = 20 score)
             $priority_boost = ((int) ($item['priority'] ?? 0)) * 20;
             return [
@@ -848,7 +1054,7 @@ class RAPLSAICH_Search_Engine {
                 'category'    => $item['category'] ?? '',
                 'priority'    => (int) ($item['priority'] ?? 0),
                 'url'         => null,
-                'score'       => $this->calculate_keyword_score($item, $keywords) + 10 + $priority_boost, // Prioritize knowledge + priority boost
+                'score'       => $this->calculate_keyword_score($item, array_keys($weights), $weights) + 10 + $priority_boost, // Prioritize knowledge + priority boost
             ];
         }, $results);
     }
@@ -999,14 +1205,6 @@ class RAPLSAICH_Search_Engine {
     }
 
     /**
-     * Prepare query for FULLTEXT search
-     */
-    private function prepare_fulltext_query(string $query): string {
-        $keywords = $this->extract_keywords($query);
-        return implode(' ', $keywords);
-    }
-
-    /**
      * 投稿IDでグループ化
      */
     private function group_by_post(array $results): array {
@@ -1075,21 +1273,26 @@ class RAPLSAICH_Search_Engine {
     /**
      * キーワードマッチ数でスコア計算
      */
-    private function calculate_keyword_score(array $item, array $keywords): float {
+    private function calculate_keyword_score(array $item, array $keywords, array $weights = []): float {
         $score = 0;
         $text = raplsaich_mb_strtolower($item['title'] . ' ' . $item['content']);
 
         foreach ($keywords as $keyword) {
-            $keyword_lower = raplsaich_mb_strtolower($keyword);
+            $keyword_lower = raplsaich_mb_strtolower((string) $keyword);
+            if ($keyword_lower === '') {
+                continue;
+            }
+            // Rare keywords count fully, words found on most pages barely.
+            $w = isset($weights[$keyword]) ? (float) $weights[$keyword] : 1.0;
 
             // Bonus if matched in title
             if (raplsaich_mb_strpos(raplsaich_mb_strtolower($item['title']), $keyword_lower) !== false) {
-                $score += 3;
+                $score += 3 * $w;
             }
 
             // Match count in body
             $count = raplsaich_mb_substr_count($text, $keyword_lower);
-            $score += min($count, 5); // Max 5 points
+            $score += min($count, 5) * $w; // Max 5 points
         }
 
         return $score;

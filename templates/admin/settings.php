@@ -790,6 +790,15 @@ if (!defined('ABSPATH')) {
                         </td>
                     </tr>
                     <tr>
+                        <th scope="row"><label for="raplsaich_crawler_max_results"><?php esc_html_e('Reference Count', 'rapls-ai-chatbot'); ?></label></th>
+                        <td>
+                            <input type="number" id="raplsaich_crawler_max_results" name="raplsaich_settings[crawler_max_results]"
+                                   value="<?php echo esc_attr($settings['crawler_max_results'] ?? 3); ?>"
+                                   min="1" max="20" class="small-text">
+                            <p class="description"><?php esc_html_e('How many sources (learned pages and knowledge base entries) are given to the AI with each question. Values below 5 still use 5. When the same topic is spread over many pages, a higher number lets the answer draw on more of them, but every question sends more text to the AI and costs more. 8 to 10 suits most sites.', 'rapls-ai-chatbot'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row"><label for="raplsaich_knowledge_slot_mode"><?php esc_html_e('Knowledge Used on Every Question', 'rapls-ai-chatbot'); ?></label></th>
                         <td>
                             <?php $raplsaich_slot_mode = RAPLSAICH_Search_Engine::knowledge_slot_mode(); ?>
@@ -798,7 +807,7 @@ if (!defined('ABSPATH')) {
                                 <option value="add" <?php selected($raplsaich_slot_mode, 'add'); ?>><?php esc_html_e('Add it to what matches the question', 'rapls-ai-chatbot'); ?></option>
                                 <option value="legacy" <?php selected($raplsaich_slot_mode, 'legacy'); ?>><?php esc_html_e('Use the knowledge first (previous behavior)', 'rapls-ai-chatbot'); ?></option>
                             </select>
-                            <p class="description"><?php esc_html_e('Active knowledge base entries, highest priority first, are given to the AI with every question, whatever was asked. Each answer uses up to five sources. "Use what matches the question first" keeps at least three of them for pages and entries that match the question, such as a page that contains a name the visitor asked about, and fills the rest with that knowledge. "Add it to what matches the question" uses all five for matches and adds the knowledge on top, which sends more text to the AI and costs more. "Use the knowledge first" is how earlier versions worked: on sites with five or more entries, matching pages could be left out.', 'rapls-ai-chatbot'); ?></p>
+                            <p class="description"><?php esc_html_e('Active knowledge base entries, highest priority first, are given to the AI with every question, whatever was asked. Each answer uses as many sources as the Reference Count above (at least five). "Use what matches the question first" keeps at least three of them for pages and entries that match the question, such as a page that contains a name the visitor asked about, and fills the rest with that knowledge. "Add it to what matches the question" uses all of them for matches and adds the knowledge on top, which sends more text to the AI and costs more. "Use the knowledge first" is how earlier versions worked: on sites with five or more entries, matching pages could be left out.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                 </table>
