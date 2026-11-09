@@ -25,8 +25,8 @@ class RAPLSAICH_Promo_Notice {
     /** Black Friday 2026: 2026-11-26T09:00:00Z (18:00 JST). */
     const BF26_START = 1795683600;
 
-    /** Black Friday 2026: 2026-12-02T09:00:00Z (18:00 JST; the deal ends 17:59 JST). */
-    const BF26_END = 1796202000;
+    /** Black Friday 2026: 2026-12-01T11:00:00Z (20:00 JST; the codes expire at this moment). */
+    const BF26_END = 1796122800;
 
     /** Query argument carrying the campaign id on the dismiss link. */
     const DISMISS_ARG = 'raplsaich_promo_dismiss';
