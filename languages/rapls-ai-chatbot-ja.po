@@ -514,6 +514,14 @@ msgstr "回答内のリンク"
 msgid "Remove links to pages on this site that do not exist"
 msgstr "このサイト内の存在しないページへのリンクを外す"
 
+#: templates/admin/crawler.php templates/admin/settings.php
+msgid "Remove page titles added to the end of sentences"
+msgstr "文末に付け足されたページ名を消す"
+
+#: templates/admin/crawler.php templates/admin/settings.php
+msgid "Some AI models put the title of a source page, often as a link, right after a sentence, as in \"…to cut costs Heating.\" When on, such a title is removed together with its link: a link to a source page at the end of a sentence, a bracketed source such as \"(Source: URL)\", or a title in 【】. Links inside a sentence and after a colon are kept. A sentence that ends with a link whose text is exactly a page title, as in \"Visit Contact.\", also loses that link, so leave this off unless you see the problem."
+msgstr "AI モデルによっては、参考にしたページの名前を、リンクにして文の直後に付けることがあります (例:「…費用を抑えられます 料金プラン。」)。オンにすると、こうしたページ名をリンクごと消します。対象は、文末にある参考ページへのリンク、「(Source: URL)」のような括弧書きの出典、【】で囲んだページ名です。文の途中のリンクと、コロンの後のリンクは残します。リンクの文字がページ名そのままで、そのリンクで文が終わる場合も、そのリンクは消えます。この問題が起きていなければオフのままにしてください。"
+
 #: templates/admin/settings.php
 msgid "Knowledge Used on Every Question"
 msgstr "毎回使うナレッジ"

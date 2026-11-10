@@ -787,6 +787,12 @@ if (!defined('ABSPATH')) {
                                 <?php esc_html_e('Remove links to pages on this site that do not exist', 'rapls-ai-chatbot'); ?>
                             </label>
                             <p class="description"><?php esc_html_e('AI models sometimes make up URLs. When on, every link to this site in an answer is checked against the learned pages and WordPress (posts, pages, media, category and tag archives) before the answer is shown. Links to pages that are not found are removed and only their text is kept. Links to other sites are not changed.', 'rapls-ai-chatbot'); ?></p>
+                            <label style="display: inline-block; margin-top: 10px;">
+                                <input type="checkbox" name="raplsaich_settings[remove_citation_links]" value="1"
+                                    <?php checked(!empty($settings['remove_citation_links'])); ?>>
+                                <?php esc_html_e('Remove page titles added to the end of sentences', 'rapls-ai-chatbot'); ?>
+                            </label>
+                            <p class="description"><?php esc_html_e('Some AI models put the title of a source page, often as a link, right after a sentence, as in "…to cut costs Heating." When on, such a title is removed together with its link: a link to a source page at the end of a sentence, a bracketed source such as "(Source: URL)", or a title in 【】. Links inside a sentence and after a colon are kept. A sentence that ends with a link whose text is exactly a page title, as in "Visit Contact.", also loses that link, so leave this off unless you see the problem.', 'rapls-ai-chatbot'); ?></p>
                         </td>
                     </tr>
                     <tr>

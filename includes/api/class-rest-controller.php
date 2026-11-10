@@ -1127,7 +1127,9 @@ class RAPLSAICH_REST_Controller {
                     }
                     $remaining_messages = $ext->get_remaining_messages();
 
-                    $cached_content = apply_filters('raplsaich_ai_response', $cached['content'], $message, $settings);
+                    // Answers cached before "remove_citation_links" was turned on
+                    // still carry the titles, so clean them on the way out too.
+                    $cached_content = apply_filters('raplsaich_ai_response', $this->strip_citation_sources((string) $cached['content'], $related_content, $settings), $message, $settings);
 
                     $cache_response_data = [
                         'message_id'         => $cache_msg_id,
@@ -1552,6 +1554,13 @@ class RAPLSAICH_REST_Controller {
                 }
             } finally {
                 do_action('raplsaich_ai_request_end', $request_id);
+            }
+
+            // Optional: drop source titles the model stuck to the end of
+            // sentences ("…senken [Wärme](…)."). Runs before the unknown-link
+            // check so a removed made-up link cannot leave its title behind.
+            if (isset($response['content']) && is_string($response['content'])) {
+                $response['content'] = $this->strip_citation_sources($response['content'], $related_content, $settings);
             }
 
             // Optional: unlink made-up URLs to this site before the answer is
@@ -3864,6 +3873,27 @@ class RAPLSAICH_REST_Controller {
      * Get the transient key for ephemeral session context.
      * Used when save_history is OFF to keep multi-turn context without DB writes.
      */
+    /**
+     * Drop source titles the model stuck to the end of sentences, when the
+     * "remove_citation_links" setting is on.
+     *
+     * @param string     $content         AI answer.
+     * @param array|null $related_content Passages given to the model.
+     * @param array      $settings        Plugin settings.
+     */
+    private function strip_citation_sources(string $content, $related_content, array $settings): string {
+        if (empty($settings['remove_citation_links']) || !is_array($related_content) || $content === '') {
+            return $content;
+        }
+        $sources = [];
+        foreach ($related_content as $rc) {
+            if (is_array($rc) && !empty($rc['title'])) {
+                $sources[] = ['title' => (string) $rc['title'], 'url' => (string) ($rc['url'] ?? '')];
+            }
+        }
+        return RAPLSAICH_Link_Guard::strip_citations($content, $sources)['content'];
+    }
+
     private function get_context_transient_key(string $session_id): string {
         return 'raplsaich_ctx_' . substr(hash('sha256', $session_id . wp_salt()), 0, 32);
     }

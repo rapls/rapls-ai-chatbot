@@ -721,6 +721,9 @@ class RAPLSAICH_Admin {
         $sanitized['remove_unknown_links'] = (array_key_exists('sources_display_mode', $input) || !empty($input['_site_learning_toggle']))
             ? !empty($input['remove_unknown_links'])
             : !empty($existing['remove_unknown_links']);
+        $sanitized['remove_citation_links'] = (array_key_exists('sources_display_mode', $input) || !empty($input['_site_learning_toggle']))
+            ? !empty($input['remove_citation_links'])
+            : !empty($existing['remove_citation_links']);
         $link_target = $input['link_target'] ?? ($existing['link_target'] ?? '_blank');
         $sanitized['link_target'] = in_array($link_target, ['_blank', '_self'], true) ? $link_target : '_blank';
         $sanitized['crawler_exclude_ids'] = array_values(array_unique(array_map(
@@ -4421,6 +4424,7 @@ class RAPLSAICH_Admin {
             'show_feedback_buttons' => false,
             'sources_display_mode'  => 'matched',
             'remove_unknown_links'  => false, // unlink own-site URLs in AI answers that don't exist
+            'remove_citation_links' => false, // drop source titles stuck to the end of sentences
             'knowledge_slot_mode'   => 'matched_first', // matched_first | add | legacy
             // Where chat reply links open: '_blank' (new window/tab) or '_self' (same window).
             'link_target'           => '_blank',

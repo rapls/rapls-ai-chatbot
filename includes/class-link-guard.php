@@ -139,6 +139,150 @@ class RAPLSAICH_Link_Guard {
     }
 
     /**
+     * Remove source references the model added to the end of sentences.
+     *
+     * Some models copy the 【title】 / (Source: …) labels of the reference
+     * passages into the answer, so a page title ends up after a sentence
+     * ("…die Kosten zu senken [Wärme](…)."). When the "remove_citation_links"
+     * setting is on, these are removed together with their text:
+     *
+     * - a link whose text is the title of one of the given sources and that
+     *   stands right before the end of a sentence or line, after a word (not
+     *   after ":" as in "Link: [Kontakt](…)."), optionally in brackets;
+     * - a bracketed reference that holds only links or URLs to this site,
+     *   with an optional label ("(Quelle: https://…)", "([Wärme](…))");
+     * - a source title in 【】 inside a line.
+     *
+     * Links inside a sentence ("use the form on the [contact page](…) to …")
+     * are kept.
+     *
+     * @param string $content AI answer (Markdown or HTML).
+     * @param array  $sources Passages given to the model: [['title' => string, 'url' => string], …].
+     * @return array{content:string, removed:string[]}
+     */
+    public static function strip_citations(string $content, array $sources): array {
+        $result = ['content' => $content, 'removed' => []];
+        if ($content === '' || empty($sources)) {
+            return $result;
+        }
+
+        $titles = [];
+        foreach ($sources as $source) {
+            $title = self::normalize_label((string) ($source['title'] ?? ''));
+            if ($title !== '') {
+                $titles[$title] = true;
+            }
+        }
+        $hosts   = self::own_hosts();
+        $removed = [];
+        $text    = $content;
+
+        $is_title = function (string $label) use ($titles): bool {
+            $label = self::normalize_label($label);
+            return $label !== '' && isset($titles[$label]);
+        };
+
+        // Where a sentence or line ends after the reference.
+        $end = '(?=[ \t]*(?:[.。!?！？]|\R|$))';
+        // The reference follows a word, a closing bracket or bold/italic marks.
+        $after_word = '(?<=[\p{L}\p{N}\)\]*_」』])';
+        $md_link    = '\[([^\]\n]+)\]\(\s*<?([^\s)>]+)>?(?:\s+"[^"]*")?\s*\)';
+        // Group numbers below count the optional opening bracket as group 1.
+        $html_link  = '<a\s[^>]*?href\s*=\s*(["\'])(.*?)\2[^>]*>(.*?)<\/a>';
+
+        // 1. Bracketed references that hold only own-site links or URLs, with an
+        //    optional short label: (Quelle: https://…), *(Source: [A](…), [B](…))*.
+        //    Not the "(url)" half of a Markdown link.
+        $text = (string) preg_replace_callback(
+            '/(?<!\])[ \t]*([*_]{0,2})[(（]\s*(?:[\p{L} ]{1,20}[:：]\s*)?((?:\[[^\]\n]+\]\([^)\s]+\)|https?:\/\/[^\s)）,，]+)(?:\s*[,，;、]\s*(?:\[[^\]\n]+\]\([^)\s]+\)|https?:\/\/[^\s)）,，]+))*)\s*[)）]\1/u',
+            function ($m) use ($hosts, &$removed) {
+                preg_match_all('/\]\(([^)\s]+)\)|(https?:\/\/[^\s)）,，\]]+)/u', $m[2], $urls);
+                $found = array_filter(array_merge($urls[1], $urls[2]));
+                if (empty($found)) {
+                    return $m[0];
+                }
+                foreach ($found as $url) {
+                    $absolute = self::absolutize($url);
+                    if ($absolute === '' || !self::is_own_url($absolute, $hosts)) {
+                        return $m[0]; // a reference to another site may be wanted
+                    }
+                }
+                $removed = array_merge($removed, $found);
+                return '';
+            },
+            $text
+        );
+
+        // 2. A Markdown link to a source, after a word and before the end of
+        //    the sentence, optionally in brackets: "senken [Wärme](…).".
+        $text = (string) preg_replace_callback(
+            '/' . $after_word . '[ \t]*([(（]?)' . $md_link . '([)）]?)' . $end . '/u',
+            function ($m) use ($is_title, &$removed) {
+                if (($m[1] === '') !== ($m[4] === '') || !$is_title($m[2])) {
+                    return $m[0];
+                }
+                $removed[] = $m[3];
+                return '';
+            },
+            $text
+        );
+
+        // 3. The same for HTML links.
+        $text = (string) preg_replace_callback(
+            '/' . $after_word . '[ \t]*([(（]?)' . $html_link . '([)）]?)' . $end . '/isu',
+            function ($m) use ($is_title, &$removed) {
+                if (($m[1] === '') !== ($m[5] === '') || !$is_title(wp_strip_all_tags($m[4]))) {
+                    return $m[0];
+                }
+                $removed[] = $m[3];
+                return '';
+            },
+            $text
+        );
+
+        // 4. A source title copied in 【】 inside a line: "senken 【Wärme】.".
+        $text = (string) preg_replace_callback(
+            '/(?<=\S)[ \t]*【([^】\n]+)】/u',
+            function ($m) use ($is_title, &$removed) {
+                if (!$is_title($m[1])) {
+                    return $m[0];
+                }
+                $removed[] = $m[1];
+                return '';
+            },
+            $text
+        );
+
+        if (empty($removed)) {
+            return $result;
+        }
+
+        // Tidy: no space left before punctuation, no doubled spaces.
+        $text = (string) preg_replace('/[ \t]+([.,;!?。、！？])/u', '$1', $text);
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = rtrim((string) preg_replace('/[ \t]+$/m', '', $text));
+
+        $removed = array_values(array_unique($removed));
+
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            error_log('[RAPLSAICH] Link guard removed ' . count($removed) . ' source reference(s): ' . implode(', ', $removed));
+        }
+
+        return ['content' => $text, 'removed' => $removed];
+    }
+
+    /**
+     * Compare link texts and page titles without case, entities, tags or
+     * surrounding spaces.
+     */
+    private static function normalize_label(string $label): string {
+        $label = html_entity_decode(wp_strip_all_tags($label), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $label = trim((string) preg_replace('/\s+/u', ' ', $label), " \t\n\r\0\x0B*_\"'«»„“”");
+        return function_exists('mb_strtolower') ? mb_strtolower($label, 'UTF-8') : strtolower($label);
+    }
+
+    /**
      * Text to keep in place of an unlinked link.
      */
     private static function link_text(string $label, string $url): string {

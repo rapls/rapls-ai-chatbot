@@ -1310,6 +1310,7 @@ class RAPLSAICH_Search_Engine {
 
         $context_parts = [];
         $current_length = 0;
+        $has_markers = false;
 
         foreach ($results as $result) {
             $content = $result['content'];
@@ -1375,9 +1376,27 @@ class RAPLSAICH_Search_Engine {
 
             $context_parts[] = $part;
             $current_length += $part_length;
+            if (!$is_qa) {
+                $has_markers = true;
+            }
         }
 
-        return implode("\n\n---\n\n", $context_parts);
+        $context = implode("\n\n---\n\n", $context_parts);
+
+        // The 【title】 headings and (Source: …) lines are labels for the model.
+        // Some models copy them into the answer as citations, leaving page
+        // titles stuck to the end of sentences ("…zu senken Wärme."). With more
+        // passages per question (1.25.0) this became frequent, so say plainly
+        // that they are not part of the answer.
+        if ($has_markers) {
+            $context .= "\n\n[ABOUT THE LABELS ABOVE]\n"
+                . "The 【title】 headings and (Source: …) lines only show where each passage comes from. "
+                . "Do not copy page titles, source names or URLs into your answer as references or citations, "
+                . "and do not add them after sentences. "
+                . "Link to a page only when you tell the visitor to open it, for example a contact or booking page.";
+        }
+
+        return $context;
     }
 
     /**
