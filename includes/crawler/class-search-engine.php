@@ -1393,7 +1393,9 @@ class RAPLSAICH_Search_Engine {
                 . "The 【title】 headings and (Source: …) lines only show where each passage comes from. "
                 . "Do not copy page titles, source names or URLs into your answer as references or citations, "
                 . "and do not add them after sentences. "
-                . "Link to a page only when you tell the visitor to open it, for example a contact or booking page.";
+                . "You may link a page inside a sentence by putting the link on a fitting word, "
+                . "for example \"available in our [online shop](url)\". "
+                . "Never put a page title or link after the end of a sentence.";
         }
 
         return $context;

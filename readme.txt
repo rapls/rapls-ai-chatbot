@@ -268,7 +268,7 @@ You can disable these features in the plugin settings:
 == Changelog ==
 
 = 1.25.1 =
-* Fixed: since 1.25.0, some answers had page titles stuck to the end of sentences ("…to cut costs Heating."). More learned pages now reach the AI with each question, and some models copied the title and source link of each page into the answer. The AI is now told that these only show where a passage comes from. Thanks to @awmaeder for the report.
+* Fixed: since 1.25.0, some answers had page titles stuck to the end of sentences ("…to cut costs Heating."). More learned pages now reach the AI with each question, and some models copied the title and source link of each page into the answer. The AI is now told that these only show where a passage comes from, and that it may link a page on a word inside the sentence but not after it. Thanks to @awmaeder for the report.
 * Added: "Remove page titles added to the end of sentences" under Settings > AI Settings > Site Learning > Links in Answers, off by default. If titles still appear, it removes a link to a source page at the end of a sentence, a bracketed source such as "(Source: URL)", and a page title in 【】. Links inside a sentence and after a colon are kept.
 * Fixed: the Black Friday notice on the settings screen now ends on December 1, 2026, 20:00 JST (11:00 UTC), when the discount codes expire.
 * Changed: Rapls AI Chatbot now requires PHP 8.2 or later. PHP 7.4, 8.0 and 8.1 no longer receive security fixes. Sites on an older PHP version keep the version they have; WordPress does not offer this update until PHP is upgraded.
