@@ -346,78 +346,8 @@ You can disable these features in the plugin settings:
 * Fixed: usage costs. GPT-4.1 models were counted at the GPT-4 price, up to 150 times too high, which could stop the chat early under Pro's monthly budget limit, and most current OpenAI, Claude and Gemini models had no price, so GPT-5.2 Pro, for example, was counted at about 1/280 of its cost. Prices now follow each provider's pricing page.
 * Changed: Model Fallback uses Gemini 3.1 Flash-Lite, and the free-tier setup picks a Gemini 3 Flash-Lite model, because Google now serves Gemini 2.5 only to projects that already used it.
 
-= 1.20.5 =
-* Fixed: Claude Sonnet 4 and Claude Opus 4.1 were retired by Anthropic (June 15 and August 5, 2026) and stopped answering. Visitors saw "The AI model is currently unavailable. Please contact the site administrator.", and nothing in wp-admin said why. A site still set to a retired Claude model now sends its chats to the successor (Sonnet 4 to Sonnet 4.6, Opus 4 and 4.1 to Opus 4.6, Claude 3 Haiku models to Haiku 4.5), and wp-admin shows a notice until a model is chosen again. The saved setting is not changed for you. The same applies to a model typed in for a Pro bot.
-* Added: Claude Sonnet 4.6, now the recommended Sonnet model. Claude Sonnet 4 and Claude Opus 4.1 are removed from the model list.
-* Fixed: when the saved model was no longer in the list, the settings screen showed the first model instead, so saving the page for any other reason quietly switched the site to Claude Opus 4.6. It now shows the model that is actually answering.
-* Fixed: usage costs for Claude Haiku 4.5, the default model, were counted at three times the real price, and Claude Opus 4.5 and 4.6 were also priced wrongly, so the Pro monthly budget limit could stop the chat early. Prices now follow Anthropic's pricing page.
-* Changed: temperature is sent only to Claude models that accept it. Claude Opus 4.7 and later and Claude Sonnet 5 reject it, which matters for a model typed in for a Pro bot.
-
-= 1.20.4 =
-* Fixed: the Site Learning screen said it learns custom fields. Since 1.19.3 custom fields are not indexed unless a site names them with the raplsaich_crawl_indexed_meta_keys filter, so the description now lists posts, pages and custom post types only. The Japanese translation of the same sentence, which repeated itself, is corrected too.
-
-= 1.20.3 =
-* Fixed: an English question could pull in an unrelated page because an everyday word in it was enough for the keyword index to match. "I need a stairlift" searched for "need" as well, and "need" appears on most pages, so whichever page used it could come back as a result — and as a reference card. The English stopword list had 20 words and kept pronouns, prepositions, auxiliaries and opening verbs; it now covers them. Words that carry meaning on a real site (help, support, cost, price, service and the like) are deliberately still searched for. Japanese questions are unaffected.
-* Fixed: when every word of an English question was a stopword ("how do I know?"), the remaining text was glued together into one keyword ("howdoIknow") that matches nothing. The plugin now searches for nothing in that case and leaves the answer to vector search. Japanese, which is written without spaces, still joins the remaining text as before. Thanks to @slafever for the report that led to both.
-
-= 1.20.2 =
-* Fixed: with the Pro response cache and Pro message encryption both on, a repeated question could be answered with a long encrypted string (starting "encg:") instead of the reply. Every other place that reads stored messages decrypts them first; the cache lookup returned the stored row as-is. It now decrypts too, and an entry that cannot be decrypted is treated as a cache miss so a fresh answer is generated — encrypted text is never shown in the chat.
-* Fixed: when the reCAPTCHA secret key could no longer be decrypted (for example after the WordPress security salts changed), every chat message was refused and visitors only saw "This feature is currently unavailable." with no warning in wp-admin, because the decryption notice only checked the AI provider's API key. A separate notice now tells administrators to re-enter the reCAPTCHA secret key.
-* Improved: the decryption notice no longer claims a key "was most likely encrypted on another site" when the salts are unchanged. The recorded fingerprint belongs to whichever key was saved last, so it now lists every way a value can be left under an old key. Thanks to Sander Rombout for the detailed report.
-
-= 1.20.1 =
-* Fixed: a request rejected as automated (added in 1.19.7) showed the vague "This feature is currently unavailable." message, because the `bot_request` error code had no entry in the message map. It now says the request looked automated and who to contact, which matters for the rare visitor whose browser is misidentified.
-
-= 1.20.0 =
-* Added: `RAPLSAICH_ENCRYPTION_KEY` — an optional wp-config.php constant that decouples the stored API key and Pro license from the WordPress security salts. Sites whose salts are rotated (by a security plugin, a failing object cache, or a restored database) lost both every few days and had to re-enter them. Define the constant and existing keys are re-encrypted with it on the next wp-admin request; they then survive any salt change. Nothing changes for sites that do not define it. See the FAQ for details.
-* Improved: the "API key decryption failed" notice now names the likely cause. It compares the current salts against a fingerprint recorded when the key was saved, so it can tell "your salts changed on <date>" apart from "your salts are unchanged, so this key was encrypted on another site" instead of listing both possibilities. Thanks to Sander Rombout for the detailed report.
-
-= 1.19.7 =
-* Fixed: search-engine crawlers that run JavaScript (for example Baiduspider-render) could create fake conversations. When a crawler followed a deep link such as `?raplsaich_q=…`, the question was sent automatically, so every crawl showed up under Conversations as a new visitor and triggered a real AI request. Each crawl gets a new session, so per-visitor limits did not stop it. Known crawlers and automated browsers no longer auto-send deep-link questions, and the server refuses chat requests from crawler User-Agents before the AI is called or anything is saved. Developers can adjust detection with the new raplsaich_is_bot_request filter. Thanks to xyp for the detailed report.
-
-= 1.19.6 =
-* Fixed: with the optional "iOS keyboard fix" enabled, opening the chat on desktop locked the background page at the top — the page could not be scrolled until the chat was closed. The scroll-cancel that keeps the mobile full-screen chat pinned was running on desktop too, where the widget is only a small floating panel. It is now limited to the mobile view, matching the body lock it belongs to. No effect unless "iOS keyboard fix" is turned on. Thanks to @slafever for the detailed report.
-
-= 1.19.5 =
-* Fixed: a reference card below an answer could point to an unrelated page when the answer was actually grounded in a different page found by vector search. Reference cards and the sources list only showed pages that keyword search matched, so a page found only by semantic (vector) search — often the very page the answer came from — could never appear, and a weaker keyword hit was shown in its place. Vector matches that clear the grounding score are now eligible for reference cards and sources, so the card reflects the page the answer is based on. Only affects sites with Vector Search enabled. Thanks to @slafever for the detailed report.
-
-= 1.19.4 =
-* Fixed: System Health showed "Last crawl: Never run yet" even though Site Learning was crawling on schedule and the content index was growing. The scheduled crawler runs incrementally — one batch per run, resuming across runs — but the "Last crawl" time was only recorded when an entire sweep finished (every post type, every batch). On sites where a sweep spans several runs (many post types, or a type with more than 100 posts) the field could sit at "Never run yet" for days while crawls were in fact running. Each crawl run now records its own timestamp, so the status reflects the most recent run. Thanks to @slafever for the detailed report.
-
-= 1.19.3 =
-* Fixed: Site Learning (the site crawler) was adding third-party plugin metadata to the indexed content of a page, and it could surface in chatbot answers and reference cards. It walked every public custom field on a post and appended it under "Additional Info", filtering out only keys that start with an underscore. Plugins such as Rank Math SEO and page-builder themes store their data under plain keys (for example rank_math_focus_keyword or a theme's section layout flags), so that data slipped through and ended up in the knowledge base even though it never appeared in the page's visible content. The crawler no longer indexes arbitrary post meta; it indexes the title, excerpt, taxonomy terms, and page body. If you deliberately keep content in a custom field, you can opt specific keys back in with the new raplsaich_crawl_indexed_meta_keys filter. Run Site Learning again after updating to overwrite already-indexed pages. Thanks to @slafever for the detailed report.
-
-= 1.19.2 =
-* Fixed: In the cross-site script embed, the close (×) button did nothing on other domains, so visitors could not close the chat. The chat window notified the host page to close via a browser message addressed to the wrong origin (this plugin's own site instead of the page it was embedded on), so the browser dropped it. The embed now sends the message to the host page's own origin, and the close button works on any site. Embedding the chat on its own site was unaffected.
-
-= 1.19.1 =
-* Fixed: In the cross-site script embed, the Google reCAPTCHA v3 badge (shown when reCAPTCHA is enabled) could sit on top of the send button. Google pins the badge to the bottom-right corner, and the embedded chat window is narrow, so the badge landed right where the send button is. The badge is now lifted above the input bar so it no longer covers the send button. No change if you do not use reCAPTCHA.
-
-= 1.19.0 =
-* Added: Large uploaded documents are now split into parts automatically. Until now a document had to fit the embedding model's single-request token limit or it would not embed; now the Knowledge Base splits a big TXT, MD, PDF, or DOCX into smaller parts on upload, and each part embeds on its own. You no longer need to cut a file up by hand before uploading. The Knowledge Base list shows the document as one item with a "parts embedded" badge, and deleting it removes every part. This also improves answers: the bot retrieves the most relevant passage of a long document instead of one blurred embedding of the whole thing. Existing entries are untouched — re-upload a document to split it.
-
-= 1.18.1 =
-* Fixed: The bot avatar beside a message could occasionally render at full size (very large) on sites where a caching or CSS-optimization plugin combined and minified stylesheets. The avatar wrapper is now sized directly, so the icon stays at its intended size even if that one rule is dropped. If you see it oversized after updating, clear your caching plugin's cache once.
-
-= 1.18.0 =
-* **Fixed: embedding could loop indefinitely, sending requests to your provider without end.** The client kept asking for more as long as documents remained unembedded, so a single document that could never embed — one over the model's token limit, or a PDF with no extractable text — put the loop in a state it could not leave. On a metered API key that meant requests, and charges, with nothing to show for them. Permanent failures are now excluded from the next pass and the loop ends when it stops making progress. If you have uploaded a large document and left the Knowledge Base screen open, update.
-* Fixed: Knowledge Base entries that failed to embed used to index silently — you saw 0 chunks with no reason. Each entry that cannot be embedded now shows why on the Knowledge Base list (for example, "Too large to embed — split this entry into smaller documents", or an API-key/rate-limit note). Thanks to @publiastel for the clear report.
-* Improved: When you embed several documents at once and one is too large for the embedding model's single-request limit, the oversized document no longer sinks the whole batch. The rest embed normally, and only the oversized one is flagged. Split it into smaller entries and it will embed on the next run.
-
-= 1.17.0 =
-* Added: Optional HTML in the "Limit reached" message (Security, Usage Control). Turn on "Allow a safe HTML subset" to use links and basic emphasis in that message — for example, point a blocked visitor to a login or upgrade page: Please <a href="/login">log in</a> or go <a href="/vip">VIP</a>. Only a small allowlist is permitted (<a href>, <br>, <strong>, <em>); everything else is stripped on save, and the widget scrubs the message again before rendering. Off by default, so existing setups are unchanged.
-
-= 1.16.2 =
-* Added: Badge label. You can now show a short line of text next to the launcher icon — for example "Contact us here" — so first-time visitors understand what the button does instead of seeing an icon alone. Set it under Settings, Badge Label; leave it empty to keep the icon-only circle. The label is hidden on phones to save space.
-
-= 1.16.1 =
-* Fixed: With the OpenAI-compatible provider selected (e.g. Alibaba Qwen/DashScope), the chat widget returned "AI API key is not configured" even though the key was saved and Test Connection succeeded. The pre-send key check did not recognize the new provider and looked for an OpenAI key instead of the OpenAI-compatible one. Chat now reads the correct key. No settings changes are needed.
-
-= 1.16.0 =
-* Added: OpenAI-compatible provider. Connect any service that speaks the OpenAI Chat Completions API — including Chinese providers such as Alibaba Tongyi Qwen (DashScope), DeepSeek, and Zhipu GLM — by entering a base URL, a model name, and an API key. Vector embeddings (RAG) are supported as well, so sites that cannot reach OpenAI or Gemini (for example inside mainland China) can run both chat and RAG on a domestic provider such as Qwen. When the embedding provider is set to Auto and chat runs on the OpenAI-compatible provider, embeddings use that same vendor. Changing the embedding provider now warns you to clear and regenerate embeddings.
-* Added: Deep-link auto-send. A URL such as `?raplsaich_q=your+question` (a plain `?q=` also works) opens the chatbot and sends that question automatically, with no typing or copy-paste — ideal for turning end-of-article "suggested questions" into one-click conversations. The question is shown as a normal visitor message, and the parameter is removed from the URL after sending so a refresh does not resend it.
-
-Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
+= Older versions =
+The changes in 1.20.5 and earlier are listed in the [1.20.5 readme](https://plugins.trac.wordpress.org/browser/rapls-ai-chatbot/tags/1.20.5/readme.txt).
 
 == Upgrade Notice ==
 
