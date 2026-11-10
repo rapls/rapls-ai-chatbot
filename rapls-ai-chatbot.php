@@ -6,7 +6,7 @@
  * Description:       Answers from your own posts and pages, says so when it doesn't know, and stops at the spending limit you set. Works with OpenAI, Claude or Gemini.
  * Version:           1.25.0
  * Requires at least: 6.3
- * Requires PHP:      7.4
+ * Requires PHP:      8.2
  * Author:            Rapls
  * Author URI:        https://raplsworks.com/
  * License:           GPL v2 or later

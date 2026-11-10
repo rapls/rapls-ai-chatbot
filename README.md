@@ -51,7 +51,7 @@ For full setup instructions (enabling the server, generating an API key, client 
 ### 前提条件
 
 - **WordPress 6.3 以上**（WordPress 7.0+ で Connectors API 統合推奨）
-- **PHP 7.4 以上**
+- **PHP 8.2 以上**
 - **API キー** — OpenAI / Anthropic Claude / Google Gemini / OpenRouter のいずれか
 
 クレジットカードを使いたくない場合は、**OpenRouter または Google Gemini の無料枠**（どちらもカード登録不要）で始められます。設定画面の「まず無料で動かす」パネルでどちらかを選び、キーを貼り付けて接続テストを押すと、その場で使えるモデルまで自動設定されます。パネルには各オプションのデータの扱い（Gemini 無料枠は送信内容が Google のモデル改善に使われる場合がある、など）が選ぶ前に表示されるので、納得したうえで選べます。
@@ -141,7 +141,7 @@ Same design story, posted across a few platforms — pick whichever you read on:
 ### Requirements
 
 - WordPress 6.3 以上
-- PHP 7.4 以上
+- PHP 8.2 以上
 - OpenAI / Anthropic / Google Gemini / OpenRouter いずれかの API キー
 
 ### Contributing
