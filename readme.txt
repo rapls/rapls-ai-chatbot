@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.25.0
+Stable tag: 1.25.1
 Requires PHP: 8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,12 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.25.1 =
+* Fixed: since 1.25.0, some answers had page titles stuck to the end of sentences ("…to cut costs Heating."). More learned pages now reach the AI with each question, and some models copied the title and source link of each page into the answer. The AI is now told that these only show where a passage comes from. Thanks to @awmaeder for the report.
+* Added: "Remove page titles added to the end of sentences" under Settings > AI Settings > Site Learning > Links in Answers, off by default. If titles still appear, it removes a link to a source page at the end of a sentence, a bracketed source such as "(Source: URL)", and a page title in 【】. Links inside a sentence and after a colon are kept.
+* Fixed: the Black Friday notice on the settings screen now ends on December 1, 2026, 20:00 JST (11:00 UTC), when the discount codes expire.
+* Changed: Rapls AI Chatbot now requires PHP 8.2 or later. PHP 7.4, 8.0 and 8.1 no longer receive security fixes. Sites on an older PHP version keep the version they have; WordPress does not offer this update until PHP is upgraded.
+
 = 1.25.0 =
 * Added: the chat window's own texts (buttons, notices and error messages) are shown in the visitor's language. WordPress translates them only into the site language, and only when a language pack exists, so a German site without a German pack showed them in English, and with Response Language set to "Auto-detect" a visitor reading another language saw them in the site language. Translations for the 13 response languages are now built in: with "Auto-detect" they follow the visitor's browser, otherwise the language you set. Texts you wrote yourself, such as the welcome message, are not changed. The translations are loaded only when they can be needed. Thanks to @awmaeder for the suggestion.
 * Added: "Reference Count" under Settings > AI Settings > Site Learning, so sites without Pro can choose how many sources (learned pages and knowledge base entries) each answer uses. A higher number helps when the same topic is spread over many pages.
@@ -414,6 +420,9 @@ You can disable these features in the plugin settings:
 Older versions (1.15.4 and earlier) are listed in [changelog.txt](https://plugins.svn.wordpress.org/rapls-ai-chatbot/trunk/changelog.txt).
 
 == Upgrade Notice ==
+
+= 1.25.1 =
+Fixes page titles stuck to the end of sentences in some answers. Requires PHP 8.2 or later. Check your PHP version (Tools > Site Health > Info > Server) before updating.
 
 = 1.25.0 =
 Chat window texts in the visitor's language, and better answers to long questions. If you use Rapls AI Chatbot Pro, update it to 1.9.12 as well.
