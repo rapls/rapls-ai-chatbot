@@ -764,6 +764,13 @@ wp_footer();
         if ((is_archive() || is_search()) && !($settings['badge_show_on_archives'] ?? true)) {
             return false;
         }
+        // Everything the four types above do not cover: other post types
+        // (e.g. WooCommerce products), attachments and the 404 page.
+        $is_listed_type = is_front_page() || is_home() || is_singular('post') || is_page()
+            || is_archive() || is_search();
+        if (!$is_listed_type && !($settings['badge_show_on_other'] ?? true)) {
+            return false;
+        }
 
         // Exclude IDs blacklist
         $exclude_ids = $this->parse_id_list($settings['badge_exclude_ids'] ?? '');

@@ -590,11 +590,13 @@ class RAPLSAICH_Admin {
             $sanitized['badge_show_on_posts'] = !empty($input['badge_show_on_posts']);
             $sanitized['badge_show_on_pages'] = !empty($input['badge_show_on_pages']);
             $sanitized['badge_show_on_archives'] = !empty($input['badge_show_on_archives']);
+            $sanitized['badge_show_on_other'] = !empty($input['badge_show_on_other']);
         } else {
             $sanitized['badge_show_on_home'] = $existing['badge_show_on_home'] ?? true;
             $sanitized['badge_show_on_posts'] = $existing['badge_show_on_posts'] ?? true;
             $sanitized['badge_show_on_pages'] = $existing['badge_show_on_pages'] ?? true;
             $sanitized['badge_show_on_archives'] = $existing['badge_show_on_archives'] ?? true;
+            $sanitized['badge_show_on_other'] = $existing['badge_show_on_other'] ?? true;
         }
         $sanitized['badge_include_ids'] = sanitize_text_field($input['badge_include_ids'] ?? ($existing['badge_include_ids'] ?? ''));
         $sanitized['badge_exclude_ids'] = sanitize_text_field($input['badge_exclude_ids'] ?? ($existing['badge_exclude_ids'] ?? ''));
@@ -4463,6 +4465,7 @@ class RAPLSAICH_Admin {
             'badge_show_on_posts'   => true,
             'badge_show_on_pages'   => true,
             'badge_show_on_archives' => true,
+            'badge_show_on_other'   => true,
             'badge_include_ids'     => '',
             'badge_exclude_ids'     => '',
             'excluded_pages'        => [],

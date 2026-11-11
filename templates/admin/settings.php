@@ -2234,6 +2234,11 @@ if (!defined('ABSPATH')) {
                                         <?php checked($settings['badge_show_on_archives'] ?? true); ?>>
                                     <?php esc_html_e('Archives (Category, Tag, Date, Author)', 'rapls-ai-chatbot'); ?>
                                 </label>
+                                <label style="display: block; margin-bottom: 6px;">
+                                    <input type="checkbox" name="raplsaich_settings[badge_show_on_other]" value="1"
+                                        <?php checked($settings['badge_show_on_other'] ?? true); ?>>
+                                    <?php esc_html_e('Other pages (products and other content types, attachments, 404)', 'rapls-ai-chatbot'); ?>
+                                </label>
                             </fieldset>
                             <p class="description"><?php esc_html_e('Uncheck to hide the chatbot on specific page types. Note: Include IDs below will override these settings.', 'rapls-ai-chatbot'); ?></p>
                         </td>

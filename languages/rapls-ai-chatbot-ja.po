@@ -514,6 +514,10 @@ msgstr "回答内のリンク"
 msgid "Remove links to pages on this site that do not exist"
 msgstr "このサイト内の存在しないページへのリンクを外す"
 
+#: templates/admin/settings.php
+msgid "Other pages (products and other content types, attachments, 404)"
+msgstr "その他のページ (商品などのコンテンツタイプ、添付ファイル、404)"
+
 #: templates/admin/crawler.php templates/admin/settings.php
 msgid "Remove page titles added to the end of sentences"
 msgstr "文末に付け足されたページ名を消す"

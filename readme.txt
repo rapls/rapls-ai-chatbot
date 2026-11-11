@@ -4,7 +4,7 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.25.1
+Stable tag: 1.25.2
 Requires PHP: 8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -267,6 +267,9 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.25.2 =
+* Fixed: when only some page types were selected under Settings > Display Settings > Page Type Display, the chat still appeared on pages of other kinds, such as WooCommerce products, attachments and the 404 page. A new "Other pages" option covers them. It is on by default, so nothing changes until you turn it off. Thanks to @awmaeder for the report.
+
 = 1.25.1 =
 * Fixed: since 1.25.0, some answers had page titles stuck to the end of sentences ("…to cut costs Heating."). More learned pages now reach the AI with each question, and some models copied the title and source link of each page into the answer. The AI is now told that these only show where a passage comes from, and that it may link a page on a word inside the sentence but not after it. Thanks to @awmaeder for the report.
 * Added: "Remove page titles added to the end of sentences" under Settings > AI Settings > Site Learning > Links in Answers, off by default. If titles still appear, it removes a link to a source page at the end of a sentence, a bracketed source such as "(Source: URL)", and a page title in 【】. Links inside a sentence and after a colon are kept.
@@ -350,6 +353,9 @@ You can disable these features in the plugin settings:
 The changes in 1.20.5 and earlier are listed in the [1.20.5 readme](https://plugins.trac.wordpress.org/browser/rapls-ai-chatbot/tags/1.20.5/readme.txt).
 
 == Upgrade Notice ==
+
+= 1.25.2 =
+Adds an "Other pages" option to Page Type Display, so the chat can be hidden on WooCommerce products, attachments and 404 pages.
 
 = 1.25.1 =
 Fixes page titles stuck to the end of sentences in some answers. Requires PHP 8.2 or later. Check your PHP version (Tools > Site Health > Info > Server) before updating.

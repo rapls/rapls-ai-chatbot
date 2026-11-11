@@ -786,6 +786,7 @@ class RAPLSAICH_Activator {
             'badge_show_on_posts'    => true,
             'badge_show_on_pages'    => true,
             'badge_show_on_archives' => true,
+            'badge_show_on_other'    => true,
             'excluded_pages'  => [],
 
             // History settings
