@@ -4041,14 +4041,32 @@ class RAPLSAICH_Admin {
             $result = RAPLSAICH_Knowledge::import_from_file($file, $category);
 
             if (is_wp_error($result)) {
-                // Return the error code (safe, fixed string) rather than potentially dynamic message
+                // Show the message only for codes whose message is a fixed
+                // string written in RAPLSAICH_Knowledge::import_from_file(), so
+                // the reason (a scanned PDF, a missing extension) reaches the
+                // screen. Any other code gets the general message.
                 $safe_messages = [
-                    'invalid_file_type' => __('Invalid file type. Please upload a CSV or JSON file.', 'rapls-ai-chatbot'),
-                    'empty_file'        => __('The uploaded file is empty.', 'rapls-ai-chatbot'),
-                    'parse_error'       => __('Could not parse the file. Please check the format.', 'rapls-ai-chatbot'),
+                    'empty_file'  => __('The uploaded file is empty.', 'rapls-ai-chatbot'),
+                    'parse_error' => __('Could not parse the file. Please check the format.', 'rapls-ai-chatbot'),
+                ];
+                $fixed_codes = [
+                    'upload_error',
+                    'file_error',
+                    'file_too_large',
+                    'invalid_file_type',
+                    'read_error',
+                    'pdf_no_text',
+                    'docx_not_supported',
+                    'docx_parse_error',
+                    'empty_content',
+                    'encoding_error',
                 ];
                 $code = $result->get_error_code();
-                $msg = $safe_messages[$code] ?? __('Import failed. Please check the file format and try again.', 'rapls-ai-chatbot');
+                if (in_array($code, $fixed_codes, true)) {
+                    $msg = $result->get_error_message();
+                } else {
+                    $msg = $safe_messages[$code] ?? __('Import failed. Please check the file format and try again.', 'rapls-ai-chatbot');
+                }
                 if (defined('WP_DEBUG') && WP_DEBUG) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
                     error_log('RAPLSAICH import error [' . $code . ']: ' . $result->get_error_message());

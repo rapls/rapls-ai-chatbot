@@ -168,6 +168,12 @@ class RAPLSAICH_Abilities_Bridge {
      * The MCP schema uses (object)[] for empty properties, which needs
      * to be converted to a proper array for the Abilities API.
      *
+     * When nothing in the input is required, the schema also gets an empty
+     * default. The Abilities API validates a missing input (null) against
+     * the schema, and null is not an object, so a tool with no required
+     * input could never be run without one. An empty properties list is
+     * dropped, because it would be sent to clients as [] instead of {}.
+     *
      * @param array $schema MCP inputSchema.
      * @return array Normalized schema.
      */
@@ -179,6 +185,18 @@ class RAPLSAICH_Abilities_Bridge {
         // Convert stdClass properties to array
         if (isset($schema['properties']) && $schema['properties'] instanceof \stdClass) {
             $schema['properties'] = (array) $schema['properties'];
+        }
+
+        if (array_key_exists('properties', $schema) && empty($schema['properties'])) {
+            unset($schema['properties']);
+        }
+
+        if (isset($schema['required']) && empty($schema['required'])) {
+            unset($schema['required']);
+        }
+
+        if (('object' === ($schema['type'] ?? '')) && empty($schema['required']) && !array_key_exists('default', $schema)) {
+            $schema['default'] = [];
         }
 
         return $schema;

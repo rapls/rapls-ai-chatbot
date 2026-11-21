@@ -4,8 +4,8 @@ Contributors: rapls
 Tags: ai chatbot, rag, chatbot, chatgpt, mcp
 Requires at least: 6.3
 Tested up to: 7.1
-Stable tag: 1.25.2
-Requires PHP: 8.2
+Stable tag: 1.25.3
+Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -267,6 +267,11 @@ You can disable these features in the plugin settings:
 
 == Changelog ==
 
+= 1.25.3 =
+* Changed: Rapls AI Chatbot runs on PHP 7.4 and later again. 1.25.2 required PHP 8.2; the code itself works on 7.4. PHP 8.2 or later is still recommended, because 7.4, 8.0 and 8.1 no longer receive security fixes.
+* Fixed: with MCP turned on, the WordPress Abilities API could not run the tools that take no input, such as get-site-info. A call without input was rejected as "input is not of type object". Tools whose input is all optional now accept a call without one.
+* Fixed: when a knowledge file could not be imported, the Knowledge screen showed only "Import failed. Please check the file format and try again." It now shows the reason, for example that a scanned PDF has no text to extract or that the file is too large.
+
 = 1.25.2 =
 * Fixed: when only some page types were selected under Settings > Display Settings > Page Type Display, the chat still appeared on pages of other kinds, such as WooCommerce products, attachments and the 404 page. A new "Other pages" option covers them. It is on by default, so nothing changes until you turn it off. Thanks to @awmaeder for the report.
 
@@ -353,6 +358,9 @@ You can disable these features in the plugin settings:
 The changes in 1.20.5 and earlier are listed in the [1.20.5 readme](https://plugins.trac.wordpress.org/browser/rapls-ai-chatbot/tags/1.20.5/readme.txt).
 
 == Upgrade Notice ==
+
+= 1.25.3 =
+Runs on PHP 7.4 and later again, lets MCP clients run tools that take no input, and shows why a knowledge file could not be imported.
 
 = 1.25.2 =
 Adds an "Other pages" option to Page Type Display, so the chat can be hidden on WooCommerce products, attachments and 404 pages.
